@@ -1,0 +1,112 @@
+<!--gate_summary-->
+<script src="./sessionstorage.js"></script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+	.button {
+	background-color: #008CBA; /* Green */
+	border: none;
+	color: white;
+	padding: 15px 32px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	}
+	.table_wrapper{
+		display: Block;
+		overflow-x: auto;
+		white-space: nowrap;
+	}
+</style>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="favicon.ico">
+<title>Vitraag Vigyaan</title>
+<!-- Bootstrap core CSS -->
+<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
+<link href="css/plugin.css" rel="stylesheet">
+<!-- Custom styles for this template -->
+<link href="css/clockpicker.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
+        <div class="header">
+            <div class="container">
+                <div class="logo">
+                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+                </div>
+                    <div class="logout">
+                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
+                    </div>
+            </div>
+    	</div>
+		        <div class="middlecontent">
+        	<div class="container">
+            	<div class="whitesec">
+					<div class="frm-head">
+					  <h1>Current On-Premise Report</h1>
+					</div>
+					<div class="form">
+						<div class="row">
+							<div class="col-md-12">
+								<div class="table">
+									<table class="table table-striped table-bordered">
+										<tr>
+											<th><center>PR</center></th>
+											<th><center>Mumukshu</center></th>
+											<th><center>Seva Kutir</center></th>
+										</tr>
+											<?php	
+														echo "<tr>"; 
+														echo "<td><center>"."<a href='onprem_detail.php?type=pr&status=onprem' target='_blank'>".$row['pr_total']."</a></td></center>";
+														echo "<td><center>"."<a href='onprem_detail.php?type=mumukshu&status=checkedin' target='_blank'>".$row1['guest_total']."</a></td></center>";
+														echo "<td><center>"."<a href='onprem_detail.php?type=seva_kutir&status=onprem' target='_blank'>".$row2['sevakutir_total']."</a></td></center>";
+														//echo "<td><center>".$row['pr_total']."</center></td>";
+														//echo "<td><center>".$row1['guest_total']."</center></td>";
+														echo "</tr>";
+
+											?>
+											
+									</table>				
+								</div>
+								<div><center>
+										<ul class="pagination">
+											<li><center><button onclick="document.location='generate_gatereport_data.php?export=true'" class="button">Export to Excel</button></center><br></li>
+										</ul>
+										</center>	
+							</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<div class="container">
+				<p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
+			</div>
+		</div>
+</div>
+<!-- Bootstrap core JavaScript
+	================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="https://use.fontawesome.com/373a347df2.js"></script>
+<script src="js/plugin.js"></script>
+<script src="js/bootstrap-datepicker.min.js"></script>
+<script src="js/clockpicker.js"></script>
+<script src="js/custom.js"></script>
+</body>
+</html>
+		
+
+<!--generate_gatereport_data & onprem_detail pending-->

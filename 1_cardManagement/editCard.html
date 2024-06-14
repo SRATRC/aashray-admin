@@ -1,0 +1,139 @@
+<!--edit--> 
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="favicon.ico">
+<title>Office Admin</title>
+<!-- Bootstrap core CSS -->
+<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
+<link href="css/plugin.css" rel="stylesheet">
+<!-- Custom styles for this template -->
+<link href="css/clockpicker.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
+        <div class="header">
+            <div class="container">
+                <div class="logo">
+                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+                </div>
+                    <div class="logout">
+                        <a href="logout.php;"><img src="images/user.png" alt="" title=""> LOGOUT</a>
+                    </div>
+            </div>
+    	</div>
+        <div class="middlecontent">
+        	<div class="container">
+            	<div class="whitesec">
+                    <div class="inner-padding">
+                    	<div class="frm-head">
+                          <h4><b><u>Edit Card Details </u></b></h4>
+							   </div>
+								<div class="form" onsubmit="editCard(event)">
+								<form>
+									<div class="row">
+										<div class="col-md-12">
+											<label>Card Issued To: </label>
+												<input type="text" name="issuedto" value="<?php echo $row['issuedto']; ?>">
+										</div>
+										<div class="col-md-12">
+											<label>cardno: </label>
+												<input type="text" name="cardno" value="<?php echo $row['cardno']; ?>">
+										</div>
+										<div class="col-md-12">
+											<label>Centre </label>
+												<select type="text" name="centre">
+													<option value=<?php echo $row['centre']; ?>><?php echo $row['centre']; ?></option>";
+													<?php
+														while ($row1 = mysqli_fetch_array($result1)){
+															
+													?>
+														<option value="<?php echo $row1['centre']; ?>"><?php echo $row1['centre']; ?></option>";
+													<?php
+													}
+													echo "</select>";
+													?>
+												</select>
+										</div>
+										<div class="col-md-12">
+											<label>Residential Status </label>
+												<SELECT type="text" name="res_status">
+													<option value="PR" <?php If($res_selected == 'PR'){ECHO "Selected";}; ?>>PR</option>
+													<option value="MUMUKSHU" <?php If($res_selected == 'MUMUKSHU'){ECHO "Selected";}; ?>>MUMUKSHU</option>
+													<option value="Seva_Kutir" <?php If($res_selected == 'Seva_Kutir'){ECHO "Selected";}; ?>>Seva Kutir</option>
+												</SELECT>
+										</div>
+										<div class="col-md-12">
+											<label>Gender: </label>
+												<input type="text" name="gender" value="<?php echo $row['gender']; ?>">
+										</div>
+										<div class="col-md-12">
+											<label>Phone No: </label>
+												<input type="text" name="phno" value="<?php echo $row['mobno']; ?>">
+										</div>
+										<div class="col-md-12">
+											<label>E-mail address: </label>
+												<input type="text" name="email" value="<?php echo $row['email']; ?>">
+										</div>
+										<div class="col-md-12">
+											<label>Address: </label>
+											<input type="text" name="address" value="<?php echo $row['address']; ?>">
+										</div>
+										<div class="col-md-12">
+											<label>ID Type: </label>
+												<input type="text" name="idtypeshow" value="<?php echo $row['idType']; ?>" disabled>
+										</div>
+										<div class="col-md-12">
+											<label>ID NO </label>
+												<input type="text" name="idno" value="<?php echo $row['idNo']; ?>">
+										</div>
+										<div class="col-md-12">
+											<center>
+												<input type="hidden" name="cardno_id" value="<?php echo $card_id; ?>">
+												<button type="submit" name="btn-update" id="btn-update"><strong>Update</strong></button>
+												<a href="search_card.php"><button type="button" value="button">Cancel</button></a>
+											</center>
+										</div>	
+                                </form>
+							</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+        	<div class="container">
+            	<p>© 2022 <a href="#" target="_blank">Kreative Fingers Pvt. Ltd.</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bootstrap core JavaScript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="https://use.fontawesome.com/373a347df2.js"></script>
+<script src="js/plugin.js"></script>
+<script src="js/bootstrap-datepicker.min.js"></script>
+<script src="js/clockpicker.js"></script>
+<script src="js/custom.js"></script>
+<script src="js/score.js"></script>
+<script src="editCard.js"></script>
+<script src="./sessionstorage.js"></script>
+
+<!-- Alert for Updating -->
+
+
+</body>
+</html>
