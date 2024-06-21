@@ -1,47 +1,49 @@
 <!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Card Management</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 2rem;
-      text-align: center;
-    }
-    .search {
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      width: 100%;
-      max-width: 300px;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      background: #f4f4f4;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Card Management</h1>
-  <input
-    type="text"
-    id="search"
-    class="search"
-    placeholder="Search by name"
-  />
-  <ul id="data-list"></ul>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Management</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+      }
+      .search {
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        width: 100%;
+        max-width: 300px;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        background: #f4f4f4;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Card Management</h1>
+    <input
+      type="text"
+      id="search"
+      class="search"
+      placeholder="Search by name"
+    />
+    <button id="searchButton">Search</button>
+    <div id="data-list"></div>
+    <div id="detailed-data"></div>
 
-  <script src="searchCard.js"></script>
-  <script src="../sessionstorage.js"></script>
-</body>
+    <script src="searchCard.js"></script>
+    <script src="../sessionstorage.js"></script>
+  </body>
 </html>
