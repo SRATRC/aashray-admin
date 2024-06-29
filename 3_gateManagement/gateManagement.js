@@ -1,19 +1,30 @@
-<?php
+document.addEventListener('DOMContentLoaded', () => {
+  const fetchData = async () => {
+    try {
+      const response = await fetch(
+        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/total'
+      ); // replace with your actual endpoint
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      displayData(data);
+    } catch (error) {
+      console.error(
+        'There has been a problem with your fetch operation:',
+        error
+      );
+    }
+  };
 
-include('db.php');
-//$checkin1 = $_GET['checkin1'];
-//$checkin2 = $_GET['checkin2'];
+  const displayData = (data) => {
+    const cardDataDiv = document.getElementById('card-data');
+    data.data.forEach((item) => {
+      const p = document.createElement('p');
+      p.textContent = `Status: ${item.res_status}, Count: ${item.count}`;
+      cardDataDiv.appendChild(p);
+    });
+  };
 
-$query = "SELECT count(*) AS pr_total FROM card_db WHERE status='onprem' AND res_status='PR'";
-$result = mysqli_query($conn, $query) or die("Failed to query database ".mysqli_error());
-$row = mysqli_fetch_assoc($result);
-
-$query1 = "SELECT count(*) AS guest_total FROM card_db WHERE status='checkedin' AND res_status='MUMUKSHU'";
-$result1 = mysqli_query($conn, $query1) or die("Failed to query database ".mysqli_error());
-$row1 = mysqli_fetch_assoc($result1);
-
-$query2 = "SELECT count(*) AS sevakutir_total FROM card_db WHERE status='onprem' AND res_status='Seva_Kutir'";
-$result2 = mysqli_query($conn, $query2) or die("Failed to query database ".mysqli_error());
-$row2 = mysqli_fetch_assoc($result2);
-
-?>
+  fetchData();
+});

@@ -1,112 +1,57 @@
-<!--transfer_card--> 
-<script src="./sessionstorage.js"></script>
+<!--transfer_card-->
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
-<meta name="description" content="">
-<meta name="author" content="">
-<link rel="icon" href="favicon.ico">
-<title>Office Admin</title>
-<!-- Bootstrap core CSS -->
-<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
-<link href="css/plugin.css" rel="stylesheet">
-<!-- Custom styles for this template -->
-<link href="css/clockpicker.css" rel="stylesheet">
-<link href="css/style.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-<script type="text/javascript">
-$(document).ready(function(){
-    $('.search-box input[type="text"]').on("keyup input", function(){
-        /* Get input value on change */
-        var inputVal = $(this).val();
-        var resultDropdown = $(this).siblings(".result");
-        if(inputVal.length){
-            $.get("backend-search.php", {term: inputVal}).done(function(data){
-                // Display the returned data in browser
-                resultDropdown.html(data);
-            });
-        } else{
-            resultDropdown.empty();
-        }
-    });
-    
-    // Set search input value on click of result item
-    $(document).on("click", ".result p", function(){
-        $(this).parents(".search-box").find('input[type="text"]').val($(this).text());
-        $(this).parent(".result").empty();
-    });
-});
-</script>
-</head>
-<body>
-<div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
-        <div class="header">
-            <div class="container">
-                <div class="logo">
-                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
-                </div>
-                    <div class="logout">
-                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
-                    </div>
-            </div>
-    	</div>
-        <div class="middlecontent">
-        	<div class="container">
-            	<div class="whitesec">
-                    <div class="inner-padding">
-                    	<div class="frm-head">
-                          <h4><b><u>Transfer card</u></b></h4>
-							   </div>
-								<div class="form">
-								<form action="transfer_to.php" Method="POST">
-									<div class="row">
-									<div>
-										<div class="col-md-12">
-											<div class="search-box">
-												<label>Transfer From: </label>
-												<input type="text" name="cardno_original" autocomplete="off" placeholder="Enter mumukshu name">
-												<div class="result"></div>
-											</div>
-										</div>
-										<div class="col-md-12">
-											<label>Enter Card ID From Above </label>
-											<input type="text" name="cardno_id" autocomplete="off" placeholder="Enter number from above" required>
-										</div>
-									</div>
-									<div>
-										<input type="hidden" name="transaction_detail" value="lunch">
-									</div>
-									<div class="col-md-12">
-										<input type="submit" value="Next">
-									</div>	
-                                </form>
-							</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer">
-        	<div class="container">
-            	<p>© 2019 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Bootstrap core JavaScript
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"
+    />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <link rel="icon" href="favicon.ico" />
+    <title>Office Admin</title>
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
+      rel="stylesheet"
+    />
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/plugin.css" rel="stylesheet" />
+    <!-- Custom styles for this template -->
+    <link href="css/clockpicker.css" rel="stylesheet" />
+    <link href="css/style.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript"></script>
+  </head>
+  <body>
+    <h1>Transfer Card</h1>
+    <input
+      type="text"
+      id="search"
+      class="search"
+      placeholder="Search by name"
+    />
+    <button id="searchButton">Search</button>
+    <div id="data-list"></div>
+    <div id="detailed-data"></div>
+
+    <!-- Bootstrap core JavaScript
     ================================================== -->
-<!-- Placed at the end of the document so the pages load faster -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="https://use.fontawesome.com/373a347df2.js"></script>
-<script src="js/plugin.js"></script>
-<script src="js/bootstrap-datepicker.min.js"></script>
-<script src="js/clockpicker.js"></script>
-<script src="js/custom.js"></script>
-</body>
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="js/plugin.js"></script>
+    <script src="js/bootstrap-datepicker.min.js"></script>
+    <script src="js/clockpicker.js"></script>
+    <script src="js/custom.js"></script>
+    <script src="./sessionstorage.js"></script>
+    <script src="transferCard.js"></script>
+  </body>
 </html>

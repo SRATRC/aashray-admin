@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/getAll',
+        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/fetch',
         options
       );
       const data = await response.json();
@@ -31,24 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Array.isArray(data)) {
       data.forEach((item) => {
         const div = document.createElement('div');
-        div.textContent = `Name: ${item.issuedto}, Card Number: ${item.cardno}`; // Adjust according to your data structure
+        div.textContent = `Name: ${item.name}, Speaker: ${item.speaker}`; // Adjust according to your data structure
         div.classList.add('person-item'); // Add a class to identify each person item
         dataList.appendChild(div);
 
         // Add event listener to each person item
         div.addEventListener('click', () => {
-          fetchPersonDetails(item.issuedto); // Assuming item.id is unique identifier for each person
+          fetchPersonDetails(item.id); // Assuming item.id is unique identifier for each person
         });
       });
     } else if (typeof data === 'object' && data !== null) {
       const div = document.createElement('div');
-      div.textContent = `Name: ${data.issuedto}, Card Number : ${data.cardno}`; // Adjust according to your object structure
+      div.textContent = `Name: ${data.name}, Speaker : ${data.speaker}`; // Adjust according to your object structure
       div.classList.add('person-item'); // Add a class to identify the person item
       dataList.appendChild(div);
 
       // Add event listener to the person item
       div.addEventListener('click', () => {
-        fetchPersonDetails(data.issuedto); // Assuming data.id is unique identifier for the person
+        fetchPersonDetails(data.id); // Assuming data.id is unique identifier for the person
       });
     } else {
       console.error('Unexpected data format:', data);
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fetchPersonDetails = async (personId) => {
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${personId}`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/update/${personId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -86,54 +86,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.createElement('form');
     form.innerHTML = `
-    <label>Card Number:</label>
-    <input type="text" id="cardno" value="${personData.data[0].cardno}" required><br>
-
-    <label>Issued To:</label>
-    <input type="text" id="issuedto" value="${personData.data[0].issuedto}" required><br>
-
-    <label>Gender:</label>
-    <input type="text" id="gender" value="${personData.data[0].gender}" required><br>
-
-    <label>Date of Birth:</label>
-    <input type="date" id="dob" value="${personData.data[0].dob}" required><br>
-
-    <label>Mobile Number:</label>
-    <input type="tel" id="mobno" value="${personData.data[0].mobno}" required><br>
-
-    <label>Email:</label>
-    <input type="email" id="email" value="${personData.data[0].email}" required><br>
-
-    <label>ID Type:</label>
-    <input type="text" id="idType" value="${personData.data[0].idType}" required><br>
-
-    <label>ID Number:</label>
-    <input type="text" id="idNo" value="${personData.data[0].idNo}" required><br>
-
-    <label>Address:</label>
-    <textarea id="address" rows="4" required>${personData.data[0].address}</textarea><br>
-
-    <label>City:</label>
-    <input type="text" id="city" value="${personData.data[0].city}" required><br>
-
-    <label>State:</label>
-    <input type="text" id="state" value="${personData.data[0].state}" required><br>
-
-    <label>PIN:</label>
-    <input type="text" id="pin" value="${personData.data[0].pin}" required><br>
-
-    <label>Centre:</label>
-    <input type="text" id="centre" value="${personData.data[0].centre}" required><br>
-
-    <label>Status:</label>
-    <input type="text" id="status" value="${personData.data[0].status}" required><br>
-
-    <label>Residential Status:</label>
-    <input type="text" id="res_status" value="${personData.data[0].res_status}" required><br>
-
+      <label>Id:</label>
+      <input type="text" id="id" value="${personData.data[0].id}" required><br>
   
-      <button type="button" id="saveButton">Save</button>
-    `;
+      <label>Name:</label>
+      <input type="text" id="name" value="${personData.data[0].name}" required><br>
+  
+      <label>Speaker:</label>
+      <input type="text" id="speaker" value="${personData.data[0].speaker}" required><br>
+  
+      <label>Start Date:</label>
+      <input type="date" id="start_date" value="${personData.data[0].start_date}" required><br>
+  
+      <label>End Date:</label>
+      <input type="tel" id="end_date" value="${personData.data[0].end_date}" required><br>
+  
+      <label>Total Seats:</label>
+      <input type="email" id="total_seats" value="${personData.data[0].total_seats}" required><br>
+  
+      <label>Available Seats:</label>
+      <input type="text" id="available_seats" value="${personData.data[0].available_seats}" required><br>
+  
+      <label>Comments:</label>
+      <input type="text" id="comments" value="${personData.data[0].comments}" required><br>
+    
+        <button type="button" id="saveButton">Save</button>
+      `;
 
     detailedDataContainer.appendChild(form);
 
@@ -149,26 +127,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const savePersonDetails = async (personId) => {
     const updatedData = {
-      cardno: document.getElementById('cardno').value,
-      issuedto: document.getElementById('issuedto').value,
-      gender: document.getElementById('gender').value,
-      dob: document.getElementById('dob').value,
-      mobno: document.getElementById('mobno').value,
-      email: document.getElementById('email').value,
-      idType: document.getElementById('idType').value,
-      idNo: document.getElementById('idNo').value,
-      address: document.getElementById('address').value,
-      city: document.getElementById('city').value,
-      state: document.getElementById('state').value,
-      pin: document.getElementById('pin').value,
-      centre: document.getElementById('centre').value,
-      status: document.getElementById('status').value,
-      res_status: document.getElementById('res_status').value
+      cardno: document.getElementById('id').value,
+      issuedto: document.getElementById('name').value,
+      gender: document.getElementById('speaker').value,
+      dob: document.getElementById('start_date').value,
+      mobno: document.getElementById('end_date').value,
+      email: document.getElementById('total_seats').value,
+      idType: document.getElementById('available_seats').value,
+      idNo: document.getElementById('comments').value
     };
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/update`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/update/${personId}`,
         {
           method: 'PUT',
           headers: {
@@ -205,9 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       try {
         const response = await fetch(
-          `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${encodeURIComponent(
-            searchInput.value.toLowerCase()
-          )}`,
+          `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/update/${personId}`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -219,13 +188,13 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(data);
         if (data.data.length > 0) {
           const div = document.createElement('div');
-          div.textContent = `Name: ${data.data[0].issuedto}, Card Number : ${data.data[0].cardno}`; // Adjust according to your object structure
+          div.textContent = `Name: ${data.data[0].name}, Speaker : ${data.data[0].speaker}`; // Adjust according to your object structure
           div.classList.add('person-item'); // Add a class to identify the person item
           dataList.appendChild(div);
 
           // Add event listener to the person item
           div.addEventListener('click', () => {
-            fetchPersonDetails(data.data[0].issuedto); // Assuming data.id is unique identifier for the person
+            fetchPersonDetails(data.data[0].id); // Assuming data.id is unique identifier for the person
           });
         } else {
           dataList.textContent = 'No results found.';

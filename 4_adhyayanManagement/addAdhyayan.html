@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Adhyayan</title>
+    <style>
+      form {
+        max-width: 400px;
+        margin: auto;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 1em;
+      }
+      div {
+        margin-bottom: 1em;
+      }
+      label {
+        margin-bottom: 0.5em;
+        color: #333333;
+        display: block;
+      }
+      input,
+      textarea {
+        border: 1px solid #cccccc;
+        padding: 0.5em;
+        font-size: 1em;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 0.7em;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 1em;
+        cursor: pointer;
+      }
+      button:disabled {
+        background-color: #cccccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Create Adhyayan</h2>
+    <form id="adhyayanForm">
+      <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required />
+      </div>
+      <div>
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required />
+      </div>
+      <div>
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required />
+      </div>
+      <div>
+        <label for="speaker">Speaker:</label>
+        <input type="text" id="speaker" name="speaker" required />
+      </div>
+      <div>
+        <label for="total_seats">Total Seats:</label>
+        <input type="number" id="total_seats" name="total_seats" required />
+      </div>
+      <div>
+        <label for="comments">Comments:</label>
+        <textarea id="comments" name="comments"></textarea>
+      </div>
+      <button type="submit">Create</button>
+    </form>
+
+    <script src="./sessionstorage.js"></script>
+    <script src="addAdhyayan.js"></script>
+  </body>
+</html>
