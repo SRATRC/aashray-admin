@@ -1,5 +1,4 @@
 <!--food/dinnercheck_read--> 
-<script src="./sessionstorage.js"></script>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -39,8 +38,8 @@
                     	<div class="frm-head">
                           <h4><b><u>Tap your card to avail Dinner</span></u></b></h4>
 							   </div>
-								<div class="form">
-								<form action="foodCheckin.js" Method="POST">
+                               <div class="form" onsubmit="foodCheckin(event)">
+                                <form>
 									<div class="row">
 									<div>
 										<label>Tap the card: </label>
@@ -75,5 +74,7 @@
 <script src="js/bootstrap-datepicker.min.js"></script>
 <script src="js/clockpicker.js"></script>
 <script src="js/custom.js"></script>
+<script src="./sessionstorage.js"></script>
+<script src="foodCheckin.js"></script>
 </body>
 </html>
