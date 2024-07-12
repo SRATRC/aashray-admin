@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Room Booking</title>
+  </head>
+  <body>
+    <h1>Update Room Booking</h1>
+    <form id="updateBookingForm">
+      <label for="bookingId">Booking ID:</label>
+      <input type="text" id="bookingId" name="bookingId" required /><br /><br />
+
+      <label for="cardNumber">Card Number:</label>
+      <input
+        type="text"
+        id="cardNumber"
+        name="cardNumber"
+        required
+      /><br /><br />
+
+      <label for="roomNumber">New Room Number:</label>
+      <input
+        type="text"
+        id="roomNumber"
+        name="roomNumber"
+        required
+      /><br /><br />
+
+      <label for="gender">Gender:</label>
+      <select id="gender" name="gender" required>
+        <option value="M">Male</option>
+        <option value="F">Female</option></select
+      ><br /><br />
+
+      <label for="status">Status:</label>
+      <select id="status" name="status" required>
+        <option value="checked-in">Checked-in</option>
+        <option value="checked-out">Checked-out</option>
+        <option value="pending-checkin">Pending Check-in</option>
+        <option value="pending-checkout">Pending Checkout</option></select
+      ><br /><br />
+
+      <button type="submit">Update Booking</button>
+    </form>
+
+    <script src="updateRoomBooking.js"></script>
+  </body>
+</html>

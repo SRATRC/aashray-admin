@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room Bookings by Card Number</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Room Bookings by Card Number</h1>
+    <form id="bookingForm">
+      <label for="cardno">Card Number:</label>
+      <input type="text" id="cardno" name="cardno" required />
+      <button type="submit">Fetch Bookings</button>
+    </form>
+
+    <table id="bookingsTable">
+      <thead>
+        <tr>
+          <th>Booking ID</th>
+          <th>Room Number</th>
+          <th>Check-in Date</th>
+          <th>Check-out Date</th>
+          <th>Nights</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Room booking data will be dynamically inserted here -->
+      </tbody>
+    </table>
+
+    <script src="fetchRoomBookingsByCard.js"></script>
+  </body>
+</html>

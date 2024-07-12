@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room Booking</title>
+    <style>
+      form {
+        max-width: 400px;
+        margin: auto;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 1em;
+      }
+      div + div {
+        margin-top: 1em;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5em;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.5em;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 0.7em;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 1em;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Room Booking</h1>
+    <form id="roomBookingForm">
+      <div>
+        <label for="mobile">Mobile Number:</label>
+        <input type="tel" id="mobile" name="mobile" required />
+      </div>
+      <div>
+        <label for="checkin_date">Check-in Date:</label>
+        <input type="date" id="checkin_date" name="checkin_date" required />
+      </div>
+      <div>
+        <label for="checkout_date">Check-out Date:</label>
+        <input type="date" id="checkout_date" name="checkout_date" required />
+      </div>
+      <div>
+        <label for="room_type">Room Type:</label>
+        <select id="room_type" name="room_type" required>
+          <option value="nac">NAC</option>
+          <option value="ac">AC</option>
+        </select>
+      </div>
+      <div>
+        <label for="floor_pref">Floor Preference:</label>
+        <select id="floor_pref" name="floor_pref" required>
+          <option value="ground">Ground</option>
+          <option value="first">First</option>
+        </select>
+      </div>
+      <button type="submit">Book Room</button>
+    </form>
+
+    <script src="roomBooking.js"></script>
+  </body>
+</html>

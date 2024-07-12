@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flat Booking</title>
+    <style>
+      form {
+        max-width: 400px;
+        margin: auto;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 1em;
+      }
+      div + div {
+        margin-top: 1em;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5em;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.5em;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 0.7em;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 1em;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Flat Booking</h1>
+    <form id="flatBookingForm">
+      <div>
+        <label for="mobno">Mobile Number:</label>
+        <input type="tel" id="mobno" name="mobno" required />
+      </div>
+      <div>
+        <label for="checkin_date">Check-in Date:</label>
+        <input type="date" id="checkin_date" name="checkin_date" required />
+      </div>
+      <div>
+        <label for="checkout_date">Check-out Date:</label>
+        <input type="date" id="checkout_date" name="checkout_date" required />
+      </div>
+      <div>
+        <label for="flat_no">Flat Number:</label>
+        <input type="text" id="flat_no" name="flat_no" required />
+      </div>
+      <button type="submit">Book Flat</button>
+    </form>
+
+    <script src="flatBooking.js"></script>
+  </body>
+</html>

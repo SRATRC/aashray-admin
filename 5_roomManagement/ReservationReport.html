@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reservation Report</title>
+  </head>
+  <body>
+    <h1>Reservation Report</h1>
+
+    <form id="reservationReportForm">
+      <label for="start_date">Start Date:</label>
+      <input type="date" id="start_date" name="start_date" required />
+
+      <label for="end_date">End Date:</label>
+      <input type="date" id="end_date" name="end_date" required />
+
+      <button type="submit">Fetch Report</button>
+    </form>
+
+    <div id="reportResults"></div>
+
+    <script src="reservationReport.js"></script>
+  </body>
+</html>

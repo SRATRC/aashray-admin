@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Flat Booking</title>
+  </head>
+  <body>
+    <h1>Update Flat Booking</h1>
+    <form id="updateBookingForm">
+      <label for="bookingId">Booking ID:</label>
+      <input type="text" id="bookingId" name="bookingId" required /><br /><br />
+
+      <label for="cardNumber">Card Number:</label>
+      <input
+        type="text"
+        id="cardNumber"
+        name="cardNumber"
+        required
+      /><br /><br />
+
+      <label for="flatNumber">Flat Number:</label>
+      <input
+        type="text"
+        id="flatNumber"
+        name="flatNumber"
+        required
+      /><br /><br />
+
+      <label for="checkinDate">Check-in Date:</label>
+      <input
+        type="date"
+        id="checkinDate"
+        name="checkinDate"
+        required
+      /><br /><br />
+
+      <label for="checkoutDate">Check-out Date:</label>
+      <input
+        type="date"
+        id="checkoutDate"
+        name="checkoutDate"
+        required
+      /><br /><br />
+
+      <label for="status">Status:</label>
+      <select id="status" name="status" required>
+        <option value="pending-checkin">Pending Check-in</option>
+        <option value="checked-in">Checked-in</option>
+        <option value="checked-out">Checked-out</option>
+        <option value="cancelled">Cancelled</option></select
+      ><br /><br />
+
+      <button type="submit">Update Booking</button>
+    </form>
+
+    <script src="updateFlatBooking.js"></script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout Report</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Checkout Report</h1>
+
+    <table id="checkoutTable">
+      <thead>
+        <tr>
+          <th>Booking ID</th>
+          <th>Room Number</th>
+          <th>Check-in Date</th>
+          <th>Checkout Date</th>
+          <th>Nights</th>
+          <th>Card Number</th>
+          <th>Issued To</th>
+          <th>Mobile Number</th>
+          <th>Centre</th>
+        </tr>
+      </thead>
+      <tbody id="checkoutTableBody">
+        <!-- Table rows will be dynamically added here -->
+      </tbody>
+    </table>
+
+    <script src="checkoutReport.js"></script>
+  </body>
+</html>

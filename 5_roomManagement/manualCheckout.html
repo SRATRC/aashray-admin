@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manual Checkout</title>
+    <style>
+      form {
+        max-width: 400px;
+        margin: auto;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 1em;
+      }
+      div + div {
+        margin-top: 1em;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5em;
+      }
+      input {
+        width: 100%;
+        padding: 0.5em;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 0.7em;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 1em;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual Checkout</h1>
+    <form id="manualCheckoutForm">
+      <div>
+        <label for="cardno">Card Number:</label>
+        <input type="text" id="cardno" name="cardno" required />
+      </div>
+      <button type="submit">Checkout</button>
+    </form>
+
+    <script src="manualCheckout.js"></script>
+  </body>
+</html>
