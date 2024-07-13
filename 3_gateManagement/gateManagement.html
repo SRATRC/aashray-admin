@@ -1,20 +1,33 @@
-<!--gate_summary-->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gate Entry</title>
+    <title>Fetch Total Residents</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>Gate Entry</h1>
-    <form id="gateEntryForm">
-      <button type="submit">Mark On-Premises</button>
-    </form>
+    <h1>Total Residents Report</h1>
 
-    <p id="responseMessage"></p>
+    <div id="totalResidents"></div>
+
+    <div id="linksContainer">
+      <p>
+        <a href="totalPR.html" onclick="fetchResidents('PR')"
+          >click here to see all the Permanent Residents at Research Centre</a
+        >
+      </p>
+      <p>
+        <a href="totalMumukshu.html" onclick="fetchResidents('MUMUKSHU')"
+          >click here to see all the Mumukshus at Research Centre</a
+        >
+      </p>
+      <p>
+        <a href="totalSeva.html" onclick="fetchResidents('SEVA KUTIR')"
+          >click here to see all the Labours at Seva Kutir</a
+        >
+      </p>
+    </div>
 
     <script src="gateManagement.js"></script>
   </body>
