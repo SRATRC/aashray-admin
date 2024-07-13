@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Admin Roles</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h1>Update Admin Roles</h1>
+    <form id="updateRolesForm">
+      <label for="userid">User ID:</label>
+      <input type="text" id="userid" name="userid" required />
+      <label for="roles">Roles (comma-separated):</label>
+      <input type="text" id="roles" name="roles" required />
+      <button type="submit">Update Roles</button>
+    </form>
+    <p id="statusMessage"></p>
+
+    <script src="updateAdminRoles.js"></script>
+  </body>
+</html>
