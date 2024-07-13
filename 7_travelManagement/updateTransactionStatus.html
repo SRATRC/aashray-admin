@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Transaction Status</title>
+  </head>
+  <body>
+    <h1>Update Transaction Status</h1>
+
+    <form id="updateTransactionForm">
+      <label for="cardno">Card Number:</label>
+      <input type="text" id="cardno" name="cardno" required /><br /><br />
+
+      <label for="bookingid">Booking ID:</label>
+      <input type="text" id="bookingid" name="bookingid" required /><br /><br />
+
+      <label for="type">Type:</label>
+      <input type="text" id="type" name="type" required /><br /><br />
+
+      <label for="status">Status:</label>
+      <select id="status" name="status" required>
+        <option value="">Select Status</option>
+        <option value="payment pending">Payment Pending</option>
+        <option value="payment completed">Payment Completed</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="admin canceled">Admin Cancelled</option>
+        <option value="awaiting refund">Awaiting Refund</option></select
+      ><br /><br />
+
+      <button type="submit">Update Status</button>
+    </form>
+
+    <div id="message"></div>
+
+    <script src="updateTransactionStatus.js"></script>
+  </body>
+</html>

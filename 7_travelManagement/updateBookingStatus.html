@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Booking Status</title>
+  </head>
+  <body>
+    <h1>Update Booking Status</h1>
+    <form id="updateBookingForm">
+      <label for="bookingid">Booking ID:</label>
+      <input type="text" id="bookingid" name="bookingid" required /><br /><br />
+
+      <label for="status">New Status:</label>
+      <select id="status" name="status" required>
+        <option value="confirmed">Confirmed</option>
+        <option value="admin cance  led">Admin Cancelled</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="waiting">Waiting</option></select
+      ><br /><br />
+
+      <button type="submit">Update Status</button>
+    </form>
+
+    <div id="responseMessage"></div>
+
+    <script src="updateBookingStatus.js"></script>
+  </body>
+</html>

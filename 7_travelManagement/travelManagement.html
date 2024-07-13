@@ -1,4 +1,3 @@
-<!--index--> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <link rel="icon" href="favicon.ico">
-<title>Admin - office</title>
+<title>Admin Management</title>
 <!-- Bootstrap core CSS -->
 <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 <!-- Fonts -->
@@ -18,7 +17,6 @@
 <link href="css/clockpicker.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
 </head>
-<script src="./sessionstorage.js"></script>
 <body>
 <div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
         <div class="header">
@@ -27,7 +25,7 @@
                     <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
                 </div>
                     <div class="logout">
-                        <a href="logout.php"><img src="images/user.png" alt="" title=""> Logout</a>
+                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
                     </div>
             </div>
     	</div>
@@ -36,19 +34,14 @@
             	<div class="whitesec">
                     <div class="inner-padding">
                     	<div class="frm-head">
-                          <h4><b><u>Welcome, Admin! </u></b></h4>
+                          <h4><b><u>Travel Management </u></b></h4>
 							   </div>
 								<div class="form">
 									<div class="row">
 									<div class="col-md-12">
-										<a class="btn col-md-12 btn-lg btn-demo" href="0_adminManagement/adminManagement.html">Admin Management</a>
-                                        <a class="btn col-md-12 btn-lg btn-demo" href="1_cardManagement/cardManagement.html">Card Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="2_foodManagement/foodManagement.html">Food Management</a>
-                                        <a class="btn col-md-12 btn-lg btn-demo" href="3_gateManagement/gateManagement.html">Gate Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="4_adhyayanManagement/adhyayanManagement.html">Adhyayan Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="5_roomManagement/roomManagement.html">Room Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="6_reportManagement/reportManagement.html">Admin Reports</a>
-                                        <a class="btn col-md-12 btn-lg btn-demo" href="7_travelManagement/travelManagement.html">Travel Management</a>
+                                        <a class="btn col-md-12 btn-lg btn-demo" href="fetchUpcomingBookings.html">Fetch Upcoming Bookings</a>
+                                        <a class="btn col-md-12 btn-lg btn-demo" href="updateBookingStatus.html">Update Booking Status</a>
+                                        <a class="btn col-md-12 btn-lg btn-demo" href="updateTransactionStatus.html">Update Transaction Status</a>
 									</div>	
                                 </form>
 							</div>
@@ -73,6 +66,7 @@
 <script src="js/bootstrap-datepicker.min.js"></script>
 <script src="js/clockpicker.js"></script>
 <script src="js/custom.js"></script>
-
+<script src="./sessionstorage.js"></script>
 </body>
 </html>
+
