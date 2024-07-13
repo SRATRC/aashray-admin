@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cancel Food Booking</title>
+  </head>
+  <body>
+    <div id="cardFormSection">
+      <h2>Enter Your Phone Number</h2>
+      <form id="cardForm">
+        <label for="cardNumber">Phone Number:</label>
+        <input type="text" id="cardNumber" name="cardNumber" required />
+        <button type="button" onclick="showCancellationForm()">Submit</button>
+      </form>
+    </div>
+
+    <div id="cancellationFormSection" style="display: none">
+      <h2>Cancel Your Food Booking</h2>
+      <form id="cancelBookingForm">
+        <label for="startDate">Start Date:</label>
+        <input
+          type="date"
+          id="startDate"
+          name="startDate"
+          required
+        /><br /><br />
+
+        <!-- <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" name="endDate" required /><br /><br /> -->
+
+        <fieldset>
+          <legend>Meals to Cancel</legend>
+          <input
+            type="checkbox"
+            id="cancelBreakfast"
+            name="cancelMeal"
+            value="breakfast"
+          />
+          <label for="cancelBreakfast">Breakfast</label><br />
+          <input
+            type="checkbox"
+            id="cancelLunch"
+            name="cancelMeal"
+            value="lunch"
+          />
+          <label for="cancelLunch">Lunch</label><br />
+          <input
+            type="checkbox"
+            id="cancelDinner"
+            name="cancelMeal"
+            value="dinner"
+          />
+          <label for="cancelDinner">Dinner</label><br />
+        </fieldset>
+        <br />
+
+        <button type="button" onclick="cancelBooking()">Cancel Booking</button>
+      </form>
+    </div>
+
+    <script>
+      function showCancellationForm() {
+        const cardNumber = document.getElementById('cardNumber').value;
+        if (cardNumber) {
+          document.getElementById('cardFormSection').style.display = 'none';
+          document.getElementById('cancellationFormSection').style.display =
+            'block';
+        } else {
+          alert('Please enter a card number.');
+        }
+      }
+    </script>
+  </body>
+</html>
+
+<script src="cancelMeal.js"></script>
+<script src="./sessionstorage.js"></script>

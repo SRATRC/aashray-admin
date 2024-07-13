@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Food for Guests</title>
+  </head>
+  <body>
+    <h1>Book Food for Guests</h1>
+    <form id="guestFoodForm">
+      <label for="cardno">Card Number:</label>
+      <input type="text" id="cardno" name="cardno" required /><br /><br />
+
+      <label for="start_date">Start Date:</label>
+      <input
+        type="date"
+        id="start_date"
+        name="start_date"
+        required
+      /><br /><br />
+
+      <label for="end_date">End Date:</label>
+      <input type="date" id="end_date" name="end_date" required /><br /><br />
+
+      <label for="guest_count">Number of Guests:</label>
+      <input
+        type="number"
+        id="guest_count"
+        name="guest_count"
+        min="1"
+        required
+      /><br /><br />
+
+      <label for="breakfast">Include Breakfast:</label>
+      <input type="checkbox" id="breakfast" name="breakfast" /><br /><br />
+
+      <label for="lunch">Include Lunch:</label>
+      <input type="checkbox" id="lunch" name="lunch" /><br /><br />
+
+      <label for="dinner">Include Dinner:</label>
+      <input type="checkbox" id="dinner" name="dinner" /><br /><br />
+
+      <button type="submit">Book Food</button>
+    </form>
+
+    <script src="bookFoodForGuest.js"></script>
+  </body>
+</html>

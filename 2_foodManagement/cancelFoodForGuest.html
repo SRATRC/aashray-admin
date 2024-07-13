@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cancel Food Booking for Guests</title>
+  </head>
+  <body>
+    <h1>Cancel Food Booking for Guests</h1>
+    <form id="cancelFoodForm">
+      <label for="cardno">Card Number:</label>
+      <input type="text" id="cardno" name="cardno" required /><br /><br />
+
+      <label for="bookingid">Booking ID:</label>
+      <input type="text" id="bookingid" name="bookingid" required /><br /><br />
+
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" required /><br /><br />
+
+      <label for="guest_count">Number of Guests:</label>
+      <input
+        type="number"
+        id="guest_count"
+        name="guest_count"
+        min="1"
+        required
+      /><br /><br />
+
+      <label for="breakfast">Include Breakfast:</label>
+      <input type="checkbox" id="breakfast" name="breakfast" /><br /><br />
+
+      <label for="lunch">Include Lunch:</label>
+      <input type="checkbox" id="lunch" name="lunch" /><br /><br />
+
+      <label for="dinner">Include Dinner:</label>
+      <input type="checkbox" id="dinner" name="dinner" /><br /><br />
+
+      <button type="submit">Cancel Food Booking</button>
+    </form>
+
+    <script src="cancelFoodForGuest.js"></script>
+  </body>
+</html>

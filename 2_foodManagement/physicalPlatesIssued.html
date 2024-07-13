@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Physical Plates Issued</title>
+  </head>
+  <body>
+    <h1>Physical Plates Issued</h1>
+    <form id="physicalPlatesForm">
+      <label for="plateDate">Date:</label>
+      <input type="date" id="plateDate" name="plateDate" required />
+
+      <label for="plateType">Plate Type:</label>
+      <select id="plateType" name="plateType" required>
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+        <option value="tea">Tea</option>
+        <option value="coffee">Coffee</option>
+      </select>
+
+      <label for="plateCount">Count:</label>
+      <input type="number" id="plateCount" name="plateCount" min="1" required />
+
+      <button type="submit">Add Physical Plates Issued</button>
+    </form>
+
+    <div id="responseMessage"></div>
+
+    <script src="physicalPlatesIssued.js"></script>
+  </body>
+</html>
