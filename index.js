@@ -20,9 +20,9 @@ function login(event) {
       password: password
     })
   };
-
+  //ToDo: Update the URL
   fetch(
-    'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/auth/login',
+    'http://localhost:3000/api/v1/admin/auth/login',
     options
   )
     .then((response) => response.json())
