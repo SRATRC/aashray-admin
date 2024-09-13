@@ -1,82 +1,149 @@
+<!--food/dinnercheck_read--> 
+
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Food Booking Form</title>
-  </head>
-  <body>
-    <h2>Enter Your Card Number</h2>
-    <form id="cardForm">
-      <label for="cardNumber">Card Number:</label>
-      <input type="text" id="cardNumber" name="cardNumber" required />
-      <button type="button" onclick="showBookingForm()">Submit</button>
-    </form>
-
-    <div id="bookingForm" style="display: none">
-      <h2>Book Your Food</h2>
-      <form id="foodBookingForm">
-        <label for="startDate">Start Date:</label>
-        <input
-          type="date"
-          id="startDate"
-          name="startDate"
-          required
-        /><br /><br />
-
-        <label for="endDate">End Date:</label>
-        <input type="date" id="endDate" name="endDate" required /><br /><br />
-
-        <fieldset>
-          <legend>Meals</legend>
-          <input type="checkbox" id="breakfast" name="meal" value="breakfast" />
-          <label for="breakfast">Breakfast</label><br />
-          <input type="checkbox" id="lunch" name="meal" value="lunch" />
-          <label for="lunch">Lunch</label><br />
-          <input type="checkbox" id="dinner" name="meal" value="dinner" />
-          <label for="dinner">Dinner</label><br />
-        </fieldset>
-        <br />
-
-        <fieldset>
-          <legend>Food Preference</legend>
-          <input type="radio" id="spicy" name="foodPreference" value="spicy" />
-          <label for="spicy">Spicy</label><br />
-          <input
-            type="radio"
-            id="regular"
-            name="foodPreference"
-            value="regular"
-          />
-          <label for="regular">Regular</label><br />
-        </fieldset>
-        <br />
-
-        <fieldset>
-          <legend>Afternoon Beverage</legend>
-          <input type="radio" id="tea" name="beverage" value="tea" />
-          <label for="tea">Tea</label><br />
-          <input type="radio" id="coffee" name="beverage" value="coffee" />
-          <label for="coffee">Coffee</label><br />
-        </fieldset>
-        <br />
-
-        <button type="button" onclick="submitBooking()">Book</button>
-      </form>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="favicon.ico">
+<title>Food Booking Form</title>
+<!-- Bootstrap core CSS -->
+<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
+<link href="css/plugin.css" rel="stylesheet">
+<!-- Custom styles for this template -->
+<link href="css/clockpicker.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
+        <div class="header">
+            <div class="container">
+                <div class="logo">
+                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+                </div>
+                    <div class="logout">
+                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
+                    </div>
+            </div>
+    	</div>
+        <div class="middlecontent">
+        	<div class="container">
+            	<div class="whitesec">
+                    <div class="inner-padding">
+                    	<div class="frm-head">
+                          <h4><b><u>Enter Your Card Number</span></u></b></h4>
+							   </div>
+                               <div class="form" >
+                                <form id="cardForm">
+									<div class="row">
+                    <div class="col-md-12">
+                      <label for="cardNumber">Card Number:</label>
+                      <input type="text" id="cardNumber" name="cardNumber" required />
+                  </div>
+               
+              
+                  <button type="button" onclick="showBookingForm()">Submit</button>
+                                </form>
+                               
+							</div>
+              
+              <div id="bookingForm" style="display: none">
+                <h2>Book Your Food</h2>
+                <form id="foodBookingForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                  <label for="startDate">Start Date:</label>
+                  <input
+                    type="date"
+                    id="startDate"
+                    name="startDate"
+                    required
+                  /><br /><br />
+                </div>
+                <div class="col-md-12"> 
+                  <label for="endDate">End Date:</label>
+                  <input type="date" id="endDate" name="endDate" required /><br /><br />
+                </div>
+                <div class="col-md-12"> 
+                  <fieldset>
+                    <legend>Meals</legend>
+                    <input type="checkbox" id="breakfast" name="meal" value="breakfast" />
+                    <label for="breakfast">Breakfast</label><br />
+                    <input type="checkbox" id="lunch" name="meal" value="lunch" />
+                    <label for="lunch">Lunch</label><br />
+                    <input type="checkbox" id="dinner" name="meal" value="dinner" />
+                    <label for="dinner">Dinner</label><br />
+                  </fieldset>
+                  <br />
+                </div>
+                <div class="col-md-12"> 
+                  <fieldset>
+                    <legend>Food Preference</legend>
+                    <input type="radio" id="spicy" name="foodPreference" value="spicy" />
+                    <label for="spicy">Spicy</label><br />
+                    <input
+                      type="radio"
+                      id="regular"
+                      name="foodPreference"
+                      value="regular"
+                    />
+                    <label for="regular">Regular</label><br />
+                  </fieldset>
+                  <br />
+                </div>
+                <div class="col-md-12"> 
+                  <fieldset>
+                    <legend>Afternoon Beverage</legend>
+                    <input type="radio" id="tea" name="beverage" value="tea" />
+                    <label for="tea">Tea</label><br />
+                    <input type="radio" id="coffee" name="beverage" value="coffee" />
+                    <label for="coffee">Coffee</label><br />
+                  </fieldset>
+                  <br />
+                </div>
+          
+                  <button type="button" onclick="submitBooking()">Book</button>
+                </form>
+              </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="footer">
+        	<div class="container">
+            	<p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
+            </div>
+        </div>
     </div>
-
-    <script>
-      function showBookingForm() {
-        const cardNumber = document.getElementById('cardNumber').value;
-        if (cardNumber) {
-          document.getElementById('cardForm').style.display = 'none';
-          document.getElementById('bookingForm').style.display = 'block';
-        } else {
-          alert('Please enter a card number.');
-        }
-      }
-    </script>
-    <script src="addMeal.js"></script>
-    <script src="./sessionstorage.js"></script>
-  </body>
+</div>
+<!-- Bootstrap core JavaScript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script>
+  function showBookingForm() {
+    const cardNumber = document.getElementById('cardNumber').value;
+    if (cardNumber) {
+      document.getElementById('cardForm').style.display = 'none';
+      document.getElementById('bookingForm').style.display = 'block';
+    } else {
+      alert('Please enter a card number.');
+    }
+  }
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="https://use.fontawesome.com/373a347df2.js"></script>
+<script src="js/plugin.js"></script>
+<script src="js/bootstrap-datepicker.min.js"></script>
+<script src="js/clockpicker.js"></script>
+<script src="js/custom.js"></script>
+<script src="/sessionstorage.js"></script>
+<script src="bookFoodForMumukshu.js"></script>
+</body>
 </html>
