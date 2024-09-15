@@ -17,16 +17,15 @@
 <link href="css/clockpicker.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
 </head>
-<body>
-<div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
+<body background="images/background-img.jpg">
         <div class="header">
             <div class="container">
                 <div class="logo">
-                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+                    <a href="javascript:void(0);"><img src="images/logo - Copy.png" alt="" title=""></a>
                 </div>
-                    <div class="logout">
-                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
-                    </div>
+                <div class="logout">
+                    <a href="../adminhome.html"><img src="images/user.png" alt="" title=""> Home</a>
+                </div>
             </div>
     	</div>
         <div class="middlecontent">
@@ -39,42 +38,38 @@
 								<div class="form">
 									<div class="row">
 										<div class="col-md-12">
-											<h2>Create Adhyayan</h2>
+											<h2>Create Adhyayan</h2><br />
 											<form id="adhyayanForm">
-											  <label for="name">Name:</label><br />
+											  <label for="name">Name: </label>
 											  <input type="text" id="name" name="name" required /><br />
 
-											  <label for="start_date">Start Date:</label><br />
-											  <input type="date" id="start_date" name="start_date" required /><br />
+											  <label for="start_date">Start Date: </label>
+											  <input type="date" id="start_date" name="start_date" required /><br /><br />
 
-											  <label for="end_date">End Date:</label><br />
-											  <input type="date" id="end_date" name="end_date" required /><br />
+											  <label for="end_date">End Date: </label>
+											  <input type="date" id="end_date" name="end_date" required /><br /><br />
 
-											  <label for="speaker">Speaker:</label><br />
+											  <label for="speaker">Speaker: </label>
 											  <input type="text" id="speaker" name="speaker" required /><br />
 
-											  <label for="total_seats">Total Seats:</label><br />
+											  <label for="total_seats">Total Seats: </label>
 											  <input type="number" id="total_seats" name="total_seats" required /><br />
 
-                        					  <label for="amount">Amount:</label><br />
+                        					  <label for="amount">Amount: </label>
                         					  <input type="number" id="amount" name="amount" required /><br />
 
-											  <label for="comments">Comments:</label><br />
+											  <label for="comments">Comments: </label>
 											  <textarea id="comments" name="comments" rows="4"></textarea><br />
 
-											  <button type="submit">Create Adhyayan</button>
+											  <button type="submit" style="width: 130px;">Create Adhyayan</button>
 											</form>
 										</div>
-                  </form>
 							</div>
             </div>
         </div>
       </div>
     </div>
-</div>
-
     <div id="message"></div>
-
     <script src="createAdhyayan.js"></script>
   </body>
 </html>

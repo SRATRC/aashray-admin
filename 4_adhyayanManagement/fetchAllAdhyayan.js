@@ -43,20 +43,29 @@ document.addEventListener('DOMContentLoaded', () =>{
                 sNumberField.style.textAlign = 'center';
                 sNumberField.innerHTML = serialNumber++;
                 tableRow.appendChild(sNumberField);
+                var count = 0;
                 for(const innerItem in item) {                                       
                     if (itemsToPrint.includes(`${innerItem}`)) {
+                        count++;
                         const tableData = document.createElement('td');
                         tableData.classList.add('table-bordered');
                         tableData.style.textAlign = 'center';
                         tableData.innerHTML = `${item[innerItem]}`;
                         tableRow.appendChild(tableData);
                     }
-                    /*
-                    * We need to create an array of items that are required to be printed.
-                    * While going through the json, check if item belongs to above array, if Yes, print it. If No, skip it.
-                    * Items required: name, speaker, start_date, end_date, total_seats   
-                    * 
-                    */
+                    if(count === 5) {
+                        count++;
+                        const adhyayanToEdit = `${item['id']}`;
+                        console.log("Adhyayan to Edit: " + adhyayanToEdit);
+                        const lastCol = document.createElement('td');
+                        lastCol.classList.add('table-bordered');
+                        lastCol.style.textAlign = 'center';
+                        const editLink = document.createElement('a');
+                        editLink.href = `updateAdhyayan.html?id=${adhyayanToEdit}`;
+                        editLink.text = "Edit";
+                        lastCol.appendChild(editLink);
+                        tableRow.appendChild(lastCol);
+                    }
                 }
                 adhyayanListElement.appendChild(tableRow);
             });
