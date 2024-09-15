@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -24,12 +24,12 @@
           id="startDate"
           name="startDate"
           required
-        /><br /><br />
+        /><br /><br /> -->
 
         <!-- <label for="endDate">End Date:</label>
         <input type="date" id="endDate" name="endDate" required /><br /><br /> -->
 
-        <fieldset>
+        <!-- <fieldset>
           <legend>Meals to Cancel</legend>
           <input
             type="checkbox"
@@ -74,5 +74,143 @@
   </body>
 </html>
 
+<script src="cancelFoodByCard.js"></script>
+<script src="/sessionstorage.js"></script>
+
+
+ -->
+
+ <!--food/dinnercheck_read--> 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="favicon.ico">
+<title>Food Booking Form</title>
+<!-- Bootstrap core CSS -->
+<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
+<link href="css/plugin.css" rel="stylesheet">
+<!-- Custom styles for this template -->
+<link href="css/clockpicker.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="fullheight" style="background:url(images/background-img.jpg) no-repeat center center; background-size: cover;">
+        <div class="header">
+            <div class="container">
+                <div class="logo">
+                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+                </div>
+                    <div class="logout">
+                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
+                    </div>
+            </div>
+    	</div>
+        <div class="middlecontent">
+        	<div class="container">
+            	<div class="whitesec">
+                    <div class="inner-padding">
+                    	<div class="frm-head">
+                          <h4><b><u>Enter Your Card Number</span></u></b></h4>
+							   </div>
+                               <div class="form" >
+                                <form id="cardForm">
+									<div class="row">
+                    <div class="col-md-12">
+                      <label for="cardNumber">Card Number:</label>
+                      <input type="text" id="cardNumber" name="cardNumber" required />
+                  </div>
+               
+              
+                  <button type="button" onclick="showCancellationForm()">Submit</button>
+                                </form>
+                               
+							</div>
+              <div id="cancellationFormSection" style="display: none">
+                <h2>Cancel Your Food Booking</h2>
+                <form id="cancelBookingForm">
+                  <label for="startDate">Start Date:</label>
+                  <input
+                    type="date"
+                    id="startDate"
+                    name="startDate"
+                    required
+                  /><br /><br />
+          
+                  <!-- <label for="endDate">End Date:</label>
+                  <input type="date" id="endDate" name="endDate" required /><br /><br /> -->
+          
+                  <fieldset>
+                    <legend>Meals to Cancel</legend>
+                    <input
+                      type="checkbox"
+                      id="cancelBreakfast"
+                      name="cancelMeal"
+                      value="breakfast"
+                    />
+                    <label for="cancelBreakfast">Breakfast</label><br />
+                    <input
+                      type="checkbox"
+                      id="cancelLunch"
+                      name="cancelMeal"
+                      value="lunch"
+                    />
+                    <label for="cancelLunch">Lunch</label><br />
+                    <input
+                      type="checkbox"
+                      id="cancelDinner"
+                      name="cancelMeal"
+                      value="dinner"
+                    />
+                    <label for="cancelDinner">Dinner</label><br />
+                  </fieldset>
+                  <br />
+          
+                  <button type="button" onclick="cancelBooking()">Cancel Booking</button>
+                </form>
+            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="footer">
+        	<div class="container">
+            	<p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bootstrap core JavaScript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script>
+  function showCancellationForm() {
+    const cardNumber = document.getElementById('cardNumber').value;
+    if (cardNumber) {
+      document.getElementById('cardFormSection').style.display = 'none';
+      document.getElementById('cancellationFormSection').style.display =
+        'block';
+    } else {
+      alert('Please enter a card number.');
+    }
+  }
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="https://use.fontawesome.com/373a347df2.js"></script>
+<script src="js/plugin.js"></script>
+<script src="js/bootstrap-datepicker.min.js"></script>
+<script src="js/clockpicker.js"></script>
+<script src="js/custom.js"></script>
+<script src="/sessionstorage.js"></script>
 <script src="cancelMeal.js"></script>
-<script src="./sessionstorage.js"></script>
+</body>
+</html>
