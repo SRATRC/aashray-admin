@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="favicon.ico">
+<title>Room Admin</title>
+<!-- Bootstrap core CSS -->
+<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
+<link href="css/plugin.css" rel="stylesheet">
+<!-- Custom styles for this template -->
+<link href="css/clockpicker.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+</head>
+<body background="images/background-img.jpg">
+        <div class="header">
+            <div class="container">
+                <div class="logo">
+                    <a href="javascript:void(0);"><img src="images/logo - Copy.png" alt="" title=""></a>
+                </div>
+                <div class="logout">
+                    <a href="../adminhome.html"><img src="images/user.png" alt="" title=""> Home</a>
+                </div>
+            </div>
+    	</div>
+        <div class="middlecontent">
+        	<div class="container">
+            	<div class="whitesec">
+                    <div class="inner-padding">
+                    	<div class="frm-head">
+                          <h4><b><u>Adhyayan Management </u></b></h4>
+							   </div>
+								<div class="form">
+									<div class="row">
+										<div class="col-md-12">
+											<h2>Create Adhyayan</h2><br />
+											<form id="adhyayanForm">
+											  <label for="name">Name: </label>
+											  <input type="text" id="name" name="name" required /><br />
+
+											  <label for="start_date">Start Date: </label>
+											  <input type="date" id="start_date" name="start_date" required /><br /><br />
+
+											  <label for="end_date">End Date: </label>
+											  <input type="date" id="end_date" name="end_date" required /><br /><br />
+
+											  <label for="speaker">Speaker: </label>
+											  <input type="text" id="speaker" name="speaker" required /><br />
+
+											  <label for="total_seats">Total Seats: </label>
+											  <input type="number" id="total_seats" name="total_seats" required /><br />
+
+                        					  <label for="amount">Amount: </label>
+                        					  <input type="number" id="amount" name="amount" required /><br />
+
+											  <label for="comments">Comments: </label>
+											  <textarea id="comments" name="comments" rows="4"></textarea><br />
+
+											  <button type="submit" style="width: 130px;">Create Adhyayan</button>
+											</form>
+										</div>
+							</div>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div id="message"></div>
+    <script src="createAdhyayan.js"></script>
+  </body>
+</html>
