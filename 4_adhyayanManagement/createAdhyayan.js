@@ -12,12 +12,14 @@ document.addEventListener('DOMContentLoaded', function () {
       end_date: formData.get('end_date'),
       speaker: formData.get('speaker'),
       total_seats: formData.get('total_seats'),
+      amount: formData.get('amount'),
       comments: formData.get('comments')
     };
 
     try {
+      //ToDo: Update the URL
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/create',
+        'http://localhost:3000/api/v1/admin/adhyayan/create',
         {
           method: 'POST',
           headers: {
