@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   const updateMenuForm = document.getElementById('updateMenuForm');
-  const messageDiv = document.getElementById('message');
+  const statusMessage = document.getElementById('statusMessage'); // Updated message element ID
 
   updateMenuForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
-            // Include any authentication headers if required
           },
           body: JSON.stringify({ old_date, date, breakfast, lunch, dinner })
         }
@@ -27,14 +26,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const data = await response.json();
       if (response.ok) {
-        messageDiv.textContent = 'Menu updated successfully';
+        statusMessage.textContent = 'Menu updated successfully';
         updateMenuForm.reset(); // Reset form fields after successful submission
       } else {
         throw new Error(data.message || 'Failed to update menu');
       }
     } catch (error) {
       console.error('Error:', error);
-      messageDiv.textContent = 'Error updating menu';
+      statusMessage.textContent = 'Error updating menu';
     }
   });
 });

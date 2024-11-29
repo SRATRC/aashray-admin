@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   const addMenuForm = document.getElementById('addMenuForm');
-  const messageDiv = document.getElementById('message');
+  const statusMessage = document.getElementById('statusMessage'); // Changed from 'message' to 'statusMessage'
 
   addMenuForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -26,14 +26,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const data = await response.json();
       if (response.ok) {
-        messageDiv.textContent = 'Menu added successfully';
+        statusMessage.textContent = 'Menu added successfully'; // Updated for the new ID
+        statusMessage.style.color = 'green'; // Optionally, you can style the success message
         addMenuForm.reset(); // Reset form fields after successful submission
       } else {
         throw new Error(data.message || 'Failed to add menu');
       }
     } catch (error) {
       console.error('Error:', error);
-      messageDiv.textContent = 'Error adding menu';
+      statusMessage.textContent = 'Error adding menu'; // Updated for the new ID
+      statusMessage.style.color = 'red'; // Optionally, you can style the error message
     }
   });
 });

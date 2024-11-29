@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
-            // Include any authentication headers if required
           },
           body: JSON.stringify({ cardno, bookingid, type, status })
         }
@@ -28,13 +27,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const data = await response.json();
       if (response.ok) {
-        messageDiv.textContent = data.message;
+        messageDiv.innerHTML = `<p>${data.message}</p>`;
       } else {
         throw new Error(data.message || 'Failed to update transaction status');
       }
     } catch (error) {
       console.error('Error:', error);
-      messageDiv.textContent = 'Error updating transaction status';
+      messageDiv.innerHTML = `<p>Error updating transaction status</p>`;
     }
   });
 });

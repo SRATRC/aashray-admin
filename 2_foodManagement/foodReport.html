@@ -3,18 +3,102 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <link rel="icon" href="favicon.ico" />
     <title>Food Report</title>
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
+      rel="stylesheet"
+    />
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="../style/css/plugin.css" rel="stylesheet" />
+    <!-- Custom styles for this template -->
+    <link href="../style/css/clockpicker.css" rel="stylesheet" />
+    <link href="../style/css/style.css" rel="stylesheet" />
   </head>
   <body>
-    <h1>Food Report</h1>
-    <form id="foodReportForm">
-      <label for="reportDate">Select Date:</label>
-      <input type="date" id="reportDate" name="reportDate" required />
-      <button type="submit">Get Report</button>
-    </form>
+    <div
+      class="fullheight"
+      style="
+        background: url(../style/images/RC_Blur.png) no-repeat center center;
+        background-size: cover;
+      "
+    >
+      <div class="header">
+        <div class="container">
+          <div class="logo">
+            <a href="javascript:void(0);"
+              ><img src="images/logo.png" alt="" title=""
+            /></a>
+          </div>
+          <div class="logout">
+            <a href="index.html"
+              ><img src="images/user.png" alt="" title="" /> Home</a
+            >
+          </div>
+        </div>
+      </div>
 
-    <div id="foodReportContainer"></div>
+      <div class="middlecontent">
+        <div class="container">
+          <div class="whitesec">
+            <div class="inner-padding">
+              <div class="frm-head">
+                <h4>
+                  <b><u>Food Report</u></b>
+                </h4>
+              </div>
+              <div class="form">
+                <form id="foodReportForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label for="reportDate">Select Date:</label>
+                      <input
+                        type="date"
+                        id="reportDate"
+                        name="reportDate"
+                        required
+                      /><br /><br />
+                    </div>
+                    <div class="col-md-12">
+                      <button type="submit">Get Report</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
 
+              <!-- Table for displaying fetched data -->
+              <div id="foodReportContainer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="container">
+          <p>
+            © 2022
+            <a href="#" target="_blank"
+              >Shrimad Rajchandra Aatma Tatva Research Centre</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="../style/js/plugin.js"></script>
+    <script src="../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../style/js/clockpicker.js"></script>
+    <script src="../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
     <script src="foodReport.js"></script>
   </body>
 </html>

@@ -29,19 +29,39 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 function displayMenu(menu) {
   const menuContainer = document.getElementById('menuContainer');
-  menuContainer.innerHTML = '';
+  menuContainer.innerHTML = ''; // Clear any existing content
 
   if (menu && menu.length > 0) {
+    // Create a table to display the menu items
+    const table = document.createElement('table');
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Breakfast</th>
+          <th>Lunch</th>
+          <th>Dinner</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
     menu.forEach((item) => {
-      const menuDiv = document.createElement('div');
-      menuDiv.innerHTML = `
-          <h3>Date: ${item.date}</h3>
-          <p><strong>Breakfast:</strong> ${item.breakfast}</p>
-          <p><strong>Lunch:</strong> ${item.lunch}</p>
-          <p><strong>Dinner:</strong> ${item.dinner}</p>
-        `;
-      menuContainer.appendChild(menuDiv);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.date}</td>
+        <td>${item.breakfast}</td>
+        <td>${item.lunch}</td>
+        <td>${item.dinner}</td>
+      `;
+      tbody.appendChild(row);
     });
+
+    // Append the table to the container
+    menuContainer.appendChild(table);
   } else {
     menuContainer.textContent = 'No menu items available.';
   }

@@ -16,6 +16,7 @@ async function assignCard(event) {
   const pin = document.querySelector('input[name="pin"]').value;
   const centre = document.querySelector('input[name="centre"]').value;
   const resStatus = document.querySelector('select[name="res_status"]').value;
+  const country = document.querySelector('input[name="country"]').value;
 
   const options = {
     method: 'POST',
@@ -36,6 +37,7 @@ async function assignCard(event) {
       city: city,
       state: state,
       pin: pin,
+      country: country,
       centre: centre,
       res_status: resStatus
     })

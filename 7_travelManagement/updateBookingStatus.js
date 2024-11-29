@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('updateBookingForm');
-  const responseMessage = document.getElementById('responseMessage');
+  const statusMessage = document.getElementById('statusMessage');
 
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
-            // Include any other necessary headers
           },
           body: JSON.stringify({ bookingid, status })
         }
@@ -25,13 +24,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await response.json();
 
       if (response.ok) {
-        responseMessage.innerHTML = `<p>${data.message}</p>`;
+        statusMessage.innerHTML = `<p>${data.message}</p>`;
       } else {
-        responseMessage.innerHTML = `<p>Error: ${data.message}</p>`;
+        statusMessage.innerHTML = `<p>Error: ${data.message}</p>`;
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
-      responseMessage.innerHTML = `<p>Failed to update booking status. Please try again later.</p>`;
+      statusMessage.innerHTML = `<p>Failed to update booking status. Please try again later.</p>`;
     }
   });
 });

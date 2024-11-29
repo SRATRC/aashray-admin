@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function () {
-  const menuContainer = document.getElementById('menuContainer');
+  const menuTableBody = document.querySelector('#menuTable tbody');
 
   try {
     const response = await fetch(
@@ -19,30 +19,36 @@ document.addEventListener('DOMContentLoaded', async function () {
       displayMenu(data.data);
     } else {
       console.error('Failed to fetch menu:', data.message);
-      menuContainer.textContent = 'Failed to fetch menu.';
+      menuTableBody.innerHTML =
+        '<tr><td colspan="3">Failed to fetch menu.</td></tr>';
     }
   } catch (error) {
     console.error('Error:', error);
-    menuContainer.textContent = 'Error fetching menu.';
+    menuTableBody.innerHTML =
+      '<tr><td colspan="3">Error fetching menu.</td></tr>';
   }
 });
 
 function displayMenu(menu) {
-  const menuContainer = document.getElementById('menuContainer');
-  menuContainer.innerHTML = '';
+  const menuTableBody = document.querySelector('#menuTable tbody');
+  menuTableBody.innerHTML = ''; // Clear any existing rows
 
   if (menu && menu.length > 0) {
     menu.forEach((item) => {
-      const menuDiv = document.createElement('div');
-      menuDiv.innerHTML = `
-          <h3>Date: ${item.date}</h3>
-          <p><strong>Breakfast:</strong> ${item.breakfast}</p>
-          <p><strong>Lunch:</strong> ${item.lunch}</p>
-          <p><strong>Dinner:</strong> ${item.dinner}</p>
-        `;
-      menuContainer.appendChild(menuDiv);
+      const row = document.createElement('tr');
+
+      // Create table data for each menu item (breakfast, lunch, and dinner)
+      row.innerHTML = `
+        <td>${item.date}</td>
+        <td>${item.breakfast}</td>
+        <td>${item.lunch}</td>
+        <td>${item.dinner}</td>
+      `;
+
+      menuTableBody.appendChild(row);
     });
   } else {
-    menuContainer.textContent = 'No menu items available.';
+    menuTableBody.innerHTML =
+      '<tr><td colspan="4">No menu items available.</td></tr>';
   }
 }

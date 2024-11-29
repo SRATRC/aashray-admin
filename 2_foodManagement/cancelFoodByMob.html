@@ -1,78 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cancel Food Booking</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="favicon.ico">
+    <title>Food Booking Form</title>
+    <!-- Bootstrap core CSS -->
+    <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
+    <link href="../style/css/plugin.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="../style/css/clockpicker.css" rel="stylesheet">
+    <link href="../style/css/style.css" rel="stylesheet">
   </head>
   <body>
-    <div id="cardFormSection">
-      <h2>Enter Your Phone Number</h2>
-      <form id="cardForm">
-        <label for="cardNumber">Phone Number:</label>
-        <input type="text" id="cardNumber" name="cardNumber" required />
-        <button type="button" onclick="showCancellationForm()">Submit</button>
-      </form>
+    <div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
+      <div class="header">
+        <div class="container">
+          <div class="logo">
+            <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+          </div>
+          <div class="logout">
+            <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="middlecontent">
+        <div class="container">
+          <div class="whitesec">
+            <div class="inner-padding">
+              <div class="frm-head">
+                <h4><b><u>Enter Your Phone Number</u></b></h4>
+              </div>
+              <div class="form">
+                <form id="cardForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label for="mobno">Phone Number:</label>
+                      <input type="text" id="mobno" name="cardNumber" required />
+                    </div>
+                  </div>
+                  <button type="button" onclick="showCancellationForm()">Submit</button>
+                </form>
+              </div>
+
+              <!-- Cancellation Form Section -->
+              <div id="cancellationFormSection" style="display: none">
+                <h2>Cancel Your Food Booking</h2>
+                <form id="cancelBookingForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label for="startDate">Start Date:</label>
+                      <input type="date" id="startDate" name="startDate" required /><br /><br />
+                    </div>
+                    <!-- Commented End Date Section -->
+                    <!-- <div class="col-md-12">
+                      <label for="endDate">End Date:</label>
+                      <input type="date" id="endDate" name="endDate" required /><br /><br />
+                    </div> -->
+                    <div class="col-md-12">
+                      <fieldset>
+                        <legend>Meals to Cancel</legend>
+                        <input type="checkbox" id="cancelBreakfast" name="cancelMeal" value="breakfast" />
+                        <label for="cancelBreakfast">Breakfast</label><br />
+                        <input type="checkbox" id="cancelLunch" name="cancelMeal" value="lunch" />
+                        <label for="cancelLunch">Lunch</label><br />
+                        <input type="checkbox" id="cancelDinner" name="cancelMeal" value="dinner" />
+                        <label for="cancelDinner">Dinner</label><br />
+                      </fieldset>
+                      <br />
+                    </div>
+                    <div class="col-md-12">
+                      <button type="button" onclick="cancelBooking()">Cancel Booking</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="container">
+          <p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
+        </div>
+      </div>
     </div>
-
-    <div id="cancellationFormSection" style="display: none">
-      <h2>Cancel Your Food Booking</h2>
-      <form id="cancelBookingForm">
-        <label for="startDate">Start Date:</label>
-        <input
-          type="date"
-          id="startDate"
-          name="startDate"
-          required
-        /><br /><br />
-
-        <!-- <label for="endDate">End Date:</label>
-        <input type="date" id="endDate" name="endDate" required /><br /><br /> -->
-
-        <fieldset>
-          <legend>Meals to Cancel</legend>
-          <input
-            type="checkbox"
-            id="cancelBreakfast"
-            name="cancelMeal"
-            value="breakfast"
-          />
-          <label for="cancelBreakfast">Breakfast</label><br />
-          <input
-            type="checkbox"
-            id="cancelLunch"
-            name="cancelMeal"
-            value="lunch"
-          />
-          <label for="cancelLunch">Lunch</label><br />
-          <input
-            type="checkbox"
-            id="cancelDinner"
-            name="cancelMeal"
-            value="dinner"
-          />
-          <label for="cancelDinner">Dinner</label><br />
-        </fieldset>
-        <br />
-
-        <button type="button" onclick="cancelBooking()">Cancel Booking</button>
-      </form>
     </div>
 
     <script>
       function showCancellationForm() {
-        const cardNumber = document.getElementById('cardNumber').value;
-        if (cardNumber) {
-          document.getElementById('cardFormSection').style.display = 'none';
-          document.getElementById('cancellationFormSection').style.display =
-            'block';
+        const mobno = document.getElementById('mobno').value;
+        if (mobno) {
+          document.getElementById('cardForm').style.display = 'none';
+          document.getElementById('cancellationFormSection').style.display = 'block';
         } else {
-          alert('Please enter a card number.');
+          alert('Please enter a mobile number.');
         }
       }
+
+      function cancelBooking() {
+        // Implement cancellation logic here
+      }
     </script>
+
+    <!-- JS includes -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="js/plugin.js"></script>
+    <script src="js/bootstrap-datepicker.min.js"></script>
+    <script src="js/clockpicker.js"></script>
+    <script src="js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="cancelFoodByMob.js"></script>
   </body>
 </html>
-
-<script src="cancelMeal.js"></script>
-<script src="./sessionstorage.js"></script>

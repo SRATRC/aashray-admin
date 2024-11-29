@@ -2,17 +2,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
   var adhyayanToEdit;
-  if(urlParams != null) {
+  if (urlParams != null) {
     adhyayanToEdit = urlParams.get('id');
   }
 
+  console.log('Adhyayan ID: ' + adhyayanToEdit);
 
-  console.log("Adhyayan ID: " + adhyayanToEdit)
-
-  const fetchAdhayayanDetails = async(adhyayanToEdit) => {
-    try{
+  const fetchAdhayayanDetails = async (adhyayanToEdit) => {
+    try {
       const response = await fetch(
-        `http://localhost:3000/api/v1/admin/adhyayan/fetch/${adhyayanToEdit}`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/fetch/${adhyayanToEdit}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -22,9 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
       );
       const adhayayanData = await response.json();
       fillTableData(adhayayanData);
-    }
-    catch (error) {
-      console.log("Error while fetching the data: " + error)
+    } catch (error) {
+      console.log('Error while fetching the data: ' + error);
     }
   };
 
@@ -46,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fetchAdhayayanDetails(adhyayanToEdit);
 
-  const updateAdhyayanDetails = async(adhyayanId) => {
-    console.log("Updating Adhyayan with Id: " + adhyayanId);
+  const updateAdhyayanDetails = async (adhyayanId) => {
+    console.log('Updating Adhyayan with Id: ' + adhyayanId);
     const adhyayanFormData = document.getElementById('editAdhyayanForm');
     const adhyayanForm = new FormData(adhyayanFormData);
     const updatedData = {
@@ -62,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/v1/admin/adhyayan/update/${adhyayanId}`,      
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/update/${adhyayanId}`,
         {
           method: 'PUT',
           headers: {
@@ -70,20 +68,17 @@ document.addEventListener('DOMContentLoaded', () => {
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify(updatedData)
-        }  
+        }
       );
 
-      if(response.ok) {
+      if (response.ok) {
         const upadateResponse = await response.json();
-        console.log("Update Response: " + updateResponse);
+        console.log('Update Response: ' + upadateResponse);
+      } else {
+        console.error('Update Response: ' + response.statusText);
       }
-      else {
-        console.error("Update Response: " + response.statusText)
-      }
-    }
-    catch (error) {
-      console.error("Erorr while updating the data: " + error);
+    } catch (error) {
+      console.error('Erorr while updating the data: ' + error);
     }
   };
-
 });

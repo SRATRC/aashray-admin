@@ -22,7 +22,7 @@ function login(event) {
   };
   //ToDo: Update the URL
   fetch(
-    'http://localhost:3000/api/v1/admin/auth/login',
+    'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/auth/login',
     options
   )
     .then((response) => response.json())

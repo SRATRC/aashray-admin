@@ -125,6 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <label>Centre:</label>
     <input type="text" id="centre" value="${personData.data[0].centre}" required><br>
 
+    <label>Country:</label>
+    <input type="text" id="country" value="${personData.data[0].country}" required><br>
+
     <label>Status:</label>
     <input type="text" id="status" value="${personData.data[0].status}" required><br>
 
@@ -162,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state: document.getElementById('state').value,
       pin: document.getElementById('pin').value,
       centre: document.getElementById('centre').value,
+      country: document.getElementById('country').value,
       status: document.getElementById('status').value,
       res_status: document.getElementById('res_status').value
     };

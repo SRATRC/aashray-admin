@@ -1,7 +1,7 @@
 async function cancelBooking() {
   const startDate = document.getElementById('startDate').value;
   // const endDate = document.getElementById('endDate').value;
-  const cardNumber = document.getElementById('cardNumber').value;
+  const cardNumber = document.getElementById('mobno').value;
 
   // Gather cancellation selections
   const cancelBreakfast = document.getElementById('cancelBreakfast').checked
@@ -23,7 +23,7 @@ async function cancelBooking() {
       Authorization: `Bearer ${token}`
     },
     body: JSON.stringify({
-      cardno: cardNumber,
+      mobno: mobno.value,
       food_data: [
         {
           date: startDate,

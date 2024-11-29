@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   document
-    .getElementById('foodReportDetailsForm')
+    .getElementById('foodReportForm') // Updated form ID
     .addEventListener('submit', async function (event) {
       event.preventDefault();
 
@@ -36,19 +36,21 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function displayFoodReportDetails(data) {
-  const foodReportDetailsContainer = document.getElementById(
-    'foodReportDetailsContainer'
-  );
-  foodReportDetailsContainer.innerHTML = '';
+  const foodReportContainer = document.getElementById('foodReportContainer'); // Updated container ID
+  foodReportContainer.innerHTML = ''; // Clear previous results
 
   if (data && data.length > 0) {
     const detailsTable = document.createElement('table');
+    detailsTable.classList.add('table'); // Bootstrap class for table styling
     detailsTable.innerHTML = `
-        <tr>
-          <th>Date</th>
-          <th>Mobile Number</th>
-          <th>Issued To</th>
-        </tr>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Mobile Number</th>
+            <th>Issued To</th>
+          </tr>
+        </thead>
+        <tbody>
       `;
 
     data.forEach((item) => {
@@ -61,10 +63,11 @@ function displayFoodReportDetails(data) {
       detailsTable.appendChild(row);
     });
 
-    foodReportDetailsContainer.appendChild(detailsTable);
+    detailsTable.innerHTML += '</tbody>';
+    foodReportContainer.appendChild(detailsTable);
   } else {
     const noDataDiv = document.createElement('div');
     noDataDiv.textContent = 'No data available for the selected criteria.';
-    foodReportDetailsContainer.appendChild(noDataDiv);
+    foodReportContainer.appendChild(noDataDiv);
   }
 }

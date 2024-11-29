@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
   const adhyayanForm = document.getElementById('adhyayanForm');
-  const messageDiv = document.getElementById('message');
+  const messageDiv = document.createElement('div');
+  messageDiv.setAttribute('id', 'message');
+  adhyayanForm.parentElement.appendChild(messageDiv); // Append the message div below the form dynamically
 
   adhyayanForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -17,9 +19,9 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     try {
-      //ToDo: Update the URL
+      // ToDo: Update the URL
       const response = await fetch(
-        'http://localhost:3000/api/v1/admin/adhyayan/create',
+        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/create',
         {
           method: 'POST',
           headers: {
@@ -34,13 +36,16 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await response.json();
       if (response.ok) {
         messageDiv.textContent = data.message;
+        messageDiv.style.color = 'green'; // Display success message in green
         adhyayanForm.reset(); // Clear form inputs on success
       } else {
         messageDiv.textContent = `Error: ${data.message}`;
+        messageDiv.style.color = 'red'; // Display error message in red
       }
     } catch (error) {
       console.error('Error:', error);
       messageDiv.textContent = 'Failed to create Adhyayan';
+      messageDiv.style.color = 'red'; // Display error message in red
     }
   });
 });

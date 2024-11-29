@@ -35,37 +35,67 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function displayFoodReport(data) {
   const foodReportContainer = document.getElementById('foodReportContainer');
-  foodReportContainer.innerHTML = '';
+  foodReportContainer.innerHTML = ''; // Clear the container
 
   if (data && data.report) {
     const report = data.report;
     const physicalPlates = data.physical_plates;
 
-    const reportDiv = document.createElement('div');
-    reportDiv.innerHTML = `
-        <h2>Food Report for ${report.date}</h2>
-        <p>Breakfast: ${report.breakfast}</p>
-        <p>Lunch: ${report.lunch}</p>
-        <p>Dinner: ${report.dinner}</p>
-        <p>Breakfast Plates Issued: ${report.breakfast_plate_issued}</p>
-        <p>Lunch Plates Issued: ${report.lunch_plate_issued}</p>
-        <p>Dinner Plates Issued: ${report.dinner_plate_issued}</p>
-        <p>Breakfast No Show: ${report.breakfast_noshow}</p>
-        <p>Lunch No Show: ${report.lunch_noshow}</p>
-        <p>Dinner No Show: ${report.dinner_noshow}</p>
-        <p>Tea: ${report.tea}</p>
-        <p>Coffee: ${report.coffee}</p>
-      `;
+    // Create table for the report data
+    const reportTable = document.createElement('table');
+    reportTable.classList.add('table', 'table-bordered', 'table-striped'); // Adding Bootstrap classes for styling
 
+    // Create table header
+    const headerRow = document.createElement('tr');
+    const headers = ['Meal Type', 'Plates Issued', 'No Show', 'Tea', 'Coffee'];
+    headers.forEach((headerText) => {
+      const th = document.createElement('th');
+      th.textContent = headerText;
+      headerRow.appendChild(th);
+    });
+    reportTable.appendChild(headerRow);
+
+    // Populate table rows for each meal type
+    const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
+    mealTypes.forEach((mealType) => {
+      const row = document.createElement('tr');
+
+      const mealCell = document.createElement('td');
+      mealCell.textContent = mealType;
+      row.appendChild(mealCell);
+
+      const platesIssuedCell = document.createElement('td');
+      platesIssuedCell.textContent =
+        report[`${mealType.toLowerCase()}_plate_issued`];
+      row.appendChild(platesIssuedCell);
+
+      const noShowCell = document.createElement('td');
+      noShowCell.textContent = report[`${mealType.toLowerCase()}_noshow`];
+      row.appendChild(noShowCell);
+
+      const teaCell = document.createElement('td');
+      teaCell.textContent = mealType === 'Breakfast' ? report.tea : '-'; // Only show tea for breakfast
+      row.appendChild(teaCell);
+
+      const coffeeCell = document.createElement('td');
+      coffeeCell.textContent = mealType === 'Lunch' ? report.coffee : '-'; // Only show coffee for lunch
+      row.appendChild(coffeeCell);
+
+      reportTable.appendChild(row);
+    });
+
+    foodReportContainer.appendChild(reportTable); // Append the table to the container
+
+    // Create a section for the physical plates count
     const physicalPlatesDiv = document.createElement('div');
     physicalPlatesDiv.innerHTML = `<h3>Physical Plates Count</h3>`;
     physicalPlates.forEach((plate) => {
       physicalPlatesDiv.innerHTML += `<p>${plate.type}: ${plate.count}</p>`;
     });
 
-    foodReportContainer.appendChild(reportDiv);
-    foodReportContainer.appendChild(physicalPlatesDiv);
+    foodReportContainer.appendChild(physicalPlatesDiv); // Append the physical plates count div
   } else {
+    // If no data is available, show a message
     const noDataDiv = document.createElement('div');
     noDataDiv.textContent = 'No data available for the selected date.';
     foodReportContainer.appendChild(noDataDiv);
