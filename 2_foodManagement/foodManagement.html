@@ -9,7 +9,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <link rel="icon" href="favicon.ico">
-<title>Kitchen Admin</title>
+<title>Food Management</title>
 <!-- Bootstrap core CSS -->
 <link href="https://use.fontawesome.com/releases/v5.0.6/../style/css/all.css" rel="stylesheet">
 <!-- Fonts -->
@@ -21,22 +21,26 @@
 </head>
 <body>
 <div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
-        <div class="header">
-            <div class="container">
-                <div class="logo">
-                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
-                </div>
-                    <div class="logout">
-                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
-                    </div>
-            </div>
-    	</div>
+    <div class="header">
+        <div class="container">
+            <div class="logout">
+                <a id="homelink" href="../index.html">
+                  <img alt="" title=""> Logout   
+                </a>
+              </div>
+              <div class="logout">
+                <a href="/adminhome.html">
+                  <img alt="" title=""> Home &nbsp; | &nbsp;
+                </a>
+              </div>
+        </div>
+    </div>
         <div class="middlecontent">
         	<div class="container">
             	<div class="whitesec">
                     <div class="inner-padding">
                     	<div class="frm-head">
-                          <h4><b><u>Admin Console </u></b></h4>
+                          <h4><b><u>Food Management </u></b></h4>
 							   </div>
 								<div class="form">
 									<div class="row">
@@ -75,10 +79,10 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="https://use.fontawesome.com/373a347df2.js"></script>
-<script src="js/plugin.js"></script>
-<script src="js/bootstrap-datepicker.min.js"></script>
-<script src="js/clockpicker.js"></script>
-<script src="js/custom.js"></script>
-<script src="./sessionstorage.js"></script>
+<script src="../style/js/plugin.js"></script>
+<script src="../style/js/bootstrap-datepicker.min.js"></script>
+<script src="../style/js/clockpicker.js"></script>
+<script src="../style/js/custom.js"></script>
+<script src="/sessionstorage.js"></script>
 </body>
 </html>
