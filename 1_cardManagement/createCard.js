@@ -11,12 +11,12 @@ async function assignCard(event) {
   const idType = document.querySelector('select[name="idType"]').value;
   const idNo = document.querySelector('input[name="idNo"]').value;
   const address = document.querySelector('input[name="address"]').value;
-  const city = document.querySelector('input[name="city"]').value;
-  const state = document.querySelector('input[name="state"]').value;
+  const city = document.querySelector('select[name="city"]').value;
+  const state = document.querySelector('select[name="state"]').value;
   const pin = document.querySelector('input[name="pin"]').value;
   const centre = document.querySelector('input[name="centre"]').value;
   const resStatus = document.querySelector('select[name="res_status"]').value;
-  const country = document.querySelector('input[name="country"]').value;
+  const country = document.querySelector('select[name="country"]').value;
 
   const options = {
     method: 'POST',
@@ -51,6 +51,10 @@ async function assignCard(event) {
     if (response.status >= 200 && response.status < 300) {
       const data = await response.json();
       console.log(data);
+
+      // Show success message in popup and redirect to cardManagement.html
+      alert('Card assigned successfully!');
+      window.location.href = 'cardManagement.html'; // Redirect to cardManagement.html
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message);
@@ -59,3 +63,70 @@ async function assignCard(event) {
     alert(error.message);
   }
 }
+
+async function loadLocationData() {
+  try {
+    // Fetch countries
+    const countriesResponse = await fetch(
+      'https://sratrc-portal-backend-dev.onrender.com/api/v1/location/countries'
+    );
+    const countriesData = await countriesResponse.json();
+    const countries = countriesData.data; // Accessing 'data' from the response
+    const countrySelect = document.querySelector('#country');
+    countries.forEach((country) => {
+      const option = document.createElement('option');
+      option.value = country.value;
+      option.textContent = country.value;
+      countrySelect.appendChild(option);
+    });
+
+    // Fetch states when country is selected
+    countrySelect.addEventListener('change', async function () {
+      const selectedCountry = this.value;
+      const statesResponse = await fetch(
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/states/${selectedCountry}`
+      );
+      const statesData = await statesResponse.json();
+      const states = statesData.data; // Accessing 'data' from the response
+      const stateSelect = document.querySelector('#state');
+      stateSelect.innerHTML = '<option value="">Select State</option>'; // Reset states
+      states.forEach((state) => {
+        const option = document.createElement('option');
+        option.value = state.value;
+        option.textContent = state.value;
+        stateSelect.appendChild(option);
+      });
+
+      // Reset cities when country is changed
+      const citySelect = document.querySelector('#city');
+      citySelect.innerHTML = '<option value="">Select City</option>';
+    });
+
+    // Fetch cities when state is selected
+    document
+      .querySelector('#state')
+      .addEventListener('change', async function () {
+        const selectedState = this.value;
+        const selectedCountry = document.querySelector('#country').value;
+        if (selectedState && selectedCountry) {
+          const citiesResponse = await fetch(
+            `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/cities/${selectedCountry}/${selectedState}`
+          );
+          const citiesData = await citiesResponse.json();
+          const cities = citiesData.data; // Accessing 'data' from the response
+          const citySelect = document.querySelector('#city');
+          citySelect.innerHTML = '<option value="">Select City</option>'; // Reset cities
+          cities.forEach((city) => {
+            const option = document.createElement('option');
+            option.value = city.value;
+            option.textContent = city.value;
+            citySelect.appendChild(option);
+          });
+        }
+      });
+  } catch (error) {
+    console.error('Error loading location data:', error);
+  }
+}
+
+window.onload = loadLocationData;

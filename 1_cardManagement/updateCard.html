@@ -10,19 +10,12 @@
     <meta name="description" content="" />
     <meta name="author" content="" />
     <link rel="icon" href="favicon.ico" />
-    <title>Fetch Roles</title>
-    <!-- Bootstrap core CSS -->
+    <title>Update Card Details</title>
     <link
       href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
       rel="stylesheet"
     />
-    <!-- Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
-      rel="stylesheet"
-    />
     <link href="../style/css/plugin.css" rel="stylesheet" />
-    <!-- Custom styles for this template -->
     <link href="../style/css/clockpicker.css" rel="stylesheet" />
     <link href="../style/css/style.css" rel="stylesheet" />
   </head>
@@ -37,19 +30,15 @@
       <div class="header">
         <div class="container">
           <div class="logout">
-            <a id="homelink" href="../index.html">
-              <img alt="" title="" /> Logout
-            </a>
+            <a id="homelink" href="../index.html">Logout</a>
           </div>
           <div class="logout">
-            <a href="/adminhome.html">
-              <img alt="" title="" /> Home &nbsp; | &nbsp;
-            </a>
+            <a href="/1_cardManagement/cardManagement.html"
+              >Home &nbsp; | &nbsp;</a
+            >
           </div>
           <div class="logout">
-            <a href="/0_adminManagement/adminManagement.html">
-              <img alt="" title="" /> Back &nbsp; | &nbsp;
-            </a>
+            <a href="/1_cardManagement/searchCard.html">Back &nbsp; | &nbsp;</a>
           </div>
         </div>
       </div>
@@ -59,36 +48,15 @@
           <div class="whitesec">
             <div class="inner-padding">
               <div class="frm-head">
-                <h1><br />Fetch Roles</h1>
+                <h1>Update Card Details</h1>
               </div>
               <div class="form">
                 <div class="row">
                   <div class="col-md-12">
                     <div class="table">
-                      <table
-                        id="rolesList"
-                        class="table table-striped table-bordered"
-                      >
-                        <thead>
-                          <tr>
-                            <th>Roles List</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <!-- Rows will be populated by JavaScript -->
-                        </tbody>
-                      </table>
-                      <div class="row">
-                        <div class="col-md-12">
-                          <button
-                            onclick="window.location.href='createRole.html'"
-                            class="btn btn-primary"
-                          >
-                            Add New Admin Role
-                          </button>
-                        </div>
-                      </div>
+                      <form id="updateForm">
+                        <!-- The form will be dynamically populated -->
+                      </form>
                     </div>
                   </div>
                 </div>
@@ -110,7 +78,6 @@
       </div>
     </div>
 
-    <!-- Bootstrap core JavaScript -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://use.fontawesome.com/373a347df2.js"></script>
     <script src="../style/js/plugin.js"></script>
@@ -118,6 +85,6 @@
     <script src="../style/js/clockpicker.js"></script>
     <script src="../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="fetchRoles.js"></script>
+    <script src="updateCard.js"></script>
   </body>
 </html>

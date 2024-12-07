@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (response.ok) {
         statusMessage.textContent = 'Role created successfully!';
         statusMessage.style.color = 'green';
+
+        // Show a pop-up alert and redirect after user clicks OK
+        alert('Role created successfully!');
+        window.location.href = 'fetchRoles.html'; // Redirect to fetchRoles.html
       } else {
         statusMessage.textContent = `Failed to create role: ${data.message}`;
         statusMessage.style.color = 'red';

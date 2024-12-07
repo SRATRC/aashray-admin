@@ -2,6 +2,13 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('updateRolesForm');
   const statusMessage = document.getElementById('statusMessage');
 
+  // Get the role from the URL query string
+  const urlParams = new URLSearchParams(window.location.search);
+  const roleName = urlParams.get('role'); // Get role from query parameter
+
+  // Pre-fill the form with the role name (and optionally, user ID if needed)
+  document.getElementById('roles').value = roleName;
+
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
 

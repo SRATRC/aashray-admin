@@ -7,26 +7,85 @@ document.addEventListener('DOMContentLoaded', async function () {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          // Include any authentication headers if required
         }
       }
     );
+
     const data = await response.json();
     console.log(data);
 
     if (response.ok) {
       const admins = data.data;
-      const adminTableBody = document
-        .getElementById('adminTable')
-        .querySelector('tbody');
+      const adminTable = document.getElementById('adminTable');
+      const adminTableBody = adminTable.querySelector('tbody');
+
+      // Add column heading for "Action"
+      const tableHead = adminTable.querySelector('thead');
+      if (tableHead) {
+        const headerRow = tableHead.querySelector('tr');
+        const actionHeader = document.createElement('th');
+        actionHeader.textContent = 'Action';
+        actionHeader.style.textAlign = 'center';
+        headerRow.appendChild(actionHeader);
+      }
 
       admins.forEach((admin) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${admin.id}</td>
-            <td>${admin.username}</td>
-            <td>${admin.status}</td>
-          `;
+          <td>${admin.id}</td>
+          <td>${admin.username}</td>
+          <td>${admin.status}</td>
+        `;
+
+        // Add Activate/Deactivate action link
+        const actionCell = document.createElement('td');
+        actionCell.style.textAlign = 'center';
+        const actionLink = document.createElement('a');
+        actionLink.textContent =
+          admin.status === 'active' ? 'Deactivate' : 'Activate';
+        actionLink.href = '#'; // Prevents page reload on click
+
+        actionLink.addEventListener('click', async (event) => {
+          event.preventDefault(); // Prevent default link behavior
+          const endpoint =
+            admin.status === 'active'
+              ? `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/deactivate/${admin.username}`
+              : `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/activate/${admin.username}`;
+          const method = 'PUT';
+
+          try {
+            const toggleResponse = await fetch(endpoint, {
+              method,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sessionStorage.getItem('token')}`
+              }
+            });
+
+            const toggleData = await toggleResponse.json();
+
+            if (toggleResponse.ok) {
+              // Update status and action link dynamically
+              admin.status = admin.status === 'active' ? 'inactive' : 'active';
+              actionLink.textContent =
+                admin.status === 'active' ? 'Deactivate' : 'Activate';
+              row.querySelector('td:nth-child(3)').textContent = admin.status; // Update status column
+              alert(
+                `Admin ${admin.username} has been ${
+                  admin.status === 'active' ? 'activated' : 'deactivated'
+                } successfully.`
+              );
+            } else {
+              alert(`Failed to update admin status: ${toggleData.message}`);
+            }
+          } catch (error) {
+            console.error('Error toggling admin status:', error);
+            alert('An error occurred. Please try again.');
+          }
+        });
+
+        actionCell.appendChild(actionLink);
+        row.appendChild(actionCell);
         adminTableBody.appendChild(row);
       });
     } else {

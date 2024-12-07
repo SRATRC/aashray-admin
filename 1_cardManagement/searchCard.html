@@ -1,49 +1,135 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
+    />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <link rel="icon" href="favicon.ico" />
     <title>Card Management</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 2rem;
-        text-align: center;
-      }
-      .search {
-        margin-bottom: 1rem;
-        padding: 0.5rem;
-        width: 100%;
-        max-width: 300px;
-      }
-      ul {
-        list-style-type: none;
-        padding: 0;
-      }
-      li {
-        background: #f4f4f4;
-        margin: 0.5rem 0;
-        padding: 0.5rem;
-        border-radius: 4px;
-      }
-    </style>
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
+      rel="stylesheet"
+    />
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="../style/css/plugin.css" rel="stylesheet" />
+    <!-- Custom styles for this template -->
+    <link href="../style/css/clockpicker.css" rel="stylesheet" />
+    <link href="../style/css/style.css" rel="stylesheet" />
   </head>
   <body>
-    <h1>Card Management</h1>
-    <input
-      type="text"
-      id="search"
-      class="search"
-      placeholder="Search by name"
-    />
-    <button id="searchButton">Search</button>
-    <div id="data-list"></div>
-    <div id="detailed-data"></div>
+    <div
+      class="fullheight"
+      style="
+        background: url(../style/images/RC_Blur.png) no-repeat center center;
+        background-size: cover;
+      "
+    >
+      <div class="header">
+        <div class="container">
+          <div class="logout">
+            <a id="homelink" href="../index.html"
+              ><img alt="" title="" /> Logout</a
+            >
+          </div>
+          <div class="logout">
+            <a href="/adminhome.html"
+              ><img alt="" title="" /> Home &nbsp; | &nbsp;</a
+            >
+          </div>
+          <div class="logout">
+            <a href="/adminhome.html"
+              ><img alt="" title="" /> Back &nbsp; | &nbsp;</a
+            >
+          </div>
+        </div>
+      </div>
 
-    <script src="searchCard.js"></script>
+      <div class="middlecontent">
+        <div class="container">
+          <div class="whitesec">
+            <div class="inner-padding">
+              <div class="frm-head">
+                <h1><br />Card Management</h1>
+              </div>
+              <div class="form">
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="search-section">
+                      <input
+                        type="text"
+                        id="search"
+                        placeholder="Search by name or card number"
+                      />
+                    </div>
+                    <div class="table">
+                      <table
+                        id="data-list"
+                        class="table table-striped table-bordered"
+                      >
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Card Number</th>
+                            <th>Action</th>
+                            <!-- New Action Column -->
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Rows will be populated by JavaScript -->
+                        </tbody>
+                      </table>
+                    </div>
+                    <!-- Add New Card Button -->
+                    <div class="add-new-card">
+                      <button
+                        onclick="window.location.href='createCard.html'"
+                        class="btn btn-primary"
+                      >
+                        Add New Card
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detailed-data" id="detailed-data">
+            <!-- Detailed data form will be inserted here by JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="container">
+          <p>
+            © 2022
+            <a href="#" target="_blank"
+              >Shrimad Rajchandra Aatma Tatva Research Centre</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="../style/js/plugin.js"></script>
+    <script src="../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../style/js/clockpicker.js"></script>
+    <script src="../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
+    <script src="searchCard.js"></script>
   </body>
 </html>
