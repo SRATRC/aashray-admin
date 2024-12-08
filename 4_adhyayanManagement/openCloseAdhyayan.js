@@ -2,29 +2,24 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('openCloseForm');
   const statusMessage = document.getElementById('responseMessage');
 
-  // Status mapping: frontend status ('open'/'close') to backend status ('active'/'inactive')
-  const statusMapping = {
-    open: 'active', // 'open' maps to 'active'
-    close: 'inactive' // 'close' maps to 'inactive'
-  };
-
   form.addEventListener('submit', async function (event) {
-    event.preventDefault();
+    event.preventDefault(); // Prevent default form submission
 
     // Get form data
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
 
-    // Ensure status is mapped to 'active' or 'inactive'
-    const status = statusMapping[data.status] || 'inactive'; // Default to 'inactive' if invalid status
+    // Map status from frontend to backend ('open' -> 'active', 'close' -> 'inactive')
+    const statusMapping = {
+      open: 'active', // 'open' maps to 'active'
+      close: 'inactive' // 'close' maps to 'inactive'
+    };
 
-    // Prepare URL for backend call based on status (open/close)
-    const action = status === 'active' ? 'activate' : 'deactivate';
+    const status = statusMapping[data.status] || 'inactive'; // Default to 'inactive' if invalid
     const shibirId = data.shibir_id;
 
     // Get the token (assuming it's stored in sessionStorage)
     const token = sessionStorage.getItem('token');
-
     if (!token) {
       statusMessage.textContent = 'Error: Missing authorization token.';
       statusMessage.style.color = 'red';
@@ -33,7 +28,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/${shibirId}/${action}`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/${shibirId}/${
+          status === 'active' ? 'activate' : 'deactivate'
+        }`,
         {
           method: 'PUT',
           headers: {

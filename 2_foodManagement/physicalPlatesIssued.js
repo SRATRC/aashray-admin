@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // Set default date to today's date
+  const today = new Date().toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+  document.getElementById('plateDate').value = today;
+
   document
     .getElementById('physicalPlatesForm')
     .addEventListener('submit', async function (event) {
@@ -26,6 +30,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (response.ok) {
           document.getElementById('responseMessage').textContent = data.message;
           clearForm();
+
+          // Show pop-up message and redirect after clicking OK
+          alert('Physical plates added successfully!');
+          window.location.href = 'fetchPhysicalPlateIssued.html'; // Redirect after OK
         } else {
           console.error('Failed to add physical plates:', data.message);
           alert('Failed to add physical plates.');
@@ -38,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function clearForm() {
-  document.getElementById('plateDate').value = '';
-  document.getElementById('plateType').selectedIndex = 0;
-  document.getElementById('plateCount').value = '';
+  document.getElementById('plateDate').value = ''; // Optionally reset date after submission
+  document.getElementById('plateType').selectedIndex = 0; // Reset type to first option
+  document.getElementById('plateCount').value = ''; // Reset count field
 }

@@ -61,6 +61,28 @@
                 <h1><br />Physical Plates Issued</h1>
               </div>
               <div class="form">
+                <!-- Date Range Filter -->
+                <div class="row">
+                  <div class="col-md-5">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" class="form-control" />
+                  </div>
+                  <div class="col-md-5">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate" class="form-control" />
+                  </div>
+                  <div class="col-md-2 text-center">
+                    <label>&nbsp;</label>
+                    <button
+                      id="filterButton"
+                      class="btn btn-primary"
+                      style="width: 250%"
+                    >
+                      Filter
+                    </button>
+                  </div>
+                </div>
+                <br />
                 <div class="row">
                   <div class="col-md-12">
                     <div class="table">
@@ -71,14 +93,24 @@
                         <thead>
                           <tr>
                             <th>Date</th>
-                            <th>Type</th>
-                            <th>Count</th>
+                            <th>Breakfast</th>
+                            <th>Lunch</th>
+                            <th>Dinner</th>
                           </tr>
                         </thead>
                         <tbody>
                           <!-- Rows will be populated by JavaScript -->
                         </tbody>
                       </table>
+                    </div>
+                    <!-- Add Count Button -->
+                    <div class="text-center mt-3">
+                      <button
+                        onclick="window.location.href='physicalPlatesIssued.html'"
+                        class="btn btn-primary"
+                      >
+                        Add Physical Plate Count For Today
+                      </button>
                     </div>
                   </div>
                 </div>

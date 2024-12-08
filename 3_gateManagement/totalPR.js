@@ -6,10 +6,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          // Include any authentication headers if required
-        },
-        body: JSON.stringify() // Adjust as needed
+          Authorization: `Bearer ${sessionStorage.getItem('token')}` // Include any authentication headers if required
+        }
       }
     );
     const data = await response.json();
@@ -30,15 +28,20 @@ function displayPRResidents(prResidents) {
   const prResidentsContainer = document.getElementById('prResidents');
   prResidentsContainer.innerHTML = '';
 
-  prResidents.forEach((resident) => {
-    const residentDiv = document.createElement('div');
-    residentDiv.innerHTML = `
-        <p><strong>Card No:</strong> ${resident.cardno}</p>
-        <p><strong>Issued To:</strong> ${resident.issuedto}</p>
-        <p><strong>Mobile No:</strong> ${resident.mobno}</p>
-        <p><strong>Centre:</strong> ${resident.centre}</p>
-        <hr>
+  if (prResidents && prResidents.length > 0) {
+    prResidents.forEach((resident) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${resident.cardno}</td>
+        <td>${resident.issuedto}</td>
+        <td>${resident.mobno}</td>
+        <td>${resident.centre}</td>
       `;
-    prResidentsContainer.appendChild(residentDiv);
-  });
+      prResidentsContainer.appendChild(row);
+    });
+  } else {
+    const noDataRow = document.createElement('tr');
+    noDataRow.innerHTML = `<td colspan="4">No data available</td>`;
+    prResidentsContainer.appendChild(noDataRow);
+  }
 }
