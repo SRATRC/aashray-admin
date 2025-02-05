@@ -12,9 +12,10 @@ document
       const response = await fetch(
         'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/status',
         {
-          method: 'POST',
+          method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify(data)
         }

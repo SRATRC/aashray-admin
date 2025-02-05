@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         deleteLink.href = '#';
         deleteLink.textContent = 'Delete';
         deleteLink.style.color = 'red';
-        deleteLink.addEventListener('click', function () {
+        deleteLink.addEventListener('click', function (event) {
+          event.preventDefault(); // Prevent default anchor behavior
           deleteRole(role); // Pass the role name to the delete function
         });
         cell2.appendChild(deleteLink);
@@ -58,3 +59,50 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.error('Error:', error);
   }
 });
+
+async function deleteRole(roleName) {
+  const confirmation = confirm(
+    `Are you sure you want to delete the role "${roleName}"?`
+  );
+
+  if (!confirmation) {
+    return; // User cancelled the delete action
+  }
+
+  try {
+    const response = await fetch(
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/role/${encodeURIComponent(
+        roleName
+      )}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(data.message || 'Role deleted successfully.');
+      // Refresh the roles table or remove the row dynamically
+      const rolesListTable = document
+        .getElementById('rolesList')
+        .getElementsByTagName('tbody')[0];
+      for (let i = 0; i < rolesListTable.rows.length; i++) {
+        if (rolesListTable.rows[i].cells[0].textContent === roleName) {
+          rolesListTable.deleteRow(i);
+          break;
+        }
+      }
+    } else {
+      console.error('Failed to delete role:', data.message);
+      alert(`Failed to delete role: ${data.message}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred while deleting the role.');
+  }
+}

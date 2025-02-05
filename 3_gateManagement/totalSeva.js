@@ -35,7 +35,7 @@ function displaySevaResidents(sevaResidents) {
         <td>${resident.cardno}</td>
         <td>${resident.issuedto}</td>
         <td>${resident.mobno}</td>
-        <td>${resident.centre}</td>
+        
       `;
       sevaResidentsContainer.appendChild(row);
     });

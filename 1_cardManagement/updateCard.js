@@ -64,13 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <label>Pin Code:</label>
           <input type="text" id="pin" value="${data.pin}" required><br>
 
-          <label>Centre:</label>
-          <input type="text" id="centre" value="${data.centre}" required><br>
+          <label>Center:</label>
+          <input type="text" id="center" value="${data.center}" required><br>
 
           <label>Residential Status:</label>
           <input type="text" id="res_status" value="${data.res_status}" required><br>
 
-          <button type="submit">Save</button>
+          
+          <button type="submit" class="btn btn-primary"> Save </button>
       `;
   };
 
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       city: document.getElementById('city').value,
       state: document.getElementById('state').value,
       pin: document.getElementById('pin').value,
-      centre: document.getElementById('centre').value,
+      center: document.getElementById('center').value,
       res_status: document.getElementById('res_status').value
     };
 

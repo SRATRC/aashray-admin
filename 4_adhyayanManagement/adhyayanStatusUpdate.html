@@ -89,14 +89,12 @@
                       <div>
                         <label for="status">Status:</label>
                         <select id="status" name="status" required>
-                          <option value="STATUS_CONFIRMED">Confirmed</option>
-                          <option value="STATUS_ADMIN_CANCELLED">
+                          <option value="confirmed">Confirmed</option>
+                          <option value="admin cancelled">
                             Admin Cancelled
                           </option>
-                          <option value="STATUS_PAYMENT_PENDING">
-                            Payment Pending
-                          </option>
-                          <option value="STATUS_WAITING">Waiting</option>
+                          <option value="pending">Payment Pending</option>
+                          <option value="waiting">Waiting</option>
                         </select>
                       </div>
 
@@ -114,11 +112,19 @@
                         ></textarea>
                       </div>
 
-                      <button
+                      <!-- <button
                         type="submit"
                         id="saveButton"
                         name="saveButton"
                         style="width: 100px"
+                      >
+                        Update Status
+                      </button> -->
+                      <button
+                        type="submit"
+                        id="saveButton"
+                        name="saveButton"
+                        class="btn btn-primary"
                       >
                         Update Status
                       </button>

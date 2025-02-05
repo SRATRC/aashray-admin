@@ -36,7 +36,7 @@ function displayMumukshuResidents(mumukshuResidents) {
         <td>${resident.cardno}</td>
         <td>${resident.issuedto}</td>
         <td>${resident.mobno}</td>
-        <td>${resident.centre}</td>
+        <td>${resident.center}</td>
       `;
       mumukshuResidentsContainer.appendChild(row);
     });

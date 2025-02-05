@@ -11,11 +11,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Map status from frontend to backend ('open' -> 'active', 'close' -> 'inactive')
     const statusMapping = {
-      open: 'active', // 'open' maps to 'active'
-      close: 'inactive' // 'close' maps to 'inactive'
+      open: 'open', // 'open' maps to 'active'
+      closed: 'closed' // 'close' maps to 'inactive'
     };
 
-    const status = statusMapping[data.status] || 'inactive'; // Default to 'inactive' if invalid
+    const status = statusMapping[data.status] || 'closed'; // Default to 'inactive' if invalid
     const shibirId = data.shibir_id;
 
     // Get the token (assuming it's stored in sessionStorage)
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       const response = await fetch(
         `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/${shibirId}/${
-          status === 'active' ? 'activate' : 'deactivate'
+          status === 'open' ? 'activate' : 'deactivate'
         }`,
         {
           method: 'PUT',

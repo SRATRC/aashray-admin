@@ -54,12 +54,13 @@
                     <input type="text" id="cardNumber" name="cardNumber" required />
                   </div>
                 </div>
-                <button type="button" onclick="showBookingForm()">Submit</button>
+                <!-- <button type="button" onclick="showBookingForm()">Submit</button> -->
+                <button type="button" class="btn btn-primary" onclick="showBookingForm()"> Submit </button>
               </form>
-            </div>
+            
 
             <div id="bookingForm" style="display: none">
-              <h2>Book Your Food</h2>
+            <h2>Book Your Food</h2></br>
               <form id="foodBookingForm">
                 <div class="row">
                   <div class="col-md-12">
@@ -68,11 +69,11 @@
                   </div>
                   <div class="col-md-12">
                     <label for="startDate">Start Date:</label>
-                    <input type="date" id="startDate" name="startDate" required /><br /><br />
+                    <input type="date" id="startDate" name="startDate" required /><br />
                   </div>
                   <div class="col-md-12">
                     <label for="endDate">End Date:</label>
-                    <input type="date" id="endDate" name="endDate" required /><br /><br />
+                    <input type="date" id="endDate" name="endDate" required /><br />
                   </div>
                   <div class="col-md-12">
                     <fieldset>
@@ -103,7 +104,8 @@
                       <label for="coffee">Coffee</label><br />
                     </fieldset><br />
                   </div>
-                  <button type="button" onclick="submitBooking()">Book</button>
+                  <!-- <button type="button" onclick="submitBooking()">Book</button> -->
+                  <button type="button" class="btn btn-primary" onclick="submitBooking()"> Book </button>
                 </form>
               </div>
             </div>

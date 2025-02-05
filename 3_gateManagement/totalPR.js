@@ -35,7 +35,7 @@ function displayPRResidents(prResidents) {
         <td>${resident.cardno}</td>
         <td>${resident.issuedto}</td>
         <td>${resident.mobno}</td>
-        <td>${resident.centre}</td>
+        
       `;
       prResidentsContainer.appendChild(row);
     });

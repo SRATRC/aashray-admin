@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/create_admin',
+        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/create',
         {
           method: 'POST',
           headers: {
@@ -24,14 +24,17 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await response.json();
 
       if (response.ok) {
-        statusMessage.innerHTML = `<div class="alert alert-success">Admin ${data.username} created successfully!</div>`;
-        form.reset(); // Clear form
+        // Show success pop-up and redirect on OK
+        alert(`Admin ${data.username} created successfully!`);
+        window.location.href = 'fetchAllAdmins.html';
       } else {
+        // Display error message in the status container
         statusMessage.innerHTML = `<div class="alert alert-danger">${
           data.message || 'Failed to create admin.'
         }</div>`;
       }
     } catch (error) {
+      // Handle unexpected errors
       statusMessage.innerHTML = `<div class="alert alert-danger">An error occurred. Please try again later.</div>`;
     }
   });
