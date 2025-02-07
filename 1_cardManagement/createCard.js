@@ -54,7 +54,7 @@ async function assignCard(event) {
 
       // Show success message in popup and redirect to cardManagement.html
       alert('Card assigned successfully!');
-      window.location.href = 'cardManagement.html'; // Redirect to cardManagement.html
+      window.location.href = 'searchCard.html'; // Redirect to cardManagement.html
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message);

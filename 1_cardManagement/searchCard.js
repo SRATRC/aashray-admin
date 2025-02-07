@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         options
       );
       const data = await response.json();
-      console.log(data);
+      console.log(`API Returned ${data.data.length} records`);
       displayData(data.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const displayData = (data) => {
+    console.log(`Displaying ${data.length} records`);
     dataList.innerHTML = '';
 
     if (Array.isArray(data)) {
@@ -64,22 +65,56 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Search functionality
-  searchInput.addEventListener('input', () => {
-    const query = searchInput.value.toLowerCase();
-    const rows = dataList.querySelectorAll('tr');
+  // searchInput.addEventListener('input', () => {
+  //   const query = searchInput.value.toLowerCase();
+  //   const rows = dataList.querySelectorAll('tr');
 
-    rows.forEach((row) => {
-      const name = row.querySelector('td').textContent.toLowerCase();
-      const cardNumber = row
-        .querySelectorAll('td')[1]
-        .textContent.toLowerCase();
+  //   rows.forEach((row) => {
+  //     const name = row.querySelector('td').textContent.toLowerCase();
+  //     const cardNumber = row
+  //       .querySelectorAll('td')[1]
+  //       .textContent.toLowerCase();
 
-      if (name.includes(query) || cardNumber.includes(query)) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
+  //     if (name.includes(query) || cardNumber.includes(query)) {
+  //       row.style.display = '';
+  //     } else {
+  //       row.style.display = 'none';
+  //     }
+  //   });
+  // });
+
+  // Search functionality with API call
+  searchInput.addEventListener('input', async () => {
+    const query = searchInput.value.trim().toLowerCase();
+    if (query.length === 0) {
+      fetchData(); // Fetch all data if the input is cleared
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${encodeURIComponent(
+          query
+        )}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch search results');
       }
-    });
+
+      const data = await response.json();
+      displayData(data.data); // Update the table with API results
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+      dataList.innerHTML = '<tr><td colspan="2">No results found</td></tr>';
+    }
   });
 
   // Fetch data on load
