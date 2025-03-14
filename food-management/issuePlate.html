@@ -1,4 +1,5 @@
-<!--index--> 
+<!--food/dinnercheck_read--> 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +9,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <link rel="icon" href="favicon.ico">
-<title>Admin - office</title>
+<title>Kitchen Admin</title>
 <!-- Bootstrap core CSS -->
 <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 <!-- Fonts -->
@@ -18,40 +19,49 @@
 <link href="/style/css/clockpicker.css" rel="stylesheet">
 <link href="/style/css/style.css" rel="stylesheet">
 </head>
-
 <body>
 <div class="fullheight" style="background:url(/style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
-    <div class="header">
+	<div class="header">
         <div class="container">
-            <div class="logo">
-                <a href="javascript:void(0);"><img src="../images/logo.png" alt="" title=""></a>
-            </div>
-            <div class="logout">
-                <a id="homelink" href="index.html">
-                  <img alt="" title=""> Logout   
-                </a>
-              </div>
+          <div class="logout">
+            <a id="homelink" href="../index.html">
+              <img alt="" title="" /> Logout
+            </a>
+          </div>
+          <div class="logout">
+            <a href="/adminhome.html">
+              <img alt="" title="" /> Home &nbsp; | &nbsp;
+            </a>
+          </div>
+          <div class="logout">
+            <a href="/food-management/foodManagement.html">
+              <img alt="" title="" /> Back &nbsp; | &nbsp;
+            </a>
+          </div>
         </div>
-    </div>
+      </div>
         <div class="middlecontent">
         	<div class="container">
             	<div class="whitesec">
                     <div class="inner-padding">
                     	<div class="frm-head">
-                          <h4><b><u>Welcome, Admin! </u></b></h4>
+                          <h4><b><u>Tap your card to avail Meal</span></u></b></h4>
 							   </div>
-								<div class="form">
+                               <div class="form" onsubmit="foodCheckin(event)">
+                                <form>
 									<div class="row">
+									<div>
+										<label>Tap the card: </label>
+										<input type="text" name="cardno" autofocus="autofocus">
+									</div>
+									<div>
+										<input type="hidden" name="transaction_detail" value="dinner">
+									</div>
 									<div class="col-md-12">
-										<a class="btn col-md-12 btn-lg btn-demo" href="admin-management/">Admin Management</a>
-                                        <a class="btn col-md-12 btn-lg btn-demo" href="card-management/searchCard.html">Card Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="food-management/foodManagement.html">Food Management</a>
-                                        <a class="btn col-md-12 btn-lg btn-demo" href="gate-management/gateManagement.html">Gate Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="adhyayan-management/adhyayanManagement.html">Adhyayan Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="room-management/roomManagement.html">Room Management</a>
-										<a class="btn col-md-12 btn-lg btn-demo" href="report-management/reportManagement.html">Admin Reports</a>
-                                        <a class="btn col-md-12 btn-lg btn-demo" href="travel-management/travelManagement.html">Travel Management</a>
+										<!-- <input type="submit" value="submit"> -->
+                    <button type="submit" class="btn btn-primary"> Submit </button>
 									</div>	
+                  
                                 </form>
 							</div>
                         </div>
@@ -76,5 +86,6 @@
 <script src="/style/js/clockpicker.js"></script>
 <script src="/style/js/custom.js"></script>
 <script src="/sessionstorage.js"></script>
+<script src="issuePlate.js"></script>
 </body>
 </html>

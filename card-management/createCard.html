@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
+    />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <link rel="icon" href="favicon.ico" />
+    <title>Office Admin</title>
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
+      rel="stylesheet"
+    />
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/style/css/plugin.css" rel="stylesheet" />
+    <!-- Custom styles for this template -->
+    <link href="/style/css/clockpicker.css" rel="stylesheet" />
+    <link href="/style/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div
+      class="fullheight"
+      style="
+        background: url(/style/images/RC_Blur.png) no-repeat center center;
+        background-size: cover;
+      "
+    >
+      <div class="header">
+        <div class="container">
+          <div class="logout">
+            <a id="homelink" href="../index.html">
+              <img alt="" title="" /> Logout
+            </a>
+          </div>
+          <div class="logout">
+            <a href="/adminhome.html">
+              <img alt="" title="" /> Home &nbsp; | &nbsp;
+            </a>
+          </div>
+          <div class="logout">
+            <a href="/card-management/searchCard.html">
+              <img alt="" title="" /> Back &nbsp; | &nbsp;
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="middlecontent">
+        <div class="container">
+          <div class="whitesec">
+            <div class="inner-padding">
+              <div class="frm-head">
+                <h4>
+                  <b><u>Assign New Card </u></b>
+                </h4>
+              </div>
+              <div class="form" onsubmit="assignCard(event)">
+                <form>
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label>Card Number:</label>
+                      <input
+                        type="text"
+                        name="cardno"
+                        pattern="[0-9]{10}"
+                        required
+                      />
+                    </div>
+                    <div class="col-md-12">
+                      <label>Card Issued To:</label>
+                      <input type="text" name="issuedto" required />
+                    </div>
+                    <div class="col-md-12">
+                      <label>Gender:</label>
+                      <select name="gender" id="gender">
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                      </select>
+                    </div>
+                    <div class="col-md-12">
+                      <label>Date of Birth:</label>
+                      <input type="date" name="dob" required />
+                    </div>
+                    <div class="col-md-12">
+                      <label>Phone No:</label>
+                      <input
+                        type="text"
+                        maxlength="10"
+                        name="mobno"
+                        pattern="\d{10}"
+                        title="Please enter exactly 10 digits"
+                        required
+                      />
+                    </div>
+                    <div class="col-md-12">
+                      <label>E-mail address:</label>
+                      <input type="text" name="email" />
+                    </div>
+                    <div class="col-md-12">
+                      <label>ID type:</label>
+                      <select name="idType" id="idType">
+                        <option value="PAN">PAN No</option>
+                        <option value="Aadhar">Aadhar No</option>
+                        <option value="Pending">None</option>
+                      </select>
+                    </div>
+                    <div class="col-md-12">
+                      <label>ID No:</label>
+                      <input type="text" name="idNo" required />
+                    </div>
+                    <div class="col-md-12">
+                      <label>Country:</label>
+                      <select name="country" id="country" required>
+                        <option value="">Select Country</option>
+                      </select>
+                    </div>
+                    <div class="col-md-12">
+                      <label>State:</label>
+                      <select name="state" id="state" required>
+                        <option value="">Select State</option>
+                      </select>
+                    </div>
+                    <div class="col-md-12">
+                      <label>City:</label>
+                      <select name="city" id="city" required>
+                        <option value="">Select City</option>
+                      </select>
+                    </div>
+                    <div class="col-md-12">
+                      <label>Address:</label>
+                      <input type="text" name="address" required />
+                    </div>
+                    <div class="col-md-12">
+                      <label>PIN:</label>
+                      <input type="text" name="pin" required />
+                    </div>
+                    <div class="col-md-12">
+                      <label>Centre:</label>
+                      <input type="text" name="centre" />
+                    </div>
+                    <div class="col-md-12">
+                      <label>Residential Status:</label>
+                      <select type="text" name="res_status">
+                        <option value="MUMUKSHU">MUMUKSHU</option>
+                        <option value="PR">PR</option>
+                        <option value="Seva_Kutir">SEVA KUTIR</option>
+                      </select>
+                    </div>
+                    <div class="col-md-12">
+                      <!-- <input type="submit" value="Submit" /> -->
+                      <button type="submit" class="btn btn-primary">
+                        Submit
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="container">
+          <p>
+            © 2019
+            <a href="#" target="_blank"
+              >Shrimad Rajchandra Aatma Tatva Research Centre</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="/style/js/plugin.js"></script>
+    <script src="/style/js/bootstrap-datepicker.min.js"></script>
+    <script src="/style/js/clockpicker.js"></script>
+    <script src="/style/js/custom.js"></script>
+    <script src="createCard.js"></script>
+    <script src="/sessionstorage.js"></script>
+  </body>
+</html>
