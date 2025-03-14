@@ -20,7 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
       );
       const data = await response.json();
       console.log(`API Returned ${data.data.length} records`);
-      displayData(data.data);
+      const sortedData = data.data.sort(
+        (a, b) =>
+          new Date(b.updatedAt || b.createdAt) -
+          new Date(a.updatedAt || a.createdAt)
+      );
+
+      // Display only the latest 20 entries
+      displayData(sortedData.slice(0, 20));
+      // displayData(data.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     }

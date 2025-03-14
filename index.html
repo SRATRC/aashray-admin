@@ -13,14 +13,14 @@
 <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
-<link href="../style/css/plugin.css" rel="stylesheet">
+<link href="/style/css/plugin.css" rel="stylesheet">
 <!-- Custom styles for this template -->
-<link href="../style/css/clockpicker.css" rel="stylesheet">
-<link href="../style/css/style.css" rel="stylesheet">
+<link href="/style/css/clockpicker.css" rel="stylesheet">
+<link href="/style/css/style.css" rel="stylesheet">
 </head>
 <body>
     
-<div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
+<div class="fullheight" style="background:url(/style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
         
         <div class="middlecontent">
         	<div class="container">
@@ -29,10 +29,10 @@
                     	<div class="frm-head">
                           <h1>Welcome To Research Centre</h1>
                        </div>
-                        <div class="form" onsubmit="login(event)">
+                        <div class="form">
                         	<div class="row">
 									<div class="col-md-12">
-										<form action="" method="post">
+										<form action="" method="post" onsubmit="login(event)">
 										<label>Username:</label>
 										<input type="text" name="username" id="username" placeholder="">
 									</div>
@@ -62,10 +62,12 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="https://use.fontawesome.com/373a347df2.js"></script>
-<script src="../style/js/plugin.js"></script>
-<script src="../style/js/bootstrap-datepicker.min.js"></script>
-<script src="../style/js/clockpicker.js"></script>
-<script src="../style/js/custom.js"></script>
-<script src="/index.js"></script>
+<script src="/style/js/plugin.js"></script>
+<script src="/style/js/bootstrap-datepicker.min.js"></script>
+<script src="/style/js/clockpicker.js"></script>
+<script src="/style/js/custom.js"></script>
+<script type="module">
+	import { login } from '/src/index.js';
+</script>
 </body>
 </html>

@@ -10,7 +10,7 @@
     <meta name="description" content="" />
     <meta name="author" content="" />
     <link rel="icon" href="favicon.ico" />
-    <title>Fetch Roles</title>
+    <title>Create New Admin</title>
     <!-- Bootstrap core CSS -->
     <link
       href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
@@ -21,16 +21,17 @@
       href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
       rel="stylesheet"
     />
-    <link href="../style/css/plugin.css" rel="stylesheet" />
+    <link href="/style/css/plugin.css" rel="stylesheet" />
     <!-- Custom styles for this template -->
-    <link href="../style/css/clockpicker.css" rel="stylesheet" />
-    <link href="../style/css/style.css" rel="stylesheet" />
+    <link href="/style/css/clockpicker.css" rel="stylesheet" />
+    <link href="/style/css/style.css" rel="stylesheet" />
   </head>
+
   <body>
     <div
       class="fullheight"
       style="
-        background: url(../style/images/RC_Blur.png) no-repeat center center;
+        background: url(/style/images/RC_Blur.png) no-repeat center center;
         background-size: cover;
       "
     >
@@ -47,7 +48,7 @@
             </a>
           </div>
           <div class="logout">
-            <a href="/0_adminManagement/adminManagement.html">
+            <a href="/admin-management/fetchAllAdmins.html">
               <img alt="" title="" /> Back &nbsp; | &nbsp;
             </a>
           </div>
@@ -59,39 +60,45 @@
           <div class="whitesec">
             <div class="inner-padding">
               <div class="frm-head">
-                <h1><br />Fetch Roles</h1>
+                <h1>
+                  <b><u>Create New Admin User</u></b>
+                </h1>
               </div>
               <div class="form">
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="table">
-                      <table
-                        id="rolesList"
-                        class="table table-striped table-bordered"
-                      >
-                        <thead>
-                          <tr>
-                            <th>Roles List</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <!-- Rows will be populated by JavaScript -->
-                        </tbody>
-                      </table>
-                      <div class="row">
-                        <div class="col-md-12">
-                          <button
-                            onclick="window.location.href='createRole.html'"
-                            class="btn btn-primary"
-                          >
-                            Add New Admin Role
-                          </button>
-                        </div>
+                <form id="createAdminForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <div class="form-group">
+                        <label for="username">Username</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="username"
+                          placeholder="Enter username"
+                          required
+                        />
                       </div>
                     </div>
+                    <div class="col-md-12">
+                      <div class="form-group">
+                        <label for="password">Password</label>
+                        <input
+                          type="password"
+                          class="form-control"
+                          id="password"
+                          placeholder="Enter password"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <button type="submit" class="btn btn-success">
+                        Create Admin
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </form>
+                <div id="statusMessage"></div>
               </div>
             </div>
           </div>
@@ -113,11 +120,11 @@
     <!-- Bootstrap core JavaScript -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://use.fontawesome.com/373a347df2.js"></script>
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../style/js/clockpicker.js"></script>
-    <script src="../style/js/custom.js"></script>
+    <script src="/style/js/plugin.js"></script>
+    <script src="/style/js/bootstrap-datepicker.min.js"></script>
+    <script src="/style/js/clockpicker.js"></script>
+    <script src="/style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="fetchRoles.js"></script>
+    <script src="createAdmin.js"></script>
   </body>
 </html>

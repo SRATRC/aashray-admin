@@ -8,19 +8,19 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <link rel="icon" href="favicon.ico">
-<title>Delete Role</title>
+<title>Deactivate Admin</title>
 <!-- Bootstrap core CSS -->
 <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
-<link href="../style/css/plugin.css" rel="stylesheet">
+<link href="/style/css/plugin.css" rel="stylesheet">
 <!-- Custom styles for this template -->
-<link href="../style/css/clockpicker.css" rel="stylesheet">
-<link href="../style/css/style.css" rel="stylesheet">
+<link href="/style/css/clockpicker.css" rel="stylesheet">
+<link href="/style/css/style.css" rel="stylesheet">
 </head>
 
 <body>
-<div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
+<div class="fullheight" style="background:url(/style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
     <div class="header">
         <div class="container">
           <div class="logout">
@@ -34,7 +34,7 @@
             </a>
           </div>
           <div class="logout">
-            <a href="/0_adminManagement/adminManagement.html">
+            <a href="/admin-management/.html">
               <img alt="" title="" /> Back &nbsp; | &nbsp;
             </a>
           </div>
@@ -45,18 +45,17 @@
             	<div class="whitesec">
                     <div class="inner-padding">
                     	<div class="frm-head">
-                          <h4><b><u>Delete Role </u></b></h4>
+                          <h4><b><u>Deactivate Admin </u></b></h4>
 							   </div>
 								<div class="form">
 									<div class="row">
 									<div class="col-md-12">
-                                        <form id="deleteRoleForm">
-                                            <label for="name">Role Name:</label>
-                                            <input type="text" id="name" name="name" required />
-                                            <button type="submit">Delete Role</button>
+										<form id="deactivateAdminForm">
+                                            <label for="username">Username:</label>
+                                            <input type="text" id="username" name="username" required />
+                                            <button type="submit">Deactivate Admin</button>
                                           </form>
-                                      
-                                          <div id="message"></div>                          
+                                          <p id="statusMessage"></p>                                      
 									</div>	
                                 </form>
 							</div>
@@ -77,11 +76,11 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="https://use.fontawesome.com/373a347df2.js"></script>
-<script src="../style/js/plugin.js"></script>
-<script src="../style/js/bootstrap-datepicker.min.js"></script>
-<script src="../style/js/clockpicker.js"></script>
-<script src="../style/js/custom.js"></script>
+<script src="/style/js/plugin.js"></script>
+<script src="/style/js/bootstrap-datepicker.min.js"></script>
+<script src="/style/js/clockpicker.js"></script>
+<script src="/style/js/custom.js"></script>
 <script src="/sessionstorage.js"></script>
-<script src="deleteRole.js"></script>
+<script src="deactivateAdmin.js"></script>
 </body>
 </html>

@@ -8,19 +8,19 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <link rel="icon" href="favicon.ico">
-<title>Create Role</title>
+<title>Admin Activation</title>
 <!-- Bootstrap core CSS -->
 <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
-<link href="../style/css/plugin.css" rel="stylesheet">
+<link href="/style/css/plugin.css" rel="stylesheet">
 <!-- Custom styles for this template -->
-<link href="../style/css/clockpicker.css" rel="stylesheet">
-<link href="../style/css/style.css" rel="stylesheet">
+<link href="/style/css/clockpicker.css" rel="stylesheet">
+<link href="/style/css/style.css" rel="stylesheet">
 </head>
 
 <body>
-    <div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
+<div class="fullheight" style="background:url(/style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
     <div class="header">
         <div class="container">
           <div class="logout">
@@ -34,38 +34,37 @@
             </a>
           </div>
           <div class="logout">
-            <a href="/0_adminManagement/fetchRoles.html">
+            <a href="/admin-management/.html">
               <img alt="" title="" /> Back &nbsp; | &nbsp;
             </a>
           </div>
         </div>
       </div>
-        <div class="middlecontent">
-        	<div class="container">
-            	<div class="whitesec">
-                    <div class="inner-padding">
-                    	<div class="frm-head">
-                          <h4><b><u>Create New Role </u></b></h4>
-							   </div>
-								<div class="form">
-									<div class="row">
-									<div class="col-md-12">
-										<form id="createRoleForm">
-                                            <label for="name">Role Name:</label>
-                                            <input type="text" id="name" name="name" required />
-                                            <button type="submit" class="btn btn-primary">
-                                              Create Role
-                                            </button>
-                                          </form>
-                                          <p id="statusMessage"></p>
-									</div>	
-                                </form>
-							</div>
-                        </div>
-                    </div>
-                </div>
+      <div class="middlecontent">
+        <div class="container">
+            <div class="whitesec">
+                  <div class="inner-padding">
+                    <div class="frm-head">
+                        <h4><b><u>Activate Admin Account </u></b></h4>
+               </div>
+              <div class="form">
+                <div class="row">
+                <div class="col-md-12">
+                  <form id="activateAdminForm">
+                                          <label for="activateUsername">Username to Activate:</label>
+                                          <input type="text" id="activateUsername" name="username" required />
+                                          <button type="submit">Activate Admin</button>
+                                        </form>
+                                    
+                                        <p id="statusMessage"></p>
+                </div>	
+                              </form>
             </div>
-        </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
         <div class="footer">
         	<div class="container">
             	<p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
@@ -78,11 +77,11 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="https://use.fontawesome.com/373a347df2.js"></script>
-<script src="../style/js/plugin.js"></script>
-<script src="../style/js/bootstrap-datepicker.min.js"></script>
-<script src="../style/js/clockpicker.js"></script>
-<script src="../style/js/custom.js"></script>
+<script src="/style/js/plugin.js"></script>
+<script src="/style/js/bootstrap-datepicker.min.js"></script>
+<script src="/style/js/clockpicker.js"></script>
+<script src="/style/js/custom.js"></script>
 <script src="/sessionstorage.js"></script>
-<script src="createRole.js"></script>
+<script src="activateAdmin.js"></script>
 </body>
 </html>
