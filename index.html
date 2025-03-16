@@ -1,73 +1,1158 @@
-<!--indexlogin--> 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
-<meta name="description" content="">
-<meta name="author" content="">
-<link rel="icon" href="favicon.ico">
-<title>Admin - Office</title>
-<!-- Bootstrap core CSS -->
-<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
-<link href="/style/css/plugin.css" rel="stylesheet">
-<!-- Custom styles for this template -->
-<link href="/style/css/clockpicker.css" rel="stylesheet">
-<link href="/style/css/style.css" rel="stylesheet">
-</head>
-<body>
-    
-<div class="fullheight" style="background:url(/style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
-        
-        <div class="middlecontent">
-        	<div class="container">
-            	<div class="whitesec">
-                    <div class="inner-padding">
-                    	<div class="frm-head">
-                          <h1>Welcome To Research Centre</h1>
-                       </div>
-                        <div class="form">
-                        	<div class="row">
-									<div class="col-md-12">
-										<form action="" method="post" onsubmit="login(event)">
-										<label>Username:</label>
-										<input type="text" name="username" id="username" placeholder="">
-									</div>
-									<div class="col-md-12">
-										<label>Password:</label>
-										<input type="password" id="password" name="password" placeholder="**********">
-									</div>
-									<div class="col-md-12">
-										<input type="submit" name="submit" value="Login">
-									</div>
-                                </form>
-							</div>
-                        </div>
-                    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="./assets/images/logo.png" />
+    <title>Vitraag Vigyaan Aashray - Download Now</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+          'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      }
+
+      :root {
+        --primary-color: #6366f1;
+        --primary-light: #818cf8;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --background-light: #f9fafb;
+        --background-white: #ffffff;
+        --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      body {
+        color: var(--text-dark);
+        line-height: 1.6;
+        background-color: var(--background-light);
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      header {
+        padding: 2rem 0;
+        background-color: var(--background-white);
+        box-shadow: var(--shadow);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        z-index: 1000;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 7rem 0 4rem;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+      }
+
+      .hero-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+      }
+
+      .hero-text {
+        flex: 1;
+      }
+
+      .hero-text h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+        background: linear-gradient(
+          to right,
+          var(--primary-color),
+          var(--primary-light)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .hero-text p {
+        font-size: 1.25rem;
+        color: var(--text-light);
+        margin-bottom: 2rem;
+        max-width: 600px;
+      }
+
+      .hero-image {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        position: relative;
+      }
+
+      .phone-mockup {
+        max-width: 300px;
+        filter: drop-shadow(0 20px 25px -5px rgba(0, 0, 0, 0.1))
+          drop-shadow(0 10px 10px -5px rgba(0, 0, 0, 0.04));
+        transform: rotate(-5deg);
+      }
+
+      .download-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--text-dark);
+        color: white;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid var(--text-dark);
+      }
+
+      .download-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+      }
+
+      .download-btn.primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .download-btn.primary:hover {
+        background-color: var(--primary-light);
+        border-color: var(--primary-light);
+      }
+
+      .download-btn.secondary {
+        background-color: transparent;
+        color: var(--text-dark);
+      }
+
+      .download-btn.secondary:hover {
+        background-color: var(--text-dark);
+        color: white;
+      }
+
+      .download-btn img {
+        height: 24px;
+        margin-right: 10px;
+      }
+
+      .legal {
+        padding: 5rem 0;
+        background-color: var(--background-white);
+      }
+
+      .legal h2 {
+        text-align: center;
+        margin-bottom: 3rem;
+        font-size: 2rem;
+        color: var(--text-dark);
+      }
+
+      /* Desktop tabs style */
+      .legal-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        position: sticky;
+        top: 90px;
+        background-color: var(--background-white);
+        padding: 1rem 0;
+        z-index: 100;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .legal-tab {
+        color: var(--text-light);
+        text-decoration: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+
+      .legal-tab:hover,
+      .legal-tab.active {
+        color: var(--primary-color);
+        background-color: rgba(99, 102, 241, 0.1);
+        border-color: rgba(99, 102, 241, 0.2);
+      }
+
+      /* Mobile dropdown style */
+      .legal-dropdown {
+        display: none;
+        position: sticky;
+        top: 90px;
+        z-index: 100;
+        margin-bottom: 2rem;
+      }
+
+      .dropdown-btn {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        background-color: var(--background-white);
+        color: var(--text-dark);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .dropdown-btn:after {
+        content: '▼';
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+      }
+
+      .dropdown-btn.active:after {
+        content: '▲';
+      }
+
+      .dropdown-content {
+        display: none;
+        background-color: var(--background-white);
+        border-radius: 0 0 8px 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .dropdown-content a {
+        display: block;
+        padding: 0.75rem 1.5rem;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+
+      .dropdown-content a:hover,
+      .dropdown-content a.active {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: var(--primary-color);
+      }
+
+      .legal-content {
+        max-width: 800px;
+        margin: 0 auto;
+        background: var(--background-white);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+      }
+
+      .legal-section {
+        display: none;
+        padding: 1rem 0;
+      }
+
+      .legal-section.active {
+        display: block;
+      }
+
+      .legal-section h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+      }
+
+      .legal-section h4 {
+        font-size: 1.25rem;
+        margin: 1.5rem 0 0.75rem;
+        color: var(--text-dark);
+      }
+
+      .legal-section p,
+      .legal-section ul {
+        margin-bottom: 1rem;
+        color: var(--text-light);
+      }
+
+      .legal-section ul {
+        padding-left: 1.5rem;
+      }
+
+      .legal-section ul li {
+        margin-bottom: 0.5rem;
+      }
+
+      footer {
+        background-color: var(--text-dark);
+        color: white;
+        text-align: center;
+        padding: 2rem 0;
+      }
+
+      .social-links {
+        margin: 1rem 0;
+      }
+
+      .social-links a {
+        color: white;
+        margin: 0 10px;
+        font-size: 1.2rem;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+
+      .social-links a:hover {
+        opacity: 1;
+      }
+
+      .contact-list {
+        list-style: none; /* Remove bullets */
+        padding: 0;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      /* Style for list items */
+      .contact-list li {
+        margin-bottom: 10px;
+      }
+
+      /* Style for address */
+      .contact-list .address {
+        display: flex;
+        align-items: flex-start;
+      }
+
+      .contact-list .address strong {
+        white-space: nowrap;
+        margin-right: 10px;
+        font-weight: bold;
+      }
+
+      .contact-list .address div {
+        max-width: 400px; /* Prevents text from stretching too wide */
+      }
+
+      @media (max-width: 992px) {
+        .hero-text h1 {
+          font-size: 3rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero-content {
+          flex-direction: column-reverse;
+          text-align: center;
+        }
+
+        .hero-text h1 {
+          font-size: 2.5rem;
+        }
+
+        .hero-text p {
+          font-size: 1.1rem;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .download-buttons {
+          justify-content: center;
+        }
+
+        .phone-mockup {
+          transform: rotate(0);
+          max-width: 250px;
+        }
+
+        /* Hide tabs and show dropdown on mobile */
+        .legal-tabs {
+          display: none;
+        }
+
+        .legal-dropdown {
+          display: block;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .hero-text h1 {
+          font-size: 2rem;
+        }
+
+        .hero {
+          padding-top: 6rem;
+        }
+
+        .download-buttons {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .download-btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .legal-content {
+          padding: 1.5rem;
+        }
+
+        .legal h2 {
+          font-size: 1.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-content">
+          <img
+            src="./assets/images/logo.png"
+            alt="App Logo"
+            style="height: 45px; width: 82px"
+          />
+        </div>
+      </div>
+    </header>
+
+    <section class="hero" id="download">
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-text">
+            <h1>Vitraag Vigyaan Aashray</h1>
+            <p>Download our app today. Available on iOS and Android.</p>
+            <div class="download-buttons">
+              <a
+                href="https://play.google.com/store/apps/details?id=org.vitraagvigyaan.aashray"
+                target="_blank"
+                class="download-btn primary"
+              >
+                <img
+                  src="./assets/images/googleplay.png"
+                  alt="Google Play icon"
+                />
+                Google Play
+              </a>
+              <a href="#" class="download-btn">
+                <img src="./assets/images/appstore.webp" alt="App Store icon" />
+                App Store
+              </a>
+            </div>
+          </div>
+          <div class="hero-image">
+            <img
+              src="./assets/images/image.png"
+              alt="App Preview"
+              class="phone-mockup"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="legal" id="legal">
+      <div class="container">
+        <h2>Legal Information</h2>
+
+        <!-- Desktop tabs -->
+        <div class="legal-tabs">
+          <a
+            href="#privacy"
+            class="legal-tab active"
+            data-target="privacy-section"
+            >Privacy Policy</a
+          >
+          <!-- <a href="#terms" class="legal-tab" data-target="terms-section">Terms of Service</a> -->
+          <a href="#contact" class="legal-tab" data-target="contact-section"
+            >Contact Us</a
+          >
+        </div>
+
+        <!-- Mobile dropdown -->
+        <div class="legal-dropdown">
+          <button class="dropdown-btn">Privacy Policy</button>
+          <div class="dropdown-content">
+            <a href="#privacy" class="active" data-target="privacy-section"
+              >Privacy Policy</a
+            >
+            <!-- <a href="#terms" data-target="terms-section">Terms of Service</a> -->
+            <a href="#contact" data-target="contact-section">Contact Us</a>
+          </div>
+        </div>
+
+        <div class="legal-content">
+          <div id="privacy-section" class="legal-section active">
+            <h1>Privacy Policy</h1>
+            <p>Last updated: February 11, 2025</p>
+            <p>
+              This Privacy Policy describes Our policies and procedures on the
+              collection, use and disclosure of Your information when You use
+              the Service and tells You about Your privacy rights and how the
+              law protects You.
+            </p>
+            <p>
+              We use Your Personal data to provide and improve the Service. By
+              using the Service, You agree to the collection and use of
+              information in accordance with this Privacy Policy. This Privacy
+              Policy has been created with the help of the
+              <a
+                href="https://www.privacypolicies.com/privacy-policy-generator/"
+                target="_blank"
+                >Privacy Policy Generator</a
+              >.
+            </p>
+            <h2>Interpretation and Definitions</h2>
+            <h3>Interpretation</h3>
+            <p>
+              The words of which the initial letter is capitalized have meanings
+              defined under the following conditions. The following definitions
+              shall have the same meaning regardless of whether they appear in
+              singular or in plural.
+            </p>
+            <h3>Definitions</h3>
+            <p>For the purposes of this Privacy Policy:</p>
+            <ul>
+              <li>
+                <p>
+                  <strong>Account</strong> means a unique account created for
+                  You to access our Service or parts of our Service.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Affiliate</strong> means an entity that controls, is
+                  controlled by or is under common control with a party, where
+                  &quot;control&quot; means ownership of 50% or more of the
+                  shares, equity interest or other securities entitled to vote
+                  for election of directors or other managing authority.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Application</strong> refers to Vitraag Vigyaan
+                  Aashray, the software program provided by the Company.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Company</strong> (referred to as either &quot;the
+                  Company&quot;, &quot;We&quot;, &quot;Us&quot; or
+                  &quot;Our&quot; in this Agreement) refers to Vitraag Vigyaan,
+                  Khopoli, maharashtra.
+                </p>
+              </li>
+              <li>
+                <p><strong>Country</strong> refers to: Maharashtra, India</p>
+              </li>
+              <li>
+                <p>
+                  <strong>Device</strong> means any device that can access the
+                  Service such as a computer, a cellphone or a digital tablet.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Personal Data</strong> is any information that relates
+                  to an identified or identifiable individual.
+                </p>
+              </li>
+              <li>
+                <p><strong>Service</strong> refers to the Application.</p>
+              </li>
+              <li>
+                <p>
+                  <strong>Service Provider</strong> means any natural or legal
+                  person who processes the data on behalf of the Company. It
+                  refers to third-party companies or individuals employed by the
+                  Company to facilitate the Service, to provide the Service on
+                  behalf of the Company, to perform services related to the
+                  Service or to assist the Company in analyzing how the Service
+                  is used.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>Usage Data</strong> refers to data collected
+                  automatically, either generated by the use of the Service or
+                  from the Service infrastructure itself (for example, the
+                  duration of a page visit).
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>You</strong> means the individual accessing or using
+                  the Service, or the company, or other legal entity on behalf
+                  of which such individual is accessing or using the Service, as
+                  applicable.
+                </p>
+              </li>
+            </ul>
+            <h2>Collecting and Using Your Personal Data</h2>
+            <h3>Types of Data Collected</h3>
+            <h4>Personal Data</h4>
+            <p>
+              While using Our Service, We may ask You to provide Us with certain
+              personally identifiable information that can be used to contact or
+              identify You. Personally identifiable information may include, but
+              is not limited to:
+            </p>
+            <ul>
+              <li>
+                <p>Email address</p>
+              </li>
+              <li>
+                <p>First name and last name</p>
+              </li>
+              <li>
+                <p>Phone number</p>
+              </li>
+              <li>
+                <p>Address, State, Province, ZIP/Postal code, City</p>
+              </li>
+              <li>
+                <p>Usage Data</p>
+              </li>
+            </ul>
+            <h4>Usage Data</h4>
+            <p>Usage Data is collected automatically when using the Service.</p>
+            <p>
+              Usage Data may include information such as Your Device's Internet
+              Protocol address (e.g. IP address), browser type, browser version,
+              the pages of our Service that You visit, the time and date of Your
+              visit, the time spent on those pages, unique device identifiers
+              and other diagnostic data.
+            </p>
+            <p>
+              When You access the Service by or through a mobile device, We may
+              collect certain information automatically, including, but not
+              limited to, the type of mobile device You use, Your mobile device
+              unique ID, the IP address of Your mobile device, Your mobile
+              operating system, the type of mobile Internet browser You use,
+              unique device identifiers and other diagnostic data.
+            </p>
+            <p>
+              We may also collect information that Your browser sends whenever
+              You visit our Service or when You access the Service by or through
+              a mobile device.
+            </p>
+            <h4>Information Collected while Using the Application</h4>
+            <p>
+              While using Our Application, in order to provide features of Our
+              Application, We may collect, with Your prior permission:
+            </p>
+            <ul>
+              <li>
+                Pictures and other information from your Device's camera and
+                photo library
+              </li>
+            </ul>
+            <p>
+              We use this information to provide features of Our Service, to
+              improve and customize Our Service. The information may be uploaded
+              to the Company's servers and/or a Service Provider's server or it
+              may be simply stored on Your device.
+            </p>
+            <p>
+              You can enable or disable access to this information at any time,
+              through Your Device settings.
+            </p>
+            <h3>Use of Your Personal Data</h3>
+            <p>The Company may use Personal Data for the following purposes:</p>
+            <ul>
+              <li>
+                <p>
+                  <strong>To provide and maintain our Service</strong>,
+                  including to monitor the usage of our Service.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>To manage Your Account:</strong> to manage Your
+                  registration as a user of the Service. The Personal Data You
+                  provide can give You access to different functionalities of
+                  the Service that are available to You as a registered user.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>For the performance of a contract:</strong> the
+                  development, compliance and undertaking of the purchase
+                  contract for the products, items or services You have
+                  purchased or of any other contract with Us through the
+                  Service.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>To contact You:</strong> To contact You by email,
+                  telephone calls, SMS, or other equivalent forms of electronic
+                  communication, such as a mobile application's push
+                  notifications regarding updates or informative communications
+                  related to the functionalities, products or contracted
+                  services, including the security updates, when necessary or
+                  reasonable for their implementation.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>To provide You</strong> with news, special offers and
+                  general information about other goods, services and events
+                  which we offer that are similar to those that you have already
+                  purchased or enquired about unless You have opted not to
+                  receive such information.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>To manage Your requests:</strong> To attend and manage
+                  Your requests to Us.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>For business transfers:</strong> We may use Your
+                  information to evaluate or conduct a merger, divestiture,
+                  restructuring, reorganization, dissolution, or other sale or
+                  transfer of some or all of Our assets, whether as a going
+                  concern or as part of bankruptcy, liquidation, or similar
+                  proceeding, in which Personal Data held by Us about our
+                  Service users is among the assets transferred.
+                </p>
+              </li>
+              <li>
+                <p>
+                  <strong>For other purposes</strong>: We may use Your
+                  information for other purposes, such as data analysis,
+                  identifying usage trends, determining the effectiveness of our
+                  promotional campaigns and to evaluate and improve our Service,
+                  products, services, marketing and your experience.
+                </p>
+              </li>
+            </ul>
+            <p>
+              We may share Your personal information in the following
+              situations:
+            </p>
+            <ul>
+              <li>
+                <strong>With Service Providers:</strong> We may share Your
+                personal information with Service Providers to monitor and
+                analyze the use of our Service, to contact You.
+              </li>
+              <li>
+                <strong>For business transfers:</strong> We may share or
+                transfer Your personal information in connection with, or during
+                negotiations of, any merger, sale of Company assets, financing,
+                or acquisition of all or a portion of Our business to another
+                company.
+              </li>
+              <li>
+                <strong>With Affiliates:</strong> We may share Your information
+                with Our affiliates, in which case we will require those
+                affiliates to honor this Privacy Policy. Affiliates include Our
+                parent company and any other subsidiaries, joint venture
+                partners or other companies that We control or that are under
+                common control with Us.
+              </li>
+              <li>
+                <strong>With business partners:</strong> We may share Your
+                information with Our business partners to offer You certain
+                products, services or promotions.
+              </li>
+              <li>
+                <strong>With other users:</strong> when You share personal
+                information or otherwise interact in the public areas with other
+                users, such information may be viewed by all users and may be
+                publicly distributed outside.
+              </li>
+              <li>
+                <strong>With Your consent</strong>: We may disclose Your
+                personal information for any other purpose with Your consent.
+              </li>
+            </ul>
+            <h3>Retention of Your Personal Data</h3>
+            <p>
+              The Company will retain Your Personal Data only for as long as is
+              necessary for the purposes set out in this Privacy Policy. We will
+              retain and use Your Personal Data to the extent necessary to
+              comply with our legal obligations (for example, if we are required
+              to retain your data to comply with applicable laws), resolve
+              disputes, and enforce our legal agreements and policies.
+            </p>
+            <p>
+              The Company will also retain Usage Data for internal analysis
+              purposes. Usage Data is generally retained for a shorter period of
+              time, except when this data is used to strengthen the security or
+              to improve the functionality of Our Service, or We are legally
+              obligated to retain this data for longer time periods.
+            </p>
+            <h3>Transfer of Your Personal Data</h3>
+            <p>
+              Your information, including Personal Data, is processed at the
+              Company's operating offices and in any other places where the
+              parties involved in the processing are located. It means that this
+              information may be transferred to — and maintained on — computers
+              located outside of Your state, province, country or other
+              governmental jurisdiction where the data protection laws may
+              differ than those from Your jurisdiction.
+            </p>
+            <p>
+              Your consent to this Privacy Policy followed by Your submission of
+              such information represents Your agreement to that transfer.
+            </p>
+            <p>
+              The Company will take all steps reasonably necessary to ensure
+              that Your data is treated securely and in accordance with this
+              Privacy Policy and no transfer of Your Personal Data will take
+              place to an organization or a country unless there are adequate
+              controls in place including the security of Your data and other
+              personal information.
+            </p>
+            <h3>Delete Your Personal Data</h3>
+            <p>
+              You have the right to delete or request that We assist in deleting
+              the Personal Data that We have collected about You.
+            </p>
+            <p>
+              Our Service may give You the ability to delete certain information
+              about You from within the Service.
+            </p>
+            <p>
+              You may update, amend, or delete Your information at any time by
+              signing in to Your Account, if you have one, and visiting the
+              account settings section that allows you to manage Your personal
+              information. You may also contact Us to request access to,
+              correct, or delete any personal information that You have provided
+              to Us.
+            </p>
+            <p>
+              Please note, however, that We may need to retain certain
+              information when we have a legal obligation or lawful basis to do
+              so.
+            </p>
+            <h3>Disclosure of Your Personal Data</h3>
+            <h4>Business Transactions</h4>
+            <p>
+              If the Company is involved in a merger, acquisition or asset sale,
+              Your Personal Data may be transferred. We will provide notice
+              before Your Personal Data is transferred and becomes subject to a
+              different Privacy Policy.
+            </p>
+            <h4>Law enforcement</h4>
+            <p>
+              Under certain circumstances, the Company may be required to
+              disclose Your Personal Data if required to do so by law or in
+              response to valid requests by public authorities (e.g. a court or
+              a government agency).
+            </p>
+            <h4>Other legal requirements</h4>
+            <p>
+              The Company may disclose Your Personal Data in the good faith
+              belief that such action is necessary to:
+            </p>
+            <ul>
+              <li>Comply with a legal obligation</li>
+              <li>Protect and defend the rights or property of the Company</li>
+              <li>
+                Prevent or investigate possible wrongdoing in connection with
+                the Service
+              </li>
+              <li>
+                Protect the personal safety of Users of the Service or the
+                public
+              </li>
+              <li>Protect against legal liability</li>
+            </ul>
+            <h3>Security of Your Personal Data</h3>
+            <p>
+              The security of Your Personal Data is important to Us, but
+              remember that no method of transmission over the Internet, or
+              method of electronic storage is 100% secure. While We strive to
+              use commercially acceptable means to protect Your Personal Data,
+              We cannot guarantee its absolute security.
+            </p>
+            <h2>Children's Privacy</h2>
+            <p>
+              Our Service does not address anyone under the age of 13. We do not
+              knowingly collect personally identifiable information from anyone
+              under the age of 13. If You are a parent or guardian and You are
+              aware that Your child has provided Us with Personal Data, please
+              contact Us. If We become aware that We have collected Personal
+              Data from anyone under the age of 13 without verification of
+              parental consent, We take steps to remove that information from
+              Our servers.
+            </p>
+            <p>
+              If We need to rely on consent as a legal basis for processing Your
+              information and Your country requires consent from a parent, We
+              may require Your parent's consent before We collect and use that
+              information.
+            </p>
+            <h2>Links to Other Websites</h2>
+            <p>
+              Our Service may contain links to other websites that are not
+              operated by Us. If You click on a third party link, You will be
+              directed to that third party's site. We strongly advise You to
+              review the Privacy Policy of every site You visit.
+            </p>
+            <p>
+              We have no control over and assume no responsibility for the
+              content, privacy policies or practices of any third party sites or
+              services.
+            </p>
+            <h2>Changes to this Privacy Policy</h2>
+            <p>
+              We may update Our Privacy Policy from time to time. We will notify
+              You of any changes by posting the new Privacy Policy on this page.
+            </p>
+            <p>
+              We will let You know via email and/or a prominent notice on Our
+              Service, prior to the change becoming effective and update the
+              &quot;Last updated&quot; date at the top of this Privacy Policy.
+            </p>
+            <p>
+              You are advised to review this Privacy Policy periodically for any
+              changes. Changes to this Privacy Policy are effective when they
+              are posted on this page.
+            </p>
+            <h2>Contact Us</h2>
+            <p>
+              If you have any questions about this Privacy Policy, You can
+              contact us:
+            </p>
+            <ul>
+              <li>
+                <p>By email: tech@vitraagvigyaan.org</p>
+              </li>
+              <li>
+                <p>
+                  By visiting this page on our website:
+                  <a
+                    href="https://www.vitraagvigyaan.org/"
+                    rel="external nofollow noopener"
+                    target="_blank"
+                    >https://www.vitraagvigyaan.org/</a
+                  >
+                </p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- <div id="terms-section" class="legal-section">
+                    <h3>Terms of Service</h3>
+                    <p>Last updated: March 9, 2025</p>
+                    
+                    <h4>1. Acceptance of Terms</h4>
+                    <p>By downloading, installing, or using our app, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use our app.</p>
+                    
+                    <h4>2. License</h4>
+                    <p>We grant you a limited, non-exclusive, non-transferable, revocable license to use our app for your personal, non-commercial purposes.</p>
+                    
+                    <h4>3. User Conduct</h4>
+                    <p>You agree not to:</p>
+                    <ul>
+                        <li>Use our app for any illegal purpose</li>
+                        <li>Violate any applicable laws or regulations</li>
+                        <li>Infringe the rights of others</li>
+                        <li>Attempt to gain unauthorized access to our app or systems</li>
+                        <li>Modify, adapt, or hack our app</li>
+                    </ul>
+                    
+                    <h4>4. Intellectual Property</h4>
+                    <p>Our app and its content are protected by copyright, trademark, and other laws. Our trademarks and trade dress may not be used without our prior written permission.</p>
+                    
+                    <h4>5. Termination</h4>
+                    <p>We may terminate or suspend your access to our app immediately, without prior notice or liability, for any reason.</p>
+                    
+                    <h4>6. Disclaimer of Warranties</h4>
+                    <p>Our app is provided "as is" without any warranties of any kind, either express or implied.</p>
+                    
+                    <h4>7. Limitation of Liability</h4>
+                    <p>We shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use our app.</p>
+                    
+                    <h4>8. Changes to Terms</h4>
+                    <p>We may modify these terms at any time. Your continued use of our app after any such changes constitutes your acceptance of the new terms.</p>
+                    
+                    <h4>9. Governing Law</h4>
+                    <p>These terms shall be governed by the laws of [Your Jurisdiction], without regard to its conflict of law provisions.</p>
+                </div> -->
+
+          <div id="contact-section" class="legal-section">
+            <h3>Contact Us</h3>
+
+            <p>
+              If you have any questions or concerns about our app or these legal
+              documents, please contact us:
+            </p>
+            <ul class="contact-list">
+              <li>
+                <strong>Email:</strong>
+                <a href="mailto:tech@vitraagvigyaan.org" target="_blank"
+                  >tech@vitraagvigyaan.org</a
+                >
+              </li>
+              <li>
+                <strong>Phone:</strong>
+                <a href="tel:+919820656510" target="_blank">+91 9820656510</a>
+              </li>
+              <li class="address">
+                <strong>Address:</strong>
+                <div>
+                  Shrimad Rajchandra Aatma Tatva Research Center<br />
+                  Rajnagar, Parli, Post Gothavade,<br />
+                  Taluka Sudhagadh<br />
+                  PALI, MAHARASHTRA 410205<br />
+                  India
                 </div>
-            </div>
+              </li>
+            </ul>
+          </div>
         </div>
-        <div class="footer">
-        	<div class="container">
-            	<p>© 2019 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
-            </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container">
+        <p>&copy; 2025 Vitraag Vigyaan. All rights reserved.</p>
+        <div class="social-links">
+          <a href="https://www.instagram.com/vitraag.vigyaan" target="_blank"
+            >Instagram</a
+          >
+          <a
+            href="https://www.linkedin.com/company/researchcentre-global"
+            target="_blank"
+            >LinkedIn</a
+          >
         </div>
-    </div>
-</div>
-<!-- Bootstrap core JavaScript
-    ================================================== -->
-<!-- Placed at the end of the document so the pages load faster -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="https://use.fontawesome.com/373a347df2.js"></script>
-<script src="/style/js/plugin.js"></script>
-<script src="/style/js/bootstrap-datepicker.min.js"></script>
-<script src="/style/js/clockpicker.js"></script>
-<script src="/style/js/custom.js"></script>
-<script type="module">
-	import { login } from '/src/index.js';
-</script>
-</body>
+      </div>
+    </footer>
+
+    <script>
+      // Handle tab and dropdown navigation
+      const tabs = document.querySelectorAll('.legal-tab, .dropdown-content a');
+      const sections = document.querySelectorAll('.legal-section');
+      const dropdownBtn = document.querySelector('.dropdown-btn');
+      const dropdownContent = document.querySelector('.dropdown-content');
+
+      // Function to set active tab and section
+      function setActiveTab(targetId) {
+        // Remove active class from all tabs and sections
+        tabs.forEach((t) => t.classList.remove('active'));
+        sections.forEach((s) => s.classList.remove('active'));
+
+        // Add active class to clicked tab
+        document
+          .querySelectorAll(`[data-target="${targetId}"]`)
+          .forEach((tab) => {
+            tab.classList.add('active');
+          });
+
+        // Update dropdown button text for mobile
+        const activeText = document.querySelector(
+          `.dropdown-content a[data-target="${targetId}"]`
+        ).textContent;
+        dropdownBtn.textContent = activeText;
+
+        // Show corresponding section
+        document.getElementById(targetId).classList.add('active');
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          const targetId = tab.getAttribute('data-target');
+          setActiveTab(targetId);
+
+          // Update URL hash without scrolling
+          history.pushState(null, null, tab.getAttribute('href'));
+
+          // Hide dropdown menu after selection on mobile
+          dropdownContent.style.display = 'none';
+          dropdownBtn.classList.remove('active');
+        });
+      });
+
+      // Toggle dropdown menu on mobile
+      dropdownBtn.addEventListener('click', () => {
+        if (dropdownContent.style.display === 'block') {
+          dropdownContent.style.display = 'none';
+          dropdownBtn.classList.remove('active');
+        } else {
+          dropdownContent.style.display = 'block';
+          dropdownBtn.classList.add('active');
+        }
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.legal-dropdown')) {
+          dropdownContent.style.display = 'none';
+          dropdownBtn.classList.remove('active');
+        }
+      });
+
+      // Check for hash on page load
+      function checkHash() {
+        const hash = window.location.hash;
+        if (hash) {
+          const targetTab = document.querySelector(`[href="${hash}"]`);
+          if (targetTab) {
+            const targetId = targetTab.getAttribute('data-target');
+            setActiveTab(targetId);
+          }
+        }
+      }
+
+      window.addEventListener('load', checkHash);
+      window.addEventListener('hashchange', checkHash);
+
+      // Smooth scroll for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener('click', function (e) {
+          if (
+            this.getAttribute('href').length > 1 &&
+            !this.closest('.legal-tabs, .dropdown-content')
+          ) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+              window.scrollTo({
+                top: targetElement.offsetTop - 100,
+                behavior: 'smooth'
+              });
+            }
+          }
+        });
+      });
+    </script>
+  </body>
 </html>

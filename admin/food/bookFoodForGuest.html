@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Book Food for Guests</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="bookFoodForGuest.js"></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Book Food for Guests</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <form id="guestFoodForm">
+                <div class="row">
+                  <div class="col-md-12">
+                    <label for="cardno">Card Number:</label>
+                    <input
+                      type="text"
+                      id="cardno"
+                      name="cardno"
+                      required
+                    /><br /><br />
+                  </div>
+                  <div class="col-md-12">
+                    <label for="start_date">Start Date:</label>
+                    <input
+                      type="date"
+                      id="start_date"
+                      name="start_date"
+                      required
+                    /><br /><br />
+                  </div>
+                  <div class="col-md-12">
+                    <label for="end_date">End Date:</label>
+                    <input
+                      type="date"
+                      id="end_date"
+                      name="end_date"
+                      required
+                    /><br /><br />
+                  </div>
+                  <div class="col-md-12">
+                    <label for="guest_count">Number of Guests:</label>
+                    <input
+                      type="number"
+                      id="guest_count"
+                      name="guest_count"
+                      min="1"
+                      required
+                    /><br /><br />
+                  </div>
+                  <div class="col-md-12">
+                    <fieldset>
+                      <legend>Meals</legend>
+                      <label for="breakfast">Include Breakfast:</label>
+                      <input
+                        type="checkbox"
+                        id="breakfast"
+                        name="breakfast"
+                      /><br /><br />
+
+                      <label for="lunch">Include Lunch:</label>
+                      <input
+                        type="checkbox"
+                        id="lunch"
+                        name="lunch"
+                      /><br /><br />
+
+                      <label for="dinner">Include Dinner:</label>
+                      <input
+                        type="checkbox"
+                        id="dinner"
+                        name="dinner"
+                      /><br /><br />
+                    </fieldset>
+                  </div>
+                  <div class="col-md-12">
+                    <!-- <button type="submit">Book Food</button> -->
+                    <button type="submit" class="btn btn-primary">
+                      Book Food
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

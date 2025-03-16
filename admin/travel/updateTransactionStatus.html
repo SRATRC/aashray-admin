@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Update Transaction Status</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="updateTransactionStatus.js"></script>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Update Transaction Status</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <div class="row">
+                <div class="col-md-12">
+                  <form id="updateTransactionForm">
+                    <label for="cardno">Card Number:</label>
+                    <input type="text" id="cardno" name="cardno" required />
+                    <label for="bookingid">Booking ID:</label>
+                    <input
+                      type="text"
+                      id="bookingid"
+                      name="bookingid"
+                      required
+                    />
+                    <label for="type">Type:</label>
+                    <input type="text" id="type" name="type" required />
+                    <label for="status">Status:</label>
+                    <select id="status" name="status" required>
+                      <option value="">Select Status</option>
+                      <option value="payment pending">Payment Pending</option>
+                      <option value="payment completed">
+                        Payment Completed
+                      </option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="admin canceled">Admin Cancelled</option>
+                      <option value="awaiting refund">Awaiting Refund</option>
+                    </select>
+                    <button type="submit">Update Status</button>
+                  </form>
+                  <p id="message"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

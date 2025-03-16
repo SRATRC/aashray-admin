@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Food Booking Form</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="cancelFoodByMob.js"></script>
+
+    <script>
+      function showCancellationForm() {
+        const mobno = document.getElementById('mobno').value;
+        if (mobno) {
+          document.getElementById('cardForm').style.display = 'none';
+          document.getElementById('cancellationFormSection').style.display =
+            'block';
+        } else {
+          alert('Please enter a mobile number.');
+        }
+      }
+
+      function cancelBooking() {
+        // Implement cancellation logic here
+      }
+    </script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Enter Your Phone Number</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <form id="cardForm">
+                <div class="row">
+                  <div class="col-md-12">
+                    <label for="mobno">Phone Number:</label>
+                    <input type="text" id="mobno" name="cardNumber" required />
+                  </div>
+                </div>
+                <!-- <button type="button" onclick="showCancellationForm()">Submit</button> -->
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick="showCancellationForm()"
+                >
+                  Submit
+                </button>
+              </form>
+
+              <!-- Cancellation Form Section -->
+              <div id="cancellationFormSection" style="display: none">
+                <h2>Cancel Your Food Booking</h2>
+                <form id="cancelBookingForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label for="startDate">Start Date:</label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        required
+                      /><br /><br />
+                    </div>
+                    <!-- Commented End Date Section -->
+                    <!-- <div class="col-md-12">
+                      <label for="endDate">End Date:</label>
+                      <input type="date" id="endDate" name="endDate" required /><br /><br />
+                    </div> -->
+                    <div class="col-md-12">
+                      <fieldset>
+                        <legend>Meals to Cancel</legend>
+                        <input
+                          type="checkbox"
+                          id="cancelBreakfast"
+                          name="cancelMeal"
+                          value="breakfast"
+                        />
+                        <label for="cancelBreakfast">Breakfast</label><br />
+                        <input
+                          type="checkbox"
+                          id="cancelLunch"
+                          name="cancelMeal"
+                          value="lunch"
+                        />
+                        <label for="cancelLunch">Lunch</label><br />
+                        <input
+                          type="checkbox"
+                          id="cancelDinner"
+                          name="cancelMeal"
+                          value="dinner"
+                        />
+                        <label for="cancelDinner">Dinner</label><br />
+                      </fieldset>
+                      <br />
+                    </div>
+                    <div class="col-md-12">
+                      <!-- <button type="button" onclick="cancelBooking()">Cancel Booking</button> -->
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        onclick="cancelBooking()"
+                      >
+                        Cancel Booking
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

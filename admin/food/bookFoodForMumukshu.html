@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Food Booking Form</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="bookFoodForMumukshu.js"></script>
+
+    <script>
+      function showBookingForm() {
+        let cardNumber = document.getElementById('cardNumber').value.trim();
+        if (cardNumber === '') {
+          alert('Please enter your card number.');
+          return;
+        }
+        document.getElementById('cardNumberDisplay').value = cardNumber;
+        document.getElementById('bookingForm').style.display = 'block';
+      }
+
+      function submitBooking() {
+        alert('Booking Submitted Successfully!');
+        document.getElementById('foodBookingForm').reset();
+        document.getElementById('bookingForm').style.display = 'none';
+      }
+    </script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Enter Your Card Number</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <form id="cardForm">
+                <div class="row">
+                  <div class="col-md-12">
+                    <label for="cardNumber">Card Number:</label>
+                    <input
+                      type="text"
+                      id="cardNumber"
+                      name="cardNumber"
+                      class="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary mt-3"
+                  onclick="showBookingForm()"
+                >
+                  Submit
+                </button>
+              </form>
+
+              <div id="bookingForm" style="display: none">
+                <h2 class="mt-4">Book Your Food</h2>
+                <form id="foodBookingForm">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <label for="cardNumberDisplay">Card Number:</label>
+                      <input
+                        type="text"
+                        id="cardNumberDisplay"
+                        name="cardNumberDisplay"
+                        class="form-control"
+                        readonly
+                      />
+                    </div>
+                    <div class="col-md-12">
+                      <label for="startDate">Start Date:</label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                    <div class="col-md-12">
+                      <label for="endDate">End Date:</label>
+                      <input
+                        type="date"
+                        id="endDate"
+                        name="endDate"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                    <div class="col-md-12">
+                      <fieldset class="mt-3">
+                        <legend>Meals</legend>
+                        <div>
+                          <input
+                            type="checkbox"
+                            id="breakfast"
+                            name="meal"
+                            value="breakfast"
+                          />
+                          <label for="breakfast">Breakfast</label>
+                        </div>
+                        <div>
+                          <input
+                            type="checkbox"
+                            id="lunch"
+                            name="meal"
+                            value="lunch"
+                          />
+                          <label for="lunch">Lunch</label>
+                        </div>
+                        <div>
+                          <input
+                            type="checkbox"
+                            id="dinner"
+                            name="meal"
+                            value="dinner"
+                          />
+                          <label for="dinner">Dinner</label>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div class="col-md-12">
+                      <fieldset class="mt-3">
+                        <legend>Food Preference</legend>
+                        <div>
+                          <input
+                            type="radio"
+                            id="spicy"
+                            name="foodPreference"
+                            value="spicy"
+                          />
+                          <label for="spicy">Spicy</label>
+                        </div>
+                        <div>
+                          <input
+                            type="radio"
+                            id="regular"
+                            name="foodPreference"
+                            value="regular"
+                          />
+                          <label for="regular">Regular</label>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div class="col-md-12">
+                      <fieldset class="mt-3">
+                        <legend>Afternoon Beverage</legend>
+                        <div>
+                          <input
+                            type="radio"
+                            id="tea"
+                            name="beverage"
+                            value="tea"
+                          />
+                          <label for="tea">Tea</label>
+                        </div>
+                        <div>
+                          <input
+                            type="radio"
+                            id="coffee"
+                            name="beverage"
+                            value="coffee"
+                          />
+                          <label for="coffee">Coffee</label>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div class="col-md-12">
+                      <button
+                        type="button"
+                        class="btn btn-success mt-3"
+                        onclick="submitBooking()"
+                      >
+                        Book
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
