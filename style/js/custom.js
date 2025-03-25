@@ -74,6 +74,7 @@ var onImgLoad = function(selector, callback){
 // Alert related functions
 function resetAlert() {
   const alert = document.getElementById('alert');
+  alert.innerHTML = "";
   alert.classList.remove('alert-success', 'alert-danger');
 }
 

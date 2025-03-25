@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
 
     const cardno = document.getElementById('cardno').value.trim();
-
+    resetAlert();
     try {
       const response = await fetch(
         `${CONFIG.basePath}/stay/fetch_room_bookings/${cardno}`,
@@ -22,11 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Invalid JSON response from server');
       }
 
       const data = await response.json();
@@ -49,6 +44,10 @@ document.addEventListener('DOMContentLoaded', function () {
           </tbody>
         `;
 
+      if (bookings.length == 0) {
+        showErrorMessage("No bookings found for the given card no.");
+      }
+
       const tableBody = bookingsTable.querySelector('tbody');
       bookings.forEach((booking) => {
         const row = document.createElement('tr');
@@ -64,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } catch (error) {
       console.error('Error fetching room bookings:', error);
-      alert('An error occurred while fetching room bookings.');
+      showErrorMessage(error);
     }
   });
 });

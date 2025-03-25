@@ -40,46 +40,39 @@
             </h1>
           </div>
           <div class="form">
-            <form id="bookingForm">
-              <div class="row">
-                <div class="col-md-6">
-                  <label for="cardno">Card Number:</label>
-                  <input
-                    type="text"
-                    id="cardno"
-                    name="cardno"
-                    class="form-control"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <button type="submit" class="btn btn-primary mt-4">
-                    Fetch Bookings
-                  </button>
-                </div>
+            <div id="alert" class="alert" role="alert"></div>
+            <form id="bookingForm" class="row">
+              <label for="cardno" class="col-form-label">Card No:</label>
+              <div class="col-sm-4">
+                <input type="text" class="form-control" id="cardno" name="cardno" required />
+              </div>
+
+              <div class="col-sm-1">
+                <button type="submit" class="btn btn-small">Fetch Bookings</button>
               </div>
             </form>
-          </div>
 
-          <div class="table mt-5">
-            <table
-              id="bookingsTable"
-              class="table table-striped table-bordered"
-            >
-              <thead>
-                <tr>
-                  <th>Booking ID</th>
-                  <th>Flat Number</th>
-                  <th>Check-in Date</th>
-                  <th>Check-out Date</th>
-                  <th>Nights</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Flat booking data will be dynamically inserted here -->
-              </tbody>
-            </table>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="table">
+                  <table id="bookingsTable" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Booking ID</th>
+                        <th>Flat Number</th>
+                        <th>Check-in Date</th>
+                        <th>Check-out Date</th>
+                        <th>Nights</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Flat booking data will be dynamically inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
