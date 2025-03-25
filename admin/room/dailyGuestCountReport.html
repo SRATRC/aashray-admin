@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Cancellation Report</title>
+    <title>Daily Guest Count Report</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -9,9 +9,6 @@
     <!-- Config and Header Scripts -->
     <script src="../../style/js/config.js"></script>
     <script src="../../style/js/header.js"></script>
-    <script>
-      const REPORT_URL = `${CONFIG.basePath}/stay/cancellation_report`;
-    </script>
 
     <!-- Additional Styles and Scripts -->
     <script src="https://use.fontawesome.com/373a347df2.js"></script>
@@ -20,7 +17,7 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="reservationReport.js"></script>
+    <script src="dailyGuestCountReport.js"></script>
   </head>
 
   <body>
@@ -39,7 +36,7 @@
         <div class="whitesec">
           <div class="frm-head">
             <h1>
-              <b><u>Cancellation Report</u></b>
+              <b><u>Daily Guest Count Report</u></b>
             </h1>
           </div>
           <div class="form" id="reportForm">
@@ -68,18 +65,9 @@
                   >
                     <thead>
                       <tr>
-                        <th>Booking ID</th>
-                        <th>Room No</th>
-                        <th>Room Type</th>
-                        <th>Check-in</th>
-                        <th>Check-out</th>
-                        <th>Status</th>
-                        <th>Nights</th>
-                        <th>Card Number</th>
-                        <th>Issued To</th>
-                        <th>Mobile Number</th>
-                        <th>Centre</th>
-                        <th>Booked By</th>
+                        <th>Date</th>
+                        <th>NAC Count</th>
+                        <th>AC Count</th>
                       </tr>
                     </thead>
                     <tbody id="reportTableBody">

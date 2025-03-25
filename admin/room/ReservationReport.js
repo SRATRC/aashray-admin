@@ -27,13 +27,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const data = await response.json();
 
-      console.log(data.data);
-
       const reportsTableBody = document.getElementById('reportTableBody');
       reportsTableBody.innerHTML = '';
-
-
-
+      
       if (data.data.length == 0) {
         const emptyReportResult = document.getElementById('emptyReportResult');
         emptyReportResult.innerHTML =
