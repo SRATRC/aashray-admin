@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const reservationReportForm = document.getElementById(
-    'reservationReportForm'
+  const reportForm = document.getElementById(
+    'reportForm'
   );
-  // const reportResults = document.getElementById('reportResults');
 
-  reservationReportForm.addEventListener('submit', async function (event) {
+  reportForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const startDate = document.getElementById('start_date').value;
@@ -12,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/reservation_report?start_date=${startDate}&end_date=${endDate}`,
+        `${REPORT_URL}?start_date=${startDate}&end_date=${endDate}`,
         {
           method: 'GET',
           headers: {
@@ -38,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (data.data.length == 0) {
         const emptyReportResult = document.getElementById('emptyReportResult');
         emptyReportResult.innerHTML =
-          '<p>No reservations found for the selected date range.</p>';
+          '<p>No bookings found for the selected date range.</p>';
         return;
       }
 
@@ -61,8 +60,8 @@ document.addEventListener('DOMContentLoaded', function () {
           reportsTableBody.appendChild(row);
       });
     } catch (error) {
-      console.error('Error fetching reservation report:', error);
-      alert('An error occurred while fetching the reservation report.');
+      console.error('Error fetching report:', error);
+      alert('An error occurred while fetching the report.');
     }
   });
 });
