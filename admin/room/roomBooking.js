@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/bookForMumukshu/${cardno}',
+        `${CONFIG.basePath}/stay/bookForMumukshu/${cardno}`,
         {
           method: 'POST',
           headers: {

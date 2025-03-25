@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/fetch_room_bookings',
+      `${CONFIG.basePath}/stay/fetch_room_bookings`,
       {
         method: 'GET', // Assuming POST method as per the original function
         headers: {

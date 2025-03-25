@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/checkin_report',
+      `${CONFIG.basePath}/stay/checkin_report`,
       {
         method: 'GET',
         headers: {

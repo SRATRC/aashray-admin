@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/unblock_rc/${block_id}`,
+        `${CONFIG.basePath}/stay/unblock_rc/${block_id}`,
         {
           method: 'PUT',
           headers: {

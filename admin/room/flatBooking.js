@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/bookFlat/${mobno}`,
+        `${CONFIG.basePath}/stay/bookFlat/${mobno}`,
         {
           method: 'POST',
           headers: {

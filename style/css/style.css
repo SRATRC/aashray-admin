@@ -197,8 +197,8 @@ select {
   background: #fff;
   color: #767676;
   height: auto;
-  padding: 11px 15px;
-  margin-bottom: 30px;
+  /* padding: 11px 15px; */
+  margin-bottom: 15px;
   outline: none;
   border-radius: 5px;
   box-shadow: none;
@@ -280,6 +280,12 @@ select.form-control:focus {
   background-color: #39b44a;
   color: #fff;
   border: 2px solid #fff;
+}
+
+.btn-small {
+  font-size: 13px;
+  padding: 15px;
+  line-height: 1em;
 }
 .displayTable {
   display: table;
@@ -377,6 +383,7 @@ body {
 }
 .frm-head {
   text-align: center;
+  padding: 15px;
 }
 .frm-head h1 {
   color: #606060;
@@ -394,7 +401,6 @@ body {
 .form {
   background-color: #f6f6f6;
   padding: 35px 90px;
-  margin: 44px 0 0 0;
   border-radius: 5px;
 }
 .form label {
@@ -604,4 +610,22 @@ a:hover {
 }
 
 @media only screen and (max-width: 320px) {
+}
+
+.row {
+  margin-bottom: 15px;
+}
+
+.row input {
+  margin-bottom: 0px;
+}
+
+.row p {
+  padding: 15px;
+}
+
+label.col-form-label {
+  width: auto;
+  padding: 15px;
+  margin: 0px;
 }

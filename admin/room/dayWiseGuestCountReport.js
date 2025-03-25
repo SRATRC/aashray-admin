@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       try {
         const response = await fetch(
-          `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/daywise_report?start_date=${startDate}&end_date=${endDate}`,
+          `${CONFIG.basePath}/stay/daywise_report?start_date=${startDate}&end_date=${endDate}`,
           {
             method: 'GET',
             headers: {
