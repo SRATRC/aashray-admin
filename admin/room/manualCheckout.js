@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
 
     const cardno = document.getElementById('cardno').value;
-
+    resetAlert();
     try {
       const response = await fetch(
         `${CONFIG.basePath}/stay/checkout/${cardno}`,
@@ -19,16 +19,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      const result = await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-        alert(`Success: ${result.message}`);
+        showSuccessMessage(data.message);
       } else {
-        alert(`Error: ${result.message}`);
+        showErrorMessage(data.message);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while checking out.');
+      showErrorMessage(error);
     }
   });
 });
