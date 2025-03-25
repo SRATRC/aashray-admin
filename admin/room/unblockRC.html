@@ -41,14 +41,17 @@
               </h4>
             </div>
             <div class="form">
-              <form id="unblockRCForm">
-                <label for="block_id">Block ID:</label>
-                <input type="text" id="block_id" name="block_id" required />
-
-                <button type="submit">Unblock RC</button>
+              <div id="alert" class="alert" role="alert"></div>
+              <form class="row" id="unblockRCForm">
+                <label for="block_id" class="col-form-label">Block ID:</label>
+                <div class="col-sm-7">
+                  <input type="text" class="form-control" id="block_id" name="block_id" required />
+                </div>
+  
+                <div class="col-sm-1">
+                  <button type="submit" class="btn btn-small">Unblock RC</button>
+                </div>
               </form>
-
-              <div id="message"></div>
             </div>
           </div>
         </div>

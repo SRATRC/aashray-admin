@@ -197,7 +197,7 @@ select {
   background: #fff;
   color: #767676;
   height: auto;
-  /* padding: 11px 15px; */
+  padding: 11px 15px;
   margin-bottom: 15px;
   outline: none;
   border-radius: 5px;
@@ -209,6 +209,9 @@ select {
   -moz-appearance: none;
   -ms-appearance: none;
   border: 1px solid #ededed;
+}
+input[type='date'] {
+  padding: 6px 12px;
 }
 textarea.form-control {
   height: 90px;
@@ -416,7 +419,6 @@ body {
 .form input[type='tel'],
 .form input[type='password'],
 .form select {
-  width: calc(100% - 160px);
   border-radius: 5px;
 }
 .form textarea {
