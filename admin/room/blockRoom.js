@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
 
     const roomNo = document.getElementById('roomNo').value.trim();
-
+    resetAlert();
     try {
       const response = await fetch(
         `${CONFIG.basePath}/stay/block_room/${roomNo}`,
@@ -24,11 +24,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const data = await response.json();
-      alert(data.message); // Show success message
-      blockRoomForm.reset(); // Reset form fields after success
+      showSuccessMessage(data.message);
     } catch (error) {
       console.error('Error blocking room:', error);
-      alert('An error occurred while blocking the room.');
+      showErrorMessage(error);
     }
   });
 });

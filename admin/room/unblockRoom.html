@@ -40,15 +40,19 @@
                 <b><u>Unblock Room</u></b>
               </h4>
             </div>
+
             <div class="form">
-              <form id="unblockRoomForm">
-                <label for="roomNo">Room Number:</label>
-                <input type="text" id="roomNo" name="roomNo" required />
-
-                <button type="submit">Unblock Room</button>
+              <div id="alert" class="alert" role="alert"></div>
+              <form class="row" id="unblockRoomForm">
+                <label for="roomNo" class="col-form-label">Room No:</label>
+                <div class="col-sm-7">
+                  <input type="text" class="form-control" id="roomNo" name="roomNo" required />
+                </div>
+  
+                <div class="col-sm-1">
+                  <button type="submit" class="btn btn-small">Unblock Room</button>
+                </div>
               </form>
-
-              <div id="message"></div>
             </div>
           </div>
         </div>
