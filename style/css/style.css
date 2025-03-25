@@ -330,7 +330,7 @@ body {
   float: left;
 }
 .container {
-  width: 900px;
+  width: 970px;
 }
 .logout {
   float: right;
@@ -415,8 +415,7 @@ body {
 .form input[type='number'],
 .form input[type='tel'],
 .form input[type='password'],
-.form select,
-.form textarea {
+.form select {
   width: calc(100% - 160px);
   border-radius: 5px;
 }
@@ -523,12 +522,6 @@ a:hover {
   }
 }
 
-@media only screen and (max-width: 1299px) {
-}
-
-@media only screen and (max-width: 1199px) {
-}
-
 @media only screen and (max-width: 991px) {
   .container {
     width: calc(100% - 30px);
@@ -541,9 +534,6 @@ a:hover {
   }
   .form {
     padding: 30px;
-  }
-  .container {
-    width: calc(100% - 15px);
   }
 }
 
