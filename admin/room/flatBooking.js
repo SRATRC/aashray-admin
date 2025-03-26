@@ -4,10 +4,12 @@ document.addEventListener('DOMContentLoaded', function () {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const mobno = document.getElementById('mobno').value;
+    const mobno = document.getElementById('mobile').value;
     const checkin_date = document.getElementById('checkin_date').value;
     const checkout_date = document.getElementById('checkout_date').value;
     const flat_no = document.getElementById('flat_no').value;
+
+    resetAlert();
 
     try {
       const response = await fetch(
@@ -22,16 +24,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      const result = await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-        alert(`Success: ${result.message}`);
+        showSuccessMessage(data.message);
       } else {
-        alert(`Error: ${result.message}`);
+        showErrorMessage(data.message);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while booking the flat.');
+      showErrorMessage(error);
     }
   });
 });
