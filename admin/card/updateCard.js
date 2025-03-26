@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const personId = sessionStorage.getItem('personId');
 
   if (!personId) {
-    window.location.href = 'searchCard.html'; // Redirect if no personId is found in sessionStorage
+    window.location.href = 'index.html'; // Redirect if no personId is found in sessionStorage
     return;
   }
 
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (response.ok) {
         alert('Card details updated successfully!');
-        window.location.href = 'searchCard.html'; // Redirect to searchCard.html
+        window.location.href = 'index.html'; // Redirect to searchCard.html
       } else {
         const error = await response.json();
         alert(`Error: ${error.message}`);

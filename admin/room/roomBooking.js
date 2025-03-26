@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const mobile = document.getElementById('mobile').value;
+    const mobno = document.getElementById('mobile').value;
     const checkin_date = document.getElementById('checkin_date').value;
     const checkout_date = document.getElementById('checkout_date').value;
     const room_type = document.getElementById('room_type').value;
@@ -12,14 +12,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/bookForMumukshu/${cardno}',
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/bookForMumukshu/`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
-            mobile,
+            mobno,
             checkin_date,
             checkout_date,
             room_type,
@@ -29,6 +30,8 @@ document.addEventListener('DOMContentLoaded', function () {
       );
 
       const result = await response.json();
+
+      console.log(JSON.stringify(result));
 
       if (response.ok) {
         alert(`Success: ${result.message}`);

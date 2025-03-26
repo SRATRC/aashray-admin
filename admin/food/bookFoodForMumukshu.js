@@ -141,6 +141,8 @@ async function submitBooking() {
       'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/book',
       options
     );
+    console.log(JSON.stringify(response));
+
     if (response.status >= 200 && response.status < 300) {
       const data = await response.json();
       console.log('Booking successful:', data);
