@@ -22,7 +22,7 @@
 
   <body>
     <div class="header">
-      <div class="container">
+      <div class="container-fluid">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
@@ -31,7 +31,7 @@
       </div>
     </div>
     <div class="middlecontent">
-      <div class="container">
+      <div class="container-fluid">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
@@ -39,46 +39,72 @@
                 <b><u>Room Booking</u></b>
               </h4>
             </div>
+
             <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <form id="roomBookingForm">
-                    <label for="mobile">Mobile Number:</label>
-                    <input type="tel" id="mobile" name="mobile" required />
+              <div id="alert" class="alert" role="alert"></div>
+              <form id="roomBookingForm">
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="mobile" class="col-form-label">Mobile No:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <input type="tel" class="form-control" id="mobile" name="mobile" />
+                  </div>
+                </div>
 
-                    <label for="checkin_date">Check-in Date:</label>
-                    <input
-                      type="date"
-                      id="checkin_date"
-                      name="checkin_date"
-                      required
-                    />
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="cardno" class="col-form-label">Card No:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <input type="tel" class="form-control" id="cardno" name="cardno" />
+                  </div>
+                </div>
 
-                    <label for="checkout_date">Check-out Date:</label>
-                    <input
-                      type="date"
-                      id="checkout_date"
-                      name="checkout_date"
-                      required
-                    />
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="checkin_date" class="col-form-label">Check-in Date:</label>
+                  </div>  
+                  <div class="col-sm-3">
+                    <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
+                  </div>
 
-                    <label for="room_type">Room Type:</label>
+                  <div class="col-sm-3">
+                    <label for="checkout_date" class="col-form-label">Check-out Date:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="room_type" class="col-form-label">Room Type:</label>
+                  </div>
+                  <div class="col-sm-3">
                     <select id="room_type" name="room_type" required>
-                      <option value="nac">NAC</option>
+                      <option selected="selected" value="nac">NAC</option>
                       <option value="ac">AC</option>
                     </select>
+                  </div>
 
-                    <label for="floor_pref">Floor Preference:</label>
-                    <select id="floor_pref" name="floor_pref" required>
-                      <option value="ground">Ground</option>
-                      <option value="first">First</option>
+                  <div class="col-sm-3">
+                    <label for="floor_pref" class="col-form-label">Floor Preference:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <select id="floor_pref" name="floor_pref">
+                      <option selected="selected" value="">None</option>
+                      <option value="SC">Ground</option>
                     </select>
-
-                    <button type="submit">Book Room</button>
-                  </form>
-                  <p id="statusMessage"></p>
+                  </div> 
                 </div>
-              </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <button type="submit" class="btn btn-small">Book Room</button>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
         </div>

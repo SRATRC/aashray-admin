@@ -234,7 +234,7 @@ select {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  background: url(../images/up-arrow.png) no-repeat 98% center #fff;
+  background: url(../images/up-arrow.png) no-repeat 90% center #fff;
   font-size: 13px;
   color: #767676;
   height: 40px;
@@ -475,14 +475,6 @@ a:hover {
 /** ==============Responsive style start ========== *****-------------------------------------------------------------***/
 
 @media only screen and (min-width: 2560px) {
-  .form input[type='text'],
-  .form input[type='number'],
-  .form input[type='tel'],
-  .form input[type='password'],
-  .form select,
-  .form textarea {
-    margin-bottom: 15px;
-  }
   .middlecontent {
     top: 53%;
   }
@@ -493,14 +485,6 @@ a:hover {
 }
 
 @media only screen and (max-width: 2560px) {
-  .form input[type='text'],
-  .form input[type='number'],
-  .form input[type='tel'],
-  .form input[type='password'],
-  .form select,
-  .form textarea {
-    margin-bottom: 15px;
-  }
   .middlecontent {
     top: 53%;
   }
@@ -546,15 +530,6 @@ a:hover {
   .logout {
     float: right;
     margin: 14px 0;
-  }
-  .form input[type='text'],
-  .form input[type='number'],
-  .form input[type='tel'],
-  .form input[type='password'],
-  .form select,
-  .form textarea {
-    width: 100%;
-    margin: 0 0 10px 0;
   }
   .logo {
     width: 150px;
