@@ -42,26 +42,39 @@
             </div>
             <div class="form">
               <form id="blockRCForm">
-                <label for="checkin_date">Check-in Date:</label>
-                <input
-                  type="date"
-                  id="checkin_date"
-                  name="checkin_date"
-                  required
-                />
+                <div id="alert" class="alert" role="alert"></div>
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="checkin_date" class="col-form-label">Start Date:</label>
+                  </div>
+                  <div class="col-sm-5">
+                    <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
+                  </div>
+                </div>
 
-                <label for="checkout_date">Check-out Date:</label>
-                <input
-                  type="date"
-                  id="checkout_date"
-                  name="checkout_date"
-                  required
-                />
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="checkout_date" class="col-form-label">End Date:</label>
+                  </div>
+                  <div class="col-sm-5">
+                    <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
+                  </div>
+                </div>
 
-                <label for="comments">Comments:</label>
-                <textarea id="comments" name="comments" required></textarea>
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="comments" class="col-form-label">Comments:</label>
+                  </div>
+                  <div class="col-sm-9">
+                    <textarea id="comments" name="comments" required></textarea>
+                  </div>
+                </div>
 
-                <button type="submit">Block RC</button>
+                <div class="row">
+                  <div class="col-sm-3">
+                    <button type="submit" class="btn btn-small">Block RC</button>
+                  </div>
+                </div>
               </form>
 
               <div id="message"></div>

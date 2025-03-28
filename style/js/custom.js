@@ -71,4 +71,23 @@ var onImgLoad = function(selector, callback){
     });
 };
 
+// Alert related functions
+function resetAlert() {
+  const alert = document.getElementById('alert');
+  alert.innerHTML = "";
+  alert.classList.remove('alert-success', 'alert-danger');
+}
+
+function showSuccessMessage(message) {
+  const alert = document.getElementById('alert');
+  alert.innerHTML = message;
+  alert.classList.add("alert-success");
+}
+
+function showErrorMessage(message) {
+  const alert = document.getElementById('alert');
+  alert.innerHTML = message;
+  alert.classList.add("alert-danger");
+}
+
 

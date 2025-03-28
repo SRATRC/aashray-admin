@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
 
     const roomNo = document.getElementById('roomNo').value.trim();
-
+    resetAlert();
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/unblock_room/${roomNo}`,
+        `${CONFIG.basePath}/stay/unblock_room/${roomNo}`,
         {
           method: 'PUT',
           headers: {
@@ -24,11 +24,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const data = await response.json();
-      alert(data.message); // Show success message
-      unblockRoomForm.reset(); // Reset form fields after success
+      showSuccessMessage(data.message);
     } catch (error) {
       console.error('Error unblocking room:', error);
-      alert('An error occurred while unblocking the room.');
+      showErrorMessage(error);
     }
   });
 });

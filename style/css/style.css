@@ -198,7 +198,7 @@ select {
   color: #767676;
   height: auto;
   padding: 11px 15px;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
   outline: none;
   border-radius: 5px;
   box-shadow: none;
@@ -209,6 +209,9 @@ select {
   -moz-appearance: none;
   -ms-appearance: none;
   border: 1px solid #ededed;
+}
+input[type='date'] {
+  padding: 6px 12px;
 }
 textarea.form-control {
   height: 90px;
@@ -281,6 +284,12 @@ select.form-control:focus {
   color: #fff;
   border: 2px solid #fff;
 }
+
+.btn-small {
+  font-size: 13px;
+  padding: 15px;
+  line-height: 1em;
+}
 .displayTable {
   display: table;
   height: 100%;
@@ -324,7 +333,7 @@ body {
   float: left;
 }
 .container {
-  width: 900px;
+  width: 970px;
 }
 .logout {
   text-align: right;
@@ -378,6 +387,7 @@ body {
 }
 .frm-head {
   text-align: center;
+  padding: 15px;
 }
 .frm-head h1 {
   color: #606060;
@@ -395,7 +405,6 @@ body {
 .form {
   background-color: #f6f6f6;
   padding: 35px 90px;
-  margin: 44px 0 0 0;
   border-radius: 5px;
 }
 .form label {
@@ -410,9 +419,7 @@ body {
 .form input[type='number'],
 .form input[type='tel'],
 .form input[type='password'],
-.form select,
-.form textarea {
-  width: calc(100% - 160px);
+.form select {
   border-radius: 5px;
 }
 .form textarea {
@@ -518,12 +525,6 @@ a:hover {
   }
 }
 
-@media only screen and (max-width: 1299px) {
-}
-
-@media only screen and (max-width: 1199px) {
-}
-
 @media only screen and (max-width: 991px) {
   .container {
     width: calc(100% - 30px);
@@ -536,9 +537,6 @@ a:hover {
   }
   .form {
     padding: 30px;
-  }
-  .container {
-    width: calc(100% - 15px);
   }
 }
 
@@ -605,4 +603,22 @@ a:hover {
 }
 
 @media only screen and (max-width: 320px) {
+}
+
+.row {
+  margin-bottom: 15px;
+}
+
+.row input {
+  margin-bottom: 0px;
+}
+
+.row p {
+  padding: 15px;
+}
+
+label.col-form-label {
+  width: auto;
+  padding: 15px;
+  margin: 0px;
 }

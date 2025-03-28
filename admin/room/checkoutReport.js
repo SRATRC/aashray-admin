@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/checkout_report',
+      `${CONFIG.basePath}/stay/checkout_report`,
       {
         method: 'GET',
         headers: {
@@ -23,14 +23,17 @@ document.addEventListener('DOMContentLoaded', async function () {
       const row = document.createElement('tr');
       row.innerHTML = `
           <td>${booking.bookingid}</td>
-          <td>${booking.roomno}</td>
+          <td>${booking.roomno || "Not Assigned"}</td>
+          <td>${booking.roomtype}</td>
           <td>${booking.checkin}</td>
           <td>${booking.checkout}</td>
+          <td>${booking.status}</td>
           <td>${booking.nights}</td>
           <td>${booking.CardDb.cardno}</td>
           <td>${booking.CardDb.issuedto}</td>
           <td>${booking.CardDb.mobno}</td>
           <td>${booking.CardDb.centre}</td>
+          <td>${booking.bookedBy || "Self"}</td>
         `;
       checkoutTableBody.appendChild(row);
     });

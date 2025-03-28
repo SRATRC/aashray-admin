@@ -6,15 +6,10 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault(); // Prevent form submission
 
     const cardno = cardnoInput.value; // Get the value of the card number
-
-    if (!cardno) {
-      alert('Please enter a card number.');
-      return;
-    }
-
+    resetAlert();
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/checkin/${cardno}`,
+        `${CONFIG.basePath}/stay/checkin/${cardno}`,
         {
           method: 'PUT',
           headers: {
@@ -25,16 +20,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      const result = await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-        alert(`Success: ${result.message}`); // Success message
+        showSuccessMessage(data.message);
       } else {
-        alert(`Error: ${result.message}`); // Error message
+        showErrorMessage(data.message);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while checking in.'); // Error message if request fails
+      showErrorMessage(error);
     }
   });
 });

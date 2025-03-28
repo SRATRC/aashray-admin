@@ -37,20 +37,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const tableRow = document.createElement('tr');
 
       tableRow.innerHTML = `
-          <td style="text-align:center;">${index + 1}</td>
-          <td style="text-align:center;">${item.name}</td>
-          <td style="text-align:center;">${item.speaker}</td>
-          <td style="text-align:center;">${item.registration_count || 0}</td>
-          <td style="text-align:center;">${item.total_seats}</td>
-          <td style="text-align:center;">${item.status}</td>
-          <td style="text-align:center;">
-            <button class="toggle-status" data-id="${item.id}" data-status="${
+            <td style="text-align:center;">${index + 1}</td>
+            <td style="text-align:center;">${item.name}</td>
+            <td style="text-align:center;">${item.speaker}</td>
+            <td style="text-align:center;">${item.registration_count || 0}</td>
+            <td style="text-align:center;">${item.total_seats}</td>
+            <td style="text-align:center;">${item.status}</td>
+            <td style="text-align:center;">
+              <button class="toggle-status" data-id="${item.id}" data-status="${
         item.status
       }">
-              ${item.status === 'open' ? 'Close' : 'Open'}
-            </button>
-          </td>
-        `;
+                ${item.status === 'open' ? 'Close' : 'Open'}
+              </button>
+            </td>
+          `;
 
       adhyayanTableBody.appendChild(tableRow);
     });

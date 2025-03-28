@@ -7,10 +7,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkin_date = document.getElementById('checkin_date').value;
     const checkout_date = document.getElementById('checkout_date').value;
     const comments = document.getElementById('comments').value.trim();
-
+    
+    resetAlert();
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/block_rc',
+        `${CONFIG.basePath}/stay/block_rc`,
         {
           method: 'POST',
           headers: {
@@ -30,11 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const data = await response.json();
-      alert(data.message); // Show success message
-      blockRCForm.reset(); // Reset form fields after success
+      showSuccessMessage(data.message);
     } catch (error) {
       console.error('Error blocking RC:', error);
-      alert('An error occurred while blocking the RC.');
+      showErrorMessage(error);
     }
   });
 });
