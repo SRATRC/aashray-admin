@@ -74,8 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         const upadateResponse = await response.json();
         console.log('Update Response: ' + upadateResponse);
+        alert('Adhyayan details updated successfully!');
+        window.location.href = 'fetchAllAdhyayan.html';
       } else {
         console.error('Update Response: ' + response.statusText);
+        alert(`Error: ${data.message}`);
       }
     } catch (error) {
       console.error('Erorr while updating the data: ' + error);

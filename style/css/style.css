@@ -336,8 +336,9 @@ body {
   width: 970px;
 }
 .logout {
+  text-align: right;
   float: right;
-  margin: 33px 0;
+  margin: 33px -500px;
 }
 .logout a {
   color: #fff;

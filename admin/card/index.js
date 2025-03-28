@@ -4,7 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     .getElementById('data-list')
     .getElementsByTagName('tbody')[0];
 
-  const fetchData = async () => {
+  let debounceTimer;
+
+  // Initially hide the table
+  document.getElementById('data-list').style.display = 'none';
+
+  const fetchData = async (query) => {
     const options = {
       method: 'GET',
       headers: {
@@ -14,15 +19,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/getAll',
-        options
-      );
+      const url = query
+        ? `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${encodeURIComponent(
+            query
+          )}`
+        : 'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/getAll';
+
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
       const data = await response.json();
-      console.log(`API Returned ${data.data.length} records`);
       displayData(data.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      dataList.innerHTML = '<tr><td colspan="3">No results found</td></tr>';
     }
   };
 
@@ -30,7 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(`Displaying ${data.length} records`);
     dataList.innerHTML = '';
 
-    if (Array.isArray(data)) {
+    if (Array.isArray(data) && data.length > 0) {
+      document.getElementById('data-list').style.display = 'table'; // Show the table
       data.forEach((item) => {
         const row = document.createElement('tr');
 
@@ -53,70 +67,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add event listener to the edit button
         editButton.addEventListener('click', () => {
-          sessionStorage.setItem('personId', item.issuedto); // Store personId (or cardno) in sessionStorage
-          window.location.href = 'updateCard.html'; // Redirect to the update page
+          sessionStorage.setItem('personId', item.issuedto);
+          window.location.href = 'updateCard.html';
         });
 
         dataList.appendChild(row);
       });
     } else {
-      console.error('Unexpected data format:', data);
+      document.getElementById('data-list').style.display = 'none'; // Hide if no results
     }
   };
 
-  // Search functionality
-  // searchInput.addEventListener('input', () => {
-  //   const query = searchInput.value.toLowerCase();
-  //   const rows = dataList.querySelectorAll('tr');
+  // Debounce function: waits for user to stop typing before triggering search
+  const debounce = (callback, delay) => {
+    return (...args) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => callback(...args), delay);
+    };
+  };
 
-  //   rows.forEach((row) => {
-  //     const name = row.querySelector('td').textContent.toLowerCase();
-  //     const cardNumber = row
-  //       .querySelectorAll('td')[1]
-  //       .textContent.toLowerCase();
+  // Search functionality with debounce (500ms delay)
+  searchInput.addEventListener(
+    'input',
+    debounce(async () => {
+      const query = searchInput.value.trim().toLowerCase();
 
-  //     if (name.includes(query) || cardNumber.includes(query)) {
-  //       row.style.display = '';
-  //     } else {
-  //       row.style.display = 'none';
-  //     }
-  //   });
-  // });
-
-  // Search functionality with API call
-  searchInput.addEventListener('input', async () => {
-    const query = searchInput.value.trim().toLowerCase();
-    if (query.length === 0) {
-      fetchData(); // Fetch all data if the input is cleared
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${encodeURIComponent(
-          query
-        )}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch search results');
+      if (query.length === 0) {
+        document.getElementById('data-list').style.display = 'none'; // Hide the table
+        return;
       }
 
-      const data = await response.json();
-      displayData(data.data); // Update the table with API results
-    } catch (error) {
-      console.error('Error fetching search results:', error);
-      dataList.innerHTML = '<tr><td colspan="2">No results found</td></tr>';
-    }
-  });
-
-  // Fetch data on load
-  fetchData();
+      await fetchData(query);
+    }, 500) // 500ms delay before search starts
+  );
 });

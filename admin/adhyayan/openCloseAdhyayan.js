@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Map status from frontend to backend ('open' -> 'active', 'close' -> 'inactive')
     const statusMapping = {
-      open: 'open', // 'open' maps to 'active'
-      closed: 'closed' // 'close' maps to 'inactive'
+      open: 'active', // 'open' maps to 'active'
+      closed: 'inactive' // 'close' maps to 'inactive'
     };
 
     const status = statusMapping[data.status] || 'closed'; // Default to 'inactive' if invalid
@@ -37,7 +37,8 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ shibir_id: shibirId, status }) // Send mapped status
+
+          body: JSON.stringify({ status }) // Send mapped status
         }
       );
 
