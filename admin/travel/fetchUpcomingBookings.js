@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/travel/upcoming', // Replace with your actual API endpoint
+      `${CONFIG.basePath}/travel/upcoming`, // Replace with your actual API endpoint
       {
         method: 'GET',
         headers: {
@@ -19,14 +19,31 @@ document.addEventListener('DOMContentLoaded', async function () {
         .getElementById('upcomingBookings')
         .querySelector('tbody');
 
+       
+
       bookings.forEach((booking) => {
         const row = document.createElement('tr');
+        var adminComments=booking.admin_comments == null ? "" :booking.admin_comments;
+        var comments=booking.comments == null ? "" :booking.comments;
+        
         row.innerHTML = `
+            <td>${booking.bookingid}</td>
+            <td>${booking.issuedto}</td>
             <td>${booking.date}</td>
-            <td>${booking.CardDb.cardno}</td>
-            <td>${booking.CardDb.issuedto}</td>
-            <td>${booking.CardDb.mobno}</td>
-            <td>${booking.CardDb.centre}</td>
+           <td>${booking.pickup_point}</td>
+           <td>${booking.drop_point}</td>
+           <td>${booking.type}</td>
+           <td>${booking.luggage}</td>
+           <td>${comments}</td>
+           <td>${adminComments}</td>
+           <td>${booking.status}</td>
+           <td>${booking.amount}</td>
+           <td>${booking.upi_ref}</td>
+            <td>${booking.paymentStatus}</td>
+            <td>${booking.bookedBy}</td>
+            <td>${booking.mobno}</td>
+            <td>${booking.center}</td>
+            <td>${booking.res_status}</td>
           `;
         bookingsTableBody.appendChild(row);
       });
