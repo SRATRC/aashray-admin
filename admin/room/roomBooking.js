@@ -40,8 +40,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const data = await response.json();
 
-      console.log(JSON.stringify(result));
-
       if (response.ok) {
         showSuccessMessage(data.message);
       } else {
