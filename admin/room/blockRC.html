@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Block Research Center</title>
+    <title>Block / Unblock RC</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -22,7 +22,7 @@
 
   <body>
     <div class="header">
-      <div class="container">
+      <div class="container-fluid">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
@@ -32,12 +32,12 @@
     </div>
 
     <div class="middlecontent">
-      <div class="container">
+      <div class="container-fluid">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
               <h4>
-                <b><u>Block Research Center</u></b>
+                <b><u>Block / Unblock RC</u></b>
               </h4>
             </div>
             <div class="form">
@@ -76,8 +76,39 @@
                   </div>
                 </div>
               </form>
+            </div>
 
-              <div id="message"></div>
+            <div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="frm-head">
+                    <h4>
+                      <b><u>Current Blocked Dates</u></b>
+                    </h4>
+                  </div>
+
+                  <div class="table">
+                    <table
+                      id="reportTable"
+                      class="table table-striped table-bordered"
+                    >
+                      <thead>
+                        <tr>
+                          <th>Block ID</th>
+                          <th>Start Date</th>
+                          <th>End Date</th>
+                          <th>Comments</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="reportTableBody">
+                        <!-- Table rows will be dynamically added here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

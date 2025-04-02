@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       tableBody.appendChild(row);
     });
   } catch (error) {
-    console.error('Error fetching occupancy report:', error);
+    console.error('Error fetching room list:', error);
     showErrorMessage(error);
   }
 });

@@ -1,5 +1,84 @@
-document.addEventListener('DOMContentLoaded', function () {
+function getAction(block) {
+  switch (block.status) {
+    case 'active':
+      return `<a href='#' onclick="return unblock('${block.id}')">Unblock</a>`;
+
+    default:
+      return '';
+  }
+}
+
+async function unblock(blockid) {
+  resetAlert();
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/stay/unblock_rc/${blockid}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showSuccessMessage(data.message);
+    } else {
+      showErrorMessage(data.message);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showErrorMessage(error);
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', async function () {
+  const tableBody = document.querySelector('#reportTableBody');
   const blockRCForm = document.getElementById('blockRCForm');
+  
+  resetAlert();
+
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/stay/rc_block_list`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify() // Default page and page_size
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const blocks = data.data;
+
+    blocks.forEach((block) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${block.id}</td>
+        <td>${block.checkin}</td>
+        <td>${block.checkout}</td>
+        <td>${block.comments}</td>
+        <td>${block.status}</td>
+        <td>${getAction(block)}</td>
+      `;
+
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error('Error fetching block list:', error);
+    showErrorMessage(error);
+  }
 
   blockRCForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -26,12 +105,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        showSuccessMessage(data.message);
+      } else {
+        showErrorMessage(data.message);  
       }
 
-      const data = await response.json();
-      showSuccessMessage(data.message);
     } catch (error) {
       console.error('Error blocking RC:', error);
       showErrorMessage(error);
