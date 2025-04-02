@@ -1,56 +1,55 @@
-let currentPage = 1;
-const pageSize = 10;
-let totalPages = 1; // Will be updated after data fetch
-
-async function fetchWaitlistData(page = 1) {
+document.addEventListener('DOMContentLoaded', async function () {
   try {
+ 
+    const tableBody = document.querySelector('#waitlistTable tbody');
+    
     const response = await fetch(
-      `/api/adhyayan-waitlist?page=${page}&page_size=${pageSize}`
+      `${CONFIG.basePath}/adhyayan/waitlist`,
+      {
+        method: 'GET', // Assuming POST method as per the original function
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify() // Default page and page_size
+      }
     );
-    const data = await response.json();
-
-    if (data && data.data) {
-      totalPages = Math.ceil(data.data.length / pageSize);
-      displayData(data.data);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
+
+    const data = await response.json();
+    const adhyanWaitListers = data.data;
+
+    console.log(adhyanWaitListers);
+
+    adhyanWaitListers.forEach((item) => {
+      const row = document.createElement('tr');
+      
+      row.innerHTML += ` 
+        <td>${item.bookingid}</td>
+        <td>${item.ShibirDb.name}</td>
+        <td>${item.ShibirDb.speaker}</td>
+        <td>${item.ShibirDb.start_date}</td>
+        <td>${item.ShibirDb.end_date}</td>
+        <td>${item.bookedby}</td>
+        <td>${item.CardDb.issuedto}</td>
+        <td>${item.CardDb.mobno}</td>
+        <td>${item.CardDb.center}</td>
+        <td>${item.CardDb.res_status}</td>
+        `;
+      
+      tableBody.appendChild(row);
+    });
+
+    
   } catch (error) {
     console.error('Error fetching data:', error);
   }
-}
+});
 
-function displayData(data) {
-  const tableBody = document
-    .getElementById('waitlistTable')
-    .getElementsByTagName('tbody')[0];
-  tableBody.innerHTML = ''; // Clear the table before populating new data
 
-  data.forEach((item) => {
-    const row = tableBody.insertRow();
-    row.insertCell(0).textContent = item.ShibirDb.name;
-    row.insertCell(1).textContent = item.ShibirDb.speaker;
-    row.insertCell(2).textContent = item.ShibirDb.start_date;
-    row.insertCell(3).textContent = item.ShibirDb.end_date;
-    row.insertCell(4).textContent = item.cardno;
-    row.insertCell(5).textContent = item.CardDb.issuedto;
-    row.insertCell(6).textContent = item.CardDb.mobno;
-    row.insertCell(7).textContent = item.CardDb.centre;
-  });
 
-  updatePaginationButtons();
-}
 
-function updatePaginationButtons() {
-  document.getElementById('prevBtn').disabled = currentPage <= 1;
-  document.getElementById('nextBtn').disabled = currentPage >= totalPages;
-}
 
-function changePage(direction) {
-  const newPage = currentPage + direction;
-  if (newPage >= 1 && newPage <= totalPages) {
-    currentPage = newPage;
-    fetchWaitlistData(currentPage);
-  }
-}
-
-// Initial data fetch
-fetchWaitlistData(currentPage);
