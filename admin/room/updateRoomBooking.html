@@ -41,52 +41,41 @@
               </h4>
             </div>
             <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <form id="updateBookingForm">
+              <form id="updateBookingForm">
+                <div id="alert" class="alert" role="alert"></div>
+                <div class="row">
+                  <div class="col-sm-3">
                     <label for="bookingId">Booking ID:</label>
+                  </div>
+                  <div class="col-sm-5">
                     <input
                       type="text"
                       id="bookingId"
                       name="bookingId"
                       required
                     />
-
-                    <label for="cardNumber">Card Number:</label>
-                    <input
-                      type="text"
-                      id="cardNumber"
-                      name="cardNumber"
-                      required
-                    />
-
-                    <label for="roomNumber">New Room Number:</label>
-                    <input
-                      type="text"
-                      id="roomNumber"
-                      name="roomNumber"
-                      required
-                    />
-
-                    <label for="gender">Gender:</label>
-                    <select id="gender" name="gender" required>
-                      <option value="M">Male</option>
-                      <option value="F">Female</option>
-                    </select>
-
-                    <label for="status">Status:</label>
-                    <select id="status" name="status" required>
-                      <option value="checked-in">Checked-in</option>
-                      <option value="checked-out">Checked-out</option>
-                      <option value="pending-checkin">Pending Check-in</option>
-                      <option value="pending-checkout">Pending Checkout</option>
-                    </select>
-
-                    <button type="submit">Update Booking</button>
-                  </form>
-                  <p id="statusMessage"></p>
+                  </div>
                 </div>
-              </div>
+
+                <div class="row">
+                  <div class="col-sm-3"> 
+                    <label for="roomNumber">New Room No:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <select id="roomNumber" name="roomNumber" required></select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3"> 
+                    <label for="submit"></label>
+                  </div>
+
+                  <div class="col-sm-3">
+                    <input type="submit" value="Submit"/>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
         </div>
