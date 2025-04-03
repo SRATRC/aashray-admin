@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="footer">
         <div class="container">
           <p>
-            © 2019
+            © 2025
             <a href="#" target="_blank">
               Shrimad Rajchandra Aatma Tatva Research Centre
               </a>
