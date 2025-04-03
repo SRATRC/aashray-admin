@@ -31,16 +31,14 @@ document.addEventListener('DOMContentLoaded', function () {
           showErrorMessage(data.message);
           return;
         }
-        
-        const reportsTableBody = document.getElementById('reportTableBody');
-        reportsTableBody.innerHTML = '';
 
         if (data.data.length == 0) {
-          const emptyReportResult = document.getElementById('emptyReportResult');
-          emptyReportResult.innerHTML =
-            '<p>No bookings found for the selected date range.</p>';
+          showErrorMessage("No bookings found for the selected date range.");
           return;
         }
+
+        const reportsTableBody = document.getElementById('reportTableBody');
+        reportsTableBody.innerHTML = '';
 
         data.data.forEach((report) => {
           const row = document.createElement('tr');
