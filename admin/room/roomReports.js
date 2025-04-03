@@ -163,7 +163,12 @@ document.addEventListener('DOMContentLoaded', function () {
           <td>${booking.CardDb.issuedto}</td>
           <td>${booking.CardDb.mobno}</td>
           <td>${booking.CardDb.centre}</td>
-          <td>${booking.roomno || "Not Assigned"}</td>
+          <td>
+            <a href='updateRoomBooking.html?bookingid=${booking.bookingid}'>
+              <span>&#x270E;</span>
+            </a>
+            ${booking.roomno || "Not Assigned"}
+          </td>
           <td>${booking.roomtype}</td>
           <td>${booking.checkin}</td>
           <td>${booking.checkout}</td>
