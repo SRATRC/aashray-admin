@@ -25,17 +25,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const bodyContent = body.innerHTML;
 
   // Calculate relative path to style directory
-  const currentPath = window.location.pathname;
-  const pathToRoot = currentPath
-    .split('/')
-    .slice(1, -1)
-    .map(() => '..')
-    .join('/');
-  const bgImagePath = `${pathToRoot}/style/images/RC_Blur.png`;
-
   body.innerHTML = `
-    <div class="fullheight" style="background: url(${bgImagePath}) no-repeat center center; background-size: cover;">
+    <div class="fullheight">
       ${bodyContent}
+      <div class="footer">
+        <div class="container">
+          <p>
+            © 2019
+            <a href="#" target="_blank">
+              Shrimad Rajchandra Aatma Tatva Research Centre
+              </a>
+          </p>
+        </div>
+      </div>
     </div>
   `;
 });

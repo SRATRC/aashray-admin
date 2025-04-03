@@ -38,51 +38,59 @@
     <div class="middlecontent">
       <div class="container-fluid">
         <div class="whitesec">
-          <div class="frm-head">
-            <h1>
-              <b><u>Room Booking Reports</u></b>
-            </h1>
-          </div>
-          <div class="form">
-            <div id="alert" class="alert" role="alert"></div>
-            <form id="reportForm">
-                <div class="row">
-                  <div class="col-sm-2">
-                    <label for="report_type" class="col-form-label">Report Type:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <select id="report_type" name="report_type" required>
-                      <option value="reservation_report">Reservation Report</option>
-                      <option value="cancellation_report">Cancellation Report</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-sm-2">
-                    <label for="start_date" class="col-form-label">Report Start Date:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="start_date" name="start_date" required />
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Room Booking Reports</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <div id="alert" class="alert" role="alert"></div>
+              <form id="reportForm">
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <label for="report_type" class="col-form-label">Report Type:</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <select id="report_type" name="report_type" required>
+                        <option value="reservation_report">Reservation Report</option>
+                        <option value="cancellation_report">Cancellation Report</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div class="col-sm-2">
-                    <label for="end_date" class="col-form-label">Report End Date:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="end_date" name="end_date" required />
-                  </div>
-                </div>
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <label for="start_date" class="col-form-label">Report Start Date:</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <input type="date" class="form-control" id="start_date" name="start_date" required />
+                    </div>
 
-                <div class="row">
-                  <div class="col-sm-1">
-                    <button type="submit" class="btn btn-small">Submit</button>
+                    <div class="col-sm-2">
+                      <label for="end_date" class="col-form-label">Report End Date:</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <input type="date" class="form-control" id="end_date" name="end_date" required />
+                    </div>
                   </div>
-                </div>
-            </form>
 
+                  <div class="row">
+                    <div class="col-sm-1">
+                      <button type="submit" class="btn btn-small">Submit</button>
+                    </div>
+                  </div>
+              </form>
+
+            </div>
+        
             <div class="row">
               <div class="col-md-12">
+                <div class="frm-head">
+                  <h4>
+                    <b><u>Bookings</u></b>
+                  </h4>
+                </div>
                 <div class="table">
                   <table
                     id="reportTable"
