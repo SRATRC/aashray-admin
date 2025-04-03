@@ -212,6 +212,11 @@ select {
 input[type='date'] {
   padding: 5px 11px;
 }
+input[type='checkbox'] {
+  vertical-align: middle;
+  margin-top: -1px;
+}
+
 textarea.form-control {
   height: 90px;
   resize: none;
@@ -405,7 +410,6 @@ body {
 }
 .form label {
   width: 135px;
-  float: left;
   margin: 11px 25px 11px 0;
   font-weight: 400;
   font-size: 13px;

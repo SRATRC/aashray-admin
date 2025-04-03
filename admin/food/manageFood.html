@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Food Booking Form</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="manageFood.js"></script>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>New Food Booking</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <div id="alert" class="alert" role="alert"></div>
+              <form id="foodBookingForm">
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="mobile" class="col-form-label">Mobile No:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <input type="tel" class="form-control" id="mobile" name="mobile" />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="cardno" class="col-form-label">Card No:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <input type="tel" class="form-control" id="cardno" name="cardno" />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="start_date" class="col-form-label">Start Date:</label>
+                  </div>  
+                  <div class="col-sm-3">
+                    <input type="date" class="form-control" id="start_date" name="start_date" required />
+                  </div>
+
+                  <div class="col-sm-3">
+                    <label for="end_date" class="col-form-label">End Date:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="date" class="form-control" id="end_date" name="end_date" required />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="meals" class="col-form-label">Select Meals:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <label for="breakfast" class="col-form-label">
+                      <input type="checkbox" id="breakfast" name="meal" value="breakfast" />
+                      Breakfast
+                    </label>
+                  </div>
+                  <div class="col-sm-3">
+                    <label for="lunch" class="col-form-label">
+                      <input type="checkbox" id="lunch" name="meal" value="lunch" />
+                      Lunch
+                    </label>
+                  </div>
+                  <div class="col-sm-3">
+                    <label for="dinner" class="col-form-label">
+                      <input type="checkbox" id="dinner" name="meal" value="dinner" />
+                      Dinner
+                    </label>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="spicy" class="col-form-label">Spice Level:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <select id="spicy" name="spicy" required>
+                      <option selected="selected" value=0>Regular</option>
+                      <option value=1>Spicy</option>
+                    </select>
+                  </div>
+
+                  <div class="col-sm-3">
+                    <label for="beverage" class="col-form-label">Tea/Coffee:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <select id="beverage" name="beverage">
+                      <option selected="selected" value="NONE">No, Thank You</option>
+                      <option value="TEA">Tea</option>
+                      <option value="COFFEE">Coffee</option>
+                    </select>
+                  </div> 
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="submit" class="col-form-label"></label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="submit" value="Submit" />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
