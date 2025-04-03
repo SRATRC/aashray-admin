@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Update Room</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="updateRoom.js"></script>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Update Room</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <form id="updateRoomForm">
+                <div id="alert" class="alert" role="alert"></div>
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="roomno">Room No:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="text" id="roomno" name="roomno" required />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3"> 
+                    <label for="roomtype">Room Type:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <select id="roomtype" name="roomtype" required>
+                      <option value="nac">Non A.C.</option>
+                      <option value="ac">A.C.</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3"> 
+                    <label for="gender">Gender:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <select id="gender" name="gender" required>
+                      <option value="M">Male</option>
+                      <option value="F">Female</option>
+                      <option value="SCM">Senior Citizen Male</option>
+                      <option value="SCF">Senior Citizen Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3"> 
+                    <label for="submit"></label>
+                  </div>
+
+                  <div class="col-sm-3">
+                    <input type="submit" value="Submit"/>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

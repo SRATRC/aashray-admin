@@ -95,6 +95,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     rooms.forEach((room) => {
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>
+          <a href='updateRoom.html?roomno=${room.roomno}&roomtype=${room.roomtype}&gender=${room.gender}'>
+            <span>&#x270E;</span>
+          </a>
+        </td>
         <td>${room.roomno}</td>
         <td>${room.roomtype}</td>
         <td>${room.gender}</td>
