@@ -32,7 +32,7 @@
     </div>
 
     <div class="middlecontent">
-      <div class="container-fluid">
+      <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
@@ -44,18 +44,29 @@
               <div id="alert" class="alert" role="alert"></div>
               <form>
                 <div class="row">
-                  <label for="start_date" class="col-form-label">Start Date:</label>
                   <div class="col-sm-3">
+                    <label for="start_date" class="col-form-label">Start Date:</label>
+                  </div>
+                  <div class="col-sm-4">
                     <input type="date" class="form-control" id="start_date" name="start_date" required />
                   </div>
-
-                  <label for="end_date" class="col-form-label">End Date:</label>
+                </div>
+                
+                <div class="row">
                   <div class="col-sm-3">
+                    <label for="end_date" class="col-form-label">End Date:</label>
+                  </div>
+                  <div class="col-sm-4">
                     <input type="date" class="form-control" id="end_date" name="end_date" required />
                   </div>
-
-                  <div class="col-sm-1">
-                    <button type="submit" class="btn btn-small">Fetch Report</button>
+                </div>
+                  
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="submit" class="col-form-label"></label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="submit" value="Submit" />
                   </div>
                 </div>
               </form>
