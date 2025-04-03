@@ -85,11 +85,12 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     );
 
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      showErrorMessage(data.message);
+      return;
     }
 
-    const data = await response.json();
     const rooms = data.data;
 
     rooms.forEach((room) => {
