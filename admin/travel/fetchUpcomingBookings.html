@@ -15,14 +15,38 @@
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    
+
+    
+
     <script src="/sessionstorage.js"></script>
     <script src="fetchUpcomingBookings.js"></script>
+    <style>
+      .button {
+      background-color: #008CBA; /* Green */
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      }
+      .table{
+        display: Block;
+        overflow-x: auto;
+        overflow-y: auto;
+        white-space: nowrap;
+        max-height: 300px;
+      }
+    </style>
   </head>
-  <body>
+  <body style="overflow-y: auto;overflow-x: auto;">
+   
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          <a href="javascript:void(0);" onclick="history.back()">Back why i am not seen</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
@@ -37,7 +61,24 @@
         <div class="form">
           <div class="row">
             <div class="col-md-12">
-              <div class="table">
+
+              Load Summary Table here 
+
+              <div class="table" ">
+                <table
+                      id="summaryBooking"
+                      class="table table-striped table-bordered" style="width: 50%;text-align: center;">
+                      <thead>
+                        <tr>
+                          <th>Status</th>
+                          <th>Count</th>
+                        </tr>
+                       </thead>
+                       <tbody>
+
+                        </tbody>   
+                </table>      
+
                 <table
                       id="upcomingBookings"
                       class="table table-striped table-bordered">
@@ -61,6 +102,7 @@
                           <th>Mobile NO</th>
                           <th>Center</th>
                           <th>Mumkshu Status</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -73,5 +115,6 @@
         </div>
       </div>
     </div>
+ 
   </body>
 </html>
