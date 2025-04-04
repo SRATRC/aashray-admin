@@ -19,6 +19,7 @@
     <script src="/sessionstorage.js"></script>
     <script src="foodReport.js"></script>
   </head>
+
   <body>
     <div class="header">
       <div class="container">
@@ -34,35 +35,84 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
-            <div class="frm-head">
-              <h4>
-                <b><u>Food Report</u></b>
-              </h4>
-            </div>
-            <div class="form">
-              <form id="foodReportForm">
-                <div class="row">
-                  <div class="col-md-12">
-                    <label for="reportDate">Select Date:</label>
-                    <input
-                      type="date"
-                      id="reportDate"
-                      name="reportDate"
-                      required
-                    /><br /><br />
+            <div class="row">
+              <div class="col-md-12">
+                <div class="frm-head">
+                  <h4 id="reportTitle"></h4>
+                  </h4>
+                </div>
+                <div id="alert" class="alert" role="alert"></div>
+                <div class="table">
+                  <table
+                    class="table table-striped table-bordered">
+                    <tr>
+                      <th colspan=5><center>Breakfast</center></th>
+                    </tr>
+                    <tr>
+                      <th><center>Date</center></th> 
+                      <th><center>Regd</center></th>
+                      <th><center>Issued</center></th>
+                      <th><center>No Show</center></th>
+                      <th><center>Physical Count</center></th>
+                    </tr>
+                    <tbody id="breakfastReportTable">
+                    </tbody>
+                  </table>
+                </div>
+                <div class="table">
+                  <table
+                    class="table table-striped table-bordered">
+                    <tr>
+                      <th colspan=5><center>Lunch</center></th>
+                    </tr>
+                    <tr>
+                      <th><center>Date</center></th> 
+                      <th><center>Regd</center></th>
+                      <th><center>Issued</center></th>
+                      <th><center>No Show</center></th>
+                      <th><center>Physical Count</center></th>
+                    </tr>
+                    <tbody id="lunchReportTable">
+                    </tbody>
+                  </table>
+                </div>
+              
+                  <div class="table">
+                    <table
+                      class="table table-striped table-bordered">
+                      <tr>
+                        <th colspan=5><center>Dinner</center></th>
+                      </tr>
+                      <tr>
+                        <th><center>Date</center></th> 
+                        <th><center>Regd</center></th>
+                        <th><center>Issued</center></th>
+                        <th><center>No Show</center></th>
+                        <th><center>Physical Count</center></th>
+                      </tr>
+                      <tbody id="dinnerReportTable">
+                      </tbody>
+                    </table>
                   </div>
-                  <div class="col-md-12">
-                    <!-- <button type="submit">Get Report</button> -->
-                    <button type="submit" class="btn btn-primary">
-                      Get Report
-                    </button>
-                    <br />
+
+               
+                  <div class="table">
+                    <table
+                      class="table table-striped table-bordered">
+                      <tr>
+                        <th colspan=3><center>Tea/Coffee</center></th>
+                      </tr>
+                      <tr>
+                        <th><center>Date</center></th> 
+                        <th><center>Tea</center></th>
+                        <th><center>Coffee</center></th>
+                      </tr>
+                      <tbody id="highteaReportTable">
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </form>
-
-              <!-- Table for displaying fetched data -->
-              <div id="foodReportContainer"></div>
+              </div>
             </div>
           </div>
         </div>

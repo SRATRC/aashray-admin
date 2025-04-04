@@ -1,148 +1,89 @@
-document.addEventListener('DOMContentLoaded', function () {
-  document
-    .getElementById('foodReportForm')
-    .addEventListener('submit', async function (event) {
-      event.preventDefault();
+document.addEventListener('DOMContentLoaded', async function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const start_date = urlParams.get('start_date') || "";
+  const end_date = urlParams.get('end_date') || "";
 
-      const date = document.getElementById('reportDate').value;
 
-      try {
-        const response = await fetch(
-          `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/report?date=${date}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${sessionStorage.getItem('token')}`
-            }
-          }
-        );
+  const reportTitle = document.querySelector(`#reportTitle`);
+  reportTitle.innerHTML = `<b><u>Food Report ${start_date} - ${end_date}</u></b>`;
 
-        const data = await response.json();
+  resetAlert();
 
-        if (response.ok) {
-          displayFoodReport(data.data);
-        } else {
-          console.error('Failed to fetch food report:', data.message);
-          alert('Failed to fetch food report.');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error fetching food report.');
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/food/report?start_date=${start_date}&end_date=${end_date}`,
+      {
+        method: 'GET', // Assuming POST method as per the original function
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify() // Default page and page_size
       }
-    });
-});
+    );
 
-function displayFoodReport(data) {
-  const foodReportContainer = document.getElementById('foodReportContainer');
-  foodReportContainer.innerHTML = ''; // Clear previous data
-
-  if (data && data.report) {
-    const report = data.report;
-    const physicalPlates = data.physical_plates;
-
-    // Create table for report data
-    const reportTable = document.createElement('table');
-    reportTable.classList.add('table', 'table-bordered', 'table-striped'); // Bootstrap styling
-
-    // Table Header
-    const tableHeader = `
-      <thead>
-        <tr>
-          <th>Meal Type</th>
-          <th>Plates Issued</th>
-          <th>No Show</th>
-          <th>Tea</th>
-          <th>Coffee</th>
-        </tr>
-      </thead>
-    `;
-    reportTable.innerHTML = tableHeader;
-
-    // Table Body
-    const tableBody = document.createElement('tbody');
-    const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
-    mealTypes.forEach((mealType) => {
-      const row = document.createElement('tr');
-
-      // Meal Type
-      const mealCell = document.createElement('td');
-      mealCell.textContent = mealType;
-      row.appendChild(mealCell);
-
-      // Plates Issued
-      const platesIssuedCell = document.createElement('td');
-      platesIssuedCell.textContent =
-        report[`${mealType.toLowerCase()}_plate_issued`] || 0;
-      row.appendChild(platesIssuedCell);
-
-      // No Show
-      const noShowCell = document.createElement('td');
-      noShowCell.textContent = report[`${mealType.toLowerCase()}_noshow`] || 0;
-      row.appendChild(noShowCell);
-
-      // Tea (Only for Breakfast)
-      const teaCell = document.createElement('td');
-      teaCell.textContent = mealType === 'Breakfast' ? report.tea || 0 : '-';
-      row.appendChild(teaCell);
-
-      // Coffee (Only for Lunch)
-      const coffeeCell = document.createElement('td');
-      coffeeCell.textContent = mealType === 'Lunch' ? report.coffee || 0 : '-';
-      row.appendChild(coffeeCell);
-
-      tableBody.appendChild(row);
-    });
-    reportTable.appendChild(tableBody);
-
-    // Append the report table to the container
-    foodReportContainer.appendChild(reportTable);
-
-    // Create table for Physical Plates Count
-    if (physicalPlates && physicalPlates.length > 0) {
-      const physicalPlatesTable = document.createElement('table');
-      physicalPlatesTable.classList.add(
-        'table',
-        'table-bordered',
-        'table-striped',
-        'mt-4'
-      ); // Bootstrap styling
-
-      // Table Header for Physical Plates
-      const physicalPlatesHeader = `
-        <thead>
-          <tr>
-            <th>Physical Plate</th>
-            <th>Count</th>
-          </tr>
-        </thead>
-      `;
-      physicalPlatesTable.innerHTML = physicalPlatesHeader;
-
-      // Table Body for Physical Plates
-      const physicalPlatesBody = document.createElement('tbody');
-      physicalPlates.forEach((plate) => {
-        const row = document.createElement('tr');
-
-        const plateTypeCell = document.createElement('td');
-        plateTypeCell.textContent = plate.type;
-        row.appendChild(plateTypeCell);
-
-        const plateCountCell = document.createElement('td');
-        plateCountCell.textContent = plate.count;
-        row.appendChild(plateCountCell);
-
-        physicalPlatesBody.appendChild(row);
-      });
-      physicalPlatesTable.appendChild(physicalPlatesBody);
-
-      // Append the Physical Plates table to the container
-      foodReportContainer.appendChild(physicalPlatesTable);
+    const data = await response.json();
+    if (!response.ok) {
+      showErrorMessage(data.message);
+      return;
     }
-  } else {
-    // If no data is available
-    const noDataMessage = document.createElement('p');
-    noDataMessage.textContent = 'No data available for the selected date.';
-    foodReportContainer.appendChild(noDataMessage);
+
+    ['breakfast','lunch','dinner'].forEach((meal) => {
+      const reportTable = document.querySelector(`#${meal}ReportTable`);
+
+      let totalCount = 0;
+      let totalPlateIssued = 0;
+      let totalNoShow = 0;
+      let totalPhysicalPlates = 0;
+
+      data.data.forEach((report) => {
+        const count = report[meal];
+        const plateIssued = report[meal + '_plate_issued'];
+        const noShow = report[meal + '_noshow'];
+        const physicalPlates = report[meal + '_physical_plates'];
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><center>${report.date}</center></td>
+          <td><center>${count}</center></td>
+          <td><center>${plateIssued}</center></td>
+          <td><center>${noShow}</center></td>
+          <td><center>${physicalPlates}</center></td>
+        `;
+        reportTable.appendChild(row);
+
+        totalCount += count;
+        totalPlateIssued += plateIssued;
+        totalNoShow += noShow;
+        totalPhysicalPlates += physicalPlates;
+      });
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><center><b>TOTAL</b></center></td>
+        <td><center><b>${totalCount}</b></center></td>
+        <td><center><b>${totalPlateIssued}</b></center></td>
+        <td><center><b>${totalNoShow}</b></center></td>
+        <td><center><b>${totalPhysicalPlates}</b></center></td>
+      `;
+      reportTable.appendChild(row);
+    });
+
+    const highteaReportTable = document.querySelector(`#highteaReportTable`);
+    data.data.forEach((report) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><center>${report.date}</center></td>
+        <td><center>${report.tea}</center></td>
+        <td><center>${report.coffee}</center></td>
+      `;
+    
+      highteaReportTable.appendChild(row);
+    });
+
+
+  } catch (error) {
+    console.error('Error fetching food report:', error);
+    showErrorMessage(error);
   }
-}
+});
