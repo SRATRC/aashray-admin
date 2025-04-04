@@ -132,8 +132,39 @@
                   <div class="col-sm-3">
                     <input type="submit" value="Submit" />
                   </div>
+                  <div class="col-sm-4">
+                    <label for="submit" class="col-form-label">
+                      <a onclick='getExistingBookings();' href='#'>Get Existing Bookings</a>
+                    </label>
+                  </div>
                 </div>
               </form>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="frm-head">
+                  <h4>
+                    <b><u>Manage Existing Bookings</u></b>
+                  </h4>
+                </div>
+                <div class="table">
+                  <table id="bookingsTable" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>&nbsp;</th>
+                        <th>Date</th>
+                        <th>Meals</th> 
+                        <th>Spice Level</th>
+                        <th>Tea/Coffee</th>
+                      </tr>
+                    </thead>
+                    <tbody id="bookingsTableBody">
+                      <!-- Table rows will be dynamically added here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>

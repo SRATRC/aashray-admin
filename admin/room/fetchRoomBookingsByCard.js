@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (bookings.length == 0) {
         showErrorMessage("No bookings found for the given card no.");
+        return;
       }
 
       const tableBody = bookingsTable.querySelector('tbody');

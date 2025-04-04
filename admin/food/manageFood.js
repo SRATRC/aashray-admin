@@ -63,16 +63,98 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// Helper function to get all dates between two dates
-function getDatesInRange(startDate, endDate) {
-  const dates = [];
-  let currentDate = new Date(startDate);
-  const end = new Date(endDate);
 
-  while (currentDate <= end) {
-    dates.push(currentDate.toISOString().split('T')[0]); // Format the date as YYYY-MM-DD
-    currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+async function cancelBooking(bookingid) {
+  resetAlert();
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/food/cancel/${bookingid}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showSuccessMessage(data.message);
+    } else {
+      showErrorMessage(data.message);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showErrorMessage(error);
+  }
+}
+
+async function getExistingBookings() {
+  const tableBody = document.querySelector('#bookingsTableBody');
+  const cardno = document.getElementById('cardno').value.trim();
+  const mobno = document.getElementById('mobile').value.trim();
+
+  if (cardno == '' && mobno == '') {
+    showErrorMessage('Please specify Mobile No. or Card No.');
+    return;
   }
 
-  return dates;
+  resetAlert();
+
+  try {
+    const searchParams = new URLSearchParams({
+      cardno,
+      mobno
+    });
+    const url = `${CONFIG.basePath}/food/fetch_food_bookings?${searchParams}`;
+    const response = await fetch(
+      url,
+      {
+        method: 'GET', // Assuming POST method as per the original function
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify() // Default page and page_size
+      }
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      showErrorMessage(data.message);
+      return;
+    }
+
+    const bookings = data.data;
+    if (bookings.length == 0) {
+      showErrorMessage("No bookings found for the given guest.");
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    bookings.forEach((booking) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+            <td>
+              <a href="#" onclick="cancelBooking('${booking.id}');">
+                <i class="fa fa-trash"></i>
+              </a>
+            </td>
+            <td>${booking.date}</td>
+            <td>
+              ${(booking.breakfast ? '&check;' : '&cross;') + ' Breakfast | ' }
+              ${(booking.lunch ? '&check;' : '&cross;') + ' Lunch | ' }
+              ${(booking.dinner ? '&check;' : '&cross;') + ' Dinner ' }
+            </td>
+            <td>${booking.spicy ? 'Spicy' : 'Regular'}</td>
+            <td>${booking.hightea}</td>
+          `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error('Error fetching flat bookings:', error);
+    showErrorMessage(error);
+  }
 }
