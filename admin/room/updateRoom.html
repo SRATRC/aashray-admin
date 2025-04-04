@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Update Room Booking</title>
+    <title>Update Room</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -17,7 +17,7 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="updateRoomBooking.js"></script>
+    <script src="updateRoom.js"></script>
   </head>
 
   <body>
@@ -37,32 +37,44 @@
           <div class="inner-padding">
             <div class="frm-head">
               <h4>
-                <b><u>Update Room Booking</u></b>
+                <b><u>Update Room</u></b>
               </h4>
             </div>
             <div class="form">
-              <form id="updateBookingForm">
+              <form id="updateRoomForm">
                 <div id="alert" class="alert" role="alert"></div>
                 <div class="row">
                   <div class="col-sm-3">
-                    <label for="bookingId">Booking ID:</label>
+                    <label for="roomno">Room No:</label>
                   </div>
-                  <div class="col-sm-5">
-                    <input
-                      type="text"
-                      id="bookingId"
-                      name="bookingId"
-                      required
-                    />
+                  <div class="col-sm-3">
+                    <input type="text" id="roomno" name="roomno" required />
                   </div>
                 </div>
 
                 <div class="row">
                   <div class="col-sm-3"> 
-                    <label for="roomNumber">New Room No:</label>
+                    <label for="roomtype">Room Type:</label>
                   </div>
                   <div class="col-sm-3">
-                    <select id="roomNumber" name="roomNumber" required></select>
+                    <select id="roomtype" name="roomtype" required>
+                      <option value="nac">Non A.C.</option>
+                      <option value="ac">A.C.</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3"> 
+                    <label for="gender">Gender:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <select id="gender" name="gender" required>
+                      <option value="M">Male</option>
+                      <option value="F">Female</option>
+                      <option value="SCM">Senior Citizen Male</option>
+                      <option value="SCF">Senior Citizen Female</option>
+                    </select>
                   </div>
                 </div>
 

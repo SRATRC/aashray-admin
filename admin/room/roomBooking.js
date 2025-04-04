@@ -4,15 +4,23 @@ document.addEventListener('DOMContentLoaded', function () {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const mobno = document.getElementById('mobile').value;
+    const cardno = document.getElementById('cardno').value.trim();
+    const mobno = document.getElementById('mobile').value.trim();
     const checkin_date = document.getElementById('checkin_date').value;
     const checkout_date = document.getElementById('checkout_date').value;
     const room_type = document.getElementById('room_type').value;
     const floor_pref = document.getElementById('floor_pref').value;
 
+    resetAlert();
+
+    if (cardno == '' && mobno == '') {
+      showErrorMessage('Please specify Mobile No. or Card No.');
+      return;
+    }
+
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/bookForMumukshu/${cardno}`,
+        `${CONFIG.basePath}/stay/bookForMumukshu`,
         {
           method: 'POST',
           headers: {
@@ -20,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
+            cardno,
             mobno,
             checkin_date,
             checkout_date,
@@ -29,18 +38,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      const result = await response.json();
-
-      console.log(JSON.stringify(result));
+      const data = await response.json();
 
       if (response.ok) {
-        alert(`Success: ${result.message}`);
+        showSuccessMessage(data.message);
       } else {
-        alert(`Error: ${result.message}`);
+        showErrorMessage(data.message);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while booking the room.');
+      showErrorMessage(error);
     }
   });
 });

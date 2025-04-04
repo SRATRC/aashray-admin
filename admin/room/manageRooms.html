@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Room Admin</title>
+    <title>Manage Rooms</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -17,8 +17,9 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="manualCheckin.js" defer></script>
+    <script src="manageRooms.js"></script>
   </head>
+
   <body>
     <div class="header">
       <div class="container">
@@ -36,21 +37,37 @@
           <div class="inner-padding">
             <div class="frm-head">
               <h4>
-                <b><u>Manual Check-in</u></b>
+                <b><u>Manage Rooms</u></b>
               </h4>
             </div>
+
             <div class="form">
               <div id="alert" class="alert" role="alert"></div>
-              <form class="row" id="manualCheckinForm">
-                <label for="cardno" class="col-form-label">Card No:</label>
-                <div class="col-sm-7">
-                  <input type="text" class="form-control" id="cardno" name="cardno" required />
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="table">
+                    <table
+                      id="reportTable"
+                      class="table table-striped table-bordered"
+                    >
+                      <thead>
+                        <tr>
+                          <th>&nbsp;</th>
+                          <th>Room No</th>
+                          <th>Room Type</th>
+                          <th>Gender</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="reportTableBody">
+                        <!-- Table rows will be dynamically added here -->
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-  
-                <div class="col-sm-1">
-                  <button type="submit" class="btn btn-small">Check-in</button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>

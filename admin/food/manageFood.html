@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Room Booking</title>
+    <title>Food Booking Form</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -17,7 +17,7 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="roomBooking.js"></script>
+    <script src="manageFood.js"></script>
   </head>
 
   <body>
@@ -30,19 +30,20 @@
         </div>
       </div>
     </div>
+
     <div class="middlecontent">
-      <div class="container-fluid">
+      <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
               <h4>
-                <b><u>Room Booking</u></b>
+                <b><u>New Food Booking</u></b>
               </h4>
             </div>
-
             <div class="form">
               <div id="alert" class="alert" role="alert"></div>
-              <form id="roomBookingForm">
+              <form id="foodBookingForm">
+
                 <div class="row">
                   <div class="col-sm-3">
                     <label for="mobile" class="col-form-label">Mobile No:</label>
@@ -63,38 +64,63 @@
 
                 <div class="row">
                   <div class="col-sm-3">
-                    <label for="checkin_date" class="col-form-label">Check-in Date:</label>
+                    <label for="start_date" class="col-form-label">Start Date:</label>
                   </div>  
                   <div class="col-sm-3">
-                    <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
+                    <input type="date" class="form-control" id="start_date" name="start_date" required />
                   </div>
 
                   <div class="col-sm-3">
-                    <label for="checkout_date" class="col-form-label">Check-out Date:</label>
+                    <label for="end_date" class="col-form-label">End Date:</label>
                   </div>
                   <div class="col-sm-3">
-                    <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
+                    <input type="date" class="form-control" id="end_date" name="end_date" required />
                   </div>
                 </div>
 
                 <div class="row">
                   <div class="col-sm-3">
-                    <label for="room_type" class="col-form-label">Room Type:</label>
+                    <label for="meals" class="col-form-label">Select Meals:</label>
                   </div>
                   <div class="col-sm-3">
-                    <select id="room_type" name="room_type" required>
-                      <option selected="selected" value="nac">Non A.C.</option>
-                      <option value="ac">A.C.</option>
+                    <label for="breakfast" class="col-form-label">
+                      <input type="checkbox" id="breakfast" name="meal" value="breakfast" />
+                      Breakfast
+                    </label>
+                  </div>
+                  <div class="col-sm-3">
+                    <label for="lunch" class="col-form-label">
+                      <input type="checkbox" id="lunch" name="meal" value="lunch" />
+                      Lunch
+                    </label>
+                  </div>
+                  <div class="col-sm-3">
+                    <label for="dinner" class="col-form-label">
+                      <input type="checkbox" id="dinner" name="meal" value="dinner" />
+                      Dinner
+                    </label>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="spicy" class="col-form-label">Spice Level:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <select id="spicy" name="spicy" required>
+                      <option selected="selected" value=0>Regular</option>
+                      <option value=1>Spicy</option>
                     </select>
                   </div>
 
                   <div class="col-sm-3">
-                    <label for="floor_pref" class="col-form-label">Floor Preference:</label>
+                    <label for="beverage" class="col-form-label">Tea/Coffee:</label>
                   </div>
                   <div class="col-sm-3">
-                    <select id="floor_pref" name="floor_pref">
-                      <option selected="selected" value="">None</option>
-                      <option value="SC">Ground</option>
+                    <select id="beverage" name="beverage">
+                      <option selected="selected" value="NONE">No, Thank You</option>
+                      <option value="TEA">Tea</option>
+                      <option value="COFFEE">Coffee</option>
                     </select>
                   </div> 
                 </div>

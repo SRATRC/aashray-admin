@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const startDate = document.getElementById('start_date').value;
       const endDate = document.getElementById('end_date').value;
 
+      resetAlert();
+
       try {
         const response = await fetch(
           `${CONFIG.basePath}/stay/daywise_report?start_date=${startDate}&end_date=${endDate}`,
@@ -24,21 +26,19 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
         const data = await response.json();
-        
-        const reportsTableBody = document.getElementById('reportTableBody');
-        reportsTableBody.innerHTML = '';
-
-        if (data.data.length == 0) {
-          const emptyReportResult = document.getElementById('emptyReportResult');
-          emptyReportResult.innerHTML =
-            '<p>No bookings found for the selected date range.</p>';
+        if (!response.ok) {
+          showErrorMessage(data.message);
           return;
         }
+
+        if (data.data.length == 0) {
+          showErrorMessage("No bookings found for the selected date range.");
+          return;
+        }
+
+        const reportsTableBody = document.getElementById('reportTableBody');
+        reportsTableBody.innerHTML = '';
 
         data.data.forEach((report) => {
           const row = document.createElement('tr');
@@ -52,9 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       } catch (error) {
         console.error('Error fetching day-wise guest count report:', error);
-        alert(
-          'An error occurred while fetching the day-wise guest count report.'
-        );
+        showErrorMessage(error);
       }
     }
   );

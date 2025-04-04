@@ -198,7 +198,6 @@ select {
   color: #767676;
   height: auto;
   padding: 11px 15px;
-  margin-bottom: 15px;
   outline: none;
   border-radius: 5px;
   box-shadow: none;
@@ -211,8 +210,13 @@ select {
   border: 1px solid #ededed;
 }
 input[type='date'] {
-  padding: 6px 12px;
+  padding: 5px 11px;
 }
+input[type='checkbox'] {
+  vertical-align: middle;
+  margin-top: -1px;
+}
+
 textarea.form-control {
   height: 90px;
   resize: none;
@@ -234,12 +238,11 @@ select {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  background: url(../images/up-arrow.png) no-repeat 98% center #fff;
+  background: url(../images/up-arrow.png) no-repeat 90% center #fff;
   font-size: 13px;
   color: #767676;
   height: 40px;
   padding: 0 20px 0 10px;
-  margin-bottom: 30px;
   font-family: 'Open Sans', sans-serif;
   line-height: 40px;
   font-weight: 400;
@@ -252,15 +255,15 @@ select.form-control:focus {
 }
 
 .btn {
-  font-size: 20px;
-  line-height: 55px;
+  font-size: 16px;
+  line-height: 50px;
   padding: 0 40px;
   color: #fff;
   background-color: #f04f5a;
   font-weight: 600;
-  border-radius: 30px;
-  -webkit-border-radius: 30px;
-  -moz-border-radius: 30px;
+  border-radius: 20px;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
   transition: all 0.5s;
   outline: none;
   border: 0;
@@ -289,6 +292,7 @@ select.form-control:focus {
   font-size: 13px;
   padding: 15px;
   line-height: 1em;
+  border-radius: 7px;
 }
 .displayTable {
   display: table;
@@ -312,19 +316,18 @@ body {
   height: 100%;
 }
 .fullheight {
-  position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
   background: url(../images/RC_Blur.png) no-repeat center center;
   background-size: cover;
+  height: 100%
 }
 .header {
-  position: absolute;
+  padding: 30px;
 }
 .footer {
-  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
@@ -338,7 +341,6 @@ body {
 .logout {
   text-align: right;
   float: right;
-  margin: 33px -500px;
 }
 .logout a {
   color: #fff;
@@ -348,7 +350,7 @@ body {
 }
 .footer {
   text-align: center;
-  padding: 35px 0;
+  padding: 30px;
 }
 .footer p {
   font-size: 10px;
@@ -365,7 +367,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
 .inner-padding {
   padding: 50px 120px 38px 120px;
@@ -404,12 +405,11 @@ body {
 
 .form {
   background-color: #f6f6f6;
-  padding: 35px 90px;
+  padding: 25px;
   border-radius: 5px;
 }
 .form label {
   width: 135px;
-  float: left;
   margin: 11px 25px 11px 0;
   font-weight: 400;
   font-size: 13px;
@@ -427,8 +427,7 @@ body {
   resize: none;
 }
 .form input[type='submit'] {
-  width: calc(100% - 160px);
-  float: right;
+  width: 100%;
   border: none;
   background-color: #21519e;
   color: #fff;
@@ -442,9 +441,6 @@ body {
 }
 a:hover {
   color: #a8c2ec;
-}
-.fullheight {
-  height: auto;
 }
 /*Home page styles*/
 
@@ -476,17 +472,6 @@ a:hover {
 /** ==============Responsive style start ========== *****-------------------------------------------------------------***/
 
 @media only screen and (min-width: 2560px) {
-  .form input[type='text'],
-  .form input[type='number'],
-  .form input[type='tel'],
-  .form input[type='password'],
-  .form select,
-  .form textarea {
-    margin-bottom: 15px;
-  }
-  .middlecontent {
-    top: 53%;
-  }
   .form textarea {
     height: 78px;
     resize: none;
@@ -494,49 +479,24 @@ a:hover {
 }
 
 @media only screen and (max-width: 2560px) {
-  .form input[type='text'],
-  .form input[type='number'],
-  .form input[type='tel'],
-  .form input[type='password'],
-  .form select,
-  .form textarea {
-    margin-bottom: 15px;
-  }
-  .middlecontent {
-    top: 53%;
-  }
 }
 
 @media only screen and (max-width: 1920px) {
 }
 
 @media only screen and (max-width: 1800px) {
-  .header,
-  .footer,
-  .middlecontent,
-  .fullheight {
-    position: relative;
-  }
-  body {
-    min-height: 100vh;
-  }
-  .middlecontent {
-    min-height: 80vh;
-  }
+
 }
 
 @media only screen and (max-width: 991px) {
   .container {
     width: calc(100% - 30px);
   }
-  .fullheight {
-    height: auto;
-  }
   .middlecontent {
     margin: 3% 0;
   }
   .form {
-    padding: 30px;
+    padding: 20px;
   }
 }
 
@@ -544,30 +504,12 @@ a:hover {
   .inner-padding {
     padding: 30px 30px;
   }
-  .logout {
-    float: right;
-    margin: 14px 0;
-  }
-  .form input[type='text'],
-  .form input[type='number'],
-  .form input[type='tel'],
-  .form input[type='password'],
-  .form select,
-  .form textarea {
-    width: 100%;
-    margin: 0 0 10px 0;
-  }
   .logo {
     width: 150px;
   }
   .form {
-    margin: 17px 0 0 0;
-  }
-  .form {
     padding: 15px;
-  }
-  .fullheight {
-    height: auto;
+    margin: 17px 0 0 0;
   }
   .form label {
     width: auto;
@@ -576,7 +518,6 @@ a:hover {
     margin: 10px 0 0px 0;
   }
   .form input[type='submit'] {
-    width: 100%;
     margin: 12px 0 0 0;
   }
 }
@@ -606,7 +547,7 @@ a:hover {
 }
 
 .row {
-  margin-bottom: 15px;
+  margin-bottom: 5px;
 }
 
 .row input {
@@ -619,6 +560,11 @@ a:hover {
 
 label.col-form-label {
   width: auto;
-  padding: 15px;
+  padding: 11px;
   margin: 0px;
+}
+
+.alert {
+  padding: 5px 10px;
+  margin-bottom: 10px;
 }
