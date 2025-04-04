@@ -43,13 +43,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     
 
     if (response.ok) {
+      const today = new Date();
+        const formattedDate = today.toLocaleDateString(); // e.g. "4/2/2025"
+        document.getElementById("currentDate").textContent = formattedDate;
+
       const bookings = data.data;
       const bookingsTableBody = document
         .getElementById('upcomingBookings')
         .querySelector('tbody');
 
        
-      let idx=0;
+      
       bookings.forEach((booking) => {
         const row = document.createElement('tr');
         var adminComments=booking.admin_comments == null ? "" :booking.admin_comments;
@@ -76,10 +80,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             <td> <a href="updateBookingStatus.html?bookingIdParam=${booking.bookingid}"> Update Booking Status </a> <br>
            </td>
           `;
-          idx++;
-          if( idx < 50){
-            bookingsTableBody.appendChild(row);
-          }
+          bookingsTableBody.appendChild(row);
       });
     } else {
       console.error('Failed to fetch upcoming bookings:', data.message);
