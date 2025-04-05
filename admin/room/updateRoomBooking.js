@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       const data = await response.json();
       if (response.ok) {
         showSuccessMessage(data.message);
+        window.location.href = '/admin/room/roomReports.html';
       } else {
         showErrorMessage(data.message);
       }
