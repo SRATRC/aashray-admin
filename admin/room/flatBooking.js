@@ -1,5 +1,48 @@
-document.addEventListener('DOMContentLoaded', function () {
+async function fetchFlats() {
+  resetAlert();
+
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/stay/flat_list`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showErrorMessage(data.message);
+      return;
+    }
+
+    const flats = data.data;
+
+    const flatSelector = document.getElementById('flat_no');
+    flatSelector.innerHTML = '';
+
+    flats.forEach((flat) => {
+      const option = document.createElement('option');
+      option.text = flat.flatno;
+      option.value = flat.flatno;
+
+      flatSelector.appendChild(option);
+    });
+  } catch(error) {
+    console.error('Error:', error);
+    showErrorMessage(error);
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', async function () {
   const form = document.getElementById('flatBookingForm');
+
+  await fetchFlats();
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
