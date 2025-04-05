@@ -42,12 +42,24 @@ document.addEventListener('DOMContentLoaded', async function () {
         const noShow = report[meal + '_noshow'];
         const physicalPlates = report[meal + '_physical_plates'];
 
+        const issuedReportParams = new URLSearchParams({
+          date: report.date,
+          meal,
+          is_issued: 1
+        });
+        const noshowReportParams = new URLSearchParams({
+          date: report.date,
+          meal,
+          is_issued: 0
+        });
+
         const row = document.createElement('tr');
+
         row.innerHTML = `
           <td><center>${report.date}</center></td>
           <td><center>${count}</center></td>
-          <td><center>${plateIssued}</center></td>
-          <td><center>${noShow}</center></td>
+          <td><center><a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a></center></td>
+          <td><center><a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a></center></td>
           <td><center>${physicalPlates}</center></td>
         `;
         reportTable.appendChild(row);

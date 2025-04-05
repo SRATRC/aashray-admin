@@ -154,7 +154,7 @@ async function getExistingBookings() {
       tableBody.appendChild(row);
     });
   } catch (error) {
-    console.error('Error fetching flat bookings:', error);
+    console.error('Error fetching food bookings:', error);
     showErrorMessage(error);
   }
 }
