@@ -1,16 +1,24 @@
-document
-  .getElementById('statusForm')
+document.addEventListener('DOMContentLoaded', async function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookingId = urlParams.get('bookingIdParam'); // "John"
+  const shibirId = urlParams.get('shibirIdParam'); 
+
+  document.getElementById('bookingid').value = bookingId;
+  document.getElementById('shibir_id').value=shibirId;
+
+  const statusMessage = document.getElementById('statusMessage');
+  document.getElementById('statusForm')
   .addEventListener('submit', async function (event) {
     event.preventDefault();
 
     // Get form data
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
-
+    
     // Send the data to the backend
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/status',
+        `${CONFIG.basePath}/adhyayan/status`,
         {
           method: 'PUT',
           headers: {
@@ -21,24 +29,20 @@ document
         }
       );
 
+      const responseData = await response.json();
       if (response.ok) {
-        const result = await response.json();
-        // Add a div for response message in HTML to show results
-        const responseMessage = document.createElement('div');
-        responseMessage.classList.add('response-message');
-        responseMessage.textContent = `Success: ${result.message}`;
-        document.body.appendChild(responseMessage);
+        statusMessage.innerHTML = `<p>${responseData.message}</p>`;
       } else {
-        const errorResult = await response.json();
-        const responseMessage = document.createElement('div');
-        responseMessage.classList.add('response-message');
-        responseMessage.textContent = `Error: ${errorResult.message}`;
-        document.body.appendChild(responseMessage);
+        statusMessage.innerHTML = `<p>Error: ${responseData.message}</p>`;
       }
+
+      
     } catch (error) {
-      const responseMessage = document.createElement('div');
-      responseMessage.classList.add('response-message');
-      responseMessage.textContent = `Error: ${error.message}`;
-      document.body.appendChild(responseMessage);
+      console.error('Error updating booking status:', error);
+      statusMessage.innerHTML = `<p>Failed to update booking status. Please try again later.</p>`;
+
+      
     }
   });
+
+})
