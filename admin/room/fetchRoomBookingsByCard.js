@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        showErrorMessage(data.message);
       }
 
-      const data = await response.json();
       const bookings = data.data;
 
       // Clear previous table rows

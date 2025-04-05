@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
       const data = await response.json();
+      if (!response.ok) {
+        showErrorMessage(data.message);
+      }
+
       const bookings = data.data;
 
       // Clear previous table rows
@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (bookings.length == 0) {
         showErrorMessage("No bookings found for the given card no.");
+        return;
       }
 
       const tableBody = bookingsTable.querySelector('tbody');

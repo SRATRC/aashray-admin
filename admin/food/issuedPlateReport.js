@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const meal = urlParams.get('meal');
   const is_issued = urlParams.get('is_issued') || 0;
 
+  const today = formatDate(new Date());
+
   const reportTitle = document.querySelector(`#reportTitle`);
 
   if (is_issued == "1") {
@@ -58,9 +60,9 @@ document.addEventListener('DOMContentLoaded', async function () {
           <td>${report.CardDb.issuedto}</td>
           <td>${report.CardDb.mobno}</td>
         `;
-      if (is_issued != "1") {
+      if (is_issued != "1" && date == today) {
         row.innerHTML += `
-          <td>Issue Plate</td>
+          <td><a href='#', onclick="foodCheckin('${report.CardDb.cardno}');">Issue Plate</a></td>
         `
       }
       tableBody.appendChild(row);

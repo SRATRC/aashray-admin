@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <title>Kitchen Admin</title>
+
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
@@ -18,11 +19,12 @@
     <script src="/sessionstorage.js"></script>
     <script src="issuePlate.js"></script>
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()"> Back </a>
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
@@ -35,28 +37,22 @@
           <div class="inner-padding">
             <div class="frm-head">
               <h4>
-                <b><u>Tap your card to avail Dinner</u></b>
+                <b><u>Tap your card for food check-in</u></b>
               </h4>
             </div>
 
             <div class="form">
-              <form onsubmit="foodCheckin(event)">
+              <div id="alert" class="alert" role="alert"></div>
+              <form id="foodCheckinForm">
                 <div class="row">
-                  <div>
-                    <label>Tap the card: </label>
-                    <input type="text" name="cardno" autofocus />
+                  <div class="col-sm-3">
+                    <label for="cardno" class="col-form-label">Tap your card:</label>
                   </div>
-                  <div>
-                    <input
-                      type="hidden"
-                      name="transaction_detail"
-                      value="dinner"
-                    />
+                  <div class="col-sm-4">
+                    <input type="text" class="form-control" id="cardno" name="cardno" required />
                   </div>
-                  <div class="col-md-12">
-                    <button type="submit" class="btn btn-primary">
-                      Submit
-                    </button>
+                  <div class="col-sm-3">
+                    <input type="submit" value="Submit" />
                   </div>
                 </div>
               </form>

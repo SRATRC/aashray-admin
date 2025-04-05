@@ -1,33 +1,40 @@
-async function foodCheckin(event) {
-  event.preventDefault();
+document.addEventListener('DOMContentLoaded', function () {
 
-  // Collecting form data
-  const cardno = document.querySelector('input[name="cardno"]').value;
+  const foodCheckinForm = document.getElementById('foodCheckinForm');
 
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${sessionStorage.getItem('token')}`
-    },
-    body: JSON.stringify({
-      cardno: cardno
-    })
-  };
+  foodCheckinForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const cardno = document.getElementById('cardno').value.trim();
+
+    await foodCheckin(cardno);
+  });
+    
+});
+
+async function foodCheckin(cardno) {
+  resetAlert();
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/issue/${cardno}`,
-      options
+      `${CONFIG.basePath}/food/issue/${cardno}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify()
+      }
     );
-    if (response.status >= 200 && response.status < 300) {
-      const data = await response.json();
-      console.log(data);
+
+    const data = await response.json();
+    if (response.ok) {
+      showSuccessMessage(data.message);
     } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message);
+      showErrorMessage(data.message);
     }
   } catch (error) {
-    alert(error.message);
+    showErrorMessage(error);
   }
 }
