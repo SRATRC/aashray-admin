@@ -64,11 +64,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-async function cancelBooking(bookingid) {
+async function cancelBooking(bookingid, mealType) {
   resetAlert();
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/food/cancel/${bookingid}`,
+      `${CONFIG.basePath}/food/cancel/${bookingid}?mealType=${mealType}`,
       {
         method: 'PUT',
         headers: {
@@ -81,6 +81,7 @@ async function cancelBooking(bookingid) {
     const data = await response.json();
 
     if (response.ok) {
+      await getExistingBookings();
       showSuccessMessage(data.message);
     } else {
       showErrorMessage(data.message);
@@ -135,23 +136,20 @@ async function getExistingBookings() {
 
     tableBody.innerHTML = '';
     bookings.forEach((booking) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
+      ['breakfast', 'lunch', 'dinner'].forEach((mealType) => {
+        if (booking[mealType]) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${booking.date}</td>
+            <td>${mealType}</td>
             <td>
-              <a href="#" onclick="cancelBooking('${booking.id}');">
+              <a href="#" onclick="cancelBooking('${booking.id}', '${mealType}');">
                 <i class="fa fa-trash"></i>
               </a>
-            </td>
-            <td>${booking.date}</td>
-            <td>
-              ${(booking.breakfast ? '&check;' : '&cross;') + ' Breakfast | ' }
-              ${(booking.lunch ? '&check;' : '&cross;') + ' Lunch | ' }
-              ${(booking.dinner ? '&check;' : '&cross;') + ' Dinner ' }
-            </td>
-            <td>${booking.spicy ? 'Spicy' : 'Regular'}</td>
-            <td>${booking.hightea}</td>
-          `;
-      tableBody.appendChild(row);
+            </td>`;
+          tableBody.appendChild(row);
+        }
+      });
     });
   } catch (error) {
     console.error('Error fetching food bookings:', error);
