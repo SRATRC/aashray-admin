@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Fetch Menu</title>
+    <title>Manage Menu</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -34,42 +34,49 @@
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
-          <div class="frm-head">
-            <h1>
-              <b><u>Menu</u></b>
-            </h1>
-          </div>
-          <div class="form">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Manage Menu</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <div id="alert" class="alert" role="alert"></div>
+              <form id="fetchMenuForm">
+                <div class="row">
+                  <div class="col-sm-2">
+                    <label for="fromDate">From Date:</label>
+                  </div>           
+                  <div class="col-sm-3">
+                    <input
+                      type="date"
+                      id="fromDate"
+                      name="fromDate"
+                      required
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <label for="toDate">To Date:</label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input
+                      type="date"
+                      id="toDate"
+                      name="toDate"
+                      required
+                    />
+                  </div>
+                  <div class="col-sm-2">
+                    <input type="submit" class="submit" value="Filter"/>
+                  </div>
+                </div>
+              </form>
+            </div>
+
             <div class="row">
               <div class="col-md-12">
-                <!-- Date Range Filter Form -->
-                <form
-                  id="dateRangeForm"
-                  style="display: flex; align-items: center"
-                >
-                  <label for="fromDate" style="margin-right: 5px"
-                    >From Date:</label
-                  >
-                  <input
-                    type="date"
-                    id="fromDate"
-                    name="fromDate"
-                    required
-                    style="margin-right: 10px"
-                  />
-
-                  <label for="toDate" style="margin-right: 5px">To Date:</label>
-                  <input
-                    type="date"
-                    id="toDate"
-                    name="toDate"
-                    required
-                    style="margin-right: 5px"
-                  />
-
-                  <button type="submit" class="btn btn-primary">Filter</button>
-                </form>
-                <div><br /></div>
+                <div class="frm-head">
+                </div>
                 <div class="table">
                   <table
                     id="menuTable"
@@ -91,11 +98,10 @@
                 </div>
 
                 <!-- Add Menu Button -->
-                <div class="add-menu-button">
+                <div>
                   <button
                     onclick="window.location.href='addMenu.html'"
-                    class="btn btn-primary"
-                  >
+                    class="btn btn-small">
                     Add Menu
                   </button>
                 </div>

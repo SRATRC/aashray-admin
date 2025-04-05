@@ -1,136 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
-    />
-    <meta name="description" content="" />
-    <meta name="author" content="" />
-    <link rel="icon" href="logo.png" />
     <title>Add Menu</title>
-    <!-- Bootstrap core CSS -->
-    <link
-      href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
-      rel="stylesheet"
-    />
-    <!-- Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
-      rel="stylesheet"
-    />
-    <link href="../style/css/plugin.css" rel="stylesheet" />
-    <!-- Custom styles for this template -->
-    <link href="../style/css/clockpicker.css" rel="stylesheet" />
-    <link href="../style/css/style.css" rel="stylesheet" />
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Config and Header Scripts -->
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script>
+
+    <!-- Additional Styles and Scripts -->
+
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="addMenu.js"></script>
   </head>
 
   <body>
-    <div
-      class="fullheight"
-      style="
-        background: url(../style/images/RC_Blur.png) no-repeat center center;
-        background-size: cover;
-      "
-    >
-      <div class="header">
-        <div class="container">
-          <div class="logout">
-            <a id="homelink" href="../index.html">
-              <img alt="" title="" /> Logout
-            </a>
-          </div>
-          <div class="logout">
-            <a href="/adminhome.html">
-              <img alt="" title="" /> Home &nbsp; | &nbsp;
-            </a>
-          </div>
-          <div class="logout">
-            <a href="/food/fetchMenu.html">
-              <img alt="" title="" /> Back &nbsp; | &nbsp;
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div class="middlecontent">
-        <div class="container">
-          <div class="whitesec">
-            <div class="inner-padding">
-              <div class="frm-head">
-                <h4>
-                  <b><u>Add Menu</u></b>
-                </h4>
-              </div>
-              <div class="form">
-                <div class="row">
-                  <div class="col-md-12">
-                    <form id="addMenuForm">
-                      <label for="date">Date:</label>
-                      <input
-                        type="date"
-                        id="date"
-                        name="date"
-                        required
-                      /><br /><br />
-
-                      <label for="breakfast">Breakfast:</label>
-                      <input
-                        type="text"
-                        id="breakfast"
-                        name="breakfast"
-                        required
-                      /><br /><br />
-
-                      <label for="lunch">Lunch:</label>
-                      <input
-                        type="text"
-                        id="lunch"
-                        name="lunch"
-                        required
-                      /><br /><br />
-
-                      <label for="dinner">Dinner:</label>
-                      <input
-                        type="text"
-                        id="dinner"
-                        name="dinner"
-                        required
-                      /><br /><br />
-
-                      <button type="submit">Add Menu</button>
-                    </form>
-                    <p id="statusMessage"></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer">
-        <div class="container">
-          <p>
-            © 2022
-            <a href="#" target="_blank"
-              >Shrimad Rajchandra Aatma Tatva Research Centre</a
-            >
-          </p>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
 
-    <!-- Bootstrap core JavaScript -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Add Menu</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <div id="alert" class="alert" role="alert"></div>
+              <form id="addMenuForm">
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="date">Date:</label>
+                  </div>
+                  <div class="col-sm-4">
+                    <input
+                      type="date"
+                      id="date"
+                      name="date"
+                      required
+                    />
+                  </div>
+                </div>
 
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../style/js/clockpicker.js"></script>
-    <script src="../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="addMenu.js"></script>
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="breakfast">Breakfast:</label>
+                  </div>
+                  <div class="col-sm-6">
+                    <textarea id="breakfast" name="breakfast" required></textarea>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="lunch">Lunch:</label>
+                  </div>
+                  <div class="col-sm-6">
+                    <textarea id="lunch" name="lunch" required></textarea>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="dinner">Dinner:</label>
+                  </div>
+                  <div class="col-sm-6">
+                    <textarea id="dinner" name="dinner" required></textarea>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-3">
+                    <label for="submit" class="col-form-label"></label>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="submit" value="Add Menu" />
+                  </div>
+                  <div class="col-sm-3">
+                    <label for="submit" class="col-form-label">
+                      <a href="/admin/food/fetchMenu.html">Menu Home</a>
+                    </label>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
