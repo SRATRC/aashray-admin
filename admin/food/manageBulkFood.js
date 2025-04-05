@@ -54,11 +54,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-async function cancelBooking(bookingid) {
+async function cancelBulkBooking(bookingid) {
   resetAlert();
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/food/cancel/${bookingid}`,
+      `${CONFIG.basePath}/food/cancel_bulk_booking/${bookingid}`,
       {
         method: 'PUT',
         headers: {
@@ -81,24 +81,17 @@ async function cancelBooking(bookingid) {
   }
 }
 
-async function getExistingBookings() {
+async function getExistingGuestBookings() {
   const tableBody = document.querySelector('#bookingsTableBody');
   const cardno = document.getElementById('cardno').value.trim();
-  const mobno = document.getElementById('mobile').value.trim();
-
-  if (cardno == '' && mobno == '') {
-    showErrorMessage('Please specify Mobile No. or Card No.');
-    return;
-  }
 
   resetAlert();
 
   try {
     const searchParams = new URLSearchParams({
-      cardno,
-      mobno
+      cardno
     });
-    const url = `${CONFIG.basePath}/food/fetch_food_bookings?${searchParams}`;
+    const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams}`;
     const response = await fetch(
       url,
       {
@@ -119,27 +112,30 @@ async function getExistingBookings() {
 
     const bookings = data.data;
     if (bookings.length == 0) {
-      showErrorMessage("No bookings found for the given guest.");
+      showErrorMessage("No bookings found.");
       return;
     }
 
     tableBody.innerHTML = '';
     bookings.forEach((booking) => {
       const row = document.createElement('tr');
+      const meals = [];
+      if (booking.breakfast) meals.push('Breakfast');
+      if (booking.lunch) meals.push('Lunch');
+      if (booking.dinner) meals.push('Dinner');
+
       row.innerHTML = `
             <td>
-              <a href="#" onclick="cancelBooking('${booking.id}');">
+              <a href="#" onclick="cancelBulkBooking('${booking.bookingid}');">
                 <i class="fa fa-trash"></i>
               </a>
             </td>
             <td>${booking.date}</td>
-            <td>
-              ${(booking.breakfast ? '&check;' : '&cross;') + ' Breakfast | ' }
-              ${(booking.lunch ? '&check;' : '&cross;') + ' Lunch | ' }
-              ${(booking.dinner ? '&check;' : '&cross;') + ' Dinner ' }
-            </td>
-            <td>${booking.spicy ? 'Spicy' : 'Regular'}</td>
-            <td>${booking.hightea}</td>
+            <td>${booking.CardDb.issuedto}</td>
+            <td>${booking.CardDb.mobno}</td>
+            <td>${booking.department}</td>
+            <td>${booking.guestCount}</td>
+            <td>${meals}</td>
           `;
       tableBody.appendChild(row);
     });
