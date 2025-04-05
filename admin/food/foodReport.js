@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       data.data.forEach((report) => {
         const count = report[meal];
+        const nonSpicy = report['non_spicy'];
         const plateIssued = report[meal + '_plate_issued'];
         const noShow = report[meal + '_noshow'];
         const physicalPlates = report[meal + '_physical_plates'];
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         row.innerHTML = `
           <td><center>${report.date}</center></td>
-          <td><center>${count}</center></td>
+          <td><center>${count} (${nonSpicy})</center></td>
           <td><center><a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a></center></td>
           <td><center><a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a></center></td>
           <td><center>${physicalPlates}</center></td>
