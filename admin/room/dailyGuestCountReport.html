@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Daily Guest Count Report</title>
+    <title>Daily Guest Count / Availability Report</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -32,12 +32,12 @@
     </div>
 
     <div class="middlecontent">
-      <div class="container">
+      <div class="container-fluid">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
               <h4>
-                <b><u>Daily Guest Count Report</u></b>
+                <b><u>Daily Guest Count / Availability Report</u></b>
               </h4>
             </div>
             <div class="form" id="reportForm">
@@ -76,9 +76,6 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="frm-head">
-                    <h4>
-                      <b><u>Report</u></b>
-                    </h4>
                   </div>
                   <div class="table">
                     <table
@@ -87,9 +84,13 @@
                     >
                       <thead>
                         <tr>
-                          <th>Date</th>
-                          <th>NAC Count</th>
-                          <th>AC Count</th>
+                          <th><center>Date</center></th>
+                          <th><center>Guests in A.C.</center></th>
+                          <th><center>Guests in Non A.C.</center></th>
+                          <th><center>Total Guests in RC</center></th>
+                          <th><center>A.C. Beds Available</center></th>
+                          <th><center>Non A.C. Beds Available</center></th>
+                          <th><center>Total Beds Available</center></th>
                         </tr>
                       </thead>
                       <tbody id="reportTableBody">

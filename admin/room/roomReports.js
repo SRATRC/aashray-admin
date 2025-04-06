@@ -87,7 +87,7 @@ async function fetchUrl(url) {
     const data = await response.json();
 
     if (response.ok) {
-      await fetchReport(); 
+      await fetchReport();
       showSuccessMessage(data.message);
     } else {
       showErrorMessage(data.message);
