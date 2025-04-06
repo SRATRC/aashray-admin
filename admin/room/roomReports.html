@@ -51,10 +51,11 @@
                     <div class="col-sm-2">
                       <label for="report_type" class="col-form-label">Report Type:</label>
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-4">
                       <select id="report_type" name="report_type" required>
-                        <option value="reservation_report">Reservation Report</option>
-                        <option value="cancellation_report">Cancellation Report</option>
+                        <option value="reservation_report" data-type="room">Room Reservation Report</option>
+                        <option value="cancellation_report" data-type="room">Room Cancellation Report</option>
+                        <option value="flat_reservation_report" data-type="flat">Flat Reservation Report</option>
                       </select>
                     </div>
                   </div>
