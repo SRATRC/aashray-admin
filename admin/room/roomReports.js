@@ -158,7 +158,7 @@ async function fetchReport(reportType, startDate, endDate) {
         <td>${index + 1}</td>
         <td>${booking.CardDb.issuedto}</td>
         <td>${booking.CardDb.mobno}</td>
-        <td>${booking.CardDb.centre}</td>
+        <td>${booking.CardDb.center}</td>
         <td>${getEditAction(booking)}</td>
         <td>${booking.roomtype}</td>
         <td>${booking.checkin}</td>

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         <td>${booking.bookingid}</td>
         <td>${booking.CardDb.issuedto}</td>
         <td>${booking.CardDb.mobno}</td>
-        <td>${booking.CardDb.centre}</td>
+        <td>${booking.CardDb.center}</td>
         <td>${booking.roomno}</td>
         <td>${booking.roomtype}</td>
         <td>${booking.checkin}</td>
