@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('bulkFoodBookingForm');
 
+  const today = formatDate(new Date());
+  document.getElementById('date').value = today;
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     resetAlert();

@@ -42,6 +42,15 @@ async function fetchFlats() {
 document.addEventListener('DOMContentLoaded', async function () {
   const form = document.getElementById('flatBookingForm');
 
+  const today = new Date();
+  const checkin = formatDate(today);
+  document.getElementById('checkin_date').value = checkin;
+
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
+  const checkout = formatDate(nextWeek);
+  document.getElementById('checkout_date').value = checkout;
+
   await fetchFlats();
 
   form.addEventListener('submit', async (event) => {

@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
   const foodReportsForm = document.getElementById('foodReportsForm');
 
+  const today = formatDate(new Date());
+  document.getElementById('start_date').value = today;
+  document.getElementById('end_date').value = today;
 
   foodReportsForm.addEventListener('submit', async function (event) {
     event.preventDefault();

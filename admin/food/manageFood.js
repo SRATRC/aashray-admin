@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('foodBookingForm');
 
+  const today = formatDate(new Date());
+  document.getElementById('start_date').value = today;
+  document.getElementById('end_date').value = today;
+
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     resetAlert();
