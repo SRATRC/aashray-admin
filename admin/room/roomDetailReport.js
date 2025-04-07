@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
   
   try {
-    const url = `${CONFIG.basePath}/stay/available_rooms_for_day?${urlParams}`;
+    const url = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/available_rooms_for_day?${urlParams}`;
 
     const response = await fetch(
       url,

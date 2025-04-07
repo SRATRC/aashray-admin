@@ -3,7 +3,7 @@ async function fetchFlats() {
 
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/flat_list`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/flat_list`,
       {
         method: 'GET',
         headers: {
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/bookFlat/${mobno}`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/bookFlat/${mobno}`,
         {
           method: 'POST',
           headers: {

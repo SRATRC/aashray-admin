@@ -2,7 +2,7 @@
 async function deleteMenu(date) {
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/food/menu?date=${date}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu?date=${date}`,
       {
         method: 'DELETE',
         headers: {
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/food/menu?startDate=${startDate}&endDate=${endDate}`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu?startDate=${startDate}&endDate=${endDate}`,
         {
           method: 'GET',
           headers: {

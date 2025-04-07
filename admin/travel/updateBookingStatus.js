@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const adminComments = document.getElementById('adminComments').value;
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/travel/booking/status`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/travel/booking/status`,
         {
           method: 'POST',
           headers: {

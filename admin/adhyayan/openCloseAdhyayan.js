@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/${shibirId}/${
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/${shibirId}/${
           status === 'open' ? 'activate' : 'deactivate'
         }`,
         {

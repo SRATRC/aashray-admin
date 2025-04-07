@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     resetAlert();
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/fetch_flat_bookings/${cardno}`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/fetch_flat_bookings/${cardno}`,
         {
           method: 'GET',
           headers: {

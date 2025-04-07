@@ -15,7 +15,7 @@ async function block(roomno) {
   resetAlert();
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/block_room/${roomno}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/block_room/${roomno}`,
       {
         method: 'PUT',
         headers: {
@@ -42,7 +42,7 @@ async function unblock(roomno) {
   resetAlert();
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/unblock_room/${roomno}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/unblock_room/${roomno}`,
       {
         method: 'PUT',
         headers: {
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/room_list`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/room_list`,
       {
         method: 'GET',
         headers: {

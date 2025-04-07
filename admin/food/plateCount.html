@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Physical Plate Count</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="plateCount.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -25,8 +25,8 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
@@ -35,55 +35,39 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h4>
-                <b><u>Physical Plate Count</u></b>
-              </h4>
+              <h1>Physical Plate Count</h1>
             </div>
+
             <div class="form">
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
               <form id="plateCountForm">
-                <div id="alert" class="alert" role="alert"></div>
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="date" class="col-form-label">Date:</label>
-                  </div>
-                  <div class="col-sm-4">
-                    <input type="date" class="form-control" id="date" name="date" required />
-                  </div>
+                <div class="form-group">
+                  <label for="date">Date:</label>
+                  <input type="date" class="form-control" id="date" name="date" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="type" class="col-form-label">Meal Type:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <select id="type" name="type" required>
-                      <option value='breakfast' selected="selected">Breakfast</option>
-                      <option value='lunch'>Lunch</option>
-                      <option value='dinner'>Dinner</option>
-                    </select>
-                  </div>
-                </div>  
-
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="count" class="col-form-label">Plate Count:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="text" id="count" name="count" required />
-                  </div>
+                <div class="form-group">
+                  <label for="type">Meal Type:</label>
+                  <select id="type" name="type" class="form-control" required>
+                    <option value="breakfast" selected>Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                  </select>
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="submit" class="col-form-label"></label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="submit" value="Submit" />
-                  </div>
+                <div class="form-group">
+                  <label for="count">Plate Count:</label>
+                  <input type="text" class="form-control" id="count" name="count" required />
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
               </form>
             </div>
+
           </div>
         </div>
       </div>

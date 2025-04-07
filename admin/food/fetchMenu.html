@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manage Menu</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="fetchMenu.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -25,8 +25,8 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
@@ -35,78 +35,53 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h4>
-                <b><u>Manage Menu</u></b>
-              </h4>
+              <h1>Manage Menu</h1>
             </div>
+
             <div class="form">
-              <div id="alert" class="alert" role="alert"></div>
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
               <form id="fetchMenuForm">
-                <div class="row">
-                  <div class="col-sm-2">
-                    <label for="fromDate">From Date:</label>
-                  </div>           
-                  <div class="col-sm-3">
-                    <input
-                      type="date"
-                      id="fromDate"
-                      name="fromDate"
-                      required
-                    />
-                  </div>
-                  <div class="col-sm-2">
-                    <label for="toDate">To Date:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input
-                      type="date"
-                      id="toDate"
-                      name="toDate"
-                      required
-                    />
-                  </div>
-                  <div class="col-sm-2">
-                    <input type="submit" class="submit" value="Filter"/>
-                  </div>
+                <div class="form-group">
+                  <label for="fromDate">From Date:</label>
+                  <input type="date" id="fromDate" name="fromDate" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="toDate">To Date:</label>
+                  <input type="date" id="toDate" name="toDate" class="form-control" required />
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Filter</button>
                 </div>
               </form>
             </div>
 
-            <div class="row">
-              <div class="col-md-12">
-                <div class="frm-head">
-                </div>
-                <div class="table">
-                  <table
-                    id="menuTable"
-                    class="table table-striped table-bordered"
-                  >
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Breakfast</th>
-                        <th>Lunch</th>
-                        <th>Dinner</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <!-- Menu rows will be populated by JavaScript -->
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Add Menu Button -->
-                <div>
-                  <button
-                    onclick="window.location.href='addMenu.html'"
-                    class="btn btn-small">
-                    Add Menu
-                  </button>
-                </div>
-              </div>
+            <div class="table-responsive">
+              <table id="menuTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Breakfast</th>
+                    <th>Lunch</th>
+                    <th>Dinner</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Menu rows will be populated by JavaScript -->
+                </tbody>
+              </table>
             </div>
+
+            <div class="form-group form-submit">
+              <button onclick="window.location.href='addMenu.html'" class="btn btn-secondary">
+                Add Menu
+              </button>
+            </div>
+
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/create`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/create`,
         {
           method: 'POST',
           headers: {

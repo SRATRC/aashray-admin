@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/bookForMumukshu`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/bookForMumukshu`,
         {
           method: 'POST',
           headers: {

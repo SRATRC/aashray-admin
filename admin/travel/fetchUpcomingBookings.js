@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/travel/upcoming`, // Replace with your actual API endpoint
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/travel/upcoming`, // Replace with your actual API endpoint
       {
         method: 'GET',
         headers: {
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     );
 
     const suumaryResponse = await fetch(
-      `${CONFIG.basePath}/travel/summary`, // Replace with your actual API endpoint
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/travel/summary`, // Replace with your actual API endpoint
       {
         method: 'GET',
         headers: {

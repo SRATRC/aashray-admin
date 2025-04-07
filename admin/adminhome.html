@@ -1,68 +1,54 @@
-<!--index-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aashray Admin Console</title>
+    
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
     <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
+    <!-- <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script> -->
 
     <!-- Additional Styles and Scripts -->
-
     <script src="../style/js/plugin.js"></script>
     <script src="../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../style/js/clockpicker.js"></script>
     <script src="../style/js/custom.js"></script>
     <script src="../sessionstorage.js"></script>
+    
+    <!-- Link to our new shared CSS -->
+    <link rel="stylesheet" href="../style/css/styles.css">
   </head>
 
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a id="homelink" href="index.html">
-            <img alt="" title="" /> Logout
-          </a>
+          <a id="homelink" href="index.html">Logout</a>
         </div>
       </div>
     </div>
+    
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Welcome, Admin! </u></b>
-              </h4>
+              <h1>Welcome, Admin!</h1>
             </div>
-            <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="sudo/index.html">Admin Management</a>
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="adhyayan/index.html">Adhyayan Management</a>
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="card/index.html">Card Management</a>
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="food/index.html">Food Management</a>
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="gate/index.html">Gate Management</a>
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="room/index.html">Room Management</a>
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="travel/index.html">Travel Management</a>
-                </div>
+            <div class="admin-menu">
+              <div class="menu-grid">
+                <a class="menu-btn" href="sudo/index.html">Admin Management</a>
+                <a class="menu-btn" href="card/index.html">Card Management</a>
+                <a class="menu-btn" href="food/index.html">Food Management</a>
+                <a class="menu-btn" href="gate/index.html">Gate Management</a>
+                <a class="menu-btn" href="adhyayan/index.html">Adhyayan Management</a>
+                <a class="menu-btn" href="room/index.html">Room Management</a>
+                <a class="menu-btn" href="report/index.html">Admin Reports</a>
+                <a class="menu-btn" href="travel/index.html">Travel Management</a>
               </div>
             </div>
           </div>

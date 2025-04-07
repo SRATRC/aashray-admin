@@ -6,7 +6,7 @@ async function fetchReport() {
 
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/daywise_report?start_date=${startDate}&end_date=${endDate}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/daywise_report?start_date=${startDate}&end_date=${endDate}`,
       {
         method: 'GET',
         headers: {

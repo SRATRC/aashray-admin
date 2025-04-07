@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     resetAlert();
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/food/physicalPlates`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/physicalPlates`,
         {
           method: 'POST',
           headers: {

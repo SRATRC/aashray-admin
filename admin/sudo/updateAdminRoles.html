@@ -1,92 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
-    />
-    <link rel="icon" href="logo.png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Update Admin Roles</title>
-    <link
-      href="https://use.fontawesome.com/releases/v5.0.6/../style/css/all.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
-      rel="stylesheet"
-    />
-    <link href="../style/css/plugin.css" rel="stylesheet" />
-    <link href="../style/css/style.css" rel="stylesheet" />
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="updateAdminRoles.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
-    <div
-      class="fullheight"
-      style="
-        background: url(../style/images/RC_Blur.png) no-repeat center center;
-        background-size: cover;
-      "
-    >
-      <div class="header">
-        <div class="container">
-          <div class="logout">
-            <a id="homelink" href="../index.html">Logout</a>
-          </div>
-          <div class="logout">
-            <a href="/adminhome.html">Home &nbsp; | &nbsp;</a>
-          </div>
-          <div class="logout">
-            <a href="/0_adminManagement/fetchRoles.html"
-              >Back &nbsp; | &nbsp;</a
-            >
-          </div>
-        </div>
-      </div>
-      <div class="middlecontent">
-        <div class="container">
-          <div class="whitesec">
-            <div class="inner-padding">
-              <div class="frm-head">
-                <h4>
-                  <b><u>Update Admin Roles </u></b>
-                </h4>
-              </div>
-              <div class="form">
-                <div class="row">
-                  <div class="col-md-12">
-                    <form id="updateRolesForm">
-                      <label for="userid">User ID:</label>
-                      <input type="text" id="userid" name="userid" required />
-                      <label for="roles">Roles (comma-separated):</label>
-                      <input type="text" id="roles" name="roles" required />
-                      <button type="submit" class="btn btn-primary">
-                        Update Roles
-                      </button>
-                    </form>
-                    <p id="statusMessage"></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="footer">
-        <div class="container">
-          <p>
-            © 2022
-            <a href="#" target="_blank"
-              >Shrimad Rajchandra Aatma Tatva Research Centre</a
-            >
-          </p>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/custom.js"></script>
-    <script src="updateAdminRoles.js"></script>
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Update Admin Roles</h1>
+            </div>
+
+            <div class="form">
+              <form id="updateRolesForm">
+                <div class="form-group">
+                  <label for="userid">User ID:</label>
+                  <input
+                    type="text"
+                    id="userid"
+                    class="form-control"
+                    placeholder="Enter User ID"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="roles">Roles (comma-separated):</label>
+                  <input
+                    type="text"
+                    id="roles"
+                    class="form-control"
+                    placeholder="e.g. admin,editor,viewer"
+                    required
+                  />
+                </div>
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">
+                    Update Roles
+                  </button>
+                </div>
+              </form>
+              <p id="statusMessage"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

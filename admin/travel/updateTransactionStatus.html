@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Update Transaction Status</title>
 
-    <!-- Load jQuery first -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
+    <script src="../../sessionstorage.js"></script>
     <script src="updateTransactionStatus.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -36,41 +36,72 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Update Transaction Status</u></b>
-              </h4>
+              <h1>Update Transaction Status</h1>
             </div>
+
             <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <form id="updateTransactionForm">
-                    <label for="cardno">Card Number:</label>
-                    <input type="text" id="cardno" name="cardno" required />
-                    <label for="bookingid">Booking ID:</label>
-                    <input
-                      type="text"
-                      id="bookingid"
-                      name="bookingid"
-                      required
-                    />
-                    <label for="type">Type:</label>
-                    <input type="text" id="type" name="type" required />
-                    <label for="status">Status:</label>
-                    <select id="status" name="status" required>
-                      <option value="">Select Status</option>
-                      <option value="payment pending">Payment Pending</option>
-                      <option value="payment completed">
-                        Payment Completed
-                      </option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="admin canceled">Admin Cancelled</option>
-                      <option value="awaiting refund">Awaiting Refund</option>
-                    </select>
-                    <button type="submit">Update Status</button>
-                  </form>
-                  <p id="message"></p>
+              <form id="updateTransactionForm">
+                <div class="form-group">
+                  <label for="cardno">Card Number:</label>
+                  <input
+                    type="text"
+                    id="cardno"
+                    name="cardno"
+                    class="form-control"
+                    placeholder="Enter Card Number"
+                    required
+                  />
                 </div>
-              </div>
+
+                <div class="form-group">
+                  <label for="bookingid">Booking ID:</label>
+                  <input
+                    type="text"
+                    id="bookingid"
+                    name="bookingid"
+                    class="form-control"
+                    placeholder="Enter Booking ID"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="type">Type:</label>
+                  <input
+                    type="text"
+                    id="type"
+                    name="type"
+                    class="form-control"
+                    placeholder="Enter Transaction Type"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="status">Status:</label>
+                  <select
+                    id="status"
+                    name="status"
+                    class="form-control"
+                    required
+                  >
+                    <option value="">Select Status</option>
+                    <option value="payment pending">Payment Pending</option>
+                    <option value="payment completed">Payment Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="admin canceled">Admin Cancelled</option>
+                    <option value="awaiting refund">Awaiting Refund</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">
+                    Update Status
+                  </button>
+                </div>
+              </form>
+
+              <p id="message" style="margin-top: 10px;"></p>
             </div>
           </div>
         </div>

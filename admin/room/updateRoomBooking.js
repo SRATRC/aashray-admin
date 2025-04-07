@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   resetAlert();
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/available_rooms/${bookingId}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/available_rooms/${bookingId}`,
       {
         method: 'GET', // Assuming POST method as per the original function
         headers: {
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/update_room_booking`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/update_room_booking`,
         {
           method: 'PUT',
           headers: {

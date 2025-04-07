@@ -1,22 +1,39 @@
 document.addEventListener('DOMContentLoaded', async function () {
   const updateMenuForm = document.getElementById('updateMenuForm');
+  const alertBox = document.getElementById('alert');
+
+  const resetAlert = () => {
+    alertBox.style.display = 'none';
+    alertBox.className = 'alert';
+    alertBox.innerText = '';
+  };
+
+  const showSuccessMessage = (message) => {
+    alertBox.style.display = 'block';
+    alertBox.className = 'alert alert-success';
+    alertBox.innerText = message;
+  };
+
+  const showErrorMessage = (message) => {
+    alertBox.style.display = 'block';
+    alertBox.className = 'alert alert-danger';
+    alertBox.innerText = message;
+  };
 
   resetAlert();
 
-  // Get date from URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const date = urlParams.get('date');
   document.getElementById('date').value = date;
 
   if (!date) {
-    showErrorMessage("No date selected");
+    showErrorMessage("No date selected.");
     return;
   }
 
   try {
-    // Fetch the existing menu details for the selected date
     const response = await fetch(
-      `${CONFIG.basePath}/food/menu?startDate=${date}&endDate=${date}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu?startDate=${date}&endDate=${date}`,
       {
         method: 'GET',
         headers: {
@@ -29,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const data = await response.json();
 
     if (!response.ok) {
-      showErrorMessage(data.message);
+      showErrorMessage(data.message || "Error fetching menu.");
       return;
     }
 
@@ -39,25 +56,25 @@ document.addEventListener('DOMContentLoaded', async function () {
       return;
     }
 
-    document.getElementById('breakfast').value = menu.breakfast;
-    document.getElementById('lunch').value = menu.lunch;
-    document.getElementById('dinner').value = menu.dinner;
+    document.getElementById('breakfast').value = menu.breakfast || '';
+    document.getElementById('lunch').value = menu.lunch || '';
+    document.getElementById('dinner').value = menu.dinner || '';
   } catch (error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    showErrorMessage("Something went wrong while fetching the menu.");
   }
 
   updateMenuForm.addEventListener('submit', async function (event) {
     event.preventDefault();
+    resetAlert();
 
-    const date = document.getElementById('date').value;
     const breakfast = document.getElementById('breakfast').value;
     const lunch = document.getElementById('lunch').value;
     const dinner = document.getElementById('dinner').value;
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/food/menu`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu`,
         {
           method: 'PUT',
           headers: {
@@ -69,14 +86,15 @@ document.addEventListener('DOMContentLoaded', async function () {
       );
 
       const data = await response.json();
+
       if (response.ok) {
-        showSuccessMessage(data.message);
+        showSuccessMessage(data.message || "Menu updated successfully.");
       } else {
-        showErrorMessage(data.message);
+        showErrorMessage(data.message || "Failed to update menu.");
       }
     } catch (error) {
       console.error('Error:', error);
-      showErrorMessage(error);
+      showErrorMessage("Something went wrong while updating the menu.");
     }
   });
 });

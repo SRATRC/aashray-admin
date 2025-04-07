@@ -1,31 +1,32 @@
-<!--food/index-->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Management</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
+    <script src="../../sessionstorage.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()"> Back </a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="/admin/">Home</a>
+          &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
@@ -36,48 +37,20 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Food Management</u></b>
-              </h4>
+              <h1>Food Management</h1>
             </div>
-            <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="issuePlate.html"
-                    >Issue Plate</a
-                  ><br />
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="manageFood.html"
-                    >Manage Food Bookings</a
-                  ><br />
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="manageBulkFood.html"
-                    >Manage Guest Food Bookings</a
-                  ><br />
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="plateCount.html"
-                  >
-                    Plates Issued</a
-                  ><br />
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="foodReports.html"
-                    >Food Reports</a
-                  ><br />
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="fetchMenu.html"
-                  >
-                    Menu Management</a
-                  ><br />
-                </div>
+
+            <div class="admin-menu">
+              <div class="menu-grid">
+                <a class="menu-btn" href="issuePlate.html">Issue Plate</a>
+                <a class="menu-btn" href="manageFood.html">Manage Food Bookings</a>
+                <a class="menu-btn" href="manageBulkFood.html">Manage Guest Food Bookings</a>
+                <a class="menu-btn" href="plateCount.html">Plates Issued</a>
+                <a class="menu-btn" href="foodReports.html">Food Reports</a>
+                <a class="menu-btn" href="fetchMenu.html">Menu Management</a>
               </div>
             </div>
+
           </div>
         </div>
       </div>

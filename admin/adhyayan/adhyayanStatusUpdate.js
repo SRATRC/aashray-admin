@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Send the data to the backend
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/status`,
+        `https:/sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/status`,
         {
           method: 'PUT',
           headers: {

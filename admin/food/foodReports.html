@@ -1,27 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Reports</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <script>
-      const REPORT_URL = `${CONFIG.basePath}/stay/reservation_report`;
-    </script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
+    <!-- <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/header.js"></script> -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="foodReports.js"></script>
+
+    <!-- API Config -->
+    <script>
+      const REPORT_URL = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin//stay/reservation_report`;
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -40,50 +43,54 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Food Reports</u></b>
-              </h4>
+              <h1>Food Reports</h1>
             </div>
+
             <div class="form">
-              <div id="alert" class="alert" role="alert"></div>
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
               <form id="foodReportsForm">
                 <div class="row">
-                  <div class="col-sm-3">
-                    <label for="report_type" class="col-form-label">Report Type:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <select id="report_type" name="report_type" required>
+                  <div class="form-group">
+                    <label for="report_type">Report Type:</label>
+                    <select id="report_type" name="report_type" class="form-control" required>
                       <option value="foodReport">Food Report</option>
                     </select>
                   </div>
-                </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="start_date" class="col-form-label">Report Start Date:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="start_date" name="start_date" required />
+                  <div class="form-group">
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control" required />
                   </div>
 
-                  <div class="col-sm-3">
-                    <label for="end_date" class="col-form-label">Report End Date:</label>
+                  <div class="form-group">
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" required />
                   </div>
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="end_date" name="end_date" required />
-                  </div>
-                </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="submit" class="col-form-label"></label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="submit" value="Submit" />
+                  <div class="form-group form-submit">
+                    <button type="submit" class="btn btn-primary">Submit</button>
                   </div>
                 </div>
               </form>
             </div>
+
+            <div class="table-responsive" id="reportResult" style="display: none;">
+              <!-- Optional table for results to be rendered dynamically -->
+              <table id="reportTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Count</th>
+                    <!-- Add other columns as needed -->
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Rows will be inserted by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+
           </div>
         </div>
       </div>

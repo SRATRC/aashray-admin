@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/food/menu`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu`,
         {
           method: 'POST',
           headers: {

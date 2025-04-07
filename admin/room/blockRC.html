@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Block / Unblock RC</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="blockRC.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -25,94 +25,67 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
 
     <div class="middlecontent">
-      <div class="container-fluid">
+      <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Block / Unblock RC</u></b>
-              </h4>
+              <h1>Block / Unblock RC</h1>
             </div>
+
             <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
               <form id="blockRCForm">
-                <div id="alert" class="alert" role="alert"></div>
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="checkin_date" class="col-form-label">Start Date:</label>
-                  </div>
-                  <div class="col-sm-5">
-                    <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
-                  </div>
+
+                <div class="form-group">
+                  <label for="checkin_date">Start Date:</label>
+                  <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="checkout_date" class="col-form-label">End Date:</label>
-                  </div>
-                  <div class="col-sm-5">
-                    <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
-                  </div>
+                <div class="form-group">
+                  <label for="checkout_date">End Date:</label>
+                  <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="comments" class="col-form-label">Comments:</label>
-                  </div>
-                  <div class="col-sm-9">
-                    <textarea id="comments" name="comments" required></textarea>
-                  </div>
+                <div class="form-group">
+                  <label for="comments">Comments:</label>
+                  <textarea id="comments" name="comments" class="form-control" rows="3" required></textarea>
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="submit" class="col-form-label"></label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="submit" value="Submit" />
-                  </div>
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
               </form>
             </div>
 
-            <div>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="frm-head">
-                    <h4>
-                      <b><u>Current Blocked Dates</u></b>
-                    </h4>
-                  </div>
-
-                  <div class="table">
-                    <table
-                      id="reportTable"
-                      class="table table-striped table-bordered"
-                    >
-                      <thead>
-                        <tr>
-                          <th>Block ID</th>
-                          <th>Start Date</th>
-                          <th>End Date</th>
-                          <th>Comments</th>
-                          <th>Status</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody id="reportTableBody">
-                        <!-- Table rows will be dynamically added here -->
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+            <div class="frm-head mt-4">
+              <h2>Current Blocked Dates</h2>
             </div>
+
+            <div class="table-responsive">
+              <table id="reportTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Block ID</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Comments</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                  <!-- Table rows will be dynamically added here -->
+                </tbody>
+              </table>
+            </div>
+
           </div>
         </div>
       </div>

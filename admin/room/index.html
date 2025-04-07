@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Room Admin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room Management</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
+    <script src="../../sessionstorage.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          &nbsp; | &nbsp;
+          <a href="/admin/">Home</a>
+          &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
@@ -34,57 +37,23 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Room Management </u></b>
-              </h4>
+              <h1>Room Management</h1>
             </div>
-            <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="roomBooking.html"
-                    >New Room Booking</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="flatBooking.html"
-                    >New Flat Booking</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="fetchRoomBookingsByCard.html"
-                    >Fetch Room Bookings By Card</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="fetchFlatBookingsByCard.html"
-                    >Fetch Flat Bookings By Card</a
-                  >
-                  <a class="btn col-md-12 btn-lg btn-demo" href="manageRooms.html"
-                    >Manage Rooms</a
-                  >
-                  <a class="btn col-md-12 btn-lg btn-demo" href="blockRC.html"
-                    >Block / Unblock RC</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="roomReports.html"
-                    >Room Booking Reports</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="occupancyReport.html"
-                    >Occupancy Report</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="dailyGuestCountReport.html"
-                    >Daily Guest Count / Availability Report</a
-                  >
-                </div>
+
+            <div class="admin-menu">
+              <div class="menu-grid">
+                <a class="menu-btn" href="roomBooking.html">New Room Booking</a>
+                <a class="menu-btn" href="flatBooking.html">New Flat Booking</a>
+                <a class="menu-btn" href="fetchRoomBookingsByCard.html">Fetch Room Bookings By Card</a>
+                <a class="menu-btn" href="fetchFlatBookingsByCard.html">Fetch Flat Bookings By Card</a>
+                <a class="menu-btn" href="manageRooms.html">Manage Rooms</a>
+                <a class="menu-btn" href="blockRC.html">Block / Unblock RC</a>
+                <a class="menu-btn" href="roomReports.html">Room Booking Reports</a>
+                <a class="menu-btn" href="occupancyReport.html">Occupancy Report</a>
+                <a class="menu-btn" href="dailyGuestCountReport.html">Daily Guest Count / Availability Report</a>
               </div>
             </div>
+            
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ async function unblock(blockid) {
   resetAlert();
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/unblock_rc/${blockid}`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/unblock_rc/${blockid}`,
       {
         method: 'PUT',
         headers: {
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/stay/rc_block_list`,
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/rc_block_list`,
       {
         method: 'GET',
         headers: {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     resetAlert();
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/stay/block_rc`,
+        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/block_rc`,
         {
           method: 'POST',
           headers: {

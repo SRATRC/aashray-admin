@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Guest Food Booking</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guest Food Booking (Bulk)</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
+        <script src="../../style/js/config.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="manageBulkFood.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -25,8 +28,8 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
@@ -35,126 +38,92 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h4>
-                <b><u>Guest Food Booking (Bulk)</u></b>
-              </h4>
+              <h1>Guest Food Booking (Bulk)</h1>
             </div>
+
             <div class="form">
-              <div id="alert" class="alert" role="alert"></div>
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
               <form id="bulkFoodBookingForm">
-
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="cardno" class="col-form-label">Card No:</label>
-                  </div>
-                  <div class="col-sm-4">
-                    <input type="tel" class="form-control" id="cardno" name="cardno" required/>
-                  </div>
+                <div class="form-group">
+                  <label for="cardno">Card No:</label>
+                  <input type="tel" class="form-control" id="cardno" name="cardno" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="date" class="col-form-label">Date:</label>
-                  </div>  
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="date" name="date" required />
-                  </div>
+                <div class="form-group">
+                  <label for="date">Date:</label>
+                  <input type="date" class="form-control" id="date" name="date" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="guestCount" class="col-form-label">Guest Count:</label>
-                  </div>  
-                  <div class="col-sm-2">
-                    <input type="text" class="form-control" id="guestCount" name="guestCount" required />
-                  </div>
+                <div class="form-group">
+                  <label for="guestCount">Guest Count:</label>
+                  <input type="text" class="form-control" id="guestCount" name="guestCount" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="department" class="col-form-label">Department:</label>
-                  </div>
-                  <div class="col-sm-5">
-                    <select id="department" name="department" required>
-                      <option value='RC' selected="selected">Research Center Guest</option>
-                      <option value='SREC'>School Guest</option>
-                      <option value='SRMC'>Medical Guest</option>
-                      <option value='Smilestones'>Smilestones Guest</option>
-                      <option value='Sanisa'>Sanisa Guest</option>
-                      <option value='Personal'>Personal Guest</option>
-                      <option value='Events-Guest'>Events Guest</option>
-                    </select>
-                  </div>
+                <div class="form-group">
+                  <label for="department">Department:</label>
+                  <select id="department" name="department" class="form-control" required>
+                    <option value='RC' selected>Research Center Guest</option>
+                    <option value='SREC'>School Guest</option>
+                    <option value='SRMC'>Medical Guest</option>
+                    <option value='Smilestones'>Smilestones Guest</option>
+                    <option value='Sanisa'>Sanisa Guest</option>
+                    <option value='Personal'>Personal Guest</option>
+                    <option value='Events-Guest'>Events Guest</option>
+                  </select>
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="meals" class="col-form-label">Select Meals:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <label for="breakfast" class="col-form-label">
+                <div class="form-group">
+                  <label class="col-form-label" for="meals">Select Meals:</label>
+                  <div class="d-flex gap-3 align-items-center">
+                    <label class="col-form-label">
                       <input type="checkbox" id="breakfast" name="meal" value="breakfast" />
                       Breakfast
                     </label>
-                  </div>
-                  <div class="col-sm-3">
-                    <label for="lunch" class="col-form-label">
+                    <label class="col-form-label">
                       <input type="checkbox" id="lunch" name="meal" value="lunch" />
                       Lunch
                     </label>
-                  </div>
-                  <div class="col-sm-3">
-                    <label for="dinner" class="col-form-label">
+                    <label class="col-form-label">
                       <input type="checkbox" id="dinner" name="meal" value="dinner" />
                       Dinner
                     </label>
                   </div>
                 </div>
+                
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="submit" class="col-form-label"></label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="submit" value="Submit" />
-                  </div>
-                  <div class="col-sm-4">
-                    <label for="submit" class="col-form-label">
-                      <a onclick='getExistingGuestBookings();' href='#'>Get Existing Guest Bookings</a>
-                    </label>
-                  </div>
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                  &nbsp;&nbsp;
+                  <a href="#" onclick="getExistingGuestBookings();">Get Existing Guest Bookings</a>
                 </div>
               </form>
             </div>
 
-            <div class="row">
-              <div class="col-md-12">
-                <div class="frm-head">
-                  <h4>
-                    <b><u>Manage Guest Food Bookings</u></b>
-                  </h4>
-                </div>
-                <div class="table">
-                  <table id="bookingsTable" class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th>&nbsp;</th>
-                        <th>Date</th>
-                        <th>Booked By</th>
-                        <th>Mobile No.</th>
-                        <th>Department</th>
-                        <th>Guest Count</th>
-                        <th>Meals</th>
-                      </tr>
-                    </thead>
-                    <tbody id="bookingsTableBody">
-                      <!-- Table rows will be dynamically added here -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            <div class="frm-head">
+              <h2>Manage Guest Food Bookings</h2>
             </div>
+
+            <div class="table-responsive">
+              <table id="bookingsTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Date</th>
+                    <th>Booked By</th>
+                    <th>Mobile No.</th>
+                    <th>Department</th>
+                    <th>Guest Count</th>
+                    <th>Meals</th>
+                  </tr>
+                </thead>
+                <tbody id="bookingsTableBody">
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+
           </div>
         </div>
       </div>
