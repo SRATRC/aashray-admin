@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/fetch',
+        `${CONFIG.basePath}/adhyayan/fetch`,
         options
       );
       const adhyayanData = await response.json();
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/${shibirId}/${newStatus}`,
+        `${CONFIG.basePath}/adhyayan/${shibirId}/${newStatus}`,
         {
           method: 'PUT',
           headers: {
