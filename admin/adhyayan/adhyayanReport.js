@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fetchAdhyayanReport = async () => {
     console.log('Fetching Adhyayan report...');
     const options = {
-      method: 'POST',
+      method: 'Get',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/report',
+        `${CONFIG.basePath}/adhyayan/fetch`,
         options
       );
       const result = await response.json();
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="text-align:center;">${index + 1}</td>
             <td style="text-align:center;">${item.name}</td>
             <td style="text-align:center;">${item.speaker}</td>
-            <td style="text-align:center;">${item.registration_count || 0}</td>
+            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}">${item.total_seats - item.available_seats}<a></td>
             <td style="text-align:center;">${item.total_seats}</td>
             <td style="text-align:center;">${item.status}</td>
             <td style="text-align:center;">

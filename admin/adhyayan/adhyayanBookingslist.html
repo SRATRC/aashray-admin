@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Adhyayan Report</title>
+    <title>Adhyayan Bookings</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -16,7 +16,7 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-    <script src="adhyayanReport.js"></script>
+    <script src="adhyayanBookingslist.js"></script>
   </head>
   <body>
     <div class="header">
@@ -32,7 +32,7 @@
     <div class="middlecontent">
       <div class="whitesec">
         <div class="frm-head">
-          <h1><br />Adhyayan Report</h1>
+          <h1><br />Adhyayan Bookings</h1>
         </div>
         <div class="form">
           <div class="row">
@@ -44,16 +44,17 @@
                 >
                   <thead>
                     <tr>
-                      <th>Serial No</th>
-                        <th>Adhyayan Name</th>
-                        <th>Swadhyay Karta</th>
-                        <th>Registration Count</th>
-                        <th>Max Count</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                      <th>Booking ID</th>
+                      <th>Guest Name</th>
+                      <th>Mobile Number</th>
+                      <th>Center</th>
+                      <th>Mumkshu Status</th>
+                      <th>Status</th>
+                      <th>Booked By</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
-                  <tbody id="adhyayanTable">
+                  <tbody>
                     <!-- Data will be populated here -->
                   </tbody>
                 </table>
@@ -65,4 +66,3 @@
     </div>
   </body>
 </html>
-
