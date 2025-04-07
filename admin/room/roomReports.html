@@ -54,7 +54,6 @@
                     <div class="col-sm-4">
                       <select id="report_type" name="report_type" required>
                         <option value="reservation_report" data-type="room">Room Reservation Report</option>
-                        <option value="cancellation_report" data-type="room">Room Cancellation Report</option>
                         <option value="flat_reservation_report" data-type="flat">Flat Reservation Report</option>
                       </select>
                     </div>
@@ -62,14 +61,62 @@
 
                   <div class="row">
                     <div class="col-sm-2">
-                      <label for="start_date" class="col-form-label">Report Start Date:</label>
+                      <label for="status" class="col-form-label">Status:</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label for="checkedin" class="col-form-label">
+                        <input type="checkbox" id="checkedin" name="status" value="checkedin" checked/>
+                        Checked-in
+                      </label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label for="checkedout" class="col-form-label">
+                        <input type="checkbox" id="checkedout" name="status" value="checkedout" />
+                        Checked-out
+                      </label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label for="pending checkin" class="col-form-label">
+                        <input type="checkbox" id="pending checkin" name="status" value="pending checkin" />
+                        Pending Check-in
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <label for="status" class="col-form-label"></label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label for="waiting" class="col-form-label">
+                        <input type="checkbox" id="waiting" name="status" value="waiting" />
+                        Waiting
+                      </label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label for="cancelled" class="col-form-label">
+                        <input type="checkbox" id="cancelled" name="status" value="cancelled" />
+                        Cancelled By User
+                      </label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label for="admin cancelled" class="col-form-label">
+                        <input type="checkbox" id="admin cancelled" name="status" value="admin cancelled" />
+                        Cancelled By Admin
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <label for="start_date" class="col-form-label">Start Date:</label>
                     </div>
                     <div class="col-sm-3">
                       <input type="date" class="form-control" id="start_date" name="start_date" required />
                     </div>
 
                     <div class="col-sm-2">
-                      <label for="end_date" class="col-form-label">Report End Date:</label>
+                      <label for="end_date" class="col-form-label">End Date:</label>
                     </div>
                     <div class="col-sm-3">
                       <input type="date" class="form-control" id="end_date" name="end_date" required />
@@ -91,9 +138,6 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="frm-head">
-                  <h4>
-                    <b><u>Bookings</u></b>
-                  </h4>
                 </div>
                 <div class="table">
                   <table

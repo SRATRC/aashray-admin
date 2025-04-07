@@ -27,17 +27,19 @@ function getCancelAction(booking) {
 function getEditAction(booking) {
   let editUrl = "";
 
-  switch (booking.status) {
-    case "checkedout":
-    case "cancelled":
-    case "admin cancelled":
-      break;
+  if (booking.nights > 0) {
+    switch (booking.status) {
+      case "checkedout":
+      case "cancelled":
+      case "admin cancelled":
+        break;
 
-    default:
-      editUrl = `
-        <a href='updateRoomBooking.html?bookingid=${booking.bookingid}'>
-          <span>&#x270E;</span>
-        </a>`;
+      default:
+        editUrl = `
+          <a href='updateRoomBooking.html?bookingid=${booking.bookingid}'>
+            <span>&#x270E;</span>
+          </a>`;
+    }
   }
 
   editUrl += (booking.roomno || "Not Assigned");
@@ -170,10 +172,20 @@ async function fetchReport() {
   const startDate = document.getElementById('start_date').value;
   const endDate = document.getElementById('end_date').value;
 
-  const reportUrl = `${CONFIG.basePath}/stay/${reportType}`;
+  const checkedValues = [...document.querySelectorAll('input[type="checkbox"]:checked')]
+    .map(checkbox => checkbox.value);
+
+  const searchParams = new URLSearchParams({
+    start_date: startDate,
+    end_date: endDate
+  });
+  checkedValues.forEach((x) => searchParams.append('statuses', x));
+
+  const reportUrl = `${CONFIG.basePath}/stay/${reportType}?${searchParams}`;
+
   try {
     const response = await fetch(
-      `${reportUrl}?start_date=${startDate}&end_date=${endDate}`,
+      reportUrl,
       {
         method: 'GET',
         headers: {
