@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fetchAdhayayanDetails = async (adhyayanToEdit) => {
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/fetch/${adhyayanToEdit}`,
+        `${CONFIG.basePath}/adhyayan/fetch/${adhyayanToEdit}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/update/${adhyayanId}`,
+        `${CONFIG.basePath}/adhyayan/update/${adhyayanId}`,
         {
           method: 'PUT',
           headers: {

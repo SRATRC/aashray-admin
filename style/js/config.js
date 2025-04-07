@@ -1,5 +1,5 @@
 const CONFIG = {
-  // basePath: 'http://127.0.0.1:3000/api/v1/admin', // Set this to your base URL if needed
+  //basePath: 'http://127.0.0.1:3000/api/v1/admin', // Set this to your base URL if needed
   basePath: 'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin',
 
   adminHomePath: '/admin/adminhome.html',
