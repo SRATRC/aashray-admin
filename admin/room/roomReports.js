@@ -1,10 +1,10 @@
 function getAction(booking) {
   switch (booking.status) {
     case "pending checkin":
-      return `<a href='#' onclick="return checkin('${booking.CardDb.cardno}')">Check-in</a>`;
+      return `<a href='#' onclick="return checkin('${booking.bookingid}')">Check-in</a>`;
 
     case "checkedin":
-      return `<a href='#' onclick="return checkout('${booking.CardDb.cardno}')">Check-out</a>`;
+      return `<a href='#' onclick="return checkout('${booking.bookingid}')">Check-out</a>`;
 
     default:
       return "";
@@ -49,10 +49,10 @@ function getEditAction(booking) {
 function getFlatAction(booking) {
   switch (booking.status) {
     case "pending checkin":
-      return `<a href='#' onclick="return flat_checkin('${booking.CardDb.cardno}')">Check-in</a>`;
+      return `<a href='#' onclick="return flat_checkin('${booking.bookingid}')">Check-in</a>`;
 
     case "checkedin":
-      return `<a href='#' onclick="return flat_checkout('${booking.CardDb.cardno}')">Check-out</a>`;
+      return `<a href='#' onclick="return flat_checkout('${booking.bookingid}')">Check-out</a>`;
 
     default:
       return "";
@@ -104,24 +104,24 @@ async function cancel(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/cancel/${bookingid}`);
 }
 
-async function checkin(cardno) {
-  await fetchUrl(`${CONFIG.basePath}/stay/checkin/${cardno}`);
+async function checkin(bookingid) {
+  await fetchUrl(`${CONFIG.basePath}/stay/checkin/${bookingid}`);
 }
 
-async function checkout(cardno) {
-  await fetchUrl(`${CONFIG.basePath}/stay/checkout/${cardno}`);
+async function checkout(bookingid) {
+  await fetchUrl(`${CONFIG.basePath}/stay/checkout/${bookingid}`);
 }
 
 async function flat_cancel(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_cancel/${bookingid}`);
 }
 
-async function flat_checkin(cardno) {
-  await fetchUrl(`${CONFIG.basePath}/stay/flat_checkin/${cardno}`);
+async function flat_checkin(bookingid) {
+  await fetchUrl(`${CONFIG.basePath}/stay/flat_checkin/${bookingid}`);
 }
 
-async function flat_checkout(cardno) {
-  await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${cardno}`);
+async function flat_checkout(bookingid) {
+  await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
 
 function createRoomBookingRow(booking, index) {
