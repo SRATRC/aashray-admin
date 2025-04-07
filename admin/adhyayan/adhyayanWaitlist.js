@@ -22,8 +22,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const data = await response.json();
     const adhyanWaitListers = data.data;
 
-    console.log(adhyanWaitListers);
-
     adhyanWaitListers.forEach((item) => {
       const row = document.createElement('tr');
     

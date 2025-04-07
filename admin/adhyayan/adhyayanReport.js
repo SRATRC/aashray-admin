@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const adhyayanTableBody = document.getElementById('adhyayanTable');
 
   const fetchAdhyayanReport = async () => {
-    console.log('Fetching Adhyayan report...');
     const options = {
       method: 'Get',
       headers: {
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         options
       );
       const result = await response.json();
-      console.log('Adhyayan Data received:', result);
       populateTable(result.data);
     } catch (error) {
       console.error('Error fetching Adhyayan report:', error);

@@ -52,33 +52,64 @@
         </div>
       </div>
     </div>
-
+    
     <div class="middlecontent">
       <div class="whitesec">
+        <div class="form"> 
+        <center>
+        <form id="reportForm"> 
+          <div class="row">
+            <div class="col-sm-2">
+              <label for="start_date" class="col-form-label">Report Start Date:</label>
+            </div>
+            <div class="col-sm-3">
+              <input type="date" class="form-control" id="start_date" name="start_date" required />
+            </div>
+    
+            <div class="col-sm-2">
+              <label for="end_date" class="col-form-label">Report End Date:</label>
+            </div>
+            <div class="col-sm-3">
+              <input type="date" class="form-control" id="end_date" name="end_date" required />
+            </div>
+          </div>
+    
+          <div class="row">
+            <div class="col-sm-2">
+              <label for="submit" class="col-form-label"></label>
+            </div>
+            <div class="col-sm-2">
+              <input type="submit" value="Submit" />
+            </div>
+          </div>
+      </form>
+    </center>  
+    </div> 
         <div class="frm-head">
-          <h1><br />Upcoming Travel Bookings</h1>
+          <h2><br />Upcoming Travel Bookings</h2>
         </div>
         <div class="form">
           <div class="row">
             <div class="col-md-12">
 
-              <h3><br />Summary for <span id="currentDate"></span></p> </h3>
-
+              <h3><br /> <center><span id="selectedDate"></span></center></p> </h3>
+              
               <div class="table" ">
+                <center>
                 <table
                       id="summaryBooking"
                       class="table table-striped table-bordered" style="width: 50%;text-align: center;">
                       <thead>
                         <tr>
-                          <th>Status</th>
-                          <th>Count</th>
+                          <th><center>Status</center></th>
+                          <th><center>Count</center></th>
                         </tr>
                        </thead>
                        <tbody>
 
                         </tbody>   
                 </table>      
-
+              </center>  
                 <table
                       id="upcomingBookings"
                       class="table table-striped table-bordered">

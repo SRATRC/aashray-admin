@@ -29,18 +29,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     adhyanWaitListers.forEach((item) => {
       const row = document.createElement('tr');  
       row.innerHTML += ` 
-        <td>${item.bookingid}</td>`;
-        if(item.CardDb != null){
-        row.innerHTML +=`
-        <td>${item.CardDb.issuedto}</td>
-        <td>${item.CardDb.mobno}</td>
-        <td>${item.CardDb.center}</td>
-        <td>${item.CardDb.res_status}</td>
+        <td>${item.bookingid}</td>
+        <td>${item.issuedto}</td>
+        <td>${item.mobno}</td>
+        <td>${item.center}</td>
+        <td>${item.res_status}</td>
         <td>${item.status}</td>
-        <td>${item.bookedby}</td>`;
-        }
-       
-        row.innerHTML +=`<td><a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&&shibirIdParam=${item.shibir_id}">Update Booking Status</a></td>
+        <td>${item.bookedby}</td>
+        <td><a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&&shibirIdParam=${item.shibir_id}">Update Booking Status</a></td>
         `;
     
       tableBody.appendChild(row);
