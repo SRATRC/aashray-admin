@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
   
   try {
-    const url = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/report_details?${urlParams}`;
+    const url = `${CONFIG.basePath}/food/report_details?${urlParams}`;
 
     const response = await fetch(
       url,

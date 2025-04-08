@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function handleAdminActivation(username) {
     try {
-      const endpoint = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/activate/${username}`;
+      const endpoint = `${CONFIG.basePath}/sudo/activate/${username}`;
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {

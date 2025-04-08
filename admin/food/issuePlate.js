@@ -13,7 +13,7 @@ async function foodCheckin(cardno) {
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/issue/${cardno}`,
+      `${CONFIG.basePath}/food/issue/${cardno}`,
       {
         method: 'POST',
         headers: {

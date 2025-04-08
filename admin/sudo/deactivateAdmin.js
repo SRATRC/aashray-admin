@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/deactivate/${username}`,
+        `${CONFIG.basePath}/sudo/deactivate/${username}`,
         {
           method: 'PUT', // Using PUT method as we are updating the admin status
           headers: {

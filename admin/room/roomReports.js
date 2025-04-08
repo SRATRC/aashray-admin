@@ -94,27 +94,27 @@ async function fetchUrl(url) {
 }
 
 async function cancel(bookingid) {
-  await fetchUrl(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/cancel/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/stay/cancel/${bookingid}`);
 }
 
 async function checkin(bookingid) {
-  await fetchUrl(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/checkin/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/stay/checkin/${bookingid}`);
 }
 
 async function checkout(bookingid) {
-  await fetchUrl(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/checkout/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/stay/checkout/${bookingid}`);
 }
 
 async function flat_cancel(bookingid) {
-  await fetchUrl(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/flat_cancel/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/stay/flat_cancel/${bookingid}`);
 }
 
 async function flat_checkin(bookingid) {
-  await fetchUrl(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/flat_checkin/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/stay/flat_checkin/${bookingid}`);
 }
 
 async function flat_checkout(bookingid) {
-  await fetchUrl(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/flat_checkout/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
 
 function createRoomBookingRow(booking, index) {
@@ -173,7 +173,7 @@ async function fetchReport() {
   });
   checkedValues.forEach((x) => searchParams.append('statuses', x));
 
-  const reportUrl = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/${reportType}?${searchParams}`;
+  const reportUrl = `${CONFIG.basePath}/stay/${reportType}?${searchParams}`;
 
   try {
     const response = await fetch(

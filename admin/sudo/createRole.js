@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function handleRoleCreation(name) {
     try {
-      const endpoint = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/role/${name}`;
+      const endpoint = `${CONFIG.basePath}/sudo/role/${name}`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {

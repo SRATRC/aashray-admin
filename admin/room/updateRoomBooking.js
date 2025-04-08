@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/available_rooms/${bookingId}`,
+      `${CONFIG.basePath}/stay/available_rooms/${bookingId}`,
       {
         method: 'GET',
         headers: {
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/update_room_booking`,
+        `${CONFIG.basePath}/stay/update_room_booking`,
         {
           method: 'PUT',
           headers: {

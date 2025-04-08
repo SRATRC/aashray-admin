@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const tableBody = document.querySelector('#waitlistTable tbody');
     
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/waitlist`,
+      `${CONFIG.basePath}/adhyayan/waitlist`,
       {
         method: 'GET', // Assuming POST method as per the original function
         headers: {

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/update_room/${roomno}`,
+        `${CONFIG.basePath}/stay/update_room/${roomno}`,
         {
           method: 'PUT',
           headers: {

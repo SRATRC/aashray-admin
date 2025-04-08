@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu?startDate=${date}&endDate=${date}`,
+      `${CONFIG.basePath}/food/menu?startDate=${date}&endDate=${date}`,
       {
         method: 'GET',
         headers: {
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu`,
+        `${CONFIG.basePath}/food/menu`,
         {
           method: 'PUT',
           headers: {
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu?startDate=${date}&endDate=${date}`,
+      `${CONFIG.basePath}/food/menu?startDate=${date}&endDate=${date}`,
       {
         method: 'GET',
         headers: {
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu`,
+        `${CONFIG.basePath}/food/menu`,
         {
           method: 'PUT',
           headers: {

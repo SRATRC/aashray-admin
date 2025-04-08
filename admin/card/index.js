@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const url = query
-        ? `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${encodeURIComponent(
+        ? `${CONFIG.basePath}/card/search/${encodeURIComponent(
             query
           )}`
-        : 'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/getAll';
+        : '${CONFIG.basePath}/card/getAll';
 
       const response = await fetch(url, options);
 

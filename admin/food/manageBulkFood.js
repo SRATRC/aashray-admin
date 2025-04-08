@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/bulk_booking`,
+        `${CONFIG.basePath}/food/bulk_booking`,
         {
           method: 'POST',
           headers: {
@@ -65,7 +65,7 @@ async function cancelBulkBooking(bookingid) {
   resetAlert();
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/cancel_bulk_booking/${bookingid}`,
+      `${CONFIG.basePath}/food/cancel_bulk_booking/${bookingid}`,
       {
         method: 'PUT',
         headers: {
@@ -96,7 +96,7 @@ async function getExistingGuestBookings() {
 
   try {
     const searchParams = new URLSearchParams({ cardno });
-    const url = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/bulk_booking?${searchParams}`;
+    const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams}`;
     const response = await fetch(
       url,
       {

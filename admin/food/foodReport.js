@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/report?start_date=${start_date}&end_date=${end_date}`,
+      `${CONFIG.basePath}/food/report?start_date=${start_date}&end_date=${end_date}`,
       {
         method: 'GET', // Assuming POST method as per the original function
         headers: {

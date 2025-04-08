@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/fetch_all_admins',
+      '${CONFIG.basePath}/sudo/fetch_all_admins',
       {
         method: 'GET',
         headers: {
@@ -49,8 +49,8 @@ document.addEventListener('DOMContentLoaded', async function () {
           event.preventDefault(); // Prevent default link behavior
           const endpoint =
             admin.status === 'active'
-              ? `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/deactivate/${admin.username}`
-              : `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/activate/${admin.username}`;
+              ? `${CONFIG.basePath}/sudo/deactivate/${admin.username}`
+              : `${CONFIG.basePath}/sudo/activate/${admin.username}`;
           const method = 'PUT';
 
           try {

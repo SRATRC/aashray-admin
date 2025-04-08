@@ -21,7 +21,7 @@ function login(event) {
     })
   };
   fetch(
-    `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/auth/login`,
+    `${CONFIG.basePath}/auth/login`,
     options
   )
     .then((response) => response.json())

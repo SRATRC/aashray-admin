@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         try {
           const response = await fetch(
-            'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/accounts/fetch',
+            '${CONFIG.basePath}/accounts/fetch',
             options
           );
           const data = await response.json();

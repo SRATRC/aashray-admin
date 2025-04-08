@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch card details based on card number
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${issuedto}`,
+      `${CONFIG.basePath}/card/search/${issuedto}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const updateResponse = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/update/${cardno}`,
+        `${CONFIG.basePath}/card/update/${cardno}`,
         {
           method: 'PUT',
           headers: {
