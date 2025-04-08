@@ -15,7 +15,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const dinner = document.getElementById('dinner').checked ? 1 : 0;
     const department = document.getElementById('department').value;
     const guestCount = document.getElementById('guestCount').value;
-    
+
+    if (cardno == '' ) {
+      showErrorMessage('Please specify Mobile No. or Card No.');
+      return;
+    }
+
     if (!(breakfast || lunch || dinner)) {
       showErrorMessage('Please select at least one meal option.');
       return;
@@ -51,11 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } catch (error) {
       console.error('Error:', error);
-      showErrorMessage(error);
+      showErrorMessage(error.message || error);
     }
   });
 });
-
 
 async function cancelBulkBooking(bookingid) {
   resetAlert();
@@ -80,7 +84,7 @@ async function cancelBulkBooking(bookingid) {
     }
   } catch (error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    showErrorMessage(error.message || error);
   }
 }
 
@@ -91,19 +95,16 @@ async function getExistingGuestBookings() {
   resetAlert();
 
   try {
-    const searchParams = new URLSearchParams({
-      cardno
-    });
+    const searchParams = new URLSearchParams({ cardno });
     const url = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/bulk_booking?${searchParams}`;
     const response = await fetch(
       url,
       {
-        method: 'GET', // Assuming POST method as per the original function
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify() // Default page and page_size
+        }
       }
     );
 
@@ -138,12 +139,27 @@ async function getExistingGuestBookings() {
             <td>${booking.CardDb.mobno}</td>
             <td>${booking.department}</td>
             <td>${booking.guestCount}</td>
-            <td>${meals}</td>
+            <td>${meals.join(', ')}</td>
           `;
       tableBody.appendChild(row);
     });
   } catch (error) {
     console.error('Error fetching food bookings:', error);
-    showErrorMessage(error);
+    showErrorMessage(error.message || error);
   }
+}
+
+// ✅ Message Functions with browser alert + redirect
+function showSuccessMessage(message) {
+  alert(message);
+  window.location.href = "/admin/food/manageBulkFood.html"; // Change this path if needed
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+  window.location.href = "/admin/food/manageBulkFood.html"; // Change this path if needed
+}
+
+function resetAlert() {
+  // Placeholder if needed for UI resets
 }

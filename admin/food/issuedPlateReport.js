@@ -72,3 +72,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     showErrorMessage(error);
   }
 });
+
+// ✅ Browser alert-based messages
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // Clear in-page alerts if needed (optional)
+}

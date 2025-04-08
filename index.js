@@ -30,7 +30,7 @@ function login(event) {
       sessionStorage.setItem('roles', data.roles);
       
       window.location.pathname.replace(/\/$/, '');
-      window.location.href = CONFIG.adminHomePath;
+      window.location.href = '/admin/adminhome.html';
     })
     .catch((error) => console.error(error));
 }

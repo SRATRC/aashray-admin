@@ -1,15 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
-
   const foodCheckinForm = document.getElementById('foodCheckinForm');
 
   foodCheckinForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const cardno = document.getElementById('cardno').value.trim();
-
     await foodCheckin(cardno);
   });
-    
 });
 
 async function foodCheckin(cardno) {
@@ -24,17 +21,20 @@ async function foodCheckin(cardno) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         },
-        body: JSON.stringify()
+        body: JSON.stringify({})
       }
     );
 
     const data = await response.json();
     if (response.ok) {
-      showSuccessMessage(data.message);
+      alert(data.message); // success popup
+      window.location.href = '/admin/food/issuePlate.html'; // redirect on OK
     } else {
-      showErrorMessage(data.message);
+      alert(`Error: ${data.message}`); // error popup
+      window.location.href = '/admin/food/issuePlate.html'; // redirect on OK
     }
   } catch (error) {
-    showErrorMessage(error);
+    alert(`Unexpected Error: ${error.message}`);
+    window.location.href = '/admin/food/issuePlate.html';
   }
 }
