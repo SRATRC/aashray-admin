@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     resetAlert();
 
-    if (cardno == '' && mobno == '') {
-      showErrorMessage('Please specify Mobile No. or Card No.');
+    if (cardno === '' && mobno === '') {
+      alert('Please specify Mobile No. or Card No.');
       return;
     }
 
@@ -50,13 +50,18 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await response.json();
 
       if (response.ok) {
-        showSuccessMessage(data.message);
+        alert(data.message); // ✅ Success popup
       } else {
-        showErrorMessage(data.message);
+        alert(`Error: ${data.message}`); // ❌ Error popup
       }
+
+      // Redirect to roomBooking.html after popup
+      window.location.href = '/admin/room/roomBooking.html';
+
     } catch (error) {
       console.error('Error:', error);
-      showErrorMessage(error);
+      alert('An error occurred while booking. Please try again.');
+      window.location.href = '/admin/room/roomBooking.html';
     }
   });
 });

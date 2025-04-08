@@ -16,7 +16,7 @@ async function fetchFlats() {
     const data = await response.json();
 
     if (!response.ok) {
-      showErrorMessage(data.message);
+      alert(`Error: ${data.message}`);
       return;
     }
 
@@ -34,10 +34,9 @@ async function fetchFlats() {
     });
   } catch(error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    alert('Failed to fetch flat list. Please try again.');
   }
 }
-
 
 document.addEventListener('DOMContentLoaded', async function () {
   const form = document.getElementById('flatBookingForm');
@@ -79,13 +78,18 @@ document.addEventListener('DOMContentLoaded', async function () {
       const data = await response.json();
 
       if (response.ok) {
-        showSuccessMessage(data.message);
+        alert(data.message); // ✅ Show success message
       } else {
-        showErrorMessage(data.message);
+        alert(`Error: ${data.message}`); // ❌ Show error message
       }
+
+      // Redirect after popup
+      window.location.href = '/admin/room/flatBooking.html';
+
     } catch (error) {
       console.error('Error:', error);
-      showErrorMessage(error);
+      alert('An error occurred. Please try again.');
+      window.location.href = '/admin/room/flatBooking.html';
     }
   });
 });

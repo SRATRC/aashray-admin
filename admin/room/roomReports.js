@@ -2,10 +2,8 @@ function getAction(booking) {
   switch (booking.status) {
     case "pending checkin":
       return `<a href='#' onclick="return checkin('${booking.bookingid}')">Check-in</a>`;
-
     case "checkedin":
       return `<a href='#' onclick="return checkout('${booking.bookingid}')">Check-out</a>`;
-
     default:
       return "";
   }
@@ -18,7 +16,6 @@ function getCancelAction(booking) {
     case "cancelled":
     case "admin cancelled":
       return "";
-
     default:
       return `<a href='#' onclick="return cancel('${booking.bookingid}')">Cancel</a>`;
   }
@@ -33,7 +30,6 @@ function getEditAction(booking) {
       case "cancelled":
       case "admin cancelled":
         break;
-
       default:
         editUrl = `
           <a href='updateRoomBooking.html?bookingid=${booking.bookingid}'>
@@ -50,10 +46,8 @@ function getFlatAction(booking) {
   switch (booking.status) {
     case "pending checkin":
       return `<a href='#' onclick="return flat_checkin('${booking.bookingid}')">Check-in</a>`;
-
     case "checkedin":
       return `<a href='#' onclick="return flat_checkout('${booking.bookingid}')">Check-out</a>`;
-
     default:
       return "";
   }
@@ -66,7 +60,6 @@ function getFlatCancelAction(booking) {
     case "cancelled":
     case "admin cancelled":
       return "";
-
     default:
       return `<a href='#' onclick="return flat_cancel('${booking.bookingid}')">Cancel</a>`;
   }
@@ -164,11 +157,10 @@ function createFlatBookingRow(booking, index) {
   return row;
 }
 
-
 async function fetchReport() {
   const reportSelect = document.getElementById('report_type');
   const reportType = reportSelect.value;
-  
+
   const startDate = document.getElementById('start_date').value;
   const endDate = document.getElementById('end_date').value;
 
@@ -202,7 +194,7 @@ async function fetchReport() {
 
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
-    
+
     if (data.data.length == 0) {
       showErrorMessage("No bookings found for the selected date range.");
       return;
@@ -212,7 +204,7 @@ async function fetchReport() {
     const roomType = selectedReport.getAttribute('data-type');
 
     data.data.forEach((booking, index) => {
-      const row = roomType == 'room' 
+      const row = roomType == 'room'
         ? createRoomBookingRow(booking, index)
         : createFlatBookingRow(booking, index);
       reportsTableBody.appendChild(row);
@@ -233,16 +225,26 @@ document.addEventListener('DOMContentLoaded', async function () {
   const endDate = formatDate(nextWeek);
   document.getElementById('end_date').value = endDate;
 
-  const reportForm = document.getElementById(
-    'reportForm'
-  );
+  const reportForm = document.getElementById('reportForm');
 
   resetAlert();
   await fetchReport();
 
   reportForm.addEventListener('submit', async function (event) {
-    event.preventDefault();   
-    resetAlert(); 
+    event.preventDefault();
+    resetAlert();
     await fetchReport();
   });
 });
+
+// ✅ Success/Error Handlers
+function showSuccessMessage(message) {
+  const confirmed = confirm(message);
+  if (confirmed) {
+    window.location.href = '/admin/room/roomReports.html';
+  }
+}
+
+function showErrorMessage(message) {
+  alert(message);
+}

@@ -6,11 +6,12 @@ document.addEventListener('DOMContentLoaded', async function () {
   document.getElementById('bookingId').value = bookingId;
 
   resetAlert();
+
   try {
     const response = await fetch(
       `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/available_rooms/${bookingId}`,
       {
-        method: 'GET', // Assuming POST method as per the original function
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
@@ -19,13 +20,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     );
 
     const data = await response.json();
+
     if (!response.ok) {
       showErrorMessage(data.message);
       return;
     }
 
     const rooms = data.data;
-    if (rooms.length == 0) {
+    if (rooms.length === 0) {
       showErrorMessage("No available rooms found matching the selected booking.");
       return;
     }
@@ -35,14 +37,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     rooms.forEach((room) => {
       const option = document.createElement('option');
-      option.value = room.roomno; 
-      option.text = room.roomno;
-      roomSelector.appendChild(option); 
+      option.value = room.roomno;
+      option.textContent = room.roomno;
+      roomSelector.appendChild(option);
     });
 
   } catch (error) {
-    console.error('Error:', error);
-    showErrorMessage(error);
+    console.error('Error fetching rooms:', error);
+    showErrorMessage("An error occurred while fetching available rooms.");
   }
 
   updateBookingForm.addEventListener('submit', async function (event) {
@@ -68,15 +70,30 @@ document.addEventListener('DOMContentLoaded', async function () {
       );
 
       const data = await response.json();
+
       if (response.ok) {
         showSuccessMessage(data.message);
-        window.location.href = '/admin/room/roomReports.html';
       } else {
         showErrorMessage(data.message);
       }
+
     } catch (error) {
       console.error('Error updating booking:', error);
-      showErrorMessage(data.message);
+      showErrorMessage("An error occurred while updating the booking.");
     }
   });
+
+  function showSuccessMessage(message) {
+    if (confirm(`${message}\n\nClick OK to go back to Room Reports.`)) {
+      window.location.href = '/admin/room/roomReports.html';
+    }
+  }
+
+  function showErrorMessage(message) {
+    alert(`Error: ${message}`);
+  }
+
+  function resetAlert() {
+    // Optional: implement UI clearing logic if needed
+  }
 });
