@@ -18,15 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({ username, password })
+          
         }
       );
 
       const data = await response.json();
+      alert(`Admin ${data.username} created successfully!`);
+console.log("Redirecting to fetchAllAdmins.html");
+window.location.href = 'fetchAllAdmins.html';
 
       if (response.ok) {
         // Show success pop-up and redirect on OK
         alert(`Admin ${data.username} created successfully!`);
-        window.location.href = 'fetchAllAdmins.html';
+        window.location.href = '/admin/sudo/fetchAllAdmins.html';
       } else {
         // Display error message in the status container
         statusMessage.innerHTML = `<div class="alert alert-danger">${
@@ -39,3 +43,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}

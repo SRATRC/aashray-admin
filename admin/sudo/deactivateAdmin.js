@@ -36,3 +36,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}
