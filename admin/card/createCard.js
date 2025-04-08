@@ -130,3 +130,15 @@ async function loadLocationData() {
 }
 
 window.onload = loadLocationData;
+
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}
