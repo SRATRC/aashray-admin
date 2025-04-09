@@ -9,10 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       }
     };
-
     try {
       const response = await fetch(
-        `https:/sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/fetch`,
+        `${CONFIG.basePath}/adhyayan/fetch`,
         options
       );
       const result = await response.json();
@@ -38,8 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="text-align:center;">${index + 1}</td>
             <td style="text-align:center;">${item.name}</td>
             <td style="text-align:center;">${item.speaker}</td>
-            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}">${item.total_seats - item.available_seats}<a></td>
+            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}">${item.total_seats - item.available_seats}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
+            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&&status=waiting">${item.waitlist_count}</a></td>
             <td style="text-align:center;">${item.status}</td>
             <td style="text-align:center;">
               <button class="toggle-status" data-id="${item.id}" data-status="${

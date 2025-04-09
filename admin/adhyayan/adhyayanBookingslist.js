@@ -3,9 +3,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const tableBody = document.querySelector('#waitlistTable tbody');
     const urlParams = new URLSearchParams(window.location.search);
     const shibirId = urlParams.get('shibir_id');
-
+    
+    const status= urlParams.get('status'); 
+    console.log(`${CONFIG.basePath}`);
     const response = await fetch(
-      `https:/sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/bookings?shibir_id=${shibirId}&&page_size=100`,
+      `${CONFIG.basePath}/adhyayan/bookings?shibir_id=${shibirId}&&status="+${status}&&page_size=100`,
       {
         method: 'GET',
         headers: {
@@ -15,15 +17,18 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     );
 
+    
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
     const data = await response.json();
     const adhyanWaitListers = data.data;
-
+    let shibirName="";
     adhyanWaitListers.forEach((item) => {
       const row = document.createElement('tr');
+      shibirName=item.name;
       row.innerHTML = `
         <td>${item.bookingid || '-'}</td>
         <td>${item.issuedto || '-'}</td>
@@ -33,12 +38,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         <td>${item.status || '-'}</td>
         <td>${item.bookedby || '-'}</td>
         <td>
-          <a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}">
+          <a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
             Update Booking Status
           </a>
         </td>
       `;
       tableBody.appendChild(row);
+      document.getElementById("shirbirName").textContent=" For "+shibirName;
     });
 
   } catch (error) {
