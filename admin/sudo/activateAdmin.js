@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function handleAdminActivation(username) {
     try {
-      const endpoint = `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/activate/${username}`;
+      const endpoint = `${CONFIG.basePath}/sudo/activate/${username}`;
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
@@ -36,3 +36,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 });
+
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}

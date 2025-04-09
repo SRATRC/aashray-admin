@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/fetch`,
+        `https:/sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/fetch`,
         options
       );
       const result = await response.json();
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/${adhyayanId}/${newStatus}`,
+        `https:/sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/${adhyayanId}/${newStatus}`,
         {
           method: 'PUT',
           headers: {

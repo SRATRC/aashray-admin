@@ -1,145 +1,156 @@
-<!-- room_booking_report -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>Room Admin</title>
-    <style>
-        .button {
-            background-color: #008CBA;
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .table_wrapper {
-            display: block;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-    </style>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Room Admin - Reservation Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-	<!-- Load jQuery first -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
+    <!-- JS Scripts -->
     <script src="../../style/js/config.js"></script>
     <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-     
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
-</head>
-<body>
-	<div class="header">
-		<div class="container">
-		  <div class="logout">
-			<a href="javascript:void(0);" onclick="history.back()">Back</a>
-			&nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-			<a id="homelink" href="/admin/">Logout</a>
-		  </div>
-		</div>
-	  </div>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .button {
+        background-color: #008cba;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 6px;
+      }
+      .table_wrapper {
+        overflow-x: auto;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
 
     <div class="middlecontent">
+      <div class="container">
         <div class="whitesec">
+          <div class="inner-padding">
             <div class="frm-head">
-                <h1>
-                    <br>Room Reservation Report from 
-                    <span style="color:blue">
-                        <?php echo htmlspecialchars(date('d/m/Y', strtotime($checkin1))); ?>
-                    </span> 
-                    To 
-                    <span style="color:blue">
-                        <?php echo htmlspecialchars(date('d/m/Y', strtotime($checkin2))); ?>
-                    </span>
-                </h1>
+              <h1 class="text-center">
+                Room Reservation Report
+                <br />
+                <small>
+                  From
+                  <span style="color: blue">
+                    <?php echo htmlspecialchars(date('d/m/Y', strtotime($checkin1))); ?>
+                  </span>
+                  to
+                  <span style="color: blue">
+                    <?php echo htmlspecialchars(date('d/m/Y', strtotime($checkin2))); ?>
+                  </span>
+                </small>
+              </h1>
             </div>
+
             <div class="form">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table_wrapper">
-                            <table class="table table-striped table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Serial #</th>
-                                        <th>Room Type</th>
-                                        <th>Guest Name</th>
-                                        <th>Mobile No.</th>
-                                        <th>Centre</th>
-                                        <th>Main stay Bed</th>
-                                        <th>Check-in Date</th>
-                                        <th>Check-Out Date</th>
-                                        <th>Nights</th>
-                                        <th>CHANGE</th>
-                                        <th>CANCEL Booking</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php  
-                                        $query = "SELECT *, DATEDIFF(checkout, checkin) AS totalnights, 
-                                                  (@a:=@a+1) AS serial_number 
-                                                  FROM guest_stay, (SELECT @a:= 0) AS a 
-                                                  WHERE checkin BETWEEN '$checkin1' AND '$checkin2' 
-                                                  AND roomno != 'WL' 
-                                                  ORDER BY checkin, roomno ASC";
+              <div class="table_wrapper">
+                <table class="table table-striped table-bordered text-center">
+                  <thead>
+                    <tr>
+                      <th>Sr. #</th>
+                      <th>Room Type</th>
+                      <th>Guest Name</th>
+                      <th>Mobile</th>
+                      <th>Centre</th>
+                      <th>Room No.</th>
+                      <th>Check-In</th>
+                      <th>Check-Out</th>
+                      <th>Nights</th>
+                      <th>Change</th>
+                      <th>Cancel</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php
+                      $query = "SELECT *, DATEDIFF(checkout, checkin) AS totalnights, 
+                                (@a:=@a+1) AS serial_number 
+                                FROM guest_stay, (SELECT @a:= 0) AS a 
+                                WHERE checkin BETWEEN '$checkin1' AND '$checkin2' 
+                                AND roomno != 'WL' 
+                                ORDER BY checkin, roomno ASC";
 
-                                        $result = mysqli_query($conn, $query) or die("Failed to query database: " . mysqli_error($conn));
+                      $result = mysqli_query($conn, $query) or die("Failed: " . mysqli_error($conn));
 
-                                        if (mysqli_num_rows($result) > 0) {
-                                            while ($row = mysqli_fetch_assoc($result)) {
-                                                $qtbookingid = $row['bookingid'];
-                                                $cardno = $row['cardno'];
+                      if (mysqli_num_rows($result) > 0):
+                        while ($row = mysqli_fetch_assoc($result)):
+                          $qtbookingid = $row['bookingid'];
+                          $cardno = $row['cardno'];
 
-                                                // Fetch room booking details
-                                                $queryqt = "SELECT * FROM qtroom_booking WHERE bookingid = $qtbookingid";
-                                                $resultqt = mysqli_query($conn, $queryqt) or die("Failed to query database 2: " . mysqli_error($conn));
-                                                $rowqt = mysqli_fetch_assoc($resultqt) ?? [];
+                          $resultqt = mysqli_query($conn, "SELECT * FROM qtroom_booking WHERE bookingid = $qtbookingid");
+                          $rowqt = mysqli_fetch_assoc($resultqt) ?? [];
 
-                                                // Fetch guest's phone number
-                                                $queryphno = "SELECT * FROM card_db WHERE cardno = $cardno";
-                                                $resultphno = mysqli_query($conn, $queryphno) or die("Failed to query database 3: " . mysqli_error($conn));
-                                                $rowphno = mysqli_fetch_assoc($resultphno) ?? [];
+                          $resultphno = mysqli_query($conn, "SELECT * FROM card_db WHERE cardno = $cardno");
+                          $rowphno = mysqli_fetch_assoc($resultphno) ?? [];
+                    ?>
+                    <tr>
+                      <td><?php echo $row['serial_number']; ?></td>
+                      <td><?php echo $row['roomtype']; ?></td>
+                      <td><?php echo $row['guest_name']; ?></td>
+                      <td><?php echo $rowphno['mobno']; ?></td>
+                      <td><?php echo $row['centre']; ?></td>
+                      <td><?php echo $row['roomno']; ?></td>
+                      <td><?php echo date('d/m/Y', strtotime($row['checkin'])); ?></td>
+                      <td><?php echo date('d/m/Y', strtotime($row['checkout'])); ?></td>
+                      <td><?php echo $row['totalnights']; ?></td>
+                      <td>
+                        <a href="assign_room.php?bookingid=<?php echo $row['bookingid']; ?>" target="_blank">
+                          Stay Bed No.
+                        </a>
+                      </td>
+                      <td>
+                        <a href="manual_cancel.php?bookingid=<?php echo $row['bookingid']; ?>" target="_blank">
+                          Cancel Booking
+                        </a>
+                      </td>
+                    </tr>
+                    <?php endwhile; else: ?>
+                    <tr>
+                      <td colspan="11">No reservations found.</td>
+                    </tr>
+                    <?php endif; ?>
+                  </tbody>
+                </table>
+              </div>
 
-                                                echo "<tr>"; 
-                                                echo "<td>{$row['serial_number']}</td>";
-                                                echo "<td>{$row['roomtype']}</td>";
-                                                echo "<td>{$row['guest_name']}</td>";
-                                                echo "<td>{$rowphno['mobno']}</td>";
-                                                echo "<td>{$row['centre']}</td>";
-                                                echo "<td>{$row['roomno']}</td>";
-                                                echo "<td>" . date('d/m/Y', strtotime($row['checkin'])) . "</td>";
-                                                echo "<td>" . date('d/m/Y', strtotime($row['checkout'])) . "</td>";
-                                                echo "<td>{$row['totalnights']}</td>";
-                                                echo "<td><a href='assign_room.php?bookingid={$row['bookingid']}' target='_blank'>Stay Bed No.</a></td>";
-                                                echo "<td><a href='manual_cancel.php?bookingid={$row['bookingid']}' target='_blank'>Cancel Booking</a></td>";
-                                                echo "</tr>";
-                                            }
-                                        } else {
-                                            echo "<tr><td colspan='11' style='text-align:center;'>No reservations found</td></tr>";
-                                        }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Export to Excel Button -->
-                        <div style="text-align: center; margin-top: 20px;">
-                            <button onclick="window.location.href='generate_room_booking_data.php?export=true&checkin1=<?php echo urlencode($checkin1); ?>&checkin2=<?php echo urlencode($checkin2); ?>'" class="button">
-                                Export to Excel
-                            </button>
-                        </div>                
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>  
-</body>
+              <!-- Export Button -->
+              <div class="text-center mt-4">
+                <button
+                  class="button"
+                  onclick="window.location.href='generate_room_booking_data.php?export=true&checkin1=<?php echo urlencode($checkin1); ?>&checkin2=<?php echo urlencode($checkin2); ?>'"
+                >
+                  Export to Excel
+                </button>
+              </div>
+            </div> <!-- .form -->
+          </div> <!-- .inner-padding -->
+        </div> <!-- .whitesec -->
+      </div> <!-- .container -->
+    </div> <!-- .middlecontent -->
+  </body>
 </html>

@@ -12,8 +12,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   const gender = urlParams.get('gender') || "";
   document.getElementById('gender').value = gender;
 
-  resetAlert();
-
   updateRoomForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
@@ -38,14 +36,19 @@ document.addEventListener('DOMContentLoaded', async function () {
       );
 
       const data = await response.json();
+
       if (response.ok) {
-        showSuccessMessage(data.message);
+        alert(data.message);
       } else {
-        showErrorMessage(data.message);
+        alert(`Error: ${data.message}`);
       }
+
+      window.location.href = '/admin/room/manageRooms.html';
+
     } catch (error) {
       console.error('Error updating room:', error);
-      showErrorMessage(data.message);
+      alert('An error occurred. Please try again.');
+      window.location.href = '/admin/room/manageRooms.html';
     }
   });
 });

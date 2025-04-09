@@ -2,17 +2,14 @@ function getAction(room) {
   switch (room.roomstatus) {
     case 'available':
       return `<a href='#' onclick="return block('${room.roomno}')">Block</a>`;
-
     case 'blocked':
       return `<a href='#' onclick="return unblock('${room.roomno}')">Unblock</a>`;
-
     default:
       return '';
   }
 }
 
 async function block(roomno) {
-  resetAlert();
   try {
     const response = await fetch(
       `${CONFIG.basePath}/stay/block_room/${roomno}`,
@@ -28,18 +25,21 @@ async function block(roomno) {
     const data = await response.json();
 
     if (response.ok) {
-      showSuccessMessage(data.message);
+      alert(data.message);
     } else {
-      showErrorMessage(data.message);
+      alert(`Error: ${data.message}`);
     }
+
+    window.location.href = '/admin/room/manageRooms.html';
+
   } catch (error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    alert('An error occurred. Please try again.');
+    window.location.href = '/admin/room/manageRooms.html';
   }
 }
 
 async function unblock(roomno) {
-  resetAlert();
   try {
     const response = await fetch(
       `${CONFIG.basePath}/stay/unblock_room/${roomno}`,
@@ -55,22 +55,22 @@ async function unblock(roomno) {
     const data = await response.json();
 
     if (response.ok) {
-      showSuccessMessage(data.message);
+      alert(data.message);
     } else {
-      showErrorMessage(data.message);
+      alert(`Error: ${data.message}`);
     }
+
+    window.location.href = '/admin/room/manageRooms.html';
+
   } catch (error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    alert('An error occurred. Please try again.');
+    window.location.href = '/admin/room/manageRooms.html';
   }
 }
 
-
-
 document.addEventListener('DOMContentLoaded', async function () {
   const tableBody = document.querySelector('#reportTableBody');
-
-  resetAlert();
 
   try {
     const response = await fetch(
@@ -80,14 +80,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify() // Default page and page_size
+        }
       }
     );
 
     const data = await response.json();
     if (!response.ok) {
-      showErrorMessage(data.message);
+      alert(`Error: ${data.message}`);
       return;
     }
 
@@ -112,6 +111,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
   } catch (error) {
     console.error('Error fetching room list:', error);
-    showErrorMessage(error);
+    alert('Failed to load room list. Please try again.');
   }
 });

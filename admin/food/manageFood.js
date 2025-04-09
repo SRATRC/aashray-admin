@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('start_date').value = today;
   document.getElementById('end_date').value = today;
 
-
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     resetAlert();
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const spicy = document.getElementById('spicy').value;
     const hightea = document.getElementById('beverage').value;
 
-    
     if (cardno == '' && mobno == '') {
       showErrorMessage('Please specify Mobile No. or Card No.');
       return;
@@ -63,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } catch (error) {
       console.error('Error:', error);
-      showErrorMessage(error);
+      showErrorMessage(error.message || error);
     }
   });
 });
@@ -93,7 +91,7 @@ async function cancelBooking(bookingid, mealType) {
     }
   } catch (error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    showErrorMessage(error.message || error);
   }
 }
 
@@ -118,12 +116,11 @@ async function getExistingBookings() {
     const response = await fetch(
       url,
       {
-        method: 'GET', // Assuming POST method as per the original function
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify() // Default page and page_size
+        }
       }
     );
 
@@ -158,6 +155,22 @@ async function getExistingBookings() {
     });
   } catch (error) {
     console.error('Error fetching food bookings:', error);
-    showErrorMessage(error);
+    showErrorMessage(error.message || error);
   }
+}
+
+
+// ✅ Alert-based message + redirect to base page
+function showSuccessMessage(message) {
+  alert(message);
+  window.location.href = "/admin/food/manageFood.html"; // Change this path as needed
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+  window.location.href = "/admin/food/manageFood.html"; // Change this path as needed
+}
+
+function resetAlert() {
+  // Placeholder if needed for clearing previous messages
 }

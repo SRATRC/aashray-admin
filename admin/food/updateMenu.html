@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Update Menu</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="updateMenu.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -25,8 +25,8 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
@@ -35,71 +35,44 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h4>
-                <b><u>Update Menu</u></b>
-              </h4>
+              <h1>Update Menu</h1>
             </div>
+
             <div class="form">
-              <div id="alert" class="alert" role="alert"></div>
-                <form id="updateMenuForm">
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="date">Date:</label>
-                    </div>
-                    <div class="col-sm-4">
-                      <input
-                        type="date"
-                        id="date"
-                        name="date"
-                        disabled
-                      />
-                    </div>
-                  </div>
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
 
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="breakfast">Breakfast:</label>
-                    </div>
-                    <div class="col-sm-6">
-                      <textarea id="breakfast" name="breakfast" required></textarea>
-                    </div>
-                  </div>
-  
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="lunch">Lunch:</label>
-                    </div>
-                    <div class="col-sm-6">
-                      <textarea id="lunch" name="lunch" required></textarea>
-                    </div>
-                  </div>
-  
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="dinner">Dinner:</label>
-                    </div>
-                    <div class="col-sm-6">
-                      <textarea id="dinner" name="dinner" required></textarea>
-                    </div>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="submit" class="col-form-label"></label>
-                    </div>
-                    <div class="col-sm-3">
-                      <input type="submit" value="Update Menu" />
-                    </div>
-                    <div class="col-sm-3">
-                      <label for="submit" class="col-form-label">
-                        <a href="/admin/food/fetchMenu.html">Menu Home</a>
-                      </label>
-                    </div>
-                  </form>
+              <form id="updateMenuForm">
+                <div class="form-group">
+                  <label for="date">Date:</label>
+                  <input type="date" id="date" name="date" class="form-control" disabled />
                 </div>
-              </div>
+
+                <div class="form-group">
+                  <label for="breakfast">Breakfast:</label>
+                  <textarea id="breakfast" name="breakfast" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="lunch">Lunch:</label>
+                  <textarea id="lunch" name="lunch" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="dinner">Dinner:</label>
+                  <textarea id="dinner" name="dinner" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Update Menu</button>
+                  <a href="/admin/food/fetchMenu.html" class="btn btn-secondary" style="margin-left: 10px;">
+                    Menu Home
+                  </a>
+                </div>
+              </form>
             </div>
+            
           </div>
         </div>
       </div>

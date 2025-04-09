@@ -1,106 +1,73 @@
-<!--indexlogin-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
-    />
-    <meta name="description" content="" />
-    <meta name="author" content="" />
-    <link rel="icon" href="../assets/images/logo.png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Office</title>
 
-    <!-- Bootstrap core CSS -->
-    <link
-      href="https://use.fontawesome.com/releases/v5.0.6/css/all.css"
-      rel="stylesheet"
-    />
-    <!-- Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap"
-      rel="stylesheet"
-    />
-    <link href="../style/css/plugin.css" rel="stylesheet" />
-    <!-- Custom styles for this template -->
-    <link href="../style/css/clockpicker.css" rel="stylesheet" />
-    <link href="../style/css/style.css" rel="stylesheet" />
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../index.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
-    <div class="fullheight">
-      <div class="header"></div>
-      <div class="middlecontent">
-        <div class="container">
-          <div class="whitesec">
-            <div class="inner-padding">
-              <div class="frm-head">
-                <h3>Welcome To Research Centre</h3>
-              </div>
-              <!-- Fixed Form Placement -->
-              <div class="form">
-                <form action="#" method="post" onsubmit="login(event)">
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="username">Username:</label>
-                    </div>
-                    <div class="col-sm-5">
-                      <input
-                        type="text"
-                        name="username"
-                        id="username"
-                        placeholder=""/>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="password">Password:</label>
-                    </div>
-                    <div class="col-sm-5">
-                      <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="*******"/>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label for="submit"></label>
-                    </div>
-                    <div class="col-sm-5">
-                      <input type="submit" name="submit" value="Login" />
-                    </div>
-                  </div>
-                </form>
-              </div>
-              <!-- End of Fixed Form -->
+    
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Welcome To Research Centre</h1>
+            </div>
+
+            <div class="form">
+              <form action="#" method="post" onsubmit="login(event)">
+                  <div class="form-group">
+                  <label for="username">Username:</label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-control"
+                    required
+                    placeholder="Enter username"
+                  />
+                </div>
+				
+				      <div class="form-group">
+                  <label for="password">Password:</label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-control"
+                    required
+                    placeholder="*******"
+                  />
+                </div>
+
+                 <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+              </form>
+
             </div>
           </div>
         </div>
       </div>
-      <div class="footer">
-        <div class="container">
-          <p>
-            © 2025
-            <a href="#" target="_blank">
-              Shrimad Rajchandra Aatma Tatva Research Centre
-            </a>
-          </p>
-        </div>
-      </div>
     </div>
 
-    <!-- JavaScript Files -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="https://use.fontawesome.com/373a347df2.js"></script>
-    <script src="../style/js/config.js"></script>
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../style/js/clockpicker.js"></script>
-    <script src="../style/js/custom.js"></script>
-    <script src="../sessionstorage.js"></script>
-    <script src="../index.js"></script>
+
   </body>
 </html>

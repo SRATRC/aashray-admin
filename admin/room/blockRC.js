@@ -2,7 +2,6 @@ function getAction(block) {
   switch (block.status) {
     case 'active':
       return `<a href='#' onclick="return unblock('${block.id}')">Unblock</a>`;
-
     default:
       return '';
   }
@@ -25,21 +24,24 @@ async function unblock(blockid) {
     const data = await response.json();
 
     if (response.ok) {
-      showSuccessMessage(data.message);
+      alert(data.message);
     } else {
-      showErrorMessage(data.message);
+      alert(`Error: ${data.message}`);
     }
+
+    window.location.href = '/admin/room/blockRC.html';
+
   } catch (error) {
     console.error('Error:', error);
-    showErrorMessage(error);
+    alert('An error occurred. Please try again.');
+    window.location.href = '/admin/room/blockRC.html';
   }
 }
-
 
 document.addEventListener('DOMContentLoaded', async function () {
   const tableBody = document.querySelector('#reportTableBody');
   const blockRCForm = document.getElementById('blockRCForm');
-  
+
   resetAlert();
 
   try {
@@ -51,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         },
-        body: JSON.stringify() // Default page and page_size
+        body: JSON.stringify() // Unnecessary but harmless in GET, can be removed
       }
     );
 
@@ -72,12 +74,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         <td>${block.status}</td>
         <td>${getAction(block)}</td>
       `;
-
       tableBody.appendChild(row);
     });
   } catch (error) {
     console.error('Error fetching block list:', error);
-    showErrorMessage(error);
+    alert('Error fetching data. Please try again.');
   }
 
   blockRCForm.addEventListener('submit', async function (event) {
@@ -86,8 +87,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const checkin_date = document.getElementById('checkin_date').value;
     const checkout_date = document.getElementById('checkout_date').value;
     const comments = document.getElementById('comments').value.trim();
-    
+
     resetAlert();
+
     try {
       const response = await fetch(
         `${CONFIG.basePath}/stay/block_rc`,
@@ -108,14 +110,17 @@ document.addEventListener('DOMContentLoaded', async function () {
       const data = await response.json();
 
       if (response.ok) {
-        showSuccessMessage(data.message);
+        alert(data.message);
       } else {
-        showErrorMessage(data.message);  
+        alert(`Error: ${data.message}`);
       }
+
+      window.location.href = '/admin/room/blockRC.html';
 
     } catch (error) {
       console.error('Error blocking RC:', error);
-      showErrorMessage(error);
+      alert('An error occurred. Please try again.');
+      window.location.href = '/admin/room/blockRC.html';
     }
   });
 });

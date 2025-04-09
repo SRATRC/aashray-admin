@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Room Booking</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="roomBooking.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -25,90 +25,68 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
+
     <div class="middlecontent">
-      <div class="container-fluid">
+      <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h4>
-                <b><u>Room Booking</u></b>
-              </h4>
+              <h1>Room Booking</h1>
             </div>
 
             <div class="form">
-              <div id="alert" class="alert" role="alert"></div>
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
               <form id="roomBookingForm">
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="mobile" class="col-form-label">Enter Mobile No:</label>
-                  </div>
-                  <div class="col-sm-4">
-                    <input type="tel" class="form-control" id="mobile" name="mobile" />
-                  </div>
+
+                <div class="form-group">
+                  <label for="mobile">Enter Mobile No:</label>
+                  <input type="tel" id="mobile" name="mobile" class="form-control" />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="cardno" class="col-form-label">Or Card No:</label>
-                  </div>
-                  <div class="col-sm-4">
-                    <input type="tel" class="form-control" id="cardno" name="cardno" />
-                  </div>
+                <div class="form-group">
+                  <label for="cardno">Or Card No:</label>
+                  <input type="tel" id="cardno" name="cardno" class="form-control" />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="checkin_date" class="col-form-label">Check-in Date:</label>
-                  </div>  
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
-                  </div>
-
-                  <div class="col-sm-3">
-                    <label for="checkout_date" class="col-form-label">Check-out Date:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
-                  </div>
+                <div class="form-group">
+                  <label for="checkin_date">Check-in Date:</label>
+                  <input type="date" id="checkin_date" name="checkin_date" class="form-control" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="room_type" class="col-form-label">Room Type:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <select id="room_type" name="room_type" required>
-                      <option selected="selected" value="nac">Non A.C.</option>
-                      <option value="ac">A.C.</option>
-                    </select>
-                  </div>
-
-                  <div class="col-sm-3">
-                    <label for="floor_pref" class="col-form-label">Floor Preference:</label>
-                  </div>
-                  <div class="col-sm-3">
-                    <select id="floor_pref" name="floor_pref">
-                      <option selected="selected" value="">None</option>
-                      <option value="SC">Ground</option>
-                    </select>
-                  </div> 
+                <div class="form-group">
+                  <label for="checkout_date">Check-out Date:</label>
+                  <input type="date" id="checkout_date" name="checkout_date" class="form-control" required />
                 </div>
 
-                <div class="row">
-                  <div class="col-sm-3">
-                    <label for="submit" class="col-form-label"></label>
-                  </div>
-                  <div class="col-sm-3">
-                    <input type="submit" value="Submit" />
-                  </div>
+                <div class="form-group">
+                  <label for="room_type">Room Type:</label>
+                  <select id="room_type" name="room_type" class="form-control" required>
+                    <option value="nac" selected>Non A.C.</option>
+                    <option value="ac">A.C.</option>
+                  </select>
                 </div>
+
+                <div class="form-group">
+                  <label for="floor_pref">Floor Preference:</label>
+                  <select id="floor_pref" name="floor_pref" class="form-control">
+                    <option value="" selected>None</option>
+                    <option value="SC">Ground</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+
               </form>
             </div>
+
           </div>
         </div>
       </div>

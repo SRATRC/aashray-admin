@@ -1,159 +1,141 @@
-<!-- admin_report -->
-<script src="./sessionstorage.js"></script>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style>
-	.button {
-	background-color: #008CBA; /* Green */
-	border: none;
-	color: white;
-	padding: 15px 32px;
-	text-align: center;
-	text-decoration: none;
-	display: inline-block;
-	font-size: 16px;
-	}
-	.table_wrapper{
-		display: Block;
-		overflow-x: auto;
-		white-space: nowrap;
-	}
-</style>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0"/>
-<meta name="description" content="">
-<meta name="author" content="">
-<link rel="icon" href="logo.png">
-<title>Vitraag Vigyaan</title>
-<!-- Bootstrap core CSS -->
-<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet">
-<link href="../style/css/plugin.css" rel="stylesheet">
-<!-- Custom styles for this template -->
-<link href="../style/css/clockpicker.css" rel="stylesheet">
-<link href="../style/css/style.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0" />
+  <title>Room Availability Report</title>
+
+  <link rel="icon" href="logo.png" />
+  <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet" />
+  <link href="../style/css/plugin.css" rel="stylesheet" />
+  <link href="../style/css/clockpicker.css" rel="stylesheet" />
+  <link href="../style/css/style.css" rel="stylesheet" />
+
+  <style>
+    .button {
+      background-color: #008cba;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .table_wrapper {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+  </style>
+
+  <script src="./sessionstorage.js"></script>
 </head>
+
 <body>
-<div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
-        <div class="header">
-            <div class="container">
-                <div class="logo">
-                    <a href="javascript:void(0);"><img src="images/logo.png" alt="" title=""></a>
+  <div class="fullheight" style="background:url(../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
+    <div class="header">
+      <div class="container">
+        <div class="logo">
+          <a href="javascript:void(0);"><img src="images/logo.png" alt="Logo" /></a>
+        </div>
+        <div class="logout">
+          <a href="index.html"><img src="images/user.png" alt=""> Home</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="frm-head text-center">
+            <h1 class="mt-3">Room Availability Report</h1>
+            <h4>
+              <span style="color:blue"><?php echo date('d/m/Y', strtotime($checkin)); ?></span>
+              to
+              <span style="color:blue"><?php echo date('d/m/Y', strtotime($checkout)); ?></span>
+            </h4>
+          </div>
+
+          <div class="form">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="table_wrapper">
+                  <table class="table table-striped table-bordered text-center">
+                    <thead>
+                      <tr>
+                        <th>Serial #</th>
+                        <th>Date</th>
+                        <th>Beds Available (A.C.)</th>
+                        <th>Beds Available (Non A.C.)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php  
+                        $i = 0;
+                        while ($i < $nights) {
+                          $serial_number = $i + 1;
+
+                          $query1 = "SELECT COUNT(DISTINCT roomno) AS mainoccupiedac FROM room_booking WHERE dtbooked = '$date[$i]' AND roomtype = 'ac'";
+                          $result1 = mysqli_query($conn, $query1) or die("Failed: " . mysqli_error($conn));
+                          $row1 = mysqli_fetch_assoc($result1);
+
+                          $query3 = "SELECT COUNT(DISTINCT roomno) AS mainoccupiednac FROM room_booking WHERE dtbooked = '$date[$i]' AND roomtype = 'nac'";
+                          $result3 = mysqli_query($conn, $query3) or die("Failed: " . mysqli_error($conn));
+                          $row3 = mysqli_fetch_assoc($result3);
+
+                          $available_ac = $total_main_ac - $row1['mainoccupiedac'];
+                          $available_nac = $total_main_nac - $row3['mainoccupiednac'];
+
+                          echo "<tr>";
+                          echo "<td>{$serial_number}</td>";
+                          echo "<td>{$date[$i]}</td>";
+
+                          // AC Bed Cell
+                          if ($available_ac == 0) {
+                            echo "<td style='background:red;color:white;'>{$available_ac}</td>";
+                          } else {
+                            echo "<td style='background:green;'><a href='room_status_detail.php?fordate={$date[$i]}&roomtype=ac&room=main' style='color:white;'>{$available_ac}</a></td>";
+                          }
+
+                          // NAC Bed Cell
+                          if ($available_nac == 0) {
+                            echo "<td style='background:red;color:white;'>{$available_nac}</td>";
+                          } else {
+                            echo "<td style='background:green;'><a href='room_status_detail.php?fordate={$date[$i]}&roomtype=nac&room=main' style='color:white;'>{$available_nac}</a></td>";
+                          }
+
+                          echo "</tr>";
+                          $i++;
+                        }
+                      ?>
+                    </tbody>
+                  </table>
                 </div>
-                    <div class="logout">
-                        <a href="index.html"><img src="images/user.png" alt="" title=""> Home</a>
-                    </div>
+
+                <div class="text-center mt-4">
+                  <button onclick="document.location='room_via_phone.php'" class="button">
+                    Proceed to Room Booking
+                  </button>
+                </div>
+              </div>
             </div>
-    	</div>
-		        <div class="middlecontent">
-        	<div class="container">
-            	<div class="whitesec">
-					<div class="frm-head">
-                    <h1><br>Room Availability Report </h1>
-                    <h4><span style="color:blue"><?php echo date('d/m/Y',strtotime($checkin))."</span> To <span style='color:blue'>".date('d/m/Y',strtotime($checkout)); ?></span></h4>
-					</div>
-					<div class="form">
-						<div class="row">
-							<div class="col-md-12">
-								<div class="table">
-									<table class="table table-striped table-bordered">
-										<tr>
-											<th><center>Serial #</center></th>
-                                            <th><center>Date</center></th>
-											<th><center>Beds Available(A.C.)</center></th>
-											<th><center>Beds Available(Non A.C.)</center></th>
-										</tr>
-                                        <?php	
-												
-                                                $i=0;
-                                                while ($i < $nights){
-                                                    
-                                                    $serial_number = $i+1;
-                                                    /* $query = "SELECT count(DISTINCT(roomno)) AS qtoccupiedac FROM qtroom_booking WHERE dtbooked ='$date[$i]' AND roomtype='ac'";
-                                                    $result = mysqli_query($conn, $query) or die("Failed to query database ".mysqli_error());
-                                                    $resultcheck = mysqli_num_rows($result);
-                                                    $row = mysqli_fetch_assoc($result);
-                                                 
-                                                    $query2 = "SELECT count(DISTINCT(roomno)) AS qtoccupiednac FROM qtroom_booking  WHERE dtbooked ='$date[$i]' AND roomtype='nac'";
-                                                    $result2 = mysqli_query($conn, $query2) or die("Failed to query database ".mysqli_error());
-                                                    $row2 = mysqli_fetch_assoc($result2); */
+          </div>
+        </div>
+      </div><!-- container -->
+    </div><!-- middlecontent -->
 
-                                                    $query1 = "SELECT count(DISTINCT(roomno)) AS mainoccupiedac FROM room_booking WHERE dtbooked ='$date[$i]' AND roomtype='ac'";
-                                                    $result1 = mysqli_query($conn, $query1) or die("Failed to query database ".mysqli_error());
-                                                    //$resultcheck1 = mysqli_num_rows($result1);
-                                                    $row1 = mysqli_fetch_assoc($result1);
+    <div class="footer">
+      <div class="container">
+        <p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
+      </div>
+    </div>
+  </div>
 
-                                                    $query3 = "SELECT count(DISTINCT(roomno)) AS mainoccupiednac FROM room_booking WHERE dtbooked ='$date[$i]' AND roomtype='nac'";
-                                                    $result3 = mysqli_query($conn, $query3) or die("Failed to query database ".mysqli_error());
-                                                    $row3 = mysqli_fetch_assoc($result3);
-                                                    
-                                                    //$resultcheck = mysqli_num_rows($result);
-                                                    
-                                                    //if (mysqli_num_rows($result) > 0 OR mysqli_num_rows($result1)> 0){
-                                                        //while ($row = mysqli_fetch_assoc($result)){
-
-                                                            echo "<tr>"; 
-                                                            echo "<td><center>".$serial_number."</center></td>";
-                                                            echo "<td><center>".$date[$i]."</center></td>";
-                                                            
-                                                            /* if(($total_qt_ac - $row['qtoccupiedac']) == 0){
-                                                                echo "<td bgcolor='red'><font color='white'><center><a href=room_status_data.php>".($total_qt_ac - $row['qtoccupiedac'])."</a></center></td>";   
-                                                            }else{
-                                                                echo "<td bgcolor='green'><font color='white'><font color='white'><center><a href=room_status_detail.php?fordate=$date[$i]&roomtype=ac&room=qt style='color:white'>".($total_qt_ac - $row['qtoccupiedac'])."</a></center></td>";
-                                                            }
-                                                            if(($total_qt_nac - $row2['qtoccupiednac']) == 0){
-                                                                echo "<td bgcolor='red'><font color='white'><center>".($total_qt_nac - $row2['qtoccupiednac'])."</center></td>";   
-                                                            }else{
-                                                                echo "<td bgcolor='green'><font color='white'><center><a href=room_status_detail.php?fordate=$date[$i]&roomtype=nac&room=qt style='color:white'>".($total_qt_nac - $row2['qtoccupiednac'])."</center></td>";
-                                                            } */
-                                                            if(($total_main_ac - $row1['mainoccupiedac']) == 0){
-                                                                echo "<td bgcolor='red'><font color='white'><center>".($total_main_ac - $row1['mainoccupiedac'])."</center></td>";   
-                                                            }else{
-                                                                echo "<td bgcolor='green'><font color='white'><center><a href=room_status_detail.php?fordate=$date[$i]&roomtype=ac&room=main style='color:white'>".($total_main_ac - $row1['mainoccupiedac'])."</center></td>";
-                                                            }
-                                                            if(($total_main_nac - $row3['mainoccupiednac']) == 0){
-                                                                echo "<td bgcolor='red'><font color='white'><center>".($total_main_nac - $row3['mainoccupiednac'])."</center></td>";   
-                                                            }else{
-                                                                echo "<td bgcolor='green'><font color='white'><center><a href=room_status_detail.php?fordate=$date[$i]&roomtype=nac&room=main style='color:white'>".($total_main_nac - $row3['mainoccupiednac'])."</center></td>";
-                                                            }
-                                                            //echo "<td><center>".$row1['mainoccupiedac']."</center></td>";
-                                                            //echo "<td><center>".$row2['qtoccupiednac']."</center></td>";
-                                                            //echo "<td><center>".$row3['mainoccupiednac']."</center></td>";
-                                                            echo "</tr>";
-                                                        //}
-                                                    //}
-                                                    $i++;
-                                                }
-											?>
-									</table>				
-								</div>
-                                <br>
-                    				<center><button onclick="document.location='room_via_phone.php'" class="button">Proceed to Room Booking</button></center><br>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="footer">
-			<div class="container">
-				<p>© 2022 <a href="#" target="_blank">Shrimad Rajchandra Aatma Tatva Research Centre</a></p>
-			</div>
-		</div>
-</div>
-<!-- Bootstrap core JavaScript
-	================================================== -->
-<!-- Placed at the end of the document so the pages load faster -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
- 
-<script src="js/plugin.js"></script>
-<script src="js/bootstrap-datepicker.min.js"></script>
-<script src="js/clockpicker.js"></script>
-<script src="js/custom.js"></script>
+  <!-- JS Scripts -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="js/plugin.js"></script>
+  <script src="js/bootstrap-datepicker.min.js"></script>
+  <script src="js/clockpicker.js"></script>
+  <script src="js/custom.js"></script>
 </body>
 </html>
-		

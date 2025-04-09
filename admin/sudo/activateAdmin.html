@@ -1,30 +1,29 @@
-<!--index-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Activation</title>
+
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../style/js/clockpicker.js"></script>
-    <script src="../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
     <script src="activateAdmin.js"></script>
-  </head>
 
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()"> Back </a>
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
@@ -36,27 +35,31 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Activate Admin Account </u></b>
-              </h4>
+              <h1>Activate Admin Account</h1>
             </div>
             <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <form id="activateAdminForm">
-                    <label for="activateUsername">Username to Activate:</label>
-                    <input
-                      type="text"
-                      id="activateUsername"
-                      name="username"
-                      required
-                    />
-                    <button type="submit">Activate Admin</button>
-                  </form>
-
-                  <p id="statusMessage"></p>
-                </div>
+              <div class="form-group">
+                <label for="activateUsername">Username to Activate:</label>
+                <input
+                  type="text"
+                  id="activateUsername"
+                  name="username"
+                  class="form-control"
+                  placeholder="Enter admin username"
+                  required
+                />
               </div>
+
+              <div class="form-group form-submit">
+                <button type="submit" form="activateAdminForm" class="btn btn-primary">
+                  Activate Admin
+                </button>
+              </div>
+
+              <p id="statusMessage"></p>
+
+              <!-- Hidden form submission to allow button to work outside the form -->
+              <form id="activateAdminForm" style="display: none;"></form>
             </div>
           </div>
         </div>
