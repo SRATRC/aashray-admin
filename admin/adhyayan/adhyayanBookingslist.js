@@ -6,8 +6,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     const status= urlParams.get('status'); 
     console.log(`${CONFIG.basePath}`);
+    console.log("shibirId:", shibirId);
+console.log("status:", status);
+
     const response = await fetch(
-      `${CONFIG.basePath}/adhyayan/bookings?shibir_id=${shibirId}&&status="+${status}&&page_size=100`,
+      `${CONFIG.basePath}/adhyayan/bookings?shibir_id=${shibirId}&status=${status}&page_size=100`,
       {
         method: 'GET',
         headers: {
@@ -44,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         </td>
       `;
       tableBody.appendChild(row);
-      document.getElementById("shirbirName").textContent=" For "+shibirName;
+      document.getElementById("shibirName").textContent=" For "+shibirName;
     });
 
   } catch (error) {

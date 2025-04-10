@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tableRow.innerHTML = `
         <td style="text-align:center;">${index + 1}</td>
         <td style="text-align:center;">${item.name}</td>
+        <td style="text-align:center;">${item.location}</td>
         <td style="text-align:center;">${item.speaker}</td>
         <td style="text-align:center;">${item.start_date}</td>
         <td style="text-align:center;">${item.end_date}</td>

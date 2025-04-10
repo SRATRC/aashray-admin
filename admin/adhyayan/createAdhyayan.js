@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const formData = new FormData(adhyayanForm);
     const requestData = {
       name: formData.get('name'),
+      location: formData.get('location'),
       start_date: formData.get('start_date'),
       end_date: formData.get('end_date'),
       speaker: formData.get('speaker'),

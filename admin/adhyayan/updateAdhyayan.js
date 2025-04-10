@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = adhyayanData.data;
     document.getElementById('id').value = data.id;
     document.getElementById('name').value = data.name;
+    document.getElementById('location').value = data.location;
     document.getElementById('start_date').value = data.start_date;
     document.getElementById('end_date').value = data.end_date;
     document.getElementById('speaker').value = data.speaker;
@@ -46,10 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateAdhyayanDetails = async (adhyayanId) => {
     console.log('Updating Adhyayan with Id: ' + adhyayanId);
+    console.log('Setting location:', + location);
+
     const adhyayanFormData = document.getElementById('editAdhyayanForm');
     const adhyayanForm = new FormData(adhyayanFormData);
     const updatedData = {
       name: adhyayanForm.get('name'),
+      location: adhyayanForm.get('location'),
       start_date: adhyayanForm.get('start_date'),
       end_date: adhyayanForm.get('end_date'),
       speaker: adhyayanForm.get('speaker'),
