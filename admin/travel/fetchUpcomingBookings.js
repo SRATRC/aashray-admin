@@ -7,12 +7,27 @@ document.addEventListener('DOMContentLoaded', async function () {
   .addEventListener('submit', async function (event) {
     event.preventDefault();
 
-    var start_date=document.getElementById('start_date').value;
-    var end_date=document.getElementById('end_date').value;
+   
 
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+
+    const checkedValues = [...document.querySelectorAll('input[name="status"]:checked')]
+    .map(checkbox => checkbox.value);
+
+    const searchParams = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate
+    });
+    checkedValues.forEach((x) => searchParams.append('statuses', x));
+
+    const pickupValues = [...document.querySelectorAll('input[name="pickup"]:checked')]
+    .map(checkbox => checkbox.value);
+    pickupValues.forEach((x) => searchParams.append('pickup', x));
+    
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/travel/upcoming?start_date=`+start_date+"&&end_date="+end_date, // Replace with your actual API endpoint
+        `${CONFIG.basePath}/travel/upcoming?${searchParams}`, // Replace with your actual API endpoint
         {
           method: 'GET',
           headers: {
@@ -23,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       );
 
       const suumaryResponse = await fetch(
-        `${CONFIG.basePath}/travel/summary?start_date=`+start_date+"&&end_date="+end_date, // Replace with your actual API endpoint
+        `${CONFIG.basePath}/travel/summary?${searchParams}`, // Replace with your actual API endpoint
         {
           method: 'GET',
           headers: {
@@ -55,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       if (response.ok) {
         const today = new Date();
-          document.getElementById("selectedDate").textContent = "Summary For ["+start_date+" to "+end_date+"]";
+          document.getElementById("selectedDate").textContent = " For ["+startDate+" to "+endDate+"]";
 
         const bookings = data.data;
         const bookingsTableBody = document

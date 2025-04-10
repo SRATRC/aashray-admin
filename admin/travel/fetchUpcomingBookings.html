@@ -51,43 +51,54 @@
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
-        <div class="form"> 
-        <center>
-        <form id="reportForm"> 
-          <div class="row">
-            <div class="col-sm-2">
-              <label for="start_date" class="col-form-label">Report Start Date:</label>
-            </div>
-            <div class="col-sm-3">
-              <input type="date" class="form-control" id="start_date" name="start_date" required />
-            </div>
-    
-            <div class="col-sm-2">
-              <label for="end_date" class="col-form-label">Report End Date:</label>
-            </div>
-            <div class="col-sm-3">
-              <input type="date" class="form-control" id="end_date" name="end_date" required />
-            </div>
-          </div>
-    
-          <div class="row">
-            <div class="col-sm-2">
-              <label for="submit" class="col-form-label"></label>
-            </div>
-            <div class="col-sm-2">
-              <input type="submit" value="Submit" />
-            </div>
-          </div>
-      </form>
-    </center>  
-    </div> 
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h2>Upcoming Travel Bookings</h2>
+              <h1>Upcoming Travel Bookings</h1>
             </div>
 
             <div class="form">
-              <h3>Summary for <span id="currentDate"></span></h3>
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
+              <form id="reportForm">
+                
+                <div class="form-group">
+                  <label>Status:</label>
+                  <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <label><input type="checkbox" name="status" value="confirmed" /> Confirmed </label>
+                    <label><input type="checkbox" name="status" value="pending" /> Payment Pending</label>
+                    <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
+                    <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
+                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Rides from RC:</label>
+                  <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <label><input type="checkbox" name="pickup" value="RC" /> RC </label>
+                    
+                  </div>
+                </div>
+                
+
+                <div class="form-group">
+                  <label for="start_date">*Start Date:</label>
+                  <input type="date" id="start_date" name="start_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="end_date">*End Date:</label>
+                  <input type="date" id="end_date" name="end_date" class="form-control" required />
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="form">
+              <h3>Summary <span id="selectedDate"></span> </h3>
 
               <div class="table-responsive">
                 <table
@@ -139,8 +150,8 @@
                   </tbody>
                 </table>
               </div>
+            
             </div>
-
           </div>
         </div>
       </div>
