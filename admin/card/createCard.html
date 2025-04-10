@@ -1,29 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Office Admin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assign New Card</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../style/js/clockpicker.js"></script>
-    <script src="../style/js/custom.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="createCard.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()"> Back </a>
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
@@ -35,107 +36,90 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Assign New Card </u></b>
-              </h4>
+              <h1>Assign New Card</h1>
             </div>
-            <div class="form" onsubmit="assignCard(event)">
-              <form>
+            <div class="form">
+              <form id="cardForm" onsubmit="assignCard(event)">
                 <div class="row">
-                  <div class="col-md-12">
-                    <label>Card Number:</label>
-                    <input
-                      type="text"
-                      name="cardno"
-                      pattern="[0-9]{10}"
-                      required
-                    />
+                  <div class="form-group">
+                    <label for="cardno">Card Number:</label>
+                    <input type="text" id="cardno" name="cardno" class="form-control" pattern="[0-9]{10}" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>Card Issued To:</label>
-                    <input type="text" name="issuedto" required />
+                  <div class="form-group">
+                    <label for="issuedto">Card Issued To:</label>
+                    <input type="text" id="issuedto" name="issuedto" class="form-control" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>Gender:</label>
-                    <select name="gender" id="gender">
+                  <div class="form-group">
+                    <label for="gender">Gender:</label>
+                    <select id="gender" name="gender" class="form-control">
                       <option value="M">Male</option>
                       <option value="F">Female</option>
                     </select>
                   </div>
-                  <div class="col-md-12">
-                    <label>Date of Birth:</label>
-                    <input type="date" name="dob" required />
+                  <div class="form-group">
+                    <label for="dob">Date of Birth:</label>
+                    <input type="date" id="dob" name="dob" class="form-control" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>Phone No:</label>
-                    <input
-                      type="text"
-                      maxlength="10"
-                      name="mobno"
-                      pattern="\d{10}"
-                      title="Please enter exactly 10 digits"
-                      required
-                    />
+                  <div class="form-group">
+                    <label for="mobno">Phone No:</label>
+                    <input type="text" id="mobno" name="mobno" class="form-control" maxlength="10" pattern="\d{10}" title="Please enter exactly 10 digits" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>E-mail address:</label>
-                    <input type="text" name="email" />
+                  <div class="form-group">
+                    <label for="email">E-mail address:</label>
+                    <input type="text" id="email" name="email" class="form-control" />
                   </div>
-                  <div class="col-md-12">
-                    <label>ID type:</label>
-                    <select name="idType" id="idType">
+                  <div class="form-group">
+                    <label for="idType">ID Type:</label>
+                    <select id="idType" name="idType" class="form-control">
                       <option value="PAN">PAN No</option>
                       <option value="Aadhar">Aadhar No</option>
                       <option value="Pending">None</option>
                     </select>
                   </div>
-                  <div class="col-md-12">
-                    <label>ID No:</label>
-                    <input type="text" name="idNo" required />
+                  <div class="form-group">
+                    <label for="idNo">ID No:</label>
+                    <input type="text" id="idNo" name="idNo" class="form-control" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>Country:</label>
-                    <select name="country" id="country" required>
+                  <div class="form-group">
+                    <label for="country">Country:</label>
+                    <select id="country" name="country" class="form-control" required>
                       <option value="">Select Country</option>
                     </select>
                   </div>
-                  <div class="col-md-12">
-                    <label>State:</label>
-                    <select name="state" id="state" required>
+                  <div class="form-group">
+                    <label for="state">State:</label>
+                    <select id="state" name="state" class="form-control" required>
                       <option value="">Select State</option>
                     </select>
                   </div>
-                  <div class="col-md-12">
-                    <label>City:</label>
-                    <select name="city" id="city" required>
+                  <div class="form-group">
+                    <label for="city">City:</label>
+                    <select id="city" name="city" class="form-control" required>
                       <option value="">Select City</option>
                     </select>
                   </div>
-                  <div class="col-md-12">
-                    <label>Address:</label>
-                    <input type="text" name="address" required />
+                  <div class="form-group">
+                    <label for="address">Address:</label>
+                    <input type="text" id="address" name="address" class="form-control" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>PIN:</label>
-                    <input type="text" name="pin" required />
+                  <div class="form-group">
+                    <label for="pin">PIN:</label>
+                    <input type="text" id="pin" name="pin" class="form-control" required />
                   </div>
-                  <div class="col-md-12">
-                    <label>Centre:</label>
-                    <input type="text" name="centre" />
+                  <div class="form-group">
+                    <label for="centre">Centre:</label>
+                    <input type="text" id="centre" name="centre" class="form-control" />
                   </div>
-                  <div class="col-md-12">
-                    <label>Residential Status:</label>
-                    <select type="text" name="res_status">
+                  <div class="form-group">
+                    <label for="res_status">Residential Status:</label>
+                    <select id="res_status" name="res_status" class="form-control">
                       <option value="MUMUKSHU">MUMUKSHU</option>
                       <option value="PR">PR</option>
                       <option value="Seva_Kutir">SEVA KUTIR</option>
                     </select>
                   </div>
-                  <div class="col-md-12">
-                    <!-- <input type="submit" value="Submit" /> -->
-                    <button type="submit" class="btn btn-primary">
-                      Submit
-                    </button>
+                  <div class="form-group form-submit">
+                    <button type="submit" class="btn btn-primary">Submit</button>
                   </div>
                 </div>
               </form>

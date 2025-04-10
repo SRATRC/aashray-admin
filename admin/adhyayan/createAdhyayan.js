@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const formData = new FormData(adhyayanForm);
     const requestData = {
       name: formData.get('name'),
+      location: formData.get('location'),
       start_date: formData.get('start_date'),
       end_date: formData.get('end_date'),
       speaker: formData.get('speaker'),
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/adhyayan/create',
+        `${CONFIG.basePath}/adhyayan/create`,
         {
           method: 'POST',
           headers: {

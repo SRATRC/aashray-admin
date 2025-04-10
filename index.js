@@ -20,7 +20,6 @@ function login(event) {
       password: password
     })
   };
-  //ToDo: Update the URL
   fetch(
     `${CONFIG.basePath}/auth/login`,
     options
@@ -29,7 +28,9 @@ function login(event) {
     .then((data) => {
       sessionStorage.setItem('token', data.token);
       sessionStorage.setItem('roles', data.roles);
-      window.location.href = 'adminhome.html';
+      
+      window.location.pathname.replace(/\/$/, '');
+      window.location.href = '/admin/adminhome.html';
     })
     .catch((error) => console.error(error));
 }

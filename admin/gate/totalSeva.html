@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Seva Kutir Residents Report</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="totalSeva.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
   <body>
     <div class="header">
@@ -29,37 +30,32 @@
         </div>
       </div>
     </div>
+
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>
-                <b><u>Seva Kutir Residents Report</u></b>
-              </h1>
+              <h1>Seva Kutir Residents Report</h1>
             </div>
             <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="table-responsive">
-                    <table
-                      id="sevaResidentsTable"
-                      class="table table-striped table-bordered"
-                    >
-                      <thead>
-                        <tr>
-                          <th>Card No</th>
-                          <th>Issued To</th>
-                          <th>Mobile No</th>
-                          <th>Department</th>
-                        </tr>
-                      </thead>
-                      <tbody id="prResidents">
-                        <!-- Seva Kutir Residents data will be dynamically added here -->
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+              <div class="table-responsive">
+                <table
+                  id="sevaResidentsTable"
+                  class="table table-striped table-bordered"
+                >
+                  <thead>
+                    <tr>
+                      <th>Card No</th>
+                      <th>Issued To</th>
+                      <th>Mobile No</th>
+                      <th>Department</th>
+                    </tr>
+                  </thead>
+                  <tbody id="prResidents">
+                    <!-- Data populated by totalSeva.js -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

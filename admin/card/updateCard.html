@@ -1,56 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>Update Card Details</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Update Card Details</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
+  <!-- Styles and Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="updateCard.js" defer></script>
 
-    <!-- Additional Styles and Scripts -->
-
-    <script src="../style/js/plugin.js"></script>
-    <script src="../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../style/js/clockpicker.js"></script>
-    <script src="../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="updateCard.js"></script>
-  </head>
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()"> Back </a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
-        </div>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+        <a id="homelink" href="/admin/">Logout</a>
       </div>
     </div>
+  </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Update Card Details</h1>
-            </div>
-            <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="table">
-                    <form id="updateForm">
-                      <!-- The form will be dynamically populated -->
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Update Card Details</h1>
           </div>
+
+          <div class="form">
+            <form id="updateForm">
+              <div class="form-group">
+                <label for="cardno">Card Number:</label>
+                <input type="text" id="cardno" name="cardno" class="form-control" readonly />
+              </div>
+
+              <div class="form-group">
+                <label for="issuedto">Issued To:</label>
+                <input type="text" id="issuedto" name="issuedto" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="gender">Gender:</label>
+                <input type="text" id="gender" name="gender" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" name="dob" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="mobno">Mobile Number:</label>
+                <input type="tel" id="mobno" name="mobno" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="idType">ID Type:</label>
+                <input type="text" id="idType" name="idType" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="idNo">ID Number:</label>
+                <input type="text" id="idNo" name="idNo" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" rows="4" class="form-control" required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="state">State:</label>
+                <select id="state" name="state" class="form-control" required></select>
+              </div>
+
+              <div class="form-group">
+                <label for="city">City:</label>
+                <select id="city" name="city" class="form-control" required></select>
+              </div>
+
+              <div class="form-group">
+                <label for="pin">Pin Code:</label>
+                <input type="text" id="pin" name="pin" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="center">Center:</label>
+                <input type="text" id="center" name="center" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="res_status">Residential Status:</label>
+                <select id="res_status" name="res_status" class="form-control" required>
+                  <option value="">Select Status</option>
+                  <option value="MUMUKSHU">MUMUKSHU</option>
+                  <option value="PR">PR</option>
+                  <option value="SEVA KUTIR">SEVA KUTIR</option>
+                </select>
+              </div>
+
+              <div class="form-group form-submit">
+                <button type="submit" class="btn btn-primary">Save</button>
+              </div>
+            </form>
+          </div>
+
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
 </html>

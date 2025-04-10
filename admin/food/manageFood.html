@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Food Booking Form</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="manageFood.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>New Food Booking</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+              <form id="foodBookingForm">
+                <div class="form-group">
+                  <label for="mobile">Enter Mobile No:</label>
+                  <input type="tel" id="mobile" name="mobile" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label for="cardno">Or Card No:</label>
+                  <input type="tel" id="cardno" name="cardno" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label for="start_date">Start Date:</label>
+                  <input type="date" id="start_date" name="start_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="end_date">End Date:</label>
+                  <input type="date" id="end_date" name="end_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label>Select Meals:</label>
+                  <div style="display: flex; gap: 20px;">
+                    <label><input type="checkbox" id="breakfast" name="meal" value="breakfast" /> Breakfast</label>
+                    <label><input type="checkbox" id="lunch" name="meal" value="lunch" /> Lunch</label>
+                    <label><input type="checkbox" id="dinner" name="meal" value="dinner" /> Dinner</label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="spicy">Spice Level:</label>
+                  <select id="spicy" name="spicy" class="form-control" required>
+                    <option value="0" selected>Regular</option>
+                    <option value="1">Spicy</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="beverage">Tea/Coffee:</label>
+                  <select id="beverage" name="beverage" class="form-control">
+                    <option value="NONE" selected>No, Thank You</option>
+                    <option value="TEA">Tea</option>
+                    <option value="COFFEE">Coffee</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                  &nbsp;
+                  <a href="#" onclick="getExistingBookings();" class="btn btn-secondary">Get Existing Bookings</a>
+                </div>
+              </form>
+            </div>
+
+            <div class="frm-head">
+              <h1>Manage Existing Bookings</h1>
+            </div>
+
+            <div class="table-responsive">
+              <table id="bookingsTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Meal</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="bookingsTableBody">
+                  <!-- Table rows will be dynamically added here -->
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,31 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Report</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="foodReport.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
@@ -34,36 +36,79 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
-            <div class="frm-head">
-              <h4>
-                <b><u>Food Report</u></b>
-              </h4>
-            </div>
-            <div class="form">
-              <form id="foodReportForm">
-                <div class="row">
-                  <div class="col-md-12">
-                    <label for="reportDate">Select Date:</label>
-                    <input
-                      type="date"
-                      id="reportDate"
-                      name="reportDate"
-                      required
-                    /><br /><br />
-                  </div>
-                  <div class="col-md-12">
-                    <!-- <button type="submit">Get Report</button> -->
-                    <button type="submit" class="btn btn-primary">
-                      Get Report
-                    </button>
-                    <br />
-                  </div>
-                </div>
-              </form>
 
-              <!-- Table for displaying fetched data -->
-              <div id="foodReportContainer"></div>
+            <div class="frm-head">
+              <h1 id="reportTitle">Food Report</h1>
             </div>
+
+            <div id="alert" class="alert" role="alert" style="display:none;"></div>
+
+            <!-- Breakfast Table -->
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr><th colspan="5" class="text-center">Breakfast</th></tr>
+                  <tr>
+                    <th>Date</th>
+                    <th>Regd</th>
+                    <th>Issued</th>
+                    <th>No Show</th>
+                    <th>Physical Count</th>
+                  </tr>
+                </thead>
+                <tbody id="breakfastReportTable"></tbody>
+              </table>
+            </div>
+
+            <!-- Lunch Table -->
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr><th colspan="5" class="text-center">Lunch</th></tr>
+                  <tr>
+                    <th>Date</th>
+                    <th>Regd</th>
+                    <th>Issued</th>
+                    <th>No Show</th>
+                    <th>Physical Count</th>
+                  </tr>
+                </thead>
+                <tbody id="lunchReportTable"></tbody>
+              </table>
+            </div>
+
+            <!-- Dinner Table -->
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr><th colspan="5" class="text-center">Dinner</th></tr>
+                  <tr>
+                    <th>Date</th>
+                    <th>Regd</th>
+                    <th>Issued</th>
+                    <th>No Show</th>
+                    <th>Physical Count</th>
+                  </tr>
+                </thead>
+                <tbody id="dinnerReportTable"></tbody>
+              </table>
+            </div>
+
+            <!-- Tea/Coffee Table -->
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr><th colspan="3" class="text-center">Tea / Coffee</th></tr>
+                  <tr>
+                    <th>Date</th>
+                    <th>Tea</th>
+                    <th>Coffee</th>
+                  </tr>
+                </thead>
+                <tbody id="highteaReportTable"></tbody>
+              </table>
+            </div>
+
           </div>
         </div>
       </div>

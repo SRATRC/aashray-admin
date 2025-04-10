@@ -1,74 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Room Admin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adhyayan Management</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="bookFoodForMumukshu.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          &nbsp; | &nbsp;
+          <a href="/admin/">Home</a>
+          &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
+
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Adhyayan Management </u></b>
-              </h4>
+              <h1>Adhyayan Management</h1>
             </div>
-            <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="createAdhyayan.html"
-                    >Add New Adhyayan</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="fetchAllAdhyayan.html"
-                    >Edit Existing Adhyayan</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="adhyayanReport.html"
-                    >Adhyayan Summary Report</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="adhyayanWaitlist.html"
-                    >Adhyayan Waitlist Report</a
-                  >
-                  <a
-                    class="btn col-md-12 btn-lg btn-demo"
-                    href="adhyayanStatusUpdate.html"
-                    >Adhyayan Status Update</a
-                  >
-                </div>
+
+            <div class="admin-menu">
+              <div class="menu-grid">
+                <a class="menu-btn" href="createAdhyayan.html">Add New Adhyayan</a>
+                <a class="menu-btn" href="fetchAllAdhyayan.html">Edit Existing Adhyayan</a>
+                <a class="menu-btn" href="adhyayanReport.html">Adhyayan Summary Report</a>
+                <a class="menu-btn" href="adhyayanStatusUpdate.html">Adhyayan Status Update</a>
               </div>
             </div>
+            
           </div>
         </div>
       </div>
