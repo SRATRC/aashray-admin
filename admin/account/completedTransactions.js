@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         try {
           const response = await fetch(
-            '${CONFIG.basePath}/accounts/fetch',
+            `${CONFIG.basePath}/accounts/fetch`,
             options
           );
           const data = await response.json();

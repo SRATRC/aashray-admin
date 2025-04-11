@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        '${CONFIG.basePath}/sudo/update_roles',
+        `${CONFIG.basePath}/sudo/update_roles`,
         {
           method: 'PUT',
           headers: {

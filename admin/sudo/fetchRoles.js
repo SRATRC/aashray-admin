@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      '${CONFIG.basePath}/sudo/role',
+      `${CONFIG.basePath}/sudo/role`,
       {
         method: 'GET',
         headers: {
