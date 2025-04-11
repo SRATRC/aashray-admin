@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `${CONFIG.basePath}/card/search/${encodeURIComponent(
             query
           )}`
-        : '${CONFIG.basePath}/card/getAll';
+        : `${CONFIG.basePath}/card/getAll`;
 
       const response = await fetch(url, options);
 

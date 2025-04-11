@@ -45,7 +45,7 @@ async function assignCard(event) {
 
   try {
     const response = await fetch(
-      '${CONFIG.basePath}/card/create',
+      `${CONFIG.basePath}/card/create`,
       options
     );
     if (response.status >= 200 && response.status < 300) {

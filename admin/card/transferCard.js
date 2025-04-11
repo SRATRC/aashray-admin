@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        '${CONFIG.basePath}/card/getAll',
+        `${CONFIG.basePath}/card/getAll`,
         options
       );
       const data = await response.json();

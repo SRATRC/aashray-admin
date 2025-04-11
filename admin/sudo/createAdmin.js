@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        '${CONFIG.basePath}/sudo/create',
+        `${CONFIG.basePath}/sudo/create`,
         {
           method: 'POST',
           headers: {

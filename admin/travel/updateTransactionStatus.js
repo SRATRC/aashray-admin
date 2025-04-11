@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const response = await fetch(
-        '${CONFIG.basePath}/travel/transaction/status',
+        `${CONFIG.basePath}/travel/transaction/status`,
         {
           method: 'POST',
           headers: {

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const response = await fetch(
-      '${CONFIG.basePath}/gate/total', // Replace with your actual API endpoint
+      `${CONFIG.basePath}/gate/total`, // Replace with your actual API endpoint
       {
         method: 'GET',
         headers: {
