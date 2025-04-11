@@ -1,28 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kitchen Admin</title>
+
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="issuePlate.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .big-alert {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: center;
+        padding: 20px;
+        margin-top: 20px;
+      }
+      .alert-success {
+        color: green;
+      }
+      .alert-danger {
+        color: red;
+      }
+    </style>
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()"> Back </a>
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
           &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
           <a id="homelink" href="/admin/">Logout</a>
         </div>
@@ -34,33 +52,33 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Tap your card to avail Dinner</u></b>
-              </h4>
+              <h1>Tap your card for food check-in</h1>
             </div>
 
-            <div class="form">
-              <form onsubmit="foodCheckin(event)">
-                <div class="row">
-                  <div>
-                    <label>Tap the card: </label>
-                    <input type="text" name="cardno" autofocus />
+            <!-- Alert shown full screen after form -->
+            <div id="alert" class="big-alert" style="display: none;"></div>
+
+            <!-- Form wrapper for easy hiding -->
+            <div id="formWrapper">
+              <div class="form">
+                <form id="foodCheckinForm">
+                  <div class="form-group">
+                    <label for="cardno">Tap your card:</label>
+                    <input type="text" class="form-control" id="cardno" name="cardno" required />
                   </div>
-                  <div>
-                    <input
-                      type="hidden"
-                      name="transaction_detail"
-                      value="dinner"
-                    />
+
+                  <div class="form-group form-submit">
+                    <button type="submit" class="btn btn-primary">Submit</button>
                   </div>
-                  <div class="col-md-12">
-                    <button type="submit" class="btn btn-primary">
-                      Submit
-                    </button>
-                  </div>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
+
+            <!-- Error sound -->
+            <audio id="errorSound">
+              <source src="/assets/sound/alert.mp3" type="audio/mp3" />
+            </audio>
+
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/getAll',
+        `${CONFIG.basePath}/card/getAll`,
         options
       );
       const data = await response.json();
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fetchPersonDetails = async (personId) => {
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${personId}`,
+        `${CONFIG.basePath}/card/search/${personId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/update`,
+        `${CONFIG.basePath}/card/update`,
         {
           method: 'PUT',
           headers: {
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       try {
         const response = await fetch(
-          `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${encodeURIComponent(
+          `${CONFIG.basePath}/card/search/${encodeURIComponent(
             searchInput.value.toLowerCase()
           )}`,
           {

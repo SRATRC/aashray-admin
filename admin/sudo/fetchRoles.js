@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/role',
+      `${CONFIG.basePath}/sudo/role`,
       {
         method: 'GET',
         headers: {
@@ -71,7 +71,7 @@ async function deleteRole(roleName) {
 
   try {
     const response = await fetch(
-      `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/sudo/role/${encodeURIComponent(
+      `${CONFIG.basePath}/sudo/role/${encodeURIComponent(
         roleName
       )}`,
       {

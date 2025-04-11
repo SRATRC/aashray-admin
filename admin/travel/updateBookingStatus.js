@@ -2,22 +2,28 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('updateBookingForm');
   const statusMessage = document.getElementById('statusMessage');
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookingId = urlParams.get('bookingIdParam'); // "John"
+  document.getElementById('bookingid').value = bookingId;
+
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const bookingid = document.getElementById('bookingid').value;
     const status = document.getElementById('status').value;
-
+    const adminComments = document.getElementById('adminComments').value;
+    const upiRef=  document.getElementById('upi_ref').value;
+    const description=  document.getElementById('description').value;
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/travel/booking/status',
+        `${CONFIG.basePath}/travel/booking/status`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
-          body: JSON.stringify({ bookingid, status })
+          body: JSON.stringify({ bookingid, status,adminComments,upiRef ,description})
         }
       );
 
@@ -28,9 +34,18 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         statusMessage.innerHTML = `<p>Error: ${data.message}</p>`;
       }
+
+      if (response.ok) {
+        alert(data.message); // ✅ Show success popup
+        window.location.href = '/admin/travel/fetchUpcomingBookings.html'; // ✅ Redirect on OK
+      } else {
+        alert(`Error: ${data.message}`); // ❌ Show error popup
+        window.location.href = '/admin/travel/fetchUpcomingBookings.html'; // ✅ Redirect on OK
+      }
+
     } catch (error) {
-      console.error('Error updating booking status:', error);
-      statusMessage.innerHTML = `<p>Failed to update booking status. Please try again later.</p>`;
+      alert(`Error: ${error}`); // ❌ Show error popup
+      window.location.href = '/admin/travel/fetchUpcomingBookings.html';
     }
   });
 });

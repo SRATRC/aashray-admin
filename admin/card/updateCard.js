@@ -3,14 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const personId = sessionStorage.getItem('personId');
 
   if (!personId) {
-    window.location.href = 'searchCard.html'; // Redirect if no personId is found in sessionStorage
+    window.location.href = 'index.html';
     return;
   }
 
   const fetchPersonDetails = async (personId) => {
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/search/${personId}`,
+        `${CONFIG.basePath}/card/search/${personId}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -18,162 +18,97 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       );
+
       const personData = await response.json();
-      console.log('Person Data:', personData);
-      populateForm(personData.data[0]);
-      fetchStatesAndCities(
-        personData.data[0].country,
-        personData.data[0].state,
-        personData.data[0].city
-      ); // Pass country, state, and city
+      const data = personData.data[0];
+      populateForm(data);
+      fetchStatesAndCities(data.country, data.state, data.city);
     } catch (error) {
       console.error('Error fetching person details:', error);
     }
   };
 
+  const populateForm = (data) => {
+    document.getElementById('cardno').value = data.cardno;
+    document.getElementById('issuedto').value = data.issuedto;
+    document.getElementById('gender').value = data.gender;
+    document.getElementById('dob').value = data.dob;
+    document.getElementById('mobno').value = data.mobno;
+    document.getElementById('email').value = data.email;
+    document.getElementById('idType').value = data.idType;
+    document.getElementById('idNo').value = data.idNo;
+    document.getElementById('address').value = data.address;
+    document.getElementById('pin').value = data.pin;
+    document.getElementById('center').value = data.center;
+
+    const resStatus = document.getElementById('res_status');
+    resStatus.value = data.res_status;
+  };
+
   const fetchStatesAndCities = async (country, currentState, currentCity) => {
     try {
-      const countriesResponse = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/location/countries',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          }
-        }
-      );
-      const countriesData = await countriesResponse.json();
-      const countries = countriesData.data;
+      const token = sessionStorage.getItem('token');
 
-      const stateDropdown = document.getElementById('state');
-      const cityDropdown = document.getElementById('city');
-
-      // Fetch and populate states
       const statesResponse = await fetch(
         `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/states/${country}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );
       const statesData = await statesResponse.json();
-      const states = statesData.data;
+      const stateDropdown = document.getElementById('state');
+      stateDropdown.innerHTML = "";
 
-      // Add current state as the first option in state dropdown
-      stateDropdown.innerHTML = `<option value="${currentState}" selected>${currentState}</option>`;
-      states.forEach((state) => {
-        if (state.value !== currentState) {
-          stateDropdown.innerHTML += `<option value="${state.value}">${state.value}</option>`;
-        }
+      statesData.data.forEach(state => {
+        const selected = state.value === currentState ? 'selected' : '';
+        stateDropdown.innerHTML += `<option value="${state.value}" ${selected}>${state.value}</option>`;
       });
 
-      // Handle state change event
-      stateDropdown.addEventListener('change', async () => {
+      stateDropdown.addEventListener('change', () => {
         const selectedState = stateDropdown.value;
         fetchCities(country, selectedState);
       });
 
-      // Fetch and populate cities based on the initial state
       fetchCities(country, currentState, currentCity);
     } catch (error) {
-      console.error('Error fetching states/cities:', error);
+      console.error('Error fetching states:', error);
     }
   };
 
   const fetchCities = async (country, state, currentCity) => {
     try {
+      const token = sessionStorage.getItem('token');
+
       const citiesResponse = await fetch(
         `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/cities/${country}/${state}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );
       const citiesData = await citiesResponse.json();
-      const cities = citiesData.data;
-
       const cityDropdown = document.getElementById('city');
+      cityDropdown.innerHTML = "";
 
-      // Add current city as the first option in city dropdown
-      cityDropdown.innerHTML = `<option value="${currentCity}" selected>${currentCity}</option>`;
-      cities.forEach((city) => {
-        if (city.value !== currentCity) {
-          cityDropdown.innerHTML += `<option value="${city.value}">${city.value}</option>`;
-        }
+      citiesData.data.forEach(city => {
+        const selected = city.value === currentCity ? 'selected' : '';
+        cityDropdown.innerHTML += `<option value="${city.value}" ${selected}>${city.value}</option>`;
       });
     } catch (error) {
       console.error('Error fetching cities:', error);
     }
   };
 
-  const populateForm = (data) => {
-    const resStatusOptions = ['MUMUKSHU', 'PR', 'SEVA KUTIR'];
-
-    form.innerHTML = `
-      <label>Card Number:</label>
-      <input type="text" id="cardno" value="${
-        data.cardno
-      }" required readonly><br>
-
-      <label>Issued To:</label>
-      <input type="text" id="issuedto" value="${data.issuedto}" required><br>
-
-      <label>Gender:</label>
-      <input type="text" id="gender" value="${data.gender}" required><br>
-
-      <label>Date of Birth:</label>
-      <input type="date" id="dob" value="${data.dob}" required><br>
-
-      <label>Mobile Number:</label>
-      <input type="tel" id="mobno" value="${data.mobno}" required><br>
-
-      <label>Email:</label>
-      <input type="email" id="email" value="${data.email}" required><br>
-
-      <label>ID Type:</label>
-      <input type="text" id="idType" value="${data.idType}" required><br>
-
-      <label>ID Number:</label>
-      <input type="text" id="idNo" value="${data.idNo}" required><br>
-
-      <label>Address:</label>
-      <textarea id="address" rows="4" required>${data.address}</textarea><br>
-
-      <label>State:</label>
-      <select id="state" required></select><br>
-
-      <label>City:</label>
-      <select id="city" required></select><br>
-
-      <label>Pin Code:</label>
-      <input type="text" id="pin" value="${data.pin}" required><br>
-
-      <label>Center:</label>
-      <input type="text" id="center" value="${data.center}" required><br>
-
-      <label>Residential Status:</label>
-      <select id="res_status" required>
-        <option value="${data.res_status}" selected>${data.res_status}</option>
-        ${resStatusOptions
-          .filter((option) => option !== data.res_status)
-          .map((option) => `<option value="${option}">${option}</option>`)
-          .join('')}
-      </select><br>
-
-      <button type="submit" class="btn btn-primary">Save</button>
-    `;
-  };
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Get the updated data from the form
     const updatedData = {
-      cardno: document.getElementById('cardno').value, // Card number is non-editable
+      cardno: document.getElementById('cardno').value,
       issuedto: document.getElementById('issuedto').value,
       gender: document.getElementById('gender').value,
       dob: document.getElementById('dob').value,
@@ -182,17 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
       idType: document.getElementById('idType').value,
       idNo: document.getElementById('idNo').value,
       address: document.getElementById('address').value,
-      city: document.getElementById('city').value,
       state: document.getElementById('state').value,
+      city: document.getElementById('city').value,
       pin: document.getElementById('pin').value,
       center: document.getElementById('center').value,
       res_status: document.getElementById('res_status').value
     };
 
-    // Send the updated data to the backend API
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/update',
+        `${CONFIG.basePath}/card/update`,
         {
           method: 'PUT',
           headers: {
@@ -205,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (response.ok) {
         alert('Card details updated successfully!');
-        window.location.href = 'searchCard.html'; // Redirect to searchCard.html
+        window.location.href = 'index.html';
       } else {
         const error = await response.json();
         alert(`Error: ${error.message}`);
@@ -216,6 +150,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Fetch and populate the form with existing data
   fetchPersonDetails(personId);
 });
+
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}

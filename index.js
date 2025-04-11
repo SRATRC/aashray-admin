@@ -20,16 +20,17 @@ function login(event) {
       password: password
     })
   };
-  //ToDo: Update the URL
   fetch(
-    'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/auth/login',
+    `${CONFIG.basePath}/auth/login`,
     options
   )
     .then((response) => response.json())
     .then((data) => {
       sessionStorage.setItem('token', data.token);
       sessionStorage.setItem('roles', data.roles);
-      window.location.href = 'adminhome.html';
+      
+      window.location.pathname.replace(/\/$/, '');
+      window.location.href = '/admin/adminhome.html';
     })
     .catch((error) => console.error(error));
 }

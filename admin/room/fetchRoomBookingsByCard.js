@@ -6,10 +6,10 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
 
     const cardno = document.getElementById('cardno').value.trim();
-
+    resetAlert();
     try {
       const response = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/fetch_room_bookings/${cardno}`,
+        `${CONFIG.basePath}/stay/fetch_room_bookings/${cardno}`,
         {
           method: 'GET',
           headers: {
@@ -20,16 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Invalid JSON response from server');
-      }
-
       const data = await response.json();
+      if (!response.ok) {
+        showErrorMessage(data.message);
+      }
+
       const bookings = data.data;
 
       // Clear previous table rows
@@ -49,6 +44,11 @@ document.addEventListener('DOMContentLoaded', function () {
           </tbody>
         `;
 
+      if (bookings.length == 0) {
+        showErrorMessage("No bookings found for the given card no.");
+        return;
+      }
+
       const tableBody = bookingsTable.querySelector('tbody');
       bookings.forEach((booking) => {
         const row = document.createElement('tr');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } catch (error) {
       console.error('Error fetching room bookings:', error);
-      alert('An error occurred while fetching room bookings.');
+      showErrorMessage(error);
     }
   });
 });

@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/stay/occupancyReport',
+      `${CONFIG.basePath}/stay/occupancyReport`,
       {
         method: 'GET', // Assuming POST method as per the original function
         headers: {
@@ -25,15 +25,17 @@ document.addEventListener('DOMContentLoaded', async function () {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${booking.bookingid}</td>
+        <td>${booking.CardDb.issuedto}</td>
+        <td>${booking.CardDb.mobno}</td>
+        <td>${booking.CardDb.center}</td>
         <td>${booking.roomno}</td>
+        <td>${booking.roomtype}</td>
         <td>${booking.checkin}</td>
         <td>${booking.checkout}</td>
         <td>${booking.nights}</td>
-        <td>${booking.CardDb.cardno}</td>
-        <td>${booking.CardDb.issuedto}</td>
-        <td>${booking.CardDb.mobno}</td>
-        <td>${booking.CardDb.centre}</td>
+        <td>${booking.bookedBy || "Self"}</td>
       `;
+
       tableBody.appendChild(row);
     });
   } catch (error) {

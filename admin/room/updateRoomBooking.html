@@ -6,18 +6,18 @@
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="updateRoomBooking.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
@@ -36,58 +36,36 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h4>
-                <b><u>Update Room Booking</u></b>
-              </h4>
+              <h1>Update Room Booking</h1>
             </div>
+
             <div class="form">
-              <div class="row">
-                <div class="col-md-12">
-                  <form id="updateBookingForm">
-                    <label for="bookingId">Booking ID:</label>
-                    <input
-                      type="text"
-                      id="bookingId"
-                      name="bookingId"
-                      required
-                    />
-
-                    <label for="cardNumber">Card Number:</label>
-                    <input
-                      type="text"
-                      id="cardNumber"
-                      name="cardNumber"
-                      required
-                    />
-
-                    <label for="roomNumber">New Room Number:</label>
-                    <input
-                      type="text"
-                      id="roomNumber"
-                      name="roomNumber"
-                      required
-                    />
-
-                    <label for="gender">Gender:</label>
-                    <select id="gender" name="gender" required>
-                      <option value="M">Male</option>
-                      <option value="F">Female</option>
-                    </select>
-
-                    <label for="status">Status:</label>
-                    <select id="status" name="status" required>
-                      <option value="checked-in">Checked-in</option>
-                      <option value="checked-out">Checked-out</option>
-                      <option value="pending-checkin">Pending Check-in</option>
-                      <option value="pending-checkout">Pending Checkout</option>
-                    </select>
-
-                    <button type="submit">Update Booking</button>
-                  </form>
-                  <p id="statusMessage"></p>
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
+              <form id="updateBookingForm">
+                
+                <div class="form-group">
+                  <label for="bookingId">Booking ID:</label>
+                  <input
+                    type="text"
+                    id="bookingId"
+                    name="bookingId"
+                    class="form-control"
+                    required
+                  />
                 </div>
-              </div>
+
+                <div class="form-group">
+                  <label for="roomNumber">New Room No:</label>
+                  <select id="roomNumber" name="roomNumber" class="form-control" required></select>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+                
+              </form>
             </div>
+
           </div>
         </div>
       </div>

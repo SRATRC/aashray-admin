@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Gate Checkout</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    
+    <!-- Additional Styles and Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+
+    <!-- QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <script src="gateOut.js" defer></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h4>
+                <b><u>Manual Checkout</u></b>
+              </h4>
+            </div>
+            <div class="form">
+              <div id="alert" class="alert" role="alert"></div>
+              
+              <!-- QR Scanner Section -->
+              <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
+              <div id="qr-status" style="text-align: center; margin-top: 10px;"></div>
+
+              <form class="row" id="gateOutForm" style="display: none;">
+                <label for="cardno" class="col-form-label">Card No:</label>
+                <div class="col-sm-7">
+                  <input type="text" class="form-control" id="cardno" name="cardno" required />
+                </div>
+  
+                <div class="col-sm-1">
+                  <button type="submit" class="btn btn-small">Check-out</button>
+                </div>
+              </form>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

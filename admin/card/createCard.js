@@ -45,7 +45,7 @@ async function assignCard(event) {
 
   try {
     const response = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/card/create',
+      `${CONFIG.basePath}/card/create`,
       options
     );
     if (response.status >= 200 && response.status < 300) {
@@ -130,3 +130,15 @@ async function loadLocationData() {
 }
 
 window.onload = loadLocationData;
+
+function showSuccessMessage(message) {
+  alert(message);
+}
+
+function showErrorMessage(message) {
+  alert("Error: " + message);
+}
+
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}

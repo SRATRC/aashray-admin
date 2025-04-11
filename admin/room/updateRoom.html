@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Room</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="updateRoom.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+
+            <div class="frm-head">
+              <h1>Update Room</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
+              <form id="updateRoomForm">
+                <div class="form-group">
+                  <label for="roomno">Room No:</label>
+                  <input type="text" class="form-control" id="roomno" name="roomno" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="roomtype">Room Type:</label>
+                  <select id="roomtype" name="roomtype" class="form-control" required>
+                    <option value="nac">Non A.C.</option>
+                    <option value="ac">A.C.</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="gender">Gender:</label>
+                  <select id="gender" name="gender" class="form-control" required>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                    <option value="SCM">Senior Citizen Male</option>
+                    <option value="SCF">Senior Citizen Female</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

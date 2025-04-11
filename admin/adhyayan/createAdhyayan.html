@@ -1,93 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Room Admin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Adhyayan</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Config and Header Scripts -->
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/header.js"></script>
-
-    <!-- Additional Styles and Scripts -->
-    <script src="https://use.fontawesome.com/373a347df2.js"></script>
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="createAdhyayan.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
+
   <body>
     <div class="header">
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a> &nbsp; | &nbsp;
-          <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="/admin/">Home</a>
+          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
+
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
+
             <div class="frm-head">
-              <h4>
-                <b><u>Create Adhyayan</u></b>
-              </h4>
+              <h1>Create Adhyayan</h1>
             </div>
-            <div class="form" onsubmit="createAdhyayan(event)">
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
               <form id="adhyayanForm">
-                <div class="row">
-                  <div class="col-md-12">
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" required />
-                  </div>
-                  <div class="col-md-12">
-                    <label for="start_date">Start Date:</label>
-                    <input
-                      type="date"
-                      id="start_date"
-                      name="start_date"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-12">
-                    <label for="end_date">End Date:</label>
-                    <input type="date" id="end_date" name="end_date" required />
-                  </div>
-                  <div class="col-md-12">
-                    <label for="speaker">Speaker:</label>
-                    <input type="text" id="speaker" name="speaker" required />
-                  </div>
-                  <div class="col-md-12">
-                    <label for="total_seats">Total Seats:</label>
-                    <input
-                      type="number"
-                      id="total_seats"
-                      name="total_seats"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-12">
-                    <label for="amount">Amount:</label>
-                    <input type="number" id="amount" name="amount" required />
-                  </div>
-                  <div class="col-md-12">
-                    <label for="comments">Comments:</label>
-                    <textarea id="comments" name="comments" rows="4"></textarea>
-                  </div>
-                  <div class="col-md-12">
-                    <!-- <input type="submit" value="Create Adhyayan" /> -->
-                    <button type="submit" class="btn btn-primary">
-                      Create Adhyayan
-                    </button>
-                  </div>
+                <div class="form-group">
+                  <label for="name">Name:</label>
+                  <input type="text" id="name" name="name" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="location">Location:</label>
+                  <select id="location" name="location" class="form-control" required>
+                    <option value="">Select Location</option>
+                    <option value="Parli Research Centre">Parli Research Centre</option>
+                    <option value="Mokshdham Rajndangaon">Mokshdham Rajndangaon</option>
+                    <option value="Kolkata Centre">Kolkata Centre</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="start_date">Start Date:</label>
+                  <input type="date" id="start_date" name="start_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="end_date">End Date:</label>
+                  <input type="date" id="end_date" name="end_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="speaker">Speaker:</label>
+                  <input type="text" id="speaker" name="speaker" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="total_seats">Total Seats:</label>
+                  <input type="number" id="total_seats" name="total_seats" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="amount">Amount:</label>
+                  <input type="number" id="amount" name="amount" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="comments">Comments:</label>
+                  <textarea id="comments" name="comments" rows="4" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Create Adhyayan</button>
                 </div>
               </form>
             </div>
+
           </div>
         </div>
       </div>
