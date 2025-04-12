@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Room Admin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mumukshus Residents Report</title>
 
-    <!-- Load jQuery first -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    
-    <!-- Additional Styles and Scripts -->
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="/sessionstorage.js"></script>
-    
+    <script src="../../sessionstorage.js"></script>
+    <script src="gateIn.js"></script>
+  
     <!-- QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    
-    <script src="gateIn.js" defer></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
   <body>
     <div class="header">
@@ -45,15 +48,13 @@
               
               <!-- QR Scanner Section -->
               <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
-                <div id="qr-status"></div>
-
+              <div id="qr-status"></div>
 
               <form class="row" id="manualCheckinForm" style="display: none;">
                 <label for="cardno" class="col-form-label">Card No:</label>
                 <div class="col-sm-7">
                   <input type="text" class="form-control" id="cardno" name="cardno" required />
                 </div>
-  
                 <div class="col-sm-1">
                   <button type="submit" class="btn btn-small">Check-in</button>
                 </div>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Update Maintenance Request</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    label, select, input, textarea, button {
+      display: block;
+      margin: 10px 0;
+    }
+    form {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center;">Update Maintenance Request</h2>
+  <form id="updateForm">
+    <label for="issuedto">Issued To</label>
+    <input type="text" id="issuedto" name="issuedto" required>
+
+    <label for="department">Department</label>
+    <input type="text" id="department" name="department" required>
+
+    <label for="comments">Comments</label>
+    <textarea id="comments" name="comments" rows="4" required></textarea>
+
+    <label for="status">Status</label>
+    <select id="status" name="status" required>
+      <option value="">Select status</option>
+      <option value="inprogress">In Progress</option>
+      <option value="closed">Closed</option>
+    </select>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script src="updateRequest.js"></script>
+</body>
+</html>

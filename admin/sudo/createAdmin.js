@@ -7,29 +7,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+    // const roles = document.getElementById('roles').value;
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/sudo/create`,
+        `${CONFIG.basePath}/auth/create`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password, roles: ['foodAdmin'] })
           
         }
       );
 
       const data = await response.json();
-      alert(`Admin ${data.username} created successfully!`);
+      alert(`Admin ${username} created successfully!`);
 console.log("Redirecting to fetchAllAdmins.html");
 window.location.href = 'fetchAllAdmins.html';
 
       if (response.ok) {
         // Show success pop-up and redirect on OK
-        alert(`Admin ${data.username} created successfully!`);
+        alert(`Admin ${username} created successfully!`);
         window.location.href = '/admin/sudo/fetchAllAdmins.html';
       } else {
         // Display error message in the status container

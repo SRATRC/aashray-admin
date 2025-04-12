@@ -4,7 +4,7 @@ function login(event) {
   var usernameElement = document.getElementById('username');
   var username = usernameElement.value;
 
-  var passwordElement = document.getElementById('username');
+  var passwordElement = document.getElementById('password');
   var password = passwordElement.value;
 
   const options = {
