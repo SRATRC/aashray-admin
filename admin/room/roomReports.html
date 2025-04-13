@@ -1,3 +1,8 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']); // customize allowed roles per page
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -30,8 +35,8 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="/admin/">Home</a>
-          &nbsp; | &nbsp; <a id="homelink" href="/admin/">Logout</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
         </div>
       </div>
     </div>
