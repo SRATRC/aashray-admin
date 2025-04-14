@@ -1,46 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Update Maintenance Request</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    label, select, input, textarea, button {
-      display: block;
-      margin: 10px 0;
-    }
-    form {
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      background: #f9f9f9;
-    }
-  </style>
-</head>
-<body>
-  <h2 style="text-align: center;">Update Maintenance Request</h2>
-  <form id="updateForm">
-    <label for="issuedto">Issued To</label>
-    <input type="text" id="issuedto" name="issuedto" required>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Maintenance Request</title>
 
-    <label for="department">Department</label>
-    <input type="text" id="department" name="department" required>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <label for="comments">Comments</label>
-    <textarea id="comments" name="comments" rows="4" required></textarea>
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="updateRequest.js" defer></script>
 
-    <label for="status">Status</label>
-    <select id="status" name="status" required>
-      <option value="">Select status</option>
-      <option value="inprogress">In Progress</option>
-      <option value="closed">Closed</option>
-    </select>
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
 
-    <button type="submit">Submit</button>
-  </form>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="/admin/">Home</a>
+          &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
+        </div>
+      </div>
+    </div>
 
-  <script src="updateRequest.js"></script>
-</body>
+    <!-- Content -->
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+
+            <div class="frm-head">
+              <h1>Update Maintenance Request</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert"></div>
+
+              <form id="updateForm">
+                <div class="form-group">
+                  <label for="issuedto">Issued To</label>
+                  <input type="text" class="form-control" id="issuedto" name="issuedto" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="department">Department</label>
+                  <input type="text" class="form-control" id="department" name="department" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="comments">Comments</label>
+                  <textarea class="form-control" id="comments" name="comments" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="status">Status</label>
+                  <select class="form-control" id="status" name="status" required>
+                    <option value="open">Open</option>
+                    <option value="in progress">In Progress</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

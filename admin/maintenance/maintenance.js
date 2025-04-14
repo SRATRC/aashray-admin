@@ -48,17 +48,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td>${m.area_of_work}</td>            
             <td>${m.work_detail}</td>
             <td>${m.comments || ''}</td>
-            <td><a href="updateRequest.html?bookingid=${m.bookingid}" class="status-link" data-booking='${m.bookingid}'>${m.status}</a></td>
+            <td>
+              <a href="updateRequest.html?bookingid=${encodeURIComponent(m.bookingid)}&department=${encodeURIComponent(m.department)}&issuedto=${encodeURIComponent(m.CardDb.issuedto)}&comments=${encodeURIComponent(m.comments || '')}&status=${encodeURIComponent(m.status)}">
+                ${m.status}
+              </a>
+            </td>
           `;
           tableBody.appendChild(row);
-        });
-      
-        document.querySelectorAll('.status-btn').forEach((btn) => {
-          btn.addEventListener('click', (e) => {
-            const data = e.target.getAttribute('data-booking');
-            localStorage.setItem('selectedMaintenance', data);
-            window.location.href = 'updateRequest.html';
-          });
         });
       };
       

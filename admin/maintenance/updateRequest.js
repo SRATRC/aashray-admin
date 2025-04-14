@@ -1,42 +1,48 @@
+function getQueryParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    bookingid: params.get("bookingid"),
+    department: params.get("department"),
+    issuedto: params.get("issuedto"),
+    comments: params.get("comments"),
+    status: params.get("status"),
+  };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('updateForm');
-    const data = JSON.parse(localStorage.getItem('selectedMaintenance'));
   
-    if (data) {
-      document.getElementById('issuedto').value = data.issuedto || '';
-      document.getElementById('department').value = data.department || '';
-      document.getElementById('comments').value = data.comments || '';
-      document.getElementById('status').value = data.status?.toLowerCase() || '';
-    }
+    const { bookingid, department, issuedto, comments, status } = getQueryParams();
+
+    // Prefill fields
+    document.getElementById('issuedto').value = issuedto;
+    document.getElementById('department').value = department;
+    document.getElementById('comments').value = comments;
+    document.getElementById('status').value = status;
   
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
   
-      const updatedStatus = document.getElementById('status').value;
-      const issuedto = document.getElementById('issuedto').value;
-      const department = document.getElementById('department').value;
+      const status = document.getElementById('status').value;
       const comments = document.getElementById('comments').value;
   
       try {
-        const res = await fetch(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/maintenance/update`, {
+        const res = await fetch(`${CONFIG.basePath}/maintenance/update`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
-            bookingid: data.bookingid,
-            issuedto,
-            department,
+            bookingid: bookingid,
             comments,
-            status: updatedStatus
+            status: status
           })
         });
   
         const result = await res.json();
         if (res.ok) {
-          localStorage.setItem('lastUpdated', result.data.updatedAt);
-          window.location.href = 'fetchElectrical.html';
+          window.location.href = `maintenance.html?department=${department}`;
         } else {
           alert('Update failed: ' + result.message);
         }
