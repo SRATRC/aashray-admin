@@ -54,3 +54,49 @@ function showErrorMessage(message) {
 function resetAlert() {
   // This could clear UI banners if used in future (currently placeholder)
 }
+
+
+async function uploadExcel() {
+  const fileInput = document.getElementById('excelFile');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select an Excel file.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    // Expecting format: [{date: 'YYYY-MM-DD', breakfast: '', lunch: '', dinner: ''}, ...]
+
+    try {
+      const response = await fetch(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ menus: rows })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Menus uploaded successfully!");
+        // Optionally refresh table
+      } else {
+        alert("Upload failed: " + result.message);
+      }
+    } catch (err) {
+      console.error("Error uploading Excel:", err);
+      alert("Something went wrong during upload.");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}

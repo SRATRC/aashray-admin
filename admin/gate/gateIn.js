@@ -1,117 +1,68 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const cardnoInput = document.getElementById('cardno');
-  const qrStatus = document.getElementById('qr-status');
-  const readerElement = document.getElementById('reader');
-  const html5QrCode = new Html5Qrcode("reader");
+    const cardnoInput = document.getElementById('cardno');
+    const qrStatus = document.getElementById('qr-status');
+    const html5QrCode = new Html5Qrcode("reader");
 
-  // Ensure the reader element exists
-  if (!readerElement) {
-      console.error("Reader element not found. Please check your HTML.");
-      return;
-  }
+    // Function to send the check-in request
+    function sendCheckinRequest(cardno) {
+        resetAlert();  // Reset the alert message
 
-  // Reset Alert
-  function resetAlert() {
-      const alertBox = document.getElementById('alert');
-      alertBox.innerText = '';
-      alertBox.className = 'alert';
-  }
+        // Make sure the token is available before making the request
+        const token = sessionStorage.getItem('token');
+        if (!token || token.split('.').length !== 3) {
+            showErrorMessage("⚠️ Not authenticated. Please log in.");
+            return;
+        }
 
-  // Show Success Message
-  function showSuccessMessage(message) {
-      const alertBox = document.getElementById('alert');
-      alertBox.innerText = message;
-      alertBox.classList.add('alert-success');
-      alertBox.style.display = 'block';
-  }
+        // Make the API request
+        fetch(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/entry/${cardno}`, {
+            method: 'POST',  // Changed to POST if you're adding a new entry
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccessMessage(data.message);  // Show success message
+            } else {
+                showErrorMessage(data.message || 'Failed to check-in.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorMessage('Failed to check-in. Please try again.');
+        });
+    }
 
-  // Show Error Message
-  function showErrorMessage(message) {
-      const alertBox = document.getElementById('alert');
-      alertBox.innerText = message;
-      alertBox.classList.add('alert-danger');
-      alertBox.style.display = 'block';
-  }
+    // Success handler for QR code scanning
+    function onScanSuccess(decodedText) {
+        cardnoInput.value = decodedText;  // Update input field with scanned card number
+        qrStatus.innerText = "✅ QR Code Scanned: " + decodedText;
+        sendCheckinRequest(decodedText);  // Send the check-in request
+    }
 
-  // Handle Check-in Request
-  function sendCheckinRequest(cardnoInput) {
-      resetAlert();
+    // Failure handler for QR code scanning
+    function onScanFailure(error) {
+        qrStatus.innerText = "Scanning...";
+    }
 
-      const token = sessionStorage.getItem('token');
-      console.log("🔐 Token:", token);
-
-      if (!token || token.split('.').length !== 3) {
-          showErrorMessage("⚠️ Not authenticated. Please log in.");
-          return;
-      }
-
-      fetch(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/entry/${cardnoInput}`, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-          }
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.success || data.message === "Success") {
-              showSuccessMessage(data.message);
-          } else {
-              showErrorMessage(data.message || 'Check-in failed.');
-          }
-      })
-      .catch(error => {
-          console.error('Error:', error);
-          showErrorMessage('Failed to check-in.');
-      });
-  }
-
-  // On QR Scan Success
-  function onScanSuccess(decodedText) {
-      cardnoInput.value = decodedText;
-      qrStatus.innerText = "✅ QR Code Scanned: " + decodedText;
-      sendCheckinRequest(decodedText);
-  }
-
-  // On QR Scan Failure
-  function onScanFailure(error) {
-      qrStatus.innerText = "Scanning...";
-  }
-
-  // Start QR Code Scanner
-  if (readerElement) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-          .then(() => {
-              console.log("Camera accessed. Starting QR Code scanner...");
-              html5QrCode.start(
-                  { facingMode: "environment" },
-                  { fps: 10, qrbox: { width: 250, height: 250 } },
-                  onScanSuccess,
-                  onScanFailure
-              ).catch(err => {
-                  qrStatus.innerText = "❌ Scanner initialization failed: " + err;
-                  console.error("QR Scanner Error:", err);
-              });
-          })
-          .catch(err => {
-              qrStatus.innerText = "❌ Camera access denied!";
-              console.error("Camera Permission Error:", err);
-          });
-  } else {
-      console.error("QR Scanner element (#reader) is not found.");
-  }
-
-  // Handle Manual Form Submission
-  const manualForm = document.getElementById('manualCheckinForm');
-  if (manualForm) {
-      manualForm.addEventListener('submit', function (event) {
-          event.preventDefault();
-          const cardno = cardnoInput.value.trim();
-          if (cardno) {
-              sendCheckinRequest(cardno);
-          } else {
-              showErrorMessage('Please enter a valid card number.');
-          }
-      });
-  }
+    // Ensure the browser has camera permissions before starting QR scanning
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(() => {
+            html5QrCode.start(
+                { facingMode: "environment" },  // Start with the rear camera (mobile)
+                { fps: 10, qrbox: { width: 250, height: 250 } },  // Configure QR code scanning area
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                qrStatus.innerText = "❌ Scanner initialization failed: " + err;
+                console.error("QR Scanner Error:", err);
+            });
+        })
+        .catch(err => {
+            qrStatus.innerText = "❌ Camera access denied!";
+            console.error("Camera Permission Error:", err);
+        });
 });

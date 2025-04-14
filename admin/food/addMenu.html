@@ -19,6 +19,7 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="addMenu.js"></script>
 
     <!-- Styles -->
@@ -75,6 +76,14 @@
                 <div class="form-group">
                   <a href="/admin/food/fetchMenu.html" class="btn btn-secondary">Menu Home</a>
                 </div>
+                <div class="form-group">
+                  <label for="excelFile">Upload Excel (7-day Menu):</label>
+                  <input type="file" id="excelFile" accept=".xlsx, .xls" class="form-control" />
+                </div>
+                <div class="form-group form-submit">
+                  <button type="button" onclick="uploadExcel()" class="btn btn-success">Upload Excel</button>
+                </div>
+                
               </form>
             </div>
 
