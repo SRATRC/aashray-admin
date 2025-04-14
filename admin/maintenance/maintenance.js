@@ -41,15 +41,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         maintenance.forEach((m) => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${m.bookingid}</td>
-            <td>${m.requested_by}</td>
-            <td>${m.issuedto}</td>
-            <td>${m.mobno}</td>
-            <td>${m.createdAt}</td>
+            <td>${m.CardDb.issuedto}</td>
+            <td>${m.CardDb.mobno}</td>
+            <td>${formatDateTime(m.createdAt)}</td>
             <td>${m.department}</td>
+            <td>${m.area_of_work}</td>            
             <td>${m.work_detail}</td>
-            <td>${m.area_of_work}</td>
-            <td>${m.comments}</td>
+            <td>${m.comments || ''}</td>
             <td><a href="updateRequest.html?bookingid=${m.bookingid}" class="status-link" data-booking='${m.bookingid}'>${m.status}</a></td>
           `;
           tableBody.appendChild(row);
