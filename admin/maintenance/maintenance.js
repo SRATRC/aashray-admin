@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const populateTable = (maintenance) => {
         if (!Array.isArray(maintenance) || maintenance.length === 0) {
           tableBody.innerHTML =
-            '<tr><td colspan="10">No maintenance requests found.</td></tr>';
+            `<tr><td colspan="10">No ${department} requests found.</td></tr>`;
           return;
         }
       

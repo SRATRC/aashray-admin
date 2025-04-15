@@ -178,11 +178,19 @@
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
   }
   
-  /* Table styles */
-  .table {
-    width: 100%;
-    overflow-x: auto;
-  }
+/* Table styles */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  min-width: 1000px; /* Adjust based on your column count */
+  width: 100%;
+  overflow-x: auto;
+}
+
   
   table {
     width: 100%;
