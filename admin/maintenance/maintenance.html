@@ -20,22 +20,21 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="fetchMaintenance.js" defer></script>
+    <script src="maintenance.js" defer></script>
 
     <!-- Shared Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
     <style>
       .table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
 
-.table {
-  min-width: 1000px; /* Or adjust based on expected column count */
-  width: 100%;
-}
-
+      .table {
+        min-width: 1000px; /* Or adjust based on expected column count */
+        width: 100%;
+      }
     </style>
   </head>
 
@@ -57,7 +56,7 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>All Maintenance Requests</h1>
+              <h1>All Requests</h1>
             </div>
 
             <div class="form">
@@ -65,14 +64,12 @@
                 <table id="maintenanceTable" class="table table-striped table-bordered">
                   <thead>
                     <tr>
-                      <th>Booking Id</th>
                       <th>Requested By</th>
-                      <th>Issued to</th>
-                      <th>Mobile</th>
+                      <th>Mobile No.</th>
                       <th>Created At</th>
                       <th>Department</th>
-                      <th>Work Detail</th>
                       <th>Area of Work</th>
+                      <th>Work Detail</th>
                       <th>Comments</th>
                       <th>Status</th>
                     </tr>
