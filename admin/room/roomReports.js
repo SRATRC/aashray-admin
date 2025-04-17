@@ -94,7 +94,7 @@ async function fetchUrl(url) {
 }
 
 async function cancel(bookingid) {
-  await fetchUrl(`${CONFIG.basePath}/stay/cancel/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/bookings/cancel/room/${bookingid}`);
 }
 
 async function checkin(bookingid) {
