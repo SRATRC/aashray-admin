@@ -53,6 +53,11 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+function formatDateTime(datetime) {
+  const d = new Date(datetime);
+  return d.toLocaleString();
+}
+
 function equalHeight(group) {
 	 var tallest = 0;
 	 group.each(function() {

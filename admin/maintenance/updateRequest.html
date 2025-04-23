@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['maintenanceAdmin', 'electricalAdmin' , 'housekeepingAdmin' , 'superAdmin']); // customize allowed roles per page
 </script>
 
 <!DOCTYPE html>
@@ -8,77 +8,82 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flat Booking</title>
+    <title>Update Maintenance Request</title>
 
-    <!-- Load jQuery first -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Scripts -->
+    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="flatBooking.js"></script>
+    <script src="updateRequest.js" defer></script>
 
-    <!-- Styles -->
+    <!-- Shared Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
   <body>
+    <!-- Header -->
     <div class="header">
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+          &nbsp; | &nbsp;
+          <a href="/admin/">Home</a>
+          &nbsp; | &nbsp;
+          <a id="homelink" href="/admin/">Logout</a>
         </div>
       </div>
     </div>
 
+    <!-- Content -->
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
 
             <div class="frm-head">
-              <h1>Flat Booking</h1>
+              <h1>Update Maintenance Request</h1>
             </div>
 
             <div class="form">
-              <div id="alert" class="alert" role="alert" style="display: none;"></div>
-              <form id="flatBookingForm">
+              <div id="alert" class="alert" role="alert"></div>
 
+              <form id="updateForm">
                 <div class="form-group">
-                  <label for="mobile">Guest Mobile No:</label>
-                  <input type="tel" class="form-control" id="mobile" name="mobile" required />
+                  <label for="issuedto">Issued To</label>
+                  <input type="text" class="form-control" id="issuedto" name="issuedto" readonly />
                 </div>
 
                 <div class="form-group">
-                  <label for="checkin_date">Check-in Date:</label>
-                  <input type="date" class="form-control" id="checkin_date" name="checkin_date" required />
+                  <label for="department">Department</label>
+                  <input type="text" class="form-control" id="department" name="department" readonly />
                 </div>
 
                 <div class="form-group">
-                  <label for="checkout_date">Check-out Date:</label>
-                  <input type="date" class="form-control" id="checkout_date" name="checkout_date" required />
+                  <label for="comments">Comments</label>
+                  <textarea class="form-control" id="comments" name="comments" rows="4" required></textarea>
                 </div>
 
                 <div class="form-group">
-                  <label for="flat_no">Flat No:</label>
-                  <select id="flat_no" name="flat_no" class="form-control" required>
-                    <option value="">-- Select Flat --</option>
+                  <label for="status">Status</label>
+                  <select class="form-control" id="status" name="status" required>
+                    <option value="open">Open</option>
+                    <option value="in progress">In Progress</option>
+                    <option value="closed">Closed</option>
                   </select>
                 </div>
 
                 <div class="form-group form-submit">
                   <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
-
               </form>
-            </div>
 
+            </div>
           </div>
         </div>
       </div>
