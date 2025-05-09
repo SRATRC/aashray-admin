@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;">
           <a href="updateUtsav.html?id=${item.id}">Edit</a>
         </td>
+        <td style="text-align:center;">
+    <a href="createPackage.html?utsavId=${item.id}&utsavName=${encodeURIComponent(item.name)}">Add Package</a>
+  </td>
       `;
 
       utsavListElement.appendChild(tableRow);
