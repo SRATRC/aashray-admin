@@ -15,13 +15,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Make the API request
-        fetch(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/entry/${cardno}`, {
-            method: 'POST',  // Changed to POST if you're adding a new entry
+        alert (cardno)
+        fetch('https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/entry', {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
-        })
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ cardno })
+          })          
         .then(response => response.json())
         .then(data => {
             if (data.success) {

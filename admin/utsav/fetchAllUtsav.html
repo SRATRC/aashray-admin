@@ -3,26 +3,26 @@
   checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
 </script>
 
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Utsav Management</title>
+    <title>Upcoming Utsavs</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Additional Scripts -->
+    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="../../sessionstorage.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="fetchAllUtsav.js"></script>
 
-    <!-- Shared Styles -->
+    <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
   </head>
 
@@ -31,10 +31,8 @@
       <div class="container">
         <div class="logout">
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
         </div>
       </div>
     </div>
@@ -44,15 +42,27 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>Utsav Management</h1>
+              <h1>Upcoming Utsavs</h1>
             </div>
 
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="createUtsav.html">Add New Utsav</a>
-                <a class="menu-btn" href="fetchAllUtsav.html">Edit Existing Utsav</a>
-                <a class="menu-btn" href="utsavReport.html">Utsav Summary Report</a>
-                <a class="menu-btn" href="utsavStatusUpdate.html">Utsav Status Update</a>
+            <div class="form">
+              <div class="table-responsive">
+                <table id="utsavList" class="table table-striped table-bordered">
+                  <thead>
+                    <tr>
+                      <th><center>Serial No</center></th>
+                      <th><center>Utsav Name</center></th>
+                      <th><center>Start Date</center></th>
+                      <th><center>End Date</center></th>
+                      <th><center>Max Count</center></th>
+                      <th><center>Status</center></th>
+                      <th><center>Action</center></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Rows will be populated dynamically using JavaScript -->
+                  </tbody>
+                </table>
               </div>
             </div>
 

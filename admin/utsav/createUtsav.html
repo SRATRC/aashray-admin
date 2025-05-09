@@ -1,0 +1,89 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavManagement', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Utsav</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="createUtsav.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+
+            <div class="frm-head">
+              <h1>Create Utsav</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
+              <form id="utsavForm">
+                <div class="form-group">
+                  <label for="name">Name:</label>
+                  <input type="text" id="name" name="name" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="start_date">Start Date:</label>
+                  <input type="date" id="start_date" name="start_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="end_date">End Date:</label>
+                  <input type="date" id="end_date" name="end_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="total_seats">Total Seats:</label>
+                  <input type="number" id="total_seats" name="total_seats" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="comments">Comments:</label>
+                  <textarea id="comments" name="comments" rows="4" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary">Create Utsav</button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

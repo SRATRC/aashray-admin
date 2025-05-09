@@ -1,0 +1,88 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Utsav Report</title>
+
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    .table-responsive {
+width: 100%;
+overflow-x: auto;
+-webkit-overflow-scrolling: touch;
+}
+
+.table {
+min-width: 1000px; /* Or adjust based on expected column count */
+width: 100%;
+}
+
+  </style>
+  <!-- Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="utsavReport.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Utsav Report</h1>
+          </div>
+
+          <div class="form">
+            <div class="table-responsive">
+              <table id="waitlistTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Serial No</th>
+                    <th>Utsav Name</th>
+                    <th>Registration Count</th>
+                    <th>Max Count</th>
+                    <th>WaitList Count</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="utsavTable">
+                  <!-- Data will be populated dynamically by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
