@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['accountsAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['accountsAdmin', 'superAdmin']);
 </script>
 
 <!DOCTYPE html>
@@ -8,12 +8,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Accounts Management</title>
+    <title>Settlement Report Upload</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Additional Scripts -->
+    <!-- Shared Styles and Scripts -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
@@ -21,11 +22,12 @@
     <script src="../../style/js/config.js"></script>
     <script src="../../sessionstorage.js"></script>
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <!-- SheetJS for Excel parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   </head>
 
   <body>
+    <!-- Header -->
     <div class="header">
       <div class="container">
         <div class="logout">
@@ -38,26 +40,28 @@
       </div>
     </div>
 
+    <!-- Page Content -->
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>Accounts Management</h1>
+              <h1>Upload Razorpay Settlement Excel</h1>
             </div>
 
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="voucherCreation.html">Details for Voucher Creation</a>
-                <a class="menu-btn" href="settlementReport.html">Settlement Report</a>
-                <a class="menu-btn" href="settlementRecon.html">Settlement Reconciliation</a>
-                <a class="menu-btn" href="settlementBreakdown.html">Settlement BreakDown Report </a>
-                </div>
+            <div class="form-group">
+              <input class="btn btn-primary" type="file" id="excelFile" accept=".xlsx" />
+              <button class="btn btn-primary" id="parseBtn">Preview</button>
+              <button class="btn btn-primary" id="uploadBtn">Upload to DB</button>
             </div>
-            
+
+            <div id="tableContainer" style="margin-top: 20px;"></div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- JS module for Excel upload logic -->
+    <script type="module" src="settlementReport.js"></script>
   </body>
 </html>

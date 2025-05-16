@@ -1,0 +1,91 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['accountsManagement', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settlement Breakdown</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="settlementBreakdown.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+    
+
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Settlement Breakdown Report</h1>
+            </div>
+
+            <div class="form">
+              <div class="table-responsive">
+  
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+  <label>From: <input type="date" id="startDate" /></label>
+  <label>To: <input type="date" id="endDate" /></label>
+  <button type="button" class="btn btn-update" id="filterBtn" style="margin-left: 10px;">Filter</button>
+  <div id="downloadExcelBtnContainer"></div>
+  <button type="button" class="btn btn-success" id="exportFullReportBtn">Export Full Report</button>
+
+
+  </div>
+
+
+                <table id="settlementList" class="table table-striped table-bordered">
+                  <thead>
+                    <tr>
+                      <th><center>#</center></th>
+                      <th><center>Id</center></th>
+                      <th><center>Amount</center></th>
+                      <th><center>Status</center></th>
+                      <th><center>Fees</center></th>
+                      <th><center>Tax</center></th>
+                      <th><center>Utr</center></th>
+                      <th><center>Created At</center></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Rows will be populated dynamically using JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
