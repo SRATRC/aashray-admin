@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             row.innerHTML = `
                 <td>${booking.bookingid}</td>
                 <td>${booking.issuedto}</td>
-                <td>${booking.date}</td>
+                <td>${formatDate(booking.date)}</td>
                 <td>${booking.pickup_point}</td>
                 <td>${booking.drop_point}</td>
                 <td>${booking.type}</td>

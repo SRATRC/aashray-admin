@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
       tableRow.innerHTML = `
         <td style="text-align:center;">${index + 1}</td>
         <td style="text-align:center;">${item.name}</td>
-        <td style="text-align:center;">${item.start_date}</td>
-        <td style="text-align:center;">${item.end_date}</td>
+        <td style="text-align:center;">${formatDate(item.start_date)}</td>
+        <td style="text-align:center;">${formatDate(item.end_date)}</td>
         <td style="text-align:center;">${item.total_seats}</td>
         <td style="text-align:center;">
           <button class="toggle-status" data-id="${item.id}" data-status="${

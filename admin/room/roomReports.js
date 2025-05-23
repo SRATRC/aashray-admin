@@ -126,8 +126,8 @@ function createRoomBookingRow(booking, index) {
     <td>${booking.CardDb.center}</td>
     <td>${getEditAction(booking)}</td>
     <td>${booking.roomtype}</td>
-    <td>${booking.checkin}</td>
-    <td>${booking.checkout}</td>
+    <td>${formatDate(booking.checkin)}</td>
+    <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.bookedBy || "Self"}</td>

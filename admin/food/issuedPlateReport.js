@@ -13,11 +13,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (is_issued == "1") {
     reportTitle.innerHTML = `
       <b><u>Issued Food Plate Report</u></b></br>
-      <p>${date} - ${meal}</p>`;
+      <p>${formatDate(date)} - ${meal}</p>`;
   } else {
     reportTitle.innerHTML = `
       <b><u>No Show Report</u></b></br>
-      <p>${date} - ${meal}</p>`;
+      <p>${formatDate(date)} - ${meal}</p>`;
   }
   
 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     data.data.forEach((report) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-          <td>${report.date}</td>
+          <td>${formatDate(report.date)}</td>
           <td>${report.CardDb.issuedto}</td>
           <td>${report.CardDb.mobno}</td>
         `;

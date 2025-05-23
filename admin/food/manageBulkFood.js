@@ -134,7 +134,7 @@ async function getExistingGuestBookings() {
                 <i class="fa fa-trash"></i>
               </a>
             </td>
-            <td>${booking.date}</td>
+            <td>${formatDate(booking.date)}</td>
             <td>${booking.CardDb.issuedto}</td>
             <td>${booking.CardDb.mobno}</td>
             <td>${booking.department}</td>

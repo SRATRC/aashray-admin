@@ -42,7 +42,7 @@ async function fetchReport() {
 
       const row = document.createElement('tr');
       row.innerHTML = `
-          <td><center>${report.date}</center></td>
+          <td><center>${formatDate(report.date)}</center></td>
           <td><center>${report.ac}</center></td>
           <td><center>${report.nac}</center></td>
           <td><center>${report.ac + report.nac}</center></td>

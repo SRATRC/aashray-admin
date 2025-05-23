@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       menu.forEach((item) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${item.date}</td>
+          <td>${formatDate(item.date)}</td>
           <td>${item.breakfast}</td>
           <td>${item.lunch}</td>
           <td>${item.dinner}</td>

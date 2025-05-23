@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function () {
         row.innerHTML = `
             <td>${booking.bookingid}</td>
             <td>${booking.flatno}</td>
-            <td>${booking.checkin}</td>
-            <td>${booking.checkout}</td>
+            <td>${formatDate(booking.checkin)}</td>
+            <td>${formatDate(booking.checkout)}</td>
             <td>${booking.nights}</td>
             <td>${booking.status}</td>
           `;
