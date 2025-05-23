@@ -84,23 +84,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             var comments = booking.comments == null ? "" : booking.comments;
             var bookedBy = booking.bookedBy == null ? "" : booking.bookedBy;
             row.innerHTML = `
-                <td>${booking.bookingid}</td>
                 <td>${booking.issuedto}</td>
+                <td>${booking.mobno}</td>
+                <td>${booking.type}</td>
                 <td>${formatDate(booking.date)}</td>
                 <td>${booking.pickup_point}</td>
                 <td>${booking.drop_point}</td>
-                <td>${booking.type}</td>
                 <td>${booking.luggage}</td>
                 <td>${comments}</td>
                 <td>${adminComments}</td>
                 <td>${booking.status}</td>
                 <td>${booking.amount}</td>
-                <td>${booking.upi_ref}</td>
                 <td>${booking.paymentStatus}</td>
+                <td>${booking.upi_ref}</td>
+                <td>${booking.bookingid}</td>
                 <td>${bookedBy}</td>
-                <td>${booking.mobno}</td>
-                <td>${booking.center}</td>
-                <td>${booking.res_status}</td>
                 <td>
                   <a href="updateBookingStatus.html?bookingIdParam=${booking.bookingid}">
                     Update Booking Status
