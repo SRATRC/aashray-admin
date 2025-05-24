@@ -2,14 +2,14 @@ document.addEventListener('DOMContentLoaded', async function () {
   try {
     const tableBody = document.querySelector('#waitlistTable tbody');
     const urlParams = new URLSearchParams(window.location.search);
-    const utsavId = urlParams.get('utsavId');
+    const utsavid = urlParams.get('utsavId'); 
     const status= urlParams.get('status'); 
     console.log(`${CONFIG.basePath}`);
-    console.log("utsavId:", utsavId);
+    console.log("utsavId:", utsavid);
     console.log("status:", status);
 
     const response = await fetch(
-      `${CONFIG.basePath}/utsav/bookings?utsavId=${utsavId}&status=${status}`,
+      `${CONFIG.basePath}/utsav/bookings?utsavid=${utsavid}&status=${status}`,
       {
         method: 'GET',
         headers: {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let utsavName="";
     utsavWaitListers.forEach((item) => {
       const row = document.createElement('tr');
-      utsavName=item.name;
+      utsavName=item.utsav_name;
       row.innerHTML = `
         <td>${item.bookingid || '-'}</td>
         <td>${item.issuedto || '-'}</td>
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         <td>${item.status || '-'}</td>
         <td>${item.bookedby || '-'}</td>
         <td>
-          <a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavId}&&statusParam=${item.status}">
+          <a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">
             Update Booking Status
           </a>
         </td>

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const requestData = {
       utsavid: utsavid,
       utsavName: formData.get('utsav_name'), // Optional: include for backend logging or validation
-      packageName: formData.get('packageName'),
+      name: formData.get('packageName'),
       start_date: formData.get('start_date'),
       end_date: formData.get('end_date'),
       amount: formData.get('amount')
@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
         alert(`Success: ${data.message}`);
         utsavPackageForm.reset();
         document.getElementById('utsav_name').value = utsavName; // Refill utsav name
+        window.location.href = '../utsav/fetchAllUtsav.html';
       } else {
         alert(`Error: ${data.message}`);
       }

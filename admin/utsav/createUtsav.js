@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (response.ok) {
         alert(`Success: ${data.message}`); // Show success message
         utsavForm.reset(); // Clear form on success
+        window.location.href = '../utsav/index.html';
       } else {
         alert(`Error: ${data.message}`); // Show error message
       }

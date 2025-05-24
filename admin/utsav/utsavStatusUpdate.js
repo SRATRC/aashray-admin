@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
-    let additionalParameter="";
-      if(statusParam == 'waiting'){
-        additionalParameter='&&status=waiting';
-      }
+    let additionalParameter = '';
+if (statusParam === 'waiting' || statusParam === 'confirmed' || statusParam === 'admin cancelled') {
+  additionalParameter = `&status=${encodeURIComponent(statusParam)}`;
+}
 
     try {
       const response = await fetch(
@@ -34,16 +34,17 @@ document.addEventListener('DOMContentLoaded', async function () {
       
       if (response.ok) {
         alert(responseData.message); // ✅ Show success popup
-        window.location.href = '/admin/utsav/utsavBookingslist.html?utsav_id='+utsavId+additionalParameter; // ✅ Redirect on OK
+        window.location.href = '/admin/utsav/utsavBookingslist.html?utsavId=' + utsavId + additionalParameter;
+ // ✅ Redirect on OK
       } else {
         alert(`Error: ${responseData.message}`); // ❌ Show error popup
-        window.location.href = '/admin/utsav/utsavBookingslist.html?utsav_id='+utsavId+additionalParameter; // ✅ Redirect on OK
+        window.location.href = '/admin/utsav/utsavBookingslist.html?utsavId='+utsavId+additionalParameter; // ✅ Redirect on OK
       }
 
     } catch (error) {
       console.error('Error updating booking status:', error);
       alert('Failed to update booking status. Please try again later.'); // ❌ General error
-      window.location.href = '/admin/utsav/utsavBookingslist.html?utsav_id='+utsavId+additionalParameter; // ✅ Redirect on OK
+      window.location.href = '/admin/utsav/utsavBookingslist.html?utsavId='+utsavId+additionalParameter; // ✅ Redirect on OK
     }
   });
 });
