@@ -8,7 +8,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Details for Voucher Creation</title>
+    <title>Pending Transaction Report</title>
 
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -20,7 +20,7 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="voucherCreation.js" defer></script>
+    <script src="pendingTransaction.js" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="../../style/js/exportToExcel.js"></script>
 
@@ -47,42 +47,17 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>Completed Transactions</h1>
+              <h1>Pending Transactions</h1>
             </div>
 
             <div class="form">
               <div class="table-responsive">
                 <div class="form-group" style="margin-bottom: 15px;">
   <!-- Filter Section -->
-
-  <!-- Category Filter Radio Buttons -->
-<!-- Category Filter Radio Buttons (all in one line) -->
-<!-- Category Filter Radio Buttons -->
-<div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-  <label><input type="radio" name="categoryFilter" value="all" checked /> All</label>
-  <label><input type="radio" name="categoryFilter" value="room" /> Room</label>
-  <label>
-  <input type="radio" name="categoryFilter" value="adhyayan" /> Adhyayan
-  <select id="adhyayanDropdown" style="margin-left: 8px; display: none; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Select Adhyayan">
-    <option value="">-- Select Adhyayan --</option>
-  </select>
-</label>
-
-<label>
-  <input type="radio" name="categoryFilter" value="utsav" /> Utsav
-  <select id="utsavDropdown" style="margin-left: 8px; display: none; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Select Utsav">
-    <option value="">-- Select Utsav --</option>
-  </select>
-</label>
-<label><input type="radio" name="categoryFilter" value="travel" /> Travel</label>
-  <label><input type="radio" name="categoryFilter" value="food" /> Food (breakfast, lunch, dinner)</label>
-</div>
-
-<!-- Existing From, To date filters and Filter button -->
 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
   <label>From: <input type="date" id="startDate" /></label>
   <label>To: <input type="date" id="endDate" /></label>
-  <button id="filterBtn" type="button" class="btn btn-update" onclick="filterTransactions()">Filter</button>
+  <button id= "filterBtn" type="button" class="btn btn-update" onclick="filterTransactions()">Filter</button>
   <div id="downloadBtnContainer"></div>
 </div>
 
