@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Make the API request
         alert (cardno)
-        fetch(`${CONFIG.basePath}/admin/gate/entry`, {
+        fetch(`${CONFIG.basePath}/gate/entry`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -44,6 +44,22 @@ document.addEventListener('DOMContentLoaded', function () {
         qrStatus.innerText = "✅ QR Code Scanned: " + decodedText;
         sendCheckinRequest(decodedText);  // Send the check-in request
     }
+
+//     function onScanSuccess(decodedText) {
+//     let cardno = decodedText.trim();
+
+//     // Handle legacy format like "cardnumber=123456"
+//     if (cardno.toLowerCase().startsWith("cardnumber=")) {
+//         cardno = cardno.split("=")[1].trim();  // Extract and trim the actual number
+//     }
+
+//     // Optional: Add a regex to allow only digits if needed
+//     cardno = cardno.replace(/\D/g, ''); // Keep only digits if your cardno is numeric
+
+//     cardnoInput.value = cardno;
+//     qrStatus.innerText = "✅ QR Code Scanned: " + cardno;
+//     sendCheckinRequest(cardno);
+// }
 
     // Failure handler for QR code scanning
     function onScanFailure(error) {

@@ -192,9 +192,17 @@ async function fetchReport() {
     );
 
     const data = await response.json();
-    if (!response.ok) {
-      showErrorMessage(data.message);
-    }
+
+if (!Array.isArray(data.data)) {
+  showErrorMessage(data.message || "Unexpected response format.");
+  return;
+}
+
+if (!response.ok) {
+  showErrorMessage(data.message);
+  return;
+}
+
 
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
