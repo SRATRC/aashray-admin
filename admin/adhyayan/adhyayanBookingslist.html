@@ -25,6 +25,9 @@
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="adhyayanBookingslist.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+
 </head>
 <body>
   <div class="header">
@@ -46,6 +49,9 @@
           </div>
 
           <div class="form">
+            <p id="genderCount">Males: 0 | Females: 0</p>
+
+
             <div class="table-responsive">
               <table id="waitlistTable" class="table table-striped table-bordered">
                 <thead>
@@ -53,6 +59,7 @@
                     <th>Booking ID</th>
                     <th>Guest Name</th>
                     <th>Mobile Number</th>
+                    <th>Gender</th>
                     <th>Center</th>
                     <th>Mumkshu Status</th>
                     <th>Status</th>
@@ -64,6 +71,7 @@
                   <!-- Data will be populated dynamically using JavaScript -->
                 </tbody>
               </table>
+              <div id="downloadBtnContainer"></div>
             </div>
           </div>
 

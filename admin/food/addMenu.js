@@ -71,12 +71,43 @@ async function uploadExcel() {
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    const rawRows = XLSX.utils.sheet_to_json(sheet);
+
+// Convert DD-MM-YYYY to YYYY-MM-DD
+const rows = rawRows.map(row => {
+  let formattedDate = '';
+
+  // Case 1: Native Excel Date (number or Date object)
+  if (typeof row.date === 'number') {
+    const excelDate = XLSX.SSF.parse_date_code(row.date);
+    if (excelDate) {
+      const yyyy = excelDate.y;
+      const mm = String(excelDate.m).padStart(2, '0');
+      const dd = String(excelDate.d).padStart(2, '0');
+      formattedDate = `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
+  // Case 2: String DD-MM-YYYY
+  else if (typeof row.date === 'string' && row.date.includes('-')) {
+    const [day, month, year] = row.date.split('-');
+    formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  return {
+    date: formattedDate,
+    breakfast: row.breakfast || '',
+    lunch: row.lunch || '',
+    dinner: row.dinner || ''
+  };
+});
+
+
 
     // Expecting format: [{date: 'YYYY-MM-DD', breakfast: '', lunch: '', dinner: ''}, ...]
 
     try {
-      const response = await fetch(`https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/food/menu/bulk`, {
+      const response = await fetch(`${CONFIG.basePath}/food/menu/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

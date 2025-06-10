@@ -14,7 +14,7 @@ async function assignCard(event) {
   const city = document.querySelector('select[name="city"]').value;
   const state = document.querySelector('select[name="state"]').value;
   const pin = document.querySelector('input[name="pin"]').value;
-  const centre = document.querySelector('input[name="centre"]').value;
+  const centre = document.querySelector('select[name="centre"]').value;
   const resStatus = document.querySelector('select[name="res_status"]').value;
   const country = document.querySelector('select[name="country"]').value;
 
@@ -54,7 +54,7 @@ async function assignCard(event) {
 
       // Show success message in popup and redirect to cardManagement.html
       alert('Card assigned successfully!');
-      window.location.href = 'searchCard.html'; // Redirect to cardManagement.html
+      window.location.href = 'index.html'; // Redirect to cardManagement.html
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message);
@@ -68,7 +68,8 @@ async function loadLocationData() {
   try {
     // Fetch countries
     const countriesResponse = await fetch(
-      'https://sratrc-portal-backend-dev.onrender.com/api/v1/location/countries'
+      `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/countries`
+      // `${CONFIG.basePath}/location/countries`
     );
     const countriesData = await countriesResponse.json();
     const countries = countriesData.data; // Accessing 'data' from the response
@@ -85,6 +86,7 @@ async function loadLocationData() {
       const selectedCountry = this.value;
       const statesResponse = await fetch(
         `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/states/${selectedCountry}`
+        // `${CONFIG.basePath}/location/states/${selectedCountry}`
       );
       const statesData = await statesResponse.json();
       const states = statesData.data; // Accessing 'data' from the response
@@ -111,6 +113,7 @@ async function loadLocationData() {
         if (selectedState && selectedCountry) {
           const citiesResponse = await fetch(
             `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/cities/${selectedCountry}/${selectedState}`
+            // `${CONFIG.basePath}/location/cities/${selectedCountry}/${selectedState}`
           );
           const citiesData = await citiesResponse.json();
           const cities = citiesData.data; // Accessing 'data' from the response

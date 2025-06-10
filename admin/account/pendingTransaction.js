@@ -70,8 +70,8 @@ const setupDownloadButton = () => {
   renderDownloadButton({
     selector: '#downloadBtnContainer',
     getData: () => currentTransactions,
-    fileName: 'filtered_transactions.xlsx',
-    sheetName: 'Filtered Transactions'
+    fileName: 'pending_transactions.xlsx',
+    sheetName: 'Pending Transactions'
   });
 };
 

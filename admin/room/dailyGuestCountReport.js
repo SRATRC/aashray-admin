@@ -1,3 +1,5 @@
+let guestcount = [];
+
 async function fetchReport() {
   const startDate = document.getElementById('start_date').value;
   const endDate = document.getElementById('end_date').value;
@@ -17,6 +19,9 @@ async function fetchReport() {
     );
 
     const data = await response.json();
+    guestcount = data.data || [];    
+    setupDownloadButton();
+
     if (!response.ok) {
       showErrorMessage(data.message);
       return;
@@ -87,3 +92,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   );
 });
+
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => guestcount,
+    fileName: 'guestcount.xlsx',
+    sheetName: 'Guest Count'
+  });
+};

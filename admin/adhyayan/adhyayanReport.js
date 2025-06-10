@@ -1,3 +1,5 @@
+let adhyayanfetch = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   const adhyayanTableBody = document.getElementById('adhyayanTable');
 
@@ -15,7 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
         options
       );
       const result = await response.json();
+      adhyayanfetch = result.data || [];
       populateTable(result.data);
+      setupDownloadButton();
     } catch (error) {
       console.error('Error fetching Adhyayan report:', error);
     }
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     data.forEach((item, index) => {
+      console.log('Item:', item);
       const tableRow = document.createElement('tr');
 
       tableRow.innerHTML = `
@@ -39,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="text-align:center;">${item.location}</td>
             <td style="text-align:center;">${item.speaker}</td>
             <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}">${item.total_seats - item.available_seats}</a></td>
+            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=pending">${item.pending_count}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
             <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
             <td style="text-align:center;">${item.status}</td>
@@ -103,3 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fetchAdhyayanReport();
 });
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => adhyayanfetch,
+    fileName: 'all_adhyayans.xlsx',
+    sheetName: 'All Adhyayans'
+  });
+};

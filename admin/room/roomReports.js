@@ -1,3 +1,4 @@
+let roomreports = [];
 function getAction(booking) {
   switch (booking.status) {
     case "pending checkin":
@@ -80,6 +81,9 @@ async function fetchUrl(url) {
     );
 
     const data = await response.json();
+    roomreports = data.data || [];    
+    setupDownloadButton();
+
 
     if (response.ok) {
       await fetchReport();
@@ -248,3 +252,13 @@ function showSuccessMessage(message) {
 function showErrorMessage(message) {
   alert(message);
 }
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => roomreports,
+    fileName: 'roomreport.xlsx',
+    sheetName: 'Room Report'
+  });
+};

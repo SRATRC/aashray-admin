@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
     try {
       const response = await fetch(
-        'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/gaterecords', // Replace with your actual API endpoint
+        `${CONFIG.basePath}/admin/gate/gaterecords`, // Replace with your actual API endpoint
         {
           method: 'GET',
           headers: {

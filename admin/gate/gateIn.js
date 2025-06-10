@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Make the API request
         alert (cardno)
-        fetch('https://sratrc-portal-backend-dev.onrender.com/api/v1/admin/gate/entry', {
+        fetch(`${CONFIG.basePath}/admin/gate/entry`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

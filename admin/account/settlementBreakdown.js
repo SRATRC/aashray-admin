@@ -103,7 +103,7 @@ const populateTable = (data) => {
   selector: '#downloadExcelBtnContainer', // container element selector on your page
   getData: () => data,
   fileName: 'SettlementBreakdown.xlsx',
-  sheetName: 'SettlementReport',
+  sheetName: 'SettlementBreakdownReport',
   className: 'btn btn-success'
 });
 

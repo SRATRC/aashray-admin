@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const statesResponse = await fetch(
         `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/states/${country}`,
+        // `${CONFIG.basePath}/location/states/${country}`,
         {
           headers: {
             'Content-Type': 'application/json',

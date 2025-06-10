@@ -1,3 +1,5 @@
+let occupancy = [];
+
 document.addEventListener('DOMContentLoaded', async function () {
   const tableBody = document.querySelector('#occupancyTable tbody');
 
@@ -20,6 +22,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const data = await response.json();
     const bookings = data.data;
+    occupancy = data.data || [];    
+    setupDownloadButton();
 
     bookings.forEach((booking) => {
       const row = document.createElement('tr');
@@ -43,3 +47,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     alert('An error occurred while fetching occupancy report.');
   }
 });
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => occupancy,
+    fileName: 'occupancyReport.xlsx',
+    sheetName: 'Occupancy Report'
+  });
+};

@@ -506,10 +506,48 @@ const populateTable = (transactions) => {
 
 const setupDownloadButton = () => {
   document.getElementById('downloadBtnContainer').innerHTML = '';
+
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+
+  const formatDateForFilename = (dateStr) => {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}${month}${year}`;
+  };
+
+  const from = formatDateForFilename(startDate);
+  const to = formatDateForFilename(endDate);
+
+  const categoryRadios = document.getElementsByName('categoryFilter');
+  let selectedCategory = 'all';
+  for (const radio of categoryRadios) {
+    if (radio.checked) {
+      selectedCategory = radio.value;
+      break;
+    }
+  }
+
+  let filterSuffix = selectedCategory;
+  if (selectedCategory === 'adhyayan') {
+    const adhyayanDropdown = document.getElementById('adhyayanDropdown');
+    const selectedOption = adhyayanDropdown.options[adhyayanDropdown.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+      filterSuffix += `_${selectedOption.textContent.replace(/\s+/g, '_')}`;
+    }
+  } else if (selectedCategory === 'utsav') {
+    const utsavDropdown = document.getElementById('utsavDropdown');
+    const selectedOption = utsavDropdown.options[utsavDropdown.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+      filterSuffix += `_${selectedOption.textContent.replace(/\s+/g, '_')}`;
+    }
+  }
+
+  const fileName = `${from}_${to}_${filterSuffix}.xlsx`;
+
   renderDownloadButton({
     selector: '#downloadBtnContainer',
     getData: () => filterBySearch(currentTransactions),
-    fileName: 'filtered_transactions.xlsx',
-    sheetName: 'Filtered Transactions'
+    fileName,
+    sheetName: 'Completed Transactions'
   });
 };

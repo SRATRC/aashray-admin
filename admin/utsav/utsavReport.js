@@ -1,3 +1,5 @@
+let utsavfetch = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   const utsavTableBody = document.getElementById('utsavTable');
 
@@ -15,7 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
         options
       );
       const result = await response.json();
+      utsavfetch = result.data || [];
       populateTable(result.data);
+      setupDownloadButton();
     } catch (error) {
       console.error('Error fetching Utsav report:', error);
     }
@@ -37,6 +41,7 @@ console.log(data);
             <td style="text-align:center;">${index + 1}</td>
             <td style="text-align:center;">${item.name}</td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=confirmed">${item.total_seats - item.available_seats}</a></td>
+            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">${item.pending_count}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">${item.waitlist_count}</a></td>
             <td style="text-align:center;">${item.status}</td>
@@ -101,3 +106,13 @@ console.log(data);
 
   fetchUtsavReport();
 });
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => utsavfetch,
+    fileName: 'all_utsavs.xlsx',
+    sheetName: 'All Utsavs'
+  });
+};
