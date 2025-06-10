@@ -1,3 +1,4 @@
+let travelReport = [];
 document.addEventListener('DOMContentLoaded', async function () {
   document.getElementById('reportForm')
     .addEventListener('submit', async function (event) {
@@ -48,19 +49,28 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
           }
         );
-
+const statusLabelMap = {
+  waiting: 'Awaiting Confirmation for Payment (datachef)',
+  'awaiting confirmation': 'Awaiting Confirmation for Payment',
+    confirmed: 'Confirmed',
+    cancelled: 'Self Cancel',
+    'admin cancelled': 'Cancelled as wrong form filled',
+    'proceed for payment': 'Proceed for Payment'
+};
         if (suumaryResponse.ok) {
           const summary = await suumaryResponse.json();
           const summaryBody = document
             .getElementById('summaryBooking')
             .querySelector('tbody');
           summaryBody.innerHTML = "";
+          console.log("Raw status from backend:", summaryBooking.status);
           summary.data.forEach((summaryBooking) => {
             let rowSummary = document.createElement('tr');
             rowSummary.innerHTML = `
-                <td>${summaryBooking.status}</td>
+                <td>${statusLabelMap[summaryBooking.status]}</td>
                 <td>${summaryBooking.count}</td>
-            `;
+                
+          `;
             summaryBody.appendChild(rowSummary);
           });
         }
@@ -72,6 +82,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             " For [" + startDate + " to " + endDate + "]";
 
           const bookings = data.data;
+          travelReport = data.data || [];
+      
+      setupDownloadButton();
           const bookingsTableBody = document
             .getElementById('upcomingBookings')
             .querySelector('tbody');
@@ -93,9 +106,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <td>${booking.luggage}</td>
                 <td>${comments}</td>
                 <td>${adminComments}</td>
-                <td>${booking.status}</td>
+                <td>${statusLabelMap[booking.status]}</td>
                 <td>${booking.amount}</td>
                 <td>${booking.paymentStatus}</td>
+                <td>${formatDate(booking.paymentDate)}</td>
                 <td>${booking.upi_ref}</td>
                 <td>${booking.bookingid}</td>
                 <td>${bookedBy}</td>
@@ -115,3 +129,14 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     });
 });
+
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => travelReport,
+    fileName: 'travel report.xlsx',
+    sheetName: 'Travel Report'
+  });
+};

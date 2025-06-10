@@ -22,6 +22,9 @@
     <script src="../../style/js/formatDate.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="fetchUpcomingBookings.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
     
@@ -57,17 +60,18 @@
                   <label>Status:</label>
                   <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
                     <label><input type="checkbox" name="status" value="confirmed" /> Confirmed </label>
-                    <label><input type="checkbox" name="status" value="pending" /> Payment Pending</label>
-                    <label><input type="checkbox" name="status" value="waiting" /> Awaiting Confirmation for Payment</label>
+                    <label><input type="checkbox" name="status" value="proceed for payment" /> Proceed for Payment</label>
+                    <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation for Payment</label>
+                    <label><input type="checkbox" name="status" value="waiting" /> Awaiting Confirmation for Payment (datachef)</label>
                     <label><input type="checkbox" name="status" value="cancelled" /> Self-Cancel </label>
-                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
+                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled as wrong form filled</label>
                   </div>
                 </div>
 
-                <div class="form-group" style="display: flex; align-items: center; gap: 2rem;">
+                <!-- <div class="form-group" style="display: flex; align-items: center; gap: 2rem;">
                   <label><input type="radio" name="rcOption" id="pickupRC" value="pickup" /> Pickup at RC</label>
                   <label><input type="radio" name="rcOption" id="dropRC" value="drop" /> Drop at RC</label>
-                </div>
+                </div> -->
                                 
 
                 <div class="form-group">
@@ -121,30 +125,23 @@
                       <th>Pickup Point</th>
                       <th>Drop off Point</th>
                       <th>Luggage</th>
-                      <th>Comments</th>
+                      <th>Mumukshu Comments</th>
                       <th>Admin Comments</th>
-                      <th>Status</th>
+                      <th>Booking Status</th>
                       <th>Amount</th>
                       <th>Payment Status</th>
+                      <th>Payment Date</th>
                       <th>UPI Reference</th>
                       <th>Booking Id</th>
-                      <th>Action</th>
                       <th>Booked By</th>
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
+                      <th>Action</th> 
                     </tr>
                   </thead>
                   <tbody>
                     <!-- Filled via JS -->
                   </tbody>
                 </table>
+                <div id="downloadBtnContainer"></div>
               </div>
             
             </div>
