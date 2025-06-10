@@ -110,7 +110,6 @@ const statusLabelMap = {
                 <td>${booking.amount}</td>
                 <td>${booking.paymentStatus}</td>
                 <td>${formatDate(booking.paymentDate)}</td>
-                <td>${booking.upi_ref}</td>
                 <td>${booking.bookingid}</td>
                 <td>${bookedBy}</td>
                 <td>

@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const status = document.getElementById('status').value;
     const adminComments = document.getElementById('adminComments').value;
     const charges = document.getElementById('charges').value;
-    const upiRef=  document.getElementById('upi_ref').value;
     const description=  document.getElementById('description').value;
     try {
       const response = await fetch(
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
-          body: JSON.stringify({ bookingid, status,adminComments,upiRef ,description,charges})
+          body: JSON.stringify({ bookingid, status,adminComments,description,charges})
         }
       );
 
