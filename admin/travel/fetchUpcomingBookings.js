@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         summaryBody.innerHTML = "";
         summary.data.forEach((s) => {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${statusLabelMap[s.status]}</td><td>${s.count}</td>`;
+          row.innerHTML = `<td>${s.destination}</td><td>${statusLabelMap[s.status]}</td><td>${s.count}</td>`;
           summaryBody.appendChild(row);
         });
       }
@@ -70,27 +70,35 @@ document.addEventListener('DOMContentLoaded', async function () {
       });
 
       const data = await bookingsRes.json();
+      console.log(data);
+
 
       if (bookingsRes.ok) {
         travelReport = data.data || [];
+        console.log("First booking:", travelReport[0]);
+
         setupDownloadButton();
 
         upcomingTableBody.innerHTML = "";
-        document.getElementById("selectedDate").textContent = `For [${startDate} to ${endDate}]`;
+        document.getElementById("selectedDate").textContent = `For [${formatDate(startDate)} to ${formatDate(endDate)}]`;
 
         travelReport.forEach((b) => {
           const row = document.createElement('tr');
           const adminComments = b.admin_comments || "";
           const comments = b.comments || "";
           const bookedBy = b.bookedBy || "";
+          const arrival_time = b.arrival_time || "";
           row.innerHTML = `
             <td>${b.issuedto}</td>
             <td>${b.mobno}</td>
             <td>${b.type}</td>
+            <td>${b.total_people}</td>
             <td>${formatDate(b.date)}</td>
             <td>${b.pickup_point}</td>
             <td>${b.drop_point}</td>
+            <td>${formatDate(b.arrival_time)}</td>
             <td>${b.luggage}</td>
+            <td>${b.leaving_post_adhyayan}</td>
             <td>${comments}</td>
             <td>${adminComments}</td>
             <td>${statusLabelMap[b.status]}</td>

@@ -1,0 +1,83 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['travelAdmin', 'superAdmin']); // allowed roles
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> Travel Bookings details for Driver </title>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+         <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/formatDate.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="fetchBookingsForDriver.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Driver Travel Bookings</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
+              <div class="table-responsive">
+                <table
+                  id="driverBookings"
+                  class="table table-striped table-bordered"
+                >
+                  <thead>
+                    <tr>
+                      <th>Mumukshu Name</th>
+                      <th>Mobile No</th>
+                      <th>Travelling From</th>
+                      <th>Pickup/Drop Point</th>
+                      <th>Arrival Time</th>
+                      <th>Full Car Booking</th>
+                      <th>Total People</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Filled via JS -->
+                  </tbody>
+                </table>
+                <div id="downloadBtnContainer"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
