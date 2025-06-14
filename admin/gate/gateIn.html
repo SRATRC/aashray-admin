@@ -1,19 +1,11 @@
-<script src="/style/js/roleCheck.js"></script>
-<script>
-  checkRoleAccess(['gateAdmin', 'superAdmin']); // customize allowed roles per page
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mumukshus Residents Report</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Check-in System</title>
 
-    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-
-    <!-- Additional Scripts -->
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
@@ -23,52 +15,75 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="gateIn.js"></script>
   
-    <!-- QR Code Scanner Library -->
+    <link rel="stylesheet" href="../../style/css/styles.css">
     
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-  </head>
-  <body>
+    <style>
+        #qr-scanner-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        #qr-status {
+            margin: 10px 0;
+            font-weight: bold;
+            min-height: 25px;
+        }
+        
+        .success-status {
+            color: green;
+        }
+        
+        .error-status {
+            color: red;
+        }
+        
+        .scanning-status {
+            color: #666;
+        }
+        
+        #scan-again-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
     <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        <div class="container">
+            <div class="logout">
+                <a href="javascript:void(0);" onclick="history.back()">Back</a>
+                &nbsp; | &nbsp; 
+                <a href="javascript:void(0);" onclick="goToHome()">Home</a> 
+                &nbsp; | &nbsp;
+                <a href="javascript:void(0);" onclick="logout()">Logout</a>
+            </div>
         </div>
-      </div>
     </div>
 
     <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h4>
-                <b><u>Manual Check-in</u></b>
-              </h4>
-            </div>
-            <div class="form">
-              <div id="alert" class="alert" role="alert"></div>
-              
-              <!-- QR Scanner Section -->
-              <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
-              <div id="qr-status"></div>
-
-              <form class="row" id="manualCheckinForm" style="display: none;">
-                <label for="cardno" class="col-form-label">Card No:</label>
-                <div class="col-sm-7">
-                  <input type="text" class="form-control" id="cardno" name="cardno" required />
+        <div class="container">
+            <div class="whitesec">
+                <div class="inner-padding">
+                    <div class="frm-head">
+                        <h4><b><u>Gate Check-in</u></b></h4>
+                    </div>
+                    
+                    <div class="form">
+                        <div id="alert" class="alert" role="alert" style="display: none;"></div>
+                        
+                        <div id="qr-scanner-section">
+                            <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
+                            <div id="qr-status" class="scanning-status">Initializing scanner...</div>
+                            <button type="button" id="scan-again-btn" class="btn btn-small" style="display: none;">Scan Another</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-sm-1">
-                  <button type="submit" class="btn btn-small">Check-in</button>
-                </div>
-              </form>
-              
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </body>
+
+    <script src="/style/js/roleCheck.js"></script>
+    <script>
+        checkRoleAccess(['gateAdmin', 'superAdmin']);
+    </script>
+</body>
 </html>

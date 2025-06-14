@@ -1,86 +1,167 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const cardnoInput = document.getElementById('cardno');
-    const qrStatus = document.getElementById('qr-status');
-    const html5QrCode = new Html5Qrcode("reader");
+  const qrStatus = document.getElementById('qr-status');
+  const scanAgainBtn = document.getElementById('scan-again-btn');
+  const alertDiv = document.getElementById('alert');
 
-    // Function to send the check-in request
-    function sendCheckinRequest(cardno) {
-        resetAlert();  // Reset the alert message
+  let html5QrCode = null;
+  let isScanning = false;
 
-        // Make sure the token is available before making the request
-        const token = sessionStorage.getItem('token');
-        if (!token || token.split('.').length !== 3) {
-            showErrorMessage("⚠️ Not authenticated. Please log in.");
-            return;
-        }
+  startQRScanner();
 
-        // Make the API request
-        alert (cardno)
-        fetch(`${CONFIG.basePath}/gate/entry`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
+  scanAgainBtn.addEventListener('click', startQRScanner);
+
+  function startQRScanner() {
+    if (isScanning) return;
+
+    scanAgainBtn.style.display = 'none';
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = 'Initializing scanner...';
+
+    if (!html5QrCode) {
+      html5QrCode = new Html5Qrcode('reader');
+    }
+
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then(() => {
+        html5QrCode
+          .start(
+            { facingMode: 'environment' },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0
             },
-            body: JSON.stringify({ cardno })
-          })          
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccessMessage(data.message);  // Show success message
-            } else {
-                showErrorMessage(data.message || 'Failed to check-in.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showErrorMessage('Failed to check-in. Please try again.');
-        });
-    }
+            onScanSuccess,
+            onScanFailure
+          )
+          .then(() => {
+            isScanning = true;
+            qrStatus.innerText = 'Ready to scan...';
+          })
+          .catch((err) => {
+            qrStatus.className = 'error-status';
+            qrStatus.innerText = '❌ Scanner initialization failed: ' + err;
+            console.error('QR Scanner Error:', err);
+          });
+      })
+      .catch((err) => {
+        qrStatus.className = 'error-status';
+        qrStatus.innerText = '❌ Camera access denied!';
+        console.error('Camera Permission Error:', err);
+      });
+  }
 
-    // Success handler for QR code scanning
-    function onScanSuccess(decodedText) {
-        cardnoInput.value = decodedText;  // Update input field with scanned card number
-        qrStatus.innerText = "✅ QR Code Scanned: " + decodedText;
-        sendCheckinRequest(decodedText);  // Send the check-in request
-    }
-
-//     function onScanSuccess(decodedText) {
-//     let cardno = decodedText.trim();
-
-//     // Handle legacy format like "cardnumber=123456"
-//     if (cardno.toLowerCase().startsWith("cardnumber=")) {
-//         cardno = cardno.split("=")[1].trim();  // Extract and trim the actual number
-//     }
-
-//     // Optional: Add a regex to allow only digits if needed
-//     cardno = cardno.replace(/\D/g, ''); // Keep only digits if your cardno is numeric
-
-//     cardnoInput.value = cardno;
-//     qrStatus.innerText = "✅ QR Code Scanned: " + cardno;
-//     sendCheckinRequest(cardno);
-// }
-
-    // Failure handler for QR code scanning
-    function onScanFailure(error) {
-        qrStatus.innerText = "Scanning...";
-    }
-
-    // Ensure the browser has camera permissions before starting QR scanning
-    navigator.mediaDevices.getUserMedia({ video: true })
+  function stopQRScanner() {
+    if (html5QrCode && isScanning) {
+      html5QrCode
+        .stop()
         .then(() => {
-            html5QrCode.start(
-                { facingMode: "environment" },  // Start with the rear camera (mobile)
-                { fps: 10, qrbox: { width: 250, height: 250 } },  // Configure QR code scanning area
-                onScanSuccess,
-                onScanFailure
-            ).catch(err => {
-                qrStatus.innerText = "❌ Scanner initialization failed: " + err;
-                console.error("QR Scanner Error:", err);
-            });
+          isScanning = false;
         })
-        .catch(err => {
-            qrStatus.innerText = "❌ Camera access denied!";
-            console.error("Camera Permission Error:", err);
+        .catch((err) => {
+          console.error('Error stopping scanner:', err);
         });
+    }
+  }
+
+  function onScanSuccess(decodedText) {
+    stopQRScanner();
+
+    let cardno = processScannedText(decodedText);
+
+    qrStatus.className = 'success-status';
+    qrStatus.innerText = '✅ QR Code Scanned: ' + cardno;
+
+    scanAgainBtn.style.display = 'inline-block';
+
+    sendCheckinRequest(cardno);
+  }
+
+  function onScanFailure(error) {
+    if (Math.random() < 0.1) {
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = 'Scanning...';
+    }
+  }
+
+  function processScannedText(text) {
+    let cardno = text.trim();
+
+    if (cardno.toLowerCase().startsWith('cardnumber=')) {
+      cardno = cardno.split('=')[1].trim();
+    }
+
+    return cardno;
+  }
+
+  function sendCheckinRequest(cardno) {
+    resetAlert();
+
+    const token = sessionStorage.getItem('token');
+    if (!token || token.split('.').length !== 3) {
+      showErrorMessage('⚠️ Not authenticated. Please log in.');
+      return;
+    }
+
+    showInfoMessage('Processing check-in...');
+
+    fetch(`${CONFIG.basePath}/gate/entry`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ cardno })
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          showSuccessMessage(data.message || 'Check-in successful!');
+        } else {
+          showErrorMessage(data.message || 'Failed to check-in.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        showErrorMessage('Failed to check-in. Please try again.');
+      });
+  }
+
+  function showMessage(message, type) {
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+
+    if (type === 'success') {
+      setTimeout(resetAlert, 5000);
+    }
+  }
+
+  function showSuccessMessage(message) {
+    showMessage(message, 'success');
+  }
+
+  function showErrorMessage(message) {
+    showMessage(message, 'danger');
+  }
+
+  function showInfoMessage(message) {
+    showMessage(message, 'info');
+  }
+
+  function resetAlert() {
+    alertDiv.style.display = 'none';
+    alertDiv.className = 'alert';
+    alertDiv.textContent = '';
+  }
+
+  window.addEventListener('beforeunload', () => {
+    stopQRScanner();
+  });
 });
