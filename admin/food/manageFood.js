@@ -142,7 +142,7 @@ async function getExistingBookings() {
         if (booking[mealType]) {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${booking.date}</td>
+            <td>${formatDate(booking.date)}</td>
             <td>${mealType}</td>
             <td>
               <a href="#" onclick="cancelBooking('${booking.id}', '${mealType}');">

@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${block.id}</td>
-        <td>${block.checkin}</td>
-        <td>${block.checkout}</td>
+        <td>${formatDate(block.checkin)}</td>
+        <td>${formatDate(block.checkout)}</td>
         <td>${block.comments}</td>
         <td>${block.status}</td>
         <td>${getAction(block)}</td>

@@ -39,6 +39,8 @@ width: 100%;
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="adhyayanReport.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
 </head>
 <body>
   <div class="header">
@@ -68,7 +70,8 @@ width: 100%;
                     <th>Adhyayan Name</th>
                     <th>Location</th>
                     <th>Swadhyay Karta</th>
-                    <th>Registration Count</th>
+                    <th>Confirmed Count</th>
+                    <th>Pending Count</th>
                     <th>Max Count</th>
                     <th>WaitList Count</th>
                     <th>Status</th>
@@ -79,6 +82,7 @@ width: 100%;
                   <!-- Data will be populated dynamically by JavaScript -->
                 </tbody>
               </table>
+              <div id="downloadBtnContainer"></div>
             </div>
           </div>
 

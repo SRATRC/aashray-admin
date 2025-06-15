@@ -106,9 +106,60 @@
               </div>
 
               <div class="form-group">
-                <label for="center">Center:</label>
-                <input type="text" id="center" name="center" class="form-control" required />
-              </div>
+  <label for="centre">Centre:</label>
+  <select id="center" name="centre" class="form-control" required>
+    <option value="">Select Centre</option>
+    <option value="Ahmedabad">Ahmedabad</option>
+    <option value="Anand">Anand</option>
+    <option value="Andheri">Andheri</option>
+    <option value="Bangalore">Bangalore</option>
+    <option value="Bhandup">Bhandup</option>
+    <option value="Bhayandar">Bhayandar</option>
+    <option value="Borivali">Borivali</option>
+    <option value="Canada">Canada</option>
+    <option value="Chembur">Chembur</option>
+    <option value="Chennai">Chennai</option>
+    <option value="Coimbatore">Coimbatore</option>
+    <option value="Dahisar">Dahisar</option>
+    <option value="Delhi">Delhi</option>
+    <option value="Dhule">Dhule</option>
+    <option value="Dombivali">Dombivali</option>
+    <option value="Dubai">Dubai</option>
+    <option value="Ghatkopar">Ghatkopar</option>
+    <option value="Hubli">Hubli</option>
+    <option value="Hyderabad">Hyderabad</option>
+    <option value="Jabalpur">Jabalpur</option>
+    <option value="Jamshedpur">Jamshedpur</option>
+    <option value="Kandivali">Kandivali</option>
+    <option value="Khar">Khar</option>
+    <option value="Kolkata">Kolkata</option>
+    <option value="Kuwait">Kuwait</option>
+    <option value="Mahim">Mahim</option>
+    <option value="Malad">Malad</option>
+    <option value="Matunga">Matunga</option>
+    <option value="Mulund">Mulund</option>
+    <option value="Nagpur">Nagpur</option>
+    <option value="Nagri">Nagri</option>
+    <option value="New Mumbai">New Mumbai</option>
+    <option value="Pondichhery">Pondichhery</option>
+    <option value="Pune">Pune</option>
+    <option value="Raipur">Raipur</option>
+    <option value="Raj Nagar">Raj Nagar</option>
+    <option value="Rajim">Rajim</option>
+    <option value="Rajkot">Rajkot</option>
+    <option value="Rajnandgaon">Rajnandgaon</option>
+    <option value="Ranchi">Ranchi</option>
+    <option value="Santacruz">Santacruz</option>
+    <option value="South Mumbai">South Mumbai</option>
+    <option value="Thane">Thane</option>
+    <option value="UAE">UAE</option>
+    <option value="USA East Coast">USA East Coast</option>
+    <option value="USA West Coast">USA West Coast</option>
+    <option value="Vile Parla">Vile Parla</option>
+    <option value="Wadala">Wadala</option>
+    <option value="Others">Others</option>
+  </select>
+</div>
 
               <div class="form-group">
                 <label for="res_status">Residential Status:</label>
@@ -117,9 +168,27 @@
                   <option value="MUMUKSHU">MUMUKSHU</option>
                   <option value="PR">PR</option>
                   <option value="SEVA KUTIR">SEVA KUTIR</option>
+                  <option value="GUEST">GUEST</option>
                 </select>
               </div>
 
+              <!-- Add this inside <form id="updateForm">, after Residential Status -->
+<div class="form-group guest-only" style="display: none;">
+  <label for="referenceCardno">Reference Card Number:</label>
+  <input type="text" id="referenceCardno" name="referenceCardno" class="form-control" />
+</div>
+
+<!-- <div class="form-group guest-only" style="display: none;">
+  <label for="guestType">Guest Type:</label>
+  <select id="guestType" name="guestType" class="form-control">
+    <option value="">Select Type</option>
+    <option value="Family">Family</option>
+    <option value="Friend">Friend</option>
+    <option value="Driver">Driver</option>
+                        <option value="VIP">VIP</option>
+                      </select>
+</div>
+ -->
               <div class="form-group form-submit">
                 <button type="submit" class="btn btn-primary">Save</button>
               </div>

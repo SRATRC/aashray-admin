@@ -19,8 +19,12 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/formatDate.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="roomReports.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -67,6 +71,7 @@
                     <label><input type="checkbox" name="status" value="checkedout" /> Checked-out</label>
                     <label><input type="checkbox" name="status" value="pending checkin" /> Pending Check-in</label>
                     <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
+                    <label><input type="checkbox" name="status" value="pending" /> Pending</label>
                     <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
                     <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
                   </div>
@@ -86,6 +91,7 @@
                 <div class="form-group form-submit">
                   <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
+                <div id="downloadBtnContainer"></div>
               </form>
             </div>
 
@@ -112,6 +118,7 @@
                   <!-- Table rows will be dynamically added here -->
                 </tbody>
               </table>
+              
             </div>
 
           </div>

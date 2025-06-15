@@ -1,3 +1,4 @@
+let roomreports = [];
 function getAction(booking) {
   switch (booking.status) {
     case "pending checkin":
@@ -80,6 +81,9 @@ async function fetchUrl(url) {
     );
 
     const data = await response.json();
+    roomreports = data.data || [];    
+    setupDownloadButton();
+
 
     if (response.ok) {
       await fetchReport();
@@ -94,7 +98,7 @@ async function fetchUrl(url) {
 }
 
 async function cancel(bookingid) {
-  await fetchUrl(`${CONFIG.basePath}/stay/cancel/${bookingid}`);
+  await fetchUrl(`${CONFIG.basePath}/bookings/cancel/room/${bookingid}`);
 }
 
 async function checkin(bookingid) {
@@ -126,8 +130,8 @@ function createRoomBookingRow(booking, index) {
     <td>${booking.CardDb.center}</td>
     <td>${getEditAction(booking)}</td>
     <td>${booking.roomtype}</td>
-    <td>${booking.checkin}</td>
-    <td>${booking.checkout}</td>
+    <td>${formatDate(booking.checkin)}</td>
+    <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.bookedBy || "Self"}</td>
@@ -188,9 +192,17 @@ async function fetchReport() {
     );
 
     const data = await response.json();
-    if (!response.ok) {
-      showErrorMessage(data.message);
-    }
+
+if (!Array.isArray(data.data)) {
+  showErrorMessage(data.message || "Unexpected response format.");
+  return;
+}
+
+if (!response.ok) {
+  showErrorMessage(data.message);
+  return;
+}
+
 
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
@@ -248,3 +260,13 @@ function showSuccessMessage(message) {
 function showErrorMessage(message) {
   alert(message);
 }
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => roomreports,
+    fileName: 'roomreport.xlsx',
+    sheetName: 'Room Report'
+  });
+};

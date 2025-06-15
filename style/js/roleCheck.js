@@ -1,13 +1,21 @@
 function checkRoleAccess(allowedRoles) {
+  // First check if user is logged in
+  const userToken =
+    sessionStorage.getItem('token') || localStorage.getItem('token');
+  if (!userToken) {
+    window.location.href = '/admin/index.html';
+    return;
+  }
+
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 
-  const hasAccess = roles.some(role => allowedRoles.includes(role));
+  const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
   if (!hasAccess) {
     const roleRedirectMap = {
       superAdmin: '/admin/adminhome.html',
-      roomAdmin : '/admin/room/index.html',
-      cardAdmin : '/admin/card/index.html',
+      roomAdmin: '/admin/room/index.html',
+      cardAdmin: '/admin/card/index.html',
       officeAdmin: '/admin/office_index.html',
       adhyayanAdmin: '/admin/adhyayan/index.html',
       utsavAdmin: '/admin/utsav/index.html',
@@ -30,10 +38,12 @@ function checkRoleAccess(allowedRoles) {
     }
 
     // Show alert and delay redirect
-    alert('You are not authorized to access this page.\nRedirecting you to your assigned page...');
+    alert(
+      'You are not authorized to access this page.\nRedirecting you to your assigned page...'
+    );
     setTimeout(() => {
       window.location.href = redirectUrl;
-    }, ); 
+    });
   }
 }
 
@@ -55,21 +65,20 @@ function resetLogoutTimer() {
 }
 
 // Attach to common activity events
-['click', 'mousemove', 'keydown', 'scroll'].forEach(event =>
+['click', 'mousemove', 'keydown', 'scroll'].forEach((event) =>
   window.addEventListener(event, resetLogoutTimer)
 );
 
 // Start timer on load
 resetLogoutTimer();
 
-
 function getHomePageForRole() {
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 
   const roleRedirectMap = {
     superAdmin: '/admin/adminhome.html',
-    roomAdmin : '/admin/room/index.html',
-    cardAdmin : '/admin/card/index.html',
+    roomAdmin: '/admin/room/index.html',
+    cardAdmin: '/admin/card/index.html',
     officeAdmin: '/admin/office_index.html',
     adhyayanAdmin: '/admin/adhyayan/index.html',
     utsavAdmin: '/admin/utsav/index.html',

@@ -1,0 +1,91 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavManagement', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Utsav Package</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="createPackage.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+
+            <div class="frm-head">
+              <h1>Create Utsav Package</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
+              <form id="utsavPackageForm">
+  <!-- Display Utsav Name (Read-Only) -->
+  <div class="form-group">
+    <label for="utsav_name">Utsav Name:</label>
+    <input type="text" id="utsav_name" name="utsav_name" class="form-control" readonly />
+  </div>
+
+  <!-- Package Name (Editable) -->
+  <div class="form-group">
+    <label for="packageName">Package Name:</label>
+    <input type="text" id="packageName" name="packageName" class="form-control" required />
+  </div>
+
+  <div class="form-group">
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" class="form-control" required />
+  </div>
+
+  <div class="form-group">
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date" class="form-control" required />
+  </div>
+
+  <div class="form-group">
+    <label for="amount">Amount:</label>
+    <input type="number" id="amount" name="amount" class="form-control" required />
+  </div>
+
+  <div class="form-group form-submit">
+    <button type="submit" class="btn btn-primary">Create Utsav Package</button>
+  </div>
+</form>
+</div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

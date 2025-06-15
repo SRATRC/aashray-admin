@@ -1,6 +1,11 @@
+// const baseUrl = 'http://127.0.0.1:3000/api/v1';
+// const baseUrl = 'https://aashray.vitraagvigyaan.org/api/v1';
+const baseUrl = 'https://aashray-backend.onrender.com/api/v1';
 const CONFIG = {
-  //basePath: 'http://127.0.0.1:3000/api/v1/admin', // Set this to your base URL if needed
-  basePath: 'https://aashray.vitraagvigyaan.org/api/v1/admin',
+  baseUrl,
+  baseUrl: 'https://aashray-backend.onrender.com/api/v1',
+
+  basePath: `${baseUrl}/admin`,
 
   adminHomePath: '/admin/adminhome.html',
   assets: {

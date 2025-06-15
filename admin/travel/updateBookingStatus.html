@@ -64,15 +64,18 @@
                   <select id="status" name="status" class="form-control" required>
                     <option value="">Select Status</option>
                     <option value="confirmed">Confirmed</option>
-                    <option value="admin cancelled">Admin Cancelled</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="waiting">Waiting</option>
-                    <option value="pending">Payment Pending</option>
+                    <option value="proceed for payment">Proceed for Payment</option>
+                    <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
+                    <option value="admin cancelled">Cancelled as wrong form filled</option>
+                    <!-- <option value="cancelled">Cancelled</option> -->
+                    <!-- <option value="waiting">Waiting</option> -->
+                    
                   </select>
                 </div>
+                
                 <div class="form-group">
-                  <label for="upi_ref">UPI Reference:</label>
-                  <input type="text" id="upi_ref" name="upi_ref" class="form-control" />
+                  <label for="charges">Charges:</label>
+                  <input type="number" id="charges" name="charges" class="form-control"/>
                 </div>
                 <div class="form-group">
                   <label for="upi_ref">Transaction Description </label>

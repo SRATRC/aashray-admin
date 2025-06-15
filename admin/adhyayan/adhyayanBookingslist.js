@@ -1,3 +1,5 @@
+let adhyayanbookings = [];
+
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const tableBody = document.querySelector('#waitlistTable tbody');
@@ -28,14 +30,28 @@ console.log("status:", status);
 
     const data = await response.json();
     const adhyanWaitListers = data.data;
+    adhyayanbookings = data.data || [];    
+    let maleCount = 0;
+let femaleCount = 0;
+
+adhyanWaitListers.forEach((item) => {
+  if (item.gender === 'M') maleCount++;
+  else if (item.gender === 'F') femaleCount++;
+});
+document.getElementById('genderCount').textContent = `Males: ${maleCount} | Females: ${femaleCount}`;
+
+
+    setupDownloadButton();
     let shibirName="";
     adhyanWaitListers.forEach((item) => {
+      console.log('Booking item:', item)
       const row = document.createElement('tr');
       shibirName=item.name;
       row.innerHTML = `
         <td>${item.bookingid || '-'}</td>
         <td>${item.issuedto || '-'}</td>
         <td>${item.mobno || '-'}</td>
+        <td>${item.gender || '-'}</td>
         <td>${item.center || '-'}</td>
         <td>${item.res_status || '-'}</td>
         <td>${item.status || '-'}</td>
@@ -54,3 +70,13 @@ console.log("status:", status);
     console.error('Error fetching data:', error);
   }
 });
+
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => adhyayanbookings,
+    fileName: 'adhyayanbookings.xlsx',
+    sheetName: 'Adhyayan Bookings'
+  });
+};

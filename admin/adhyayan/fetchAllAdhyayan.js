@@ -43,8 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;">${item.name}</td>
         <td style="text-align:center;">${item.location}</td>
         <td style="text-align:center;">${item.speaker}</td>
-        <td style="text-align:center;">${item.start_date}</td>
-        <td style="text-align:center;">${item.end_date}</td>
+        <td style="text-align:center;">${formatDate(item.start_date)}</td>
+        <td style="text-align:center;">${formatDate(item.end_date)}</td>
         <td style="text-align:center;">${item.total_seats}</td>
         <td style="text-align:center;">
           <button class="toggle-status" data-id="${item.id}" data-status="${

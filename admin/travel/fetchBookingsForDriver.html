@@ -1,0 +1,99 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['travelAdmin', 'superAdmin']); // allowed roles
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Travel Bookings Details for Driver</title>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/formatDate.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="fetchBookingsForDriver.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Driver Travel Bookings</h1>
+            </div>
+
+            <div id="downloadBtnContainer" style="margin-bottom: 20px;"></div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
+
+              <!-- Mumbai to RC -->
+              <h3 id="toRCHeader">Travelling from Mumbai to Research Centre (0)</h3>
+              <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Date of Travel</th>
+                      <th>Mumukshu Name</th>
+                      <th>Mobile Number</th>
+                      <th>Pickup Point</th>
+                    </tr>
+                  </thead>
+                  <tbody id="driverToRCBody">
+                    <!-- Filled via JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- RC to Mumbai -->
+              <h3 id="fromRCHeader">Travelling from Research Centre to Mumbai (0)</h3>
+              <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Date of Travel</th>
+                      <th>Mumukshu Name</th>
+                      <th>Mobile Number</th>
+                      <th>Dropoff Point</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rcToDriverBody">
+                    <!-- Filled via JS -->
+                  </tbody>
+                </table>
+              </div>
+
+            </div> <!-- .form -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

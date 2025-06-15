@@ -1,0 +1,100 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <!-- <link rel="icon" href="logo.png" /> -->
+  <title>Edit Utsav</title>
+
+  <!-- Fonts and Styles -->
+  <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&display=swap" rel="stylesheet" />
+  <link href="../../style/css/plugin.css" rel="stylesheet" />
+  <link href="../../style/css/clockpicker.css" rel="stylesheet" />
+  <script src="../../style/js/config.js"></script>
+  <link href="../../style/css/styles.css" rel="stylesheet" />
+
+  
+</head>
+<body>
+  <div class="fullheight" style="background:url(../../style/images/RC_Blur.png) no-repeat center center; background-size: cover;">
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Edit Utsav</h1>
+            </div>
+
+            <div class="form">
+              <form id="editUtsavForm">
+                <input type="hidden" id="id" name="id" />
+
+                <div class="form-group">
+                  <label for="name">Name:</label>
+                  <input type="text" id="name" name="name" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="start_date">Start Date:</label>
+                  <input type="date" id="start_date" name="start_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="end_date">End Date:</label>
+                  <input type="date" id="end_date" name="end_date" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="total_seats">Total Seats:</label>
+                  <input type="number" id="total_seats" name="total_seats" class="form-control" required />
+                </div>
+
+                
+                <div class="form-group">
+                  <label for="comments">Comments:</label>
+                  <textarea id="comments" name="comments" rows="4" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="button" id="saveButton" name="saveButton" class="btn btn-primary">Save</button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+   
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="updateUtsav.js"></script>
+  <script src="/sessionstorage.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['accountsAdmin', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Details for Voucher Creation</title>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="voucherCreation.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Completed Transactions</h1>
+            </div>
+
+            <div class="form">
+              <div class="table-responsive">
+                <div class="form-group" style="margin-bottom: 15px;">
+  <!-- Filter Section -->
+
+  <!-- Category Filter Radio Buttons -->
+<!-- Category Filter Radio Buttons (all in one line) -->
+<!-- Category Filter Radio Buttons -->
+<div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+  <label><input type="radio" name="categoryFilter" value="all" checked /> All</label>
+  <label><input type="radio" name="categoryFilter" value="room" /> Room</label>
+  <label>
+  <input type="radio" name="categoryFilter" value="adhyayan" /> Adhyayan
+  <select id="adhyayanDropdown" style="margin-left: 8px; display: none; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Select Adhyayan">
+    <option value="">-- Select Adhyayan --</option>
+  </select>
+</label>
+
+<label>
+  <input type="radio" name="categoryFilter" value="utsav" /> Utsav
+  <select id="utsavDropdown" style="margin-left: 8px; display: none; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Select Utsav">
+    <option value="">-- Select Utsav --</option>
+  </select>
+</label>
+<label><input type="radio" name="categoryFilter" value="travel" /> Travel</label>
+  <label><input type="radio" name="categoryFilter" value="food" /> Food (breakfast, lunch, dinner)</label>
+</div>
+
+<!-- Existing From, To date filters and Filter button -->
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+  <label>From: <input type="date" id="startDate" /></label>
+  <label>To: <input type="date" id="endDate" /></label>
+  <button id="filterBtn" type="button" class="btn btn-update" onclick="filterTransactions()">Filter</button>
+  <div id="downloadBtnContainer"></div>
+</div>
+
+<!-- Table -->
+<table id="transactionsTable" class="table table-striped table-bordered">
+  
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Booking ID</th>
+      <th>Category</th>
+      <th>Quantity</th>
+      <th>Amount Paid</th>
+      <th>Credits Used</th>
+      <th>Status</th>
+      <th>Razorpay Order ID</th>
+      <th>BookedBy - Card No</th>
+      <th>BookedBy - Name</th>
+      <th>BookedBy - Address</th>
+      <th>BookedBy - Email</th>
+      <th>BookedBy - Mobile</th>
+      <th>BookedFor - Card No</th>
+      <th>BookedFor - Name</th>
+      <th>BookedFor - Address</th>
+      <th>BookedFor - Email</th>
+      <th>BookedFor - Mobile</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="18" style="text-align: center;">Select date range for which you want data.</td></tr>
+  </tbody>
+</table>
+              <!-- Place this where you want the button -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>

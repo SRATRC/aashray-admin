@@ -6,13 +6,22 @@ document.addEventListener('DOMContentLoaded', function () {
   const bookingId = urlParams.get('bookingIdParam'); // "John"
   document.getElementById('bookingid').value = bookingId;
 
+  form.addEventListener('change', function () {
+    const status = document.getElementById('status').value;
+    if (status === 'proceed for payment') {
+      document.getElementById('charges').disabled = false;
+    } else {
+      document.getElementById('charges').disabled = true;
+    } 
+  });
+
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const bookingid = document.getElementById('bookingid').value;
     const status = document.getElementById('status').value;
     const adminComments = document.getElementById('adminComments').value;
-    const upiRef=  document.getElementById('upi_ref').value;
+    const charges = document.getElementById('charges').value;
     const description=  document.getElementById('description').value;
     try {
       const response = await fetch(
@@ -23,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
-          body: JSON.stringify({ bookingid, status,adminComments,upiRef ,description})
+          body: JSON.stringify({ bookingid, status,adminComments,description,charges})
         }
       );
 

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Normalize path by removing trailing slash
   currentPath = currentPath.replace(/\/$/, '');
 
-  var loginPage = '/admin';
+  var loginPage = '/admin/index.html'; // Updated to correct login page path
   var publicPage = '/';
   var adminHomePage = '/admin/adminhome.html'; // Now under /admin
 

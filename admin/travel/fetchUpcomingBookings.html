@@ -19,8 +19,12 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/formatDate.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="fetchUpcomingBookings.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
     
@@ -56,17 +60,18 @@
                   <label>Status:</label>
                   <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
                     <label><input type="checkbox" name="status" value="confirmed" /> Confirmed </label>
-                    <label><input type="checkbox" name="status" value="pending" /> Payment Pending</label>
-                    <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
-                    <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
-                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
+                    <label><input type="checkbox" name="status" value="proceed for payment" /> Proceed for Payment</label>
+                    <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation for Payment</label>
+                    <label><input type="checkbox" name="status" value="waiting" /> Awaiting Confirmation for Payment (datachef)</label>
+                    <label><input type="checkbox" name="status" value="cancelled" /> Self-Cancel </label>
+                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled as wrong form filled</label>
                   </div>
                 </div>
 
-                <div class="form-group" style="display: flex; align-items: center; gap: 2rem;">
+                <!-- <div class="form-group" style="display: flex; align-items: center; gap: 2rem;">
                   <label><input type="radio" name="rcOption" id="pickupRC" value="pickup" /> Pickup at RC</label>
                   <label><input type="radio" name="rcOption" id="dropRC" value="drop" /> Drop at RC</label>
-                </div>
+                </div> -->
                                 
 
                 <div class="form-group">
@@ -96,6 +101,7 @@
                 >
                   <thead>
                     <tr>
+                      <th>Destination</th>
                       <th>Status</th>
                       <th>Count</th>
                     </tr>
@@ -113,30 +119,33 @@
                 >
                   <thead>
                     <tr>
-                      <th>Booking Id</th>
+                      <th>Travelling From</th>
                       <th>Name</th>
+                      <th>Mobile No</th>
+                      <th>Type</th>
+                      <th>Total People</th>
                       <th>Travel Date</th>
                       <th>Pickup Point</th>
                       <th>Drop off Point</th>
-                      <th>Type</th>
+                      <th>Arrival Time</th>
                       <th>Luggage</th>
-                      <th>Comments</th>
+                      <th>Attending Adhyayan</th>
+                      <th>Mumukshu Comments</th>
                       <th>Admin Comments</th>
-                      <th>Status</th>
+                      <th>Booking Status</th>
                       <th>Amount</th>
-                      <th>UPI Reference</th>
                       <th>Payment Status</th>
+                      <th>Payment Date</th>
+                      <th>Booking Id</th>
                       <th>Booked By</th>
-                      <th>Mobile No</th>
-                      <th>Center</th>
-                      <th>Mumkshu Status</th>
-                      <th>Action</th>
+                      <th>Action</th> 
                     </tr>
                   </thead>
                   <tbody>
                     <!-- Filled via JS -->
                   </tbody>
                 </table>
+                <div id="downloadBtnContainer"></div>
               </div>
             
             </div>
@@ -144,5 +153,78 @@
         </div>
       </div>
     </div>
+
+    <!-- Scrollable Modal for Updating Booking Status -->
+<div id="updateModal" class="modal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  overflow: auto;
+">
+  <div class="modal-content" style="
+    background: white;
+    padding: 2rem;
+    margin: 5% auto;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    border-radius: 10px;
+  ">
+    <span id="closeModal" style="
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+    ">&times;</span>
+
+    <h2>Update Booking Status</h2>
+    <form id="updateBookingForm">
+      <div class="form-group">
+        <label for="bookingid">Booking ID:</label>
+        <input type="text" id="bookingid" name="bookingid" class="form-control" readonly />
+      </div>
+
+      <div class="form-group">
+        <label for="status">New Status:</label>
+        <select id="status" name="status" class="form-control" required>
+          <option value="">Select Status</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="proceed for payment">Proceed for Payment</option>
+          <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
+          <option value="admin cancelled">Cancelled as wrong form filled</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="charges">Charges:</label>
+        <input type="number" id="charges" name="charges" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Transaction Description:</label>
+        <input type="text" id="description" name="description" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label for="adminComments">Admin Comments:</label>
+        <input type="text" id="adminComments" name="adminComments" class="form-control" />
+      </div>
+
+      <div class="form-group form-submit">
+        <button type="submit" class="btn btn-primary">Update Status</button>
+        <button type="button" id="cancelUpdate" class="btn btn-secondary">Cancel</button>
+      </div>
+
+      <p id="statusMessage" style="margin-top:10px;"></p>
+    </form>
+  </div>
+</div>
+
   </body>
 </html>

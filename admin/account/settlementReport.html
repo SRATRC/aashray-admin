@@ -1,0 +1,67 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['accountsAdmin', 'superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settlement Report Upload</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Shared Styles and Scripts -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+
+    <!-- SheetJS for Excel parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Upload Razorpay Settlement Excel</h1>
+            </div>
+
+            <div class="form-group">
+              <input class="btn btn-primary" type="file" id="excelFile" accept=".xlsx" />
+              <button class="btn btn-primary" id="parseBtn">Preview</button>
+              <button class="btn btn-primary" id="uploadBtn">Upload to DB</button>
+            </div>
+
+            <div id="tableContainer" style="margin-top: 20px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JS module for Excel upload logic -->
+    <script type="module" src="settlementReport.js"></script>
+  </body>
+</html>

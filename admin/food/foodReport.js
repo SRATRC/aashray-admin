@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
   const reportTitle = document.querySelector(`#reportTitle`);
-  reportTitle.innerHTML = `<b><u>Food Report ${start_date} - ${end_date}</u></b>`;
+  reportTitle.innerHTML = `<b><u>Food Report ${formatDate(start_date)} - ${formatDate(end_date)}</u></b>`;
 
   resetAlert();
 
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-          <td><center>${report.date}</center></td>
+          <td><center>${formatDate(report.date)}</center></td>
           <td><center>${count} (${nonSpicy})</center></td>
           <td><center><a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a></center></td>
           <td><center><a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a></center></td>

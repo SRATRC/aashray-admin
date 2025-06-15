@@ -21,16 +21,22 @@ async function fetchFlats() {
     }
 
     const flats = data.data;
+    console.log(flats); // Debug: See what's coming from backend
 
     const flatSelector = document.getElementById('flat_no');
     flatSelector.innerHTML = '';
 
-    flats.forEach((flat) => {
-      const option = document.createElement('option');
-      option.text = flat.flatno;
-      option.value = flat.flatno;
+    const seen = new Set();
 
-      flatSelector.appendChild(option);
+    flats.forEach((flat) => {
+      const flatno = flat.flatno;
+      if (!seen.has(flatno)) {
+        seen.add(flatno);
+        const option = document.createElement('option');
+        option.text = flatno;
+        option.value = flatno;
+        flatSelector.appendChild(option);
+      }
     });
   } catch(error) {
     console.error('Error:', error);

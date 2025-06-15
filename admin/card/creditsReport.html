@@ -1,0 +1,83 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['accountsAdmin', 'superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>View Credit Details</title>
+
+  <!-- jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../sessionstorage.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="creditsReport.js" defer></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Credit Details by Card</h1>
+          </div>
+
+          <div class="form">
+            <div class="table-responsive">
+              <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                <div></div>
+                <div id="downloadBtnContainer"></div>
+              </div>
+
+              <table id="creditsTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Card No</th>
+                    <th>Name</th>
+                    <th>Room Credits</th>
+                    <th>Food Credits</th>
+                    <th>Travel Credits</th>
+                    <th>Utsav Credits</th>
+                    <th>Address</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="10" style="text-align: center;">Loading credit details...</td></tr>
+                </tbody>
+              </table>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
