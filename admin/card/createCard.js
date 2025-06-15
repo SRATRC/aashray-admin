@@ -148,7 +148,15 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('cardForm').addEventListener('submit', assignCard);
-  loadLocationData(); // also call this inside here to be safe
+  loadLocationData();
+
+  const resStatusSelect = document.getElementById('res_status');
+  resStatusSelect.addEventListener('change', function () {
+    toggleGuestFields(this.value);
+  });
+
+  // Initial check in case GUEST is pre-selected (like after reload)
+  toggleGuestFields(resStatusSelect.value);
 });
 
 async function assignCard(event) {
@@ -174,11 +182,16 @@ async function assignCard(event) {
     country: form.country.value
   };
 
-  if (form.res_status.value === 'GUEST') {
-    bodyData.ref_cardno = form.ref_cardno.value;
-    bodyData.guest_type = form.guest_type.value;
-    bodyData.updatedBy = form.updatedBy.value;
+  if (form.res_status.value === "GUEST") {
+  bodyData.referenceCardno = form.reference_cardno?.value?.trim(); // ✅ correct field name
+  bodyData.guestType = form.guest_type?.value?.trim();             // ✅ correct field name
+
+  if (!bodyData.referenceCardno || !bodyData.guestType) {
+    alert("Please enter both Reference Card Number and Guest Type for GUEST users.");
+    return;
   }
+}
+
 
   const options = {
     method: 'POST',
@@ -200,9 +213,9 @@ async function assignCard(event) {
   }
 }
 
-function toggleGuestFields(resStatus) {
+function toggleGuestFields(res_status) {
   const guestFields = document.getElementById('guestFields');
-  guestFields.style.display = resStatus === 'GUEST' ? 'block' : 'none';
+  guestFields.style.display = res_status === 'GUEST' ? 'block' : 'none';
 }
 
 async function loadLocationData() {
