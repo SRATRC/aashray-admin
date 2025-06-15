@@ -209,7 +209,7 @@ async function loadLocationData() {
   console.log("Fetching countries from:", `${CONFIG.basePath}/location/countries`);
 
   try {
-    const countriesRes = await fetch(`${CONFIG.basePath}/location/countries`);(
+    const countriesRes = await fetch("https://aashray-backend.onrender.com/api/v1/location/countries");(
     {
       headers: {
         Authorization: `Bearer ${sessionStorage.getItem("token")}`,
