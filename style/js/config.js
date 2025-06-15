@@ -1,9 +1,12 @@
+// const baseUrl = 'http://127.0.0.1:3000/api/v1';
+// const baseUrl = 'https://aashray.vitraagvigyaan.org/api/v1';
+const baseUrl = 'https://aashray-backend.onrender.com/api/v1';
 const CONFIG = {
-  // basePath: 'http://127.0.0.1:3000/api/v1/admin',
-  // basePath: 'https://aashray.vitraagvigyaan.org/api/v1/admin',
-  // basePath: 'https://sratrc-portal-backend-dev.onrender.com/api/v1/admin',
-  basePath: 'https://aashray-backend.onrender.com/api/v1/admin',
-  
+  baseUrl,
+  baseUrl: 'https://aashray-backend.onrender.com/api/v1',
+
+  basePath: `${baseUrl}/admin`,
+
   adminHomePath: '/admin/adminhome.html',
   assets: {
     logo: '/assets/images/logo.png',

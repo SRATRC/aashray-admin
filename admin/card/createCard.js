@@ -146,8 +146,8 @@
 //   // This could clear UI banners if used in future (currently placeholder)
 // }
 
-document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("cardForm").addEventListener("submit", assignCard);
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('cardForm').addEventListener('submit', assignCard);
   loadLocationData(); // also call this inside here to be safe
 });
 
@@ -171,20 +171,20 @@ async function assignCard(event) {
     pin: form.pin.value,
     centre: form.centre.value,
     res_status: form.res_status.value,
-    country: form.country.value,
+    country: form.country.value
   };
 
-  if (form.res_status.value === "GUEST") {
+  if (form.res_status.value === 'GUEST') {
     bodyData.ref_cardno = form.ref_cardno.value;
     bodyData.guest_type = form.guest_type.value;
     bodyData.updatedBy = form.updatedBy.value;
   }
 
   const options = {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${sessionStorage.getItem("token")}`
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${sessionStorage.getItem('token')}`
     },
     body: JSON.stringify(bodyData)
   };
@@ -193,74 +193,83 @@ async function assignCard(event) {
     const response = await fetch(`${CONFIG.basePath}/card/create`, options);
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Error occurred');
-    alert("Card assigned successfully!");
-    window.location.href = "index.html";
+    alert('Card assigned successfully!');
+    window.location.href = 'index.html';
   } catch (err) {
-    alert("Error: " + err.message);
+    alert('Error: ' + err.message);
   }
 }
 
 function toggleGuestFields(resStatus) {
-  const guestFields = document.getElementById("guestFields");
-  guestFields.style.display = resStatus === "GUEST" ? "block" : "none";
+  const guestFields = document.getElementById('guestFields');
+  guestFields.style.display = resStatus === 'GUEST' ? 'block' : 'none';
 }
 
 async function loadLocationData() {
-  console.log("Fetching countries from:", `${CONFIG.basePath}/location/countries`);
+  console.log(
+    'Fetching countries from:',
+    `${CONFIG.baseUrl}/location/countries`
+  );
 
   try {
-    const countriesRes = await fetch(`${CONFIG.basePath}/location/countries`);(
-    {
+    const countriesRes = await fetch(`${CONFIG.baseUrl}/location/countries`);
+    ({
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
       }
     });
     const countriesData = await countriesRes.json();
-    console.log("Countries API response:", countriesData);
-if (!countriesRes.ok) throw new Error(countriesData.message || "Failed to load countries");
+    console.log('Countries API response:', countriesData);
+    if (!countriesRes.ok)
+      throw new Error(countriesData.message || 'Failed to load countries');
 
-    const countrySelect = document.getElementById("country");
-    countriesData.data.forEach(c => {
-      const opt = document.createElement("option");
+    const countrySelect = document.getElementById('country');
+    countriesData.data.forEach((c) => {
+      const opt = document.createElement('option');
       opt.value = c.value;
       opt.textContent = c.value;
       countrySelect.appendChild(opt);
     });
 
-    countrySelect.addEventListener("change", async () => {
+    countrySelect.addEventListener('change', async () => {
       const selectedCountry = countrySelect.value;
-      const stateRes = await fetch(`${CONFIG.basePath}/location/states/${selectedCountry}`);
+      const stateRes = await fetch(
+        `${CONFIG.baseUrl}/location/states/${selectedCountry}`
+      );
       const stateData = await stateRes.json();
-      const stateSelect = document.getElementById("state");
+      const stateSelect = document.getElementById('state');
       stateSelect.innerHTML = `<option value="">Select</option>`;
-      stateData.data.forEach(s => {
-        const opt = document.createElement("option");
+      stateData.data.forEach((s) => {
+        const opt = document.createElement('option');
         opt.value = s.value;
         opt.textContent = s.value;
         stateSelect.appendChild(opt);
       });
 
-      document.getElementById("city").innerHTML = `<option value="">Select</option>`;
+      document.getElementById(
+        'city'
+      ).innerHTML = `<option value="">Select</option>`;
     });
 
-    document.getElementById("state").addEventListener("change", async () => {
-      const selectedCountry = document.getElementById("country").value;
-      const selectedState = document.getElementById("state").value;
-      const cityRes = await fetch(`${CONFIG.basePath}/location/cities/${selectedCountry}/${selectedState}`);
+    document.getElementById('state').addEventListener('change', async () => {
+      const selectedCountry = document.getElementById('country').value;
+      const selectedState = document.getElementById('state').value;
+      const cityRes = await fetch(
+        `${CONFIG.baseUrl}/location/cities/${selectedCountry}/${selectedState}`
+      );
       const cityData = await cityRes.json();
-      const citySelect = document.getElementById("city");
+      const citySelect = document.getElementById('city');
       citySelect.innerHTML = `<option value="">Select</option>`;
-      cityData.data.forEach(city => {
-        const opt = document.createElement("option");
+      cityData.data.forEach((city) => {
+        const opt = document.createElement('option');
         opt.value = city.value;
         opt.textContent = city.value;
         citySelect.appendChild(opt);
       });
     });
-
   } catch (err) {
-    console.error("Location load failed:", err);
+    console.error('Location load failed:', err);
   }
 }
 
