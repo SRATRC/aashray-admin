@@ -23,9 +23,9 @@ function checkRoleAccess(allowedRoles) {
       travelAdmin: '/admin/travel/index.html',
       accountsAdmin: '/admin/account/index.html',
       gateAdmin: '/admin/gate/index.html',
-      maintenanceAdmin: '/admin/maintenance/fetchMaintenance.html',
-      housekeepingAdmin: '/admin/housekeeping/fetchHousekeeping.html',
-      electricalAdmin: '/admin/electrical/fetchElectrical.html'
+      maintenanceAdmin: '/admin/maintenance/maintenance.html',
+      housekeepingAdmin: '/admin/housekeeping/maintenance.html',
+      electricalAdmin: '/admin/electrical/maintenance.html'
     };
 
     // Find the first matching role's page
@@ -86,9 +86,9 @@ function getHomePageForRole() {
     travelAdmin: '/admin/travel/index.html',
     accountsAdmin: '/admin/account/index.html',
     gateAdmin: '/admin/gate/index.html',
-    maintenanceAdmin: '/admin/maintenance/fetchMaintenance.html',
-    housekeepingAdmin: '/admin/housekeeping/fetchHousekeeping.html',
-    electricalAdmin: '/admin/electrical/fetchElectrical.html'
+    maintenanceAdmin: '/admin/maintenance/maintenance.html',
+    housekeepingAdmin: '/admin/housekeeping/maintenance.html',
+    electricalAdmin: '/admin/electrical/maintenance.html'
   };
 
   for (const role of roles) {
