@@ -8,7 +8,6 @@ function checkRoleAccess(allowedRoles) {
   }
 
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
   if (!hasAccess) {
