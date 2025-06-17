@@ -8,52 +8,52 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-async function foodCheckin(cardno) {
-  resetAlert();
+// async function foodCheckin(cardno) {
+//   resetAlert();
 
-  try {
-    const response = await fetch(
-      `${CONFIG.basePath}/food/issue/${cardno}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify({})
-      }
-    );
+//   try {
+//     const response = await fetch(
+//       `${CONFIG.basePath}/food/issue/${cardno}`,
+//       {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${sessionStorage.getItem('token')}`
+//         },
+//         body: JSON.stringify({})
+//       }
+//     );
 
-    const data = await response.json();
-    const alertBox = document.getElementById('alert');
-    const formWrapper = document.getElementById('formWrapper');
+//     const data = await response.json();
+//     const alertBox = document.getElementById('alert');
+//     const formWrapper = document.getElementById('formWrapper');
 
-    formWrapper.style.display = 'none'; // Hide form
+//     formWrapper.style.display = 'none'; // Hide form
 
-    if (response.ok) {
-      showAlert(alertBox, data.message, 'success');
-    } else {
-      playErrorSound();
-      showAlert(alertBox, data.message || 'Error issuing plate', 'danger');
-    }
+//     if (response.ok) {
+//       showAlert(alertBox, data.message, 'success');
+//     } else {
+//       playErrorSound();
+//       showAlert(alertBox, data.message || 'Error issuing plate', 'danger');
+//     }
 
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
+//     setTimeout(() => {
+//       window.location.reload();
+//     }, 2000);
 
-  } catch (error) {
-    const alertBox = document.getElementById('alert');
-    const formWrapper = document.getElementById('formWrapper');
+//   } catch (error) {
+//     const alertBox = document.getElementById('alert');
+//     const formWrapper = document.getElementById('formWrapper');
 
-    formWrapper.style.display = 'none'; // Hide form
-    playErrorSound();
-    showAlert(alertBox, 'Unexpected error occurred. Please try again.', 'danger');
+//     formWrapper.style.display = 'none'; // Hide form
+//     playErrorSound();
+//     showAlert(alertBox, 'Unexpected error occurred. Please try again.', 'danger');
 
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  }
-}
+//     setTimeout(() => {
+//       window.location.reload();
+//     }, 2000);
+//   }
+// }
 
 function showAlert(element, message, type) {
   element.className = `big-alert alert-${type}`;
@@ -73,4 +73,56 @@ function resetAlert() {
 function playErrorSound() {
   const sound = document.getElementById('errorSound');
   sound.play();
+}
+
+async function foodCheckin(cardno) {
+  resetAlert();
+
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/food/issue/${cardno}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({})
+      }
+    );
+
+    const data = await response.json();
+    const alertBox = document.getElementById('alert');
+    const formWrapper = document.getElementById('formWrapper');
+    const cardnoInput = document.getElementById('cardno');
+
+    formWrapper.style.display = 'none'; // Hide form
+
+    if (response.ok) {
+      showAlert(alertBox, data.message, 'success');
+    } else {
+      playErrorSound();
+      showAlert(alertBox, data.message || 'Error issuing plate', 'danger');
+    }
+
+    setTimeout(() => {
+      cardnoInput.value = '';      // Clear input
+      resetAlert();                // Show form again
+      cardnoInput.focus();         // Set focus back to input
+    }, 2000);
+
+  } catch (error) {
+    const alertBox = document.getElementById('alert');
+    const formWrapper = document.getElementById('formWrapper');
+    const cardnoInput = document.getElementById('cardno');
+
+    formWrapper.style.display = 'none';
+    playErrorSound();
+    showAlert(alertBox, 'Unexpected error occurred. Please try again.', 'danger');
+
+    setTimeout(() => {
+      resetAlert();
+      cardnoInput.focus();        // Focus input on error recovery too
+    }, 2000);
+  }
 }
