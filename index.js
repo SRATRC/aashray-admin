@@ -81,11 +81,11 @@ function login(event) {
       } else if (roles.includes('travelAdmin')) {
         window.location.href = '/admin/travel/index.html';
       } else if (roles.includes('maintenanceAdmin')) {
-        window.location.href = '/admin/maintenance/maintenance.html';
+        window.location.href = '/admin/maintenance/maintenance.html?department=maintenance';
       } else if (roles.includes('housekeepingAdmin')) {
-        window.location.href = '/admin/maintenance/maintenance.html.html';
+        window.location.href = '/admin/maintenance/maintenance.html?department=housekeeping';
       } else if (roles.includes('electricalAdmin')) {
-        window.location.href = '/admin/maintenance/maintenance.html.html';
+        window.location.href = '/admin/maintenance/maintenance.html?department=electrical';
       } else if (roles.includes('utsavAdmin')) {
         window.location.href = '/admin/utsav/index.html';
       } else {
