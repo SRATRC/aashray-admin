@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Update table header if needed
   if (showIssuePlateColumn && tableHeader) {
     tableHeader.innerHTML = `
+      <th>Sr No</th>
       <th>Date</th>
       <th>Name</th>
       <th>Mobile No</th>
@@ -77,11 +78,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     tableBody.innerHTML = '';
-    data.data.forEach((report) => {
+    data.data.forEach((report, index) => {
       const row = document.createElement('tr');
 
       // Base row content
       const baseContent = `
+        <td>${index + 1}</td>
         <td>${formatDate(report.date)}</td>
         <td>${report.CardDb.issuedto}</td>
         <td>${report.CardDb.mobno}</td>

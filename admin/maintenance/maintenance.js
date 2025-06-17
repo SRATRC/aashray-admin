@@ -38,9 +38,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       
         tableBody.innerHTML = ''; // Clear existing rows
       
-        maintenance.forEach((m) => {
+        maintenance.forEach((m, index) => {
           const row = document.createElement('tr');
           row.innerHTML = `
+            <td>${index + 1}</td>
             <td>${m.CardDb.issuedto}</td>
             <td>${m.CardDb.mobno}</td>
             <td>${formatDateTime(m.createdAt)}</td>
