@@ -8,7 +8,6 @@ function checkRoleAccess(allowedRoles) {
   }
 
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
   if (!hasAccess) {
@@ -23,9 +22,9 @@ function checkRoleAccess(allowedRoles) {
       travelAdmin: '/admin/travel/index.html',
       accountsAdmin: '/admin/account/index.html',
       gateAdmin: '/admin/gate/index.html',
-      maintenanceAdmin: '/admin/maintenance/maintenance.html',
-      housekeepingAdmin: '/admin/housekeeping/maintenance.html',
-      electricalAdmin: '/admin/electrical/maintenance.html'
+      maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
+      housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
+      electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
     };
 
     // Find the first matching role's page
@@ -86,9 +85,9 @@ function getHomePageForRole() {
     travelAdmin: '/admin/travel/index.html',
     accountsAdmin: '/admin/account/index.html',
     gateAdmin: '/admin/gate/index.html',
-    maintenanceAdmin: '/admin/maintenance/maintenance.html',
-    housekeepingAdmin: '/admin/housekeeping/maintenance.html',
-    electricalAdmin: '/admin/electrical/maintenance.html'
+    maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
+    housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
+    electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
   };
 
   for (const role of roles) {
