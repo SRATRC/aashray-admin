@@ -1,6 +1,7 @@
+<!-- Keep all your original includes intact -->
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['utsavAdmin', 'superAdmin']);
 </script>
 
 <!DOCTYPE html>
@@ -10,14 +11,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Utsav Bookings</title>
 
-  <!-- Load jQuery first -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-
-  
-  <!-- Styles -->
   <link rel="stylesheet" href="../../style/css/styles.css" />
 
-  <!-- Additional Scripts -->
   <script src="../../style/js/plugin.js"></script>
   <script src="../../style/js/bootstrap-datepicker.min.js"></script>
   <script src="../../style/js/clockpicker.js"></script>
@@ -32,8 +28,8 @@
   <div class="header">
     <div class="container">
       <div class="logout">
-        <a href="javascript:void(0);" onclick="history.back()">Back</a>
-        &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="history.back()">Back</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
         <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -48,30 +44,17 @@
           </div>
 
           <div class="form">
-            <p id="genderCount">Males: 0 | Females: 0</p>
-            <div class="table-responsive">
-              <table id="waitlistTable" class="table table-striped table-bordered">
-                <thead>
-                  <tr>
-                    <th>Booking ID</th>
-                    <th>Name</th>
-                    <th>Mobile Number</th>
-                    <th>Gender</th>
-                    <th>Center</th>
-                    <th>Mumkshu Status</th>
-                    <th>Status</th>
-                    <th>Booked By</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Data will be populated dynamically using JavaScript -->
-                </tbody>
-              </table>
-              <div id="downloadBtnContainer"></div>
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+  <label for="packageFilter"><b>Filter by Package:</b></label>
+  <select id="packageFilter"></select>
+  <button id="downloadAll" class="btn btn-primary">Download All Registrations</button>
+  <button id="downloadPackage" class="btn btn-primary">Download This Package Registrations</button>
+</div>
+
+<div class="table-responsive" id="tableContainer">
+              <!-- Tables inserted here dynamically -->
             </div>
           </div>
-
         </div>
       </div>
     </div>
