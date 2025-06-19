@@ -1,7 +1,6 @@
-
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin', 'adhyayanAdminKol']); // customize allowed roles per page
 </script>
 
 <!DOCTYPE html>
@@ -9,7 +8,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Utsav Report</title>
+  <title>Kolkata Adhyayan Report</title>
 
   <!-- Load jQuery first -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -39,7 +38,7 @@ width: 100%;
   <script src="../../style/js/custom.js"></script>
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
-  <script src="utsavReport.js"></script>
+  <script src="kolkataAdhyayanReport.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
 </head>
@@ -59,7 +58,7 @@ width: 100%;
       <div class="whitesec">
         <div class="inner-padding">
           <div class="frm-head">
-            <h1>Utsav Report</h1>
+            <h1>Kolkata Adhyayan Report</h1>
           </div>
 
           <div class="form">
@@ -68,18 +67,18 @@ width: 100%;
                 <thead>
                   <tr>
                     <th>Serial No</th>
-                    <th>Utsav Name</th>
+                    <th>Adhyayan Name</th>
+                    <th>Location</th>
+                    <th>Swadhyay Karta</th>
                     <th>Confirmed Count</th>
                     <th>Pending Count</th>
                     <th>Max Count</th>
                     <th>WaitList Count</th>
-                    <th>Self_Cancelled Count</th>
-                    <th>Admin/Cron Cancelled Count</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="utsavTable">
+                <tbody id="adhyayanTable">
                   <!-- Data will be populated dynamically by JavaScript -->
                 </tbody>
               </table>

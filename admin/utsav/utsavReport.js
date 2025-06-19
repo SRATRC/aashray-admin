@@ -40,10 +40,12 @@ console.log(data);
       tableRow.innerHTML = `
             <td style="text-align:center;">${index + 1}</td>
             <td style="text-align:center;">${item.name}</td>
-            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=confirmed">${item.total_seats - item.available_seats}</a></td>
+            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">${item.pending_count}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">${item.waitlist_count}</a></td>
+            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
+            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=admin cancelled">${item.admincancel_count}</a></td>
             <td style="text-align:center;">${item.status}</td>
             <td style="text-align:center;">
               <button class="toggle-status" data-id="${item.id}" data-status="${
