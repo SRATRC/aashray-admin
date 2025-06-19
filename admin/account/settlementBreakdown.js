@@ -99,13 +99,20 @@ const populateTable = (data) => {
     settlementListElement.appendChild(tableRow);
   });
   
-  renderDownloadButton({
-  selector: '#downloadExcelBtnContainer', // container element selector on your page
+ // Before rendering, clear any existing button inside the container
+const downloadBtnContainer = document.querySelector('#downloadExcelBtnContainer');
+if (downloadBtnContainer) {
+  downloadBtnContainer.innerHTML = ''; // Clear previous button if any
+}
+
+renderDownloadButton({
+  selector: '#downloadExcelBtnContainer',
   getData: () => data,
   fileName: 'SettlementBreakdown.xlsx',
   sheetName: 'SettlementBreakdownReport',
   className: 'btn btn-success'
 });
+
 
 
   // Add click listeners for each settlement link
