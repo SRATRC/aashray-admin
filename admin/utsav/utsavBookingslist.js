@@ -395,9 +395,11 @@ function renderFilteredTable() {
         <th>Booking ID</th>
         <th>Registration Time</th>
         <th>Name</th>
+        <th>Age</th>
         <th>Arriving by own car?</th>
         <th>Car Number</th>
         <th>Interested in Volunteering at?</th>
+        <th>Mumukshu Comments</th>
         <th>Mobile Number</th>
         <th>Gender</th>
         <th>Center</th>
@@ -413,9 +415,11 @@ function renderFilteredTable() {
           <td>${item.bookingid}</td>
           <td>${formatDateTime(item.createdAt)}</td>
           <td>${item.issuedto}</td>
+          <td>${item.age}</td>
           <td>${item.arrival}</td>
           <td>${item.carno}</td>
           <td>${item.volunteer}</td>
+          <td>${item.other}</td>
           <td>${item.mobno}</td>
           <td>${item.gender}</td>
           <td>${item.center}</td>
