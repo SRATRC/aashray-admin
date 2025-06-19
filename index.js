@@ -88,6 +88,16 @@ function login(event) {
         window.location.href = '/admin/maintenance/maintenance.html?department=electrical';
       } else if (roles.includes('utsavAdmin')) {
         window.location.href = '/admin/utsav/index.html';
+      } else if (roles.includes('travelAdminDri')) {
+        window.location.href = '/admin/travel/fetchBookingsForDriver.html';
+      } else if (roles.includes('travelAdminDri')) {
+        window.location.href = '/admin/travel/fetchBookingsForDriver.html';
+      } else if (roles.includes('adhyayanAdminKol')) {
+        window.location.href = '/admin/adhyayan/kolkataAdhyayanReport.html';
+      } else if (roles.includes('adhyayanAdminRaj')) {
+        window.location.href = '/admin/adhyayan/rajnandgaonAdhyayanReport.html';
+      } else if (roles.includes('adhyayanAdminDhu')) {
+        window.location.href = '/admin/adhyayan/dhuleAdhyayanReport.html';
       } else {
         window.location.href = '/admin/adminhome.html'; // fallback
       }
