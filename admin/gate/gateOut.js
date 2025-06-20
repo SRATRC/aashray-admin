@@ -21,34 +21,25 @@ document.addEventListener('DOMContentLoaded', function () {
       html5QrCode = new Html5Qrcode('reader');
     }
 
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
+    html5QrCode
+      .start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        },
+        onScanSuccess,
+        onScanFailure
+      )
       .then(() => {
-        html5QrCode
-          .start(
-            { facingMode: 'environment' },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0
-            },
-            onScanSuccess,
-            onScanFailure
-          )
-          .then(() => {
-            isScanning = true;
-            qrStatus.innerText = 'Ready to scan...';
-          })
-          .catch((err) => {
-            qrStatus.className = 'error-status';
-            qrStatus.innerText = '❌ Scanner initialization failed: ' + err;
-            console.error('QR Scanner Error:', err);
-          });
+        isScanning = true;
+        qrStatus.innerText = 'Ready to scan...';
       })
       .catch((err) => {
         qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ Camera access denied!';
-        console.error('Camera Permission Error:', err);
+        qrStatus.innerText = '❌ Scanner initialization failed: ' + err.message;
+        console.error('QR Scanner Error:', err);
       });
   }
 
