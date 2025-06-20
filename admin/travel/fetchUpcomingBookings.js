@@ -336,29 +336,29 @@ document.addEventListener('DOMContentLoaded', async function () {
           row.setAttribute("style", rowStyle);
 
           row.innerHTML = `
-            <td>${travellingFrom}</td>
-            <td>${b.issuedto}</td>
-            <td>${b.mobno}</td>
-            <td>${b.type}</td>
-            <td>${b.total_people}</td>
             <td>${formatDate(b.date)}</td>
+            <td>${b.issuedto}</td>
+            <td>${b.type}</td>
             <td>${b.pickup_point}</td>
             <td>${b.drop_point}</td>
             <td>${formatDateTime(arrival_time)}</td>
-            <td>${b.luggage}</td>
-            <td>${b.leaving_post_adhyayan}</td>
-            <td>${comments}</td>
-            <td>${adminComments}</td>
+            <td>${b.leaving_post_adhyayan == 1 ? 'Yes' : 'No'}</td>
             <td>${statusLabelMap[b.status]}</td>
+            <td>
+              <a href="#" onclick="openUpdateModal('${b.bookingid}')">Update Booking Status</a>
+            </td>
+            <td>${comments}</td>
+            <td>${b.total_people}</td>
+            <td>${b.mobno}</td>
             <td>${b.amount}</td>
             <td>${b.paymentStatus}</td>
             <td>${formatDate(b.paymentDate)}</td>
             <td>${b.bookingid}</td>
             <td>${bookedBy}</td>
-            <td>
-              <a href="#" onclick="openUpdateModal('${b.bookingid}')">Update Booking Status</a>
-            </td>
-          `;
+            <td>${adminComments}</td>
+            <td>${b.luggage}</td>
+            <td>${travellingFrom}</td>
+            `;
 
           upcomingTableBody.appendChild(row);
         });
@@ -382,7 +382,8 @@ function setupDownloadButton() {
     selector: '#downloadBtnContainer',
     getData: () => travelReport,
     fileName: 'travel report.xlsx',
-    sheetName: 'Travel Report'
+    sheetName: 'Travel Report',
+    tableSelector: '#upcomingBookings'
   });
 }
 

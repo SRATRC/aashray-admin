@@ -85,32 +85,37 @@
                 </div>
 
                 <div class="form-group form-submit">
-                  <button type="submit" class="btn btn-primary">Submit</button>
-                </div>
+  <div style="display: inline-block;">
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </div>
+  <div id="downloadBtnContainer" style="display: inline-block; margin-left: 10px;"></div>
+</div>
+
               </form>
             </div>
 
             <div class="form">
-              <h3>Summary <span id="selectedDate"></span> </h3>
+  <h3>Summary <span id="selectedDate"></span> </h3>
 
-              <div class="table-responsive">
-                <table
-                  id="summaryBooking"
-                  class="table table-striped table-bordered"
-                  style="width: 50%; text-align: center;"
-                >
-                  <thead>
-                    <tr>
-                      <th>Destination</th>
-                      <th>Status</th>
-                      <th>Count</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- Filled via JS -->
-                  </tbody>
-                </table>
-              </div>
+  <div class="table-responsive">
+    <table
+      id="summaryBooking"
+      class="table table-striped table-bordered"
+      style="text-align: center; width: auto;"
+    >
+      <thead>
+        <tr>
+          <th>Destination</th>
+          <th>Status</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Filled via JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
 
               <div class="table-responsive">
                 <table
@@ -118,34 +123,34 @@
                   class="table table-striped table-bordered"
                 >
                   <thead>
-                    <tr>
-                      <th>Travelling From</th>
-                      <th>Name</th>
-                      <th>Mobile No</th>
-                      <th>Type</th>
-                      <th>Total People</th>
-                      <th>Travel Date</th>
-                      <th>Pickup Point</th>
-                      <th>Drop off Point</th>
-                      <th>Arrival Time</th>
-                      <th>Luggage</th>
-                      <th>Attending Adhyayan</th>
-                      <th>Mumukshu Comments</th>
-                      <th>Admin Comments</th>
-                      <th>Booking Status</th>
-                      <th>Amount</th>
-                      <th>Payment Status</th>
-                      <th>Payment Date</th>
-                      <th>Booking Id</th>
-                      <th>Booked By</th>
-                      <th>Action</th> 
-                    </tr>
-                  </thead>
-                  <tbody>
+  <tr>
+    <th data-key="date">Travel Date</th>
+    <th data-key="issuedto">Mumukshu Name</th>
+    <th data-key="type">Type (Regular/Full Car)</th>
+    <th data-key="pickup_point">Pickup Point</th>
+    <th data-key="drop_point">Drop off Point</th>
+    <th data-key="arrival_time">Tranin/Flight Time</th>
+    <th data-key="leaving_post_adhyayan">Attending Adhyayan</th>
+    <th data-key="status">Booking Status</th>
+    <th data-key="action">Action</th>
+    <th data-key="comments">Mumukshu Comments</th>
+    <th data-key="total_people">Total People</th>
+    <th data-key="mobno">Mobile No</th>
+    <th data-key="amount">Amount</th>
+    <th data-key="paymentStatus">Payment Status</th>
+    <th data-key="paymentDate">Payment Date</th>
+    <th data-key="bookingid">Booking Id</th>
+    <th data-key="bookedBy">Booked By</th>
+    <th data-key="adminComments">Admin Comments</th>
+    <th data-key="luggage">Luggage</th>
+    <th data-key="travellingFrom">Travelling From</th>
+  </tr>
+</thead>
+<tbody>
                     <!-- Filled via JS -->
                   </tbody>
                 </table>
-                <div id="downloadBtnContainer"></div>
+                
               </div>
             
             </div>
