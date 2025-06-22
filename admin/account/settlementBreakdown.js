@@ -93,7 +93,7 @@ const populateTable = (data) => {
       <td style="text-align:center;">${item.fees}</td>
       <td style="text-align:center;">${item.tax}</td>
       <td style="text-align:center;">${item.utr}</td>
-      <td style="text-align:center;">${item.cerated_at}</td>
+      <td style="text-align:center;">${formatDateTime(item.cerated_at)}</td>
     `;
 
     settlementListElement.appendChild(tableRow);
@@ -256,7 +256,11 @@ const fetchTransactionDetails = async (razorpay_order_id, parentRow) => {
                 <th>Booking ID</th>
                 <th>Category</th>
                 <th>Quantity</th>
+                <th>Checkin Date</th>
+                <th>Checkout Date</th>
                 <th>Amount</th>
+                <th>Received in bank on</th>
+                <th>Selltement id</th>
                 <th>Status</th>
                 <th>Booked By (Card No)</th>
                 <th>Booked By (Name)</th>
@@ -276,7 +280,11 @@ const fetchTransactionDetails = async (razorpay_order_id, parentRow) => {
                       <td>${txn.bookingid}</td>
                       <td>${txn.category}</td>
                       <td>${txn.quantity || ''}</td>
+                      <td>${txn.checkin}</td>
+                      <td>${txn.checkout}</td>
                       <td>${txn.amount}</td>
+                      <td>${formatDateTime(txn.settlementDate)}</td>
+                      <td>${txn.settlement_id}</td>
                       <td>${txn.status}</td>
                       <td>${txn.bookedBy_cardno}</td>
                       <td>${txn.bookedBy_issuedto}</td>
@@ -375,7 +383,11 @@ async function exportFullReportWithTransactions() {
           bookingId: tx.bookingid,
           category: tx.category,
           quantity: tx.quantity,
+          checkin: tx.checkin,
+          checkout: tx.checkout,
           amount: tx.amount,
+          settlementDate: tx.settlementDate,
+          settlement_id: tx.settlement_id,
           status: tx.status,
           bookedByCardNo: tx.bookedBy_cardno,
           bookedByName: tx.bookedBy_issuedto,
@@ -444,7 +456,11 @@ async function exportFullReportWithTransactions() {
         'Booking ID',
         'Category',
         'Quantity',
+        'Checkin Date',
+        'Checkout Date',
         'Amount',
+        'Received in bank on',
+        'Settlement id',
         'Status',
         'Booked By (Card No)',
         'Booked By (Name)',
@@ -466,7 +482,11 @@ async function exportFullReportWithTransactions() {
         tx.bookingId,
         tx.category,
         tx.quantity,
+        tx.checkin,
+        tx.checkout,
         tx.amount,
+        tx.settlementDate,
+        tx.settlement_id,
         tx.status,
         tx.bookedByCardNo,
         tx.bookedByName,
@@ -500,3 +520,25 @@ async function exportFullReportWithTransactions() {
 
 
 });
+
+
+function formatDateTime(dateInput) {
+  if (!dateInput) return '-';
+
+  try {
+    const dateObj = new Date(dateInput);
+
+    return dateObj.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', ''); // Optional: remove comma between date & time
+  } catch (err) {
+    console.error('Invalid date format:', dateInput);
+    return '-';
+  }
+}

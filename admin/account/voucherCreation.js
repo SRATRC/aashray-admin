@@ -229,6 +229,8 @@ const populateTable = (transactions) => {
       <td>${tx.bookingid}</td>
       <td>${tx.category}</td>
       <td>${tx.quantity}</td>
+      <td>${tx.checkin}</td>
+      <td>${tx.checkout}</td>
       <td>${tx.amount}</td>
       <td>${tx.discount}</td>
       <td>${tx.status}</td>
