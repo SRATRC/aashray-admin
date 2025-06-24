@@ -365,6 +365,7 @@ async function exportFullReportWithTransactions() {
           settlementId: settlements[idx].id,
           razorpay_order_id: payment.razorpay_order_id,
           totalAmount: payment.totalAmount,
+          totalDiscount: payment.totalDiscount,
           transactionCount: payment.transactionCount,
           source: payment.source // 'transactions+recon' or 'recon-only'
         });
