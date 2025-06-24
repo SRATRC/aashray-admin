@@ -172,6 +172,7 @@ const fetchAndShowTransactions = async (settlementId, parentRow) => {
               <th>Razorpay Order ID</th>
               <th>No of Transactions</th>
               <th>Total Amount</th>
+              <th>Total Discount (Credits Used)</th>
               <th>Total Fees</th>
               <th>Total Tax</th>
               <th>Total Credit Amount</th>
@@ -197,6 +198,7 @@ const fetchAndShowTransactions = async (settlementId, parentRow) => {
                             }
                           </td>
                           <td>${txn.totalAmount !== null ? parseFloat(txn.totalAmount).toFixed(2) : '-'}</td>
+                          <td>${parseFloat(txn.totalDiscount).toFixed(2)}</td>
                           <td>${parseFloat(txn.totalFees || 0).toFixed(2)}</td>
                           <td>${parseFloat(txn.totalTax || 0).toFixed(2)}</td>
                           <td>${parseFloat(txn.totalCreditAmount || 0).toFixed(2)}</td>
