@@ -1,129 +1,126 @@
-<script src="/style/js/roleCheck.js"></script>
-<script>
-  checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']); // customize allowed roles per page
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Room Booking Reports</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Room Booking Reports</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/formatDate.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="roomReports.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']);
+  </script>
 
-    <!-- Config and Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/formatDate.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="roomReports.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="../../style/js/exportToExcel.js"></script>
-
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-
-    <script>
-      const REPORT_URL = `${CONFIG.basePath}/stay/reservation_report`;
-    </script>
-  </head>
-
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a> |
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a> |
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
+  </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Room Booking Reports</h1>
-            </div>
-
-            <div class="form">
-              <div id="alert" class="alert" role="alert" style="display:none;"></div>
-              <form id="reportForm">
-                <div class="form-group">
-                  <label for="report_type">Report Type:</label>
-                  <select id="report_type" name="report_type" class="form-control" required>
-                    <option value="reservation_report" data-type="room">Room Reservation Report</option>
-                    <option value="flat_reservation_report" data-type="flat">Flat Reservation Report</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>Status:</label>
-                  <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-                    <label><input type="checkbox" name="status" value="checkedin" checked /> Checked-in</label>
-                    <label><input type="checkbox" name="status" value="checkedout" /> Checked-out</label>
-                    <label><input type="checkbox" name="status" value="pending checkin" /> Pending Check-in</label>
-                    <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
-                    <label><input type="checkbox" name="status" value="pending" /> Pending</label>
-                    <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
-                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
-                  </div>
-                </div>
-                
-
-                <div class="form-group">
-                  <label for="start_date">Start Date:</label>
-                  <input type="date" id="start_date" name="start_date" class="form-control" required />
-                </div>
-
-                <div class="form-group">
-                  <label for="end_date">End Date:</label>
-                  <input type="date" id="end_date" name="end_date" class="form-control" required />
-                </div>
-
-                <div class="form-group form-submit">
-                  <button type="submit" class="btn btn-primary">Submit</button>
-                </div>
-                <div id="downloadBtnContainer"></div>
-              </form>
-            </div>
-
-            <div class="table-responsive">
-              <table id="reportTable" class="table table-striped table-bordered">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Guest Name</th>
-                    <th>Mobile No.</th>
-                    <th>Center</th>
-                    <th>Room No</th>
-                    <th>Room Type</th>
-                    <th>Check-in</th>
-                    <th>Check-out</th>
-                    <th>Nights</th>
-                    <th>Status</th>
-                    <th>Booked By</th>
-                    <th>Action</th>
-                    <th>Cancel</th>
-                  </tr>
-                </thead>
-                <tbody id="reportTableBody">
-                  <!-- Table rows will be dynamically added here -->
-                </tbody>
-              </table>
-              
-            </div>
-
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Room Booking Reports</h1>
           </div>
+
+          <div class="form">
+            <div id="alert" class="alert" style="display:none;"></div>
+            <form id="reportForm">
+              <div class="form-group">
+                <label for="report_type">Report Type:</label>
+                <select id="report_type" name="report_type" class="form-control" required>
+                  <option value="reservation_report" data-type="room">Room Reservation Report</option>
+                  <option value="flat_reservation_report" data-type="flat">Flat Reservation Report</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Status:</label>
+                <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                  <label><input type="checkbox" name="status" value="checkedin" checked /> Checked-in</label>
+                  <label><input type="checkbox" name="status" value="checkedout" /> Checked-out</label>
+                  <label><input type="checkbox" name="status" value="pending checkin" /> Pending Check-in</label>
+                  <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
+                  <label><input type="checkbox" name="status" value="pending" /> Pending</label>
+                  <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
+                  <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" required />
+              </div>
+
+              <div class="form-group form-submit">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+
+              <div id="downloadBtnContainer"></div>
+            </form>
+          </div>
+
+          <div class="table-responsive">
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+            <table id="reportTable" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Guest Name</th>
+                  <th>Mobile No.</th>
+                  <th>Center</th>
+                  <th>Room No</th>
+                  <th>Room Type</th>
+                  <th>Check-in</th>
+                  <th>Check-out</th>
+                  <th>Nights</th>
+                  <th>Status</th>
+                  <th>Booked By</th>
+                  <th>Action</th>
+                  <th>Cancel</th>
+                </tr>
+              </thead>
+              <tbody id="reportTableBody">
+                <!-- JS will populate -->
+              </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
     </div>
-  </body>
+  </div>
+
+  <!-- Init features -->
+  <script type="module">
+  import { enhanceTable } from '../../style/js/tableSortFilter.js';
+  document.addEventListener('DOMContentLoaded', () => {
+    enhanceTable('reportTable', 'tableSearch');
+  });
+</script>
+</body>
 </html>
