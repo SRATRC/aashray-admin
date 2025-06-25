@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       adhyayanTableBody.appendChild(tableRow);
     });
+enhanceTable('waitlistTable', 'tableSearch');
 
     document.querySelectorAll('.toggle-status').forEach((button) => {
       button.addEventListener('click', toggleStatus);

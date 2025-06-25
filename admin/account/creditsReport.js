@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
       tableBody.insertAdjacentHTML('beforeend', row);
     });
-
+enhanceTable('creditsTable', 'tableSearch');
     document.querySelectorAll('.click-credit').forEach(el => {
       el.style.cursor = 'pointer';
       el.style.color = 'blue';

@@ -25,9 +25,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     occupancy = data.data || [];    
     setupDownloadButton();
 
-    bookings.forEach((booking) => {
+    bookings.forEach((booking, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>${index + 1}</td>
         <td>${booking.bookingid}</td>
         <td>${booking.CardDb.issuedto}</td>
         <td>${booking.CardDb.mobno}</td>
@@ -42,6 +43,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       tableBody.appendChild(row);
     });
+    enhanceTable('occupancyTable', 'tableSearch');
+
   } catch (error) {
     console.error('Error fetching occupancy report:', error);
     alert('An error occurred while fetching occupancy report.');

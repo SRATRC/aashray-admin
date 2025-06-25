@@ -29,9 +29,10 @@ function displayPRResidents(prResidents) {
   prResidentsContainer.innerHTML = '';
 
   if (prResidents && prResidents.length > 0) {
-    prResidents.forEach((resident) => {
+    prResidents.forEach((resident, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>${index + 1}</td>
         <td>${resident.cardno}</td>
         <td>${resident.issuedto}</td>
         <td>${resident.mobno}</td>
@@ -39,6 +40,8 @@ function displayPRResidents(prResidents) {
       `;
       prResidentsContainer.appendChild(row);
     });
+    enhanceTable('prResidentsTable', 'tableSearch');
+
   } else {
     const noDataRow = document.createElement('tr');
     noDataRow.innerHTML = `<td colspan="4">No data available</td>`;

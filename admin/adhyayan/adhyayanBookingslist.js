@@ -43,11 +43,12 @@ document.getElementById('genderCount').textContent = `Males: ${maleCount} | Fema
 
     setupDownloadButton();
     let shibirName="";
-    adhyanWaitListers.forEach((item) => {
+    adhyanWaitListers.forEach((item, index) => {
       console.log('Booking item:', item)
       const row = document.createElement('tr');
       shibirName=item.name;
       row.innerHTML = `
+        <td>${index + 1}</td>
         <td>${item.bookingid || '-'}</td>
         <td>${item.issuedto || '-'}</td>
         <td>${item.mobno || '-'}</td>
@@ -65,6 +66,7 @@ document.getElementById('genderCount').textContent = `Males: ${maleCount} | Fema
       tableBody.appendChild(row);
       document.getElementById("shibirName").textContent=" For "+shibirName;
     });
+enhanceTable('waitlistTable', 'tableSearch');
 
   } catch (error) {
     console.error('Error fetching data:', error);

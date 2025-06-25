@@ -98,7 +98,7 @@ const populateTable = (data) => {
 
     settlementListElement.appendChild(tableRow);
   });
-  
+  enhanceTable('settlementList', 'tableSearch');
  // Before rendering, clear any existing button inside the container
 const downloadBtnContainer = document.querySelector('#downloadExcelBtnContainer');
 if (downloadBtnContainer) {

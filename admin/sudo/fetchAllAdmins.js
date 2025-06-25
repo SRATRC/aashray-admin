@@ -88,6 +88,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         row.appendChild(actionCell);
         adminTableBody.appendChild(row);
       });
+      enhanceTable('adminTable', 'tableSearch');
+
     } else {
       console.error('Failed to fetch admins:', data.message);
     }

@@ -21,6 +21,7 @@
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="utsavBookingslist.js"></script>
+  <script src="../../style/js/tableSortFilter.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
 </head>
@@ -50,6 +51,7 @@
   <button id="downloadAll" class="btn btn-primary">Download All Registrations</button>
   <button id="downloadPackage" class="btn btn-primary">Download This Package Registrations</button>
 </div>
+<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
 
 <div class="table-responsive" id="tableContainer">
               <!-- Tables inserted here dynamically -->

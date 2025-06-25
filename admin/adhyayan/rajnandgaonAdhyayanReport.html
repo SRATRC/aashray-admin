@@ -39,6 +39,7 @@ width: 100%;
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="rajnandgaonAdhyayanReport.js"></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
 </head>
@@ -62,11 +63,12 @@ width: 100%;
           </div>
 
           <div class="form">
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
             <div class="table-responsive">
               <table id="waitlistTable" class="table table-striped table-bordered">
                 <thead>
                   <tr>
-                    <th>Serial No</th>
+                    <th>$</th>
                     <th>Adhyayan Name</th>
                     <th>Location</th>
                     <th>Swadhyay Karta</th>

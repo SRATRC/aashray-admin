@@ -14,6 +14,7 @@
   <script src="../../style/js/formatDate.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="roomReports.js"></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
   <script src="/style/js/roleCheck.js"></script>
@@ -117,7 +118,6 @@
 
   <!-- Init features -->
   <script type="module">
-  import { enhanceTable } from '../../style/js/tableSortFilter.js';
   document.addEventListener('DOMContentLoaded', () => {
     enhanceTable('reportTable', 'tableSearch');
   });
