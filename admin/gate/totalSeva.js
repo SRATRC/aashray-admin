@@ -29,9 +29,10 @@ function displaySevaResidents(sevaResidents) {
   sevaResidentsContainer.innerHTML = '';
 
   if (sevaResidents && sevaResidents.length > 0) {
-    sevaResidents.forEach((resident) => {
+    sevaResidents.forEach((resident, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>${index + 1}</td>
         <td>${resident.cardno}</td>
         <td>${resident.issuedto}</td>
         <td>${resident.mobno}</td>
@@ -39,6 +40,8 @@ function displaySevaResidents(sevaResidents) {
       `;
       sevaResidentsContainer.appendChild(row);
     });
+    enhanceTable('sevaResidentsTable', 'tableSearch');
+
   } else {
     const noDataRow = document.createElement('tr');
     noDataRow.innerHTML = `<td colspan="4">No data available</td>`;

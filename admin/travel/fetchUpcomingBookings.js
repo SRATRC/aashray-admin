@@ -108,7 +108,7 @@ const mumbaiPoints = new Set([
   'dadar (pritam hotel)'
 ]);
 
-travelReport.forEach((b) => {
+travelReport.forEach((b, index) => {
   const pickup = normalize(b.pickup_point);
   const drop = normalize(b.drop_point);
 
@@ -132,6 +132,7 @@ travelReport.forEach((b) => {
   row.setAttribute("style", rowStyle);
 
   row.innerHTML = `
+    <td>${index + 1}</td> 
     <td>${formatDate(b.date)}</td>
     <td>${b.issuedto}</td>
     <td>${b.type}</td>
@@ -157,7 +158,13 @@ travelReport.forEach((b) => {
   `;
 
   upcomingTableBody.appendChild(row);
+  // Enhance table after rendering
+
 });
+setTimeout(() => {
+  enhanceTable('upcomingBookings', 'tableSearch');
+}, 100);
+
 
         // Restore scroll
         if (sessionStorage.getItem('scrollPosition')) {

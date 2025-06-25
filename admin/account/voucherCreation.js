@@ -7,19 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const categoryRadios = document.getElementsByName('categoryFilter');
   const adhyayanDropdown = document.getElementById('adhyayanDropdown');
   const utsavDropdown = document.getElementById('utsavDropdown');
-  const searchInput = document.createElement('input');
-  searchInput.type = 'text';
-  searchInput.placeholder = 'Search by card no, name, or mobile...';
-  searchInput.className = 'form-control';
-  searchInput.style.maxWidth = '300px';
-  searchInput.style.marginBottom = '15px';
-  searchInput.id = 'searchInput';
-
-  document.querySelector('.form-group').prepend(searchInput);
-
-  searchInput.addEventListener('input', () => {
-    populateTable(filterBySearch(currentTransactions));
-  });
 
   for (const radio of categoryRadios) {
     radio.addEventListener('change', () => {
@@ -65,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn.addEventListener('click', () => {
     startInput.value = '';
     endInput.value = '';
-    searchInput.value = '';
 
     for (const radio of categoryRadios) {
       if (radio.value === 'all') {
@@ -76,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     adhyayanDropdown.style.display = 'none';
     adhyayanDropdown.value = '';
-
     utsavDropdown.style.display = 'none';
     utsavDropdown.value = '';
 
@@ -193,7 +178,7 @@ const filterTransactions = async () => {
     }
 
     currentTransactions = transactions;
-    populateTable(filterBySearch(currentTransactions));
+    populateTable(currentTransactions);
     setupDownloadButton();
 
   } catch (error) {
@@ -201,16 +186,6 @@ const filterTransactions = async () => {
     tableBody.innerHTML = `<tr><td colspan="18">Error loading data.</td></tr>`;
   }
 };
-
-function filterBySearch(transactions) {
-  const query = document.getElementById('searchInput').value.trim().toLowerCase();
-  if (!query) return transactions;
-
-  return transactions.filter(tx =>
- String(tx.bookedBy_cardno || '').toLowerCase().includes(query) ||
-    String(tx.bookedBy_issuedto || '').toLowerCase().includes(query) ||
-    String(tx.bookedBy_mobno || '').toLowerCase().includes(query)  );
-}
 
 const populateTable = (transactions) => {
   const tableBody = document.querySelector('#transactionsTable tbody');
@@ -248,6 +223,8 @@ const populateTable = (transactions) => {
     `;
     tableBody.appendChild(row);
   });
+
+  enhanceTable('transactionsTable', 'tableSearch');
 };
 
 const setupDownloadButton = () => {
@@ -292,7 +269,7 @@ const setupDownloadButton = () => {
 
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => filterBySearch(currentTransactions),
+    getData: () => currentTransactions,
     fileName,
     sheetName: 'Completed Transactions'
   });

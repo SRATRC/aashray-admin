@@ -65,6 +65,7 @@ const populateTable = (transactions) => {
     `;
     tableBody.appendChild(row);
   });
+  enhanceTable('transactionsTable', 'tableSearch');
 };
 
 const setupDownloadButton = () => {

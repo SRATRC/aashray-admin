@@ -143,6 +143,8 @@ async function getExistingGuestBookings() {
           `;
       tableBody.appendChild(row);
     });
+    enhanceTable('bookingsTable', 'tableSearch');
+
   } catch (error) {
     console.error('Error fetching food bookings:', error);
     showErrorMessage(error.message || error);

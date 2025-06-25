@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     gateRecordsContainer.innerHTML = '';
   
     if (gateRecords && gateRecords.length > 0) {
-      gateRecords.forEach((record) => {
+      gateRecords.forEach((record, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${record.id}</td>
+          <td>${index + 1}</td>
           <td>${record.cardno}</td>
           <td>${record.issuedto}</td>
           <td>${record.mobno}</td>
@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         `;
         gateRecordsContainer.appendChild(row);
       });
+      enhanceTable('gateRecordTable', 'tableSearch');
+
     } else {
       const noDataRow = document.createElement('tr');
       noDataRow.innerHTML = `<td colspan="4">No data available</td>`;

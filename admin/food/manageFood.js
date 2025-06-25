@@ -226,6 +226,8 @@ async function getExistingBookings() {
         }
       });
     });
+    enhanceTable('bookingsTable', 'tableSearch');
+
   } catch (error) {
     console.error('Error fetching food bookings:', error);
     showErrorMessage(error.message || error);
@@ -292,21 +294,6 @@ function showAlertMessage(message, type = 'success') {
   }, 3000);
 }
 
-
-// ✅ Alert-based message + redirect to base page
-// function showSuccessMessage(message) {
-//   alert(message);
-//   window.location.href = "/admin/food/manageFood.html"; // Change this path as needed
-// }
-
-// function showErrorMessage(message) {
-//   alert("Error: " + message);
-//   window.location.href = "/admin/food/manageFood.html"; // Change this path as needed
-// }
-
-// function resetAlert() {
-//   // Placeholder if needed for clearing previous messages
-// }
 
 function showSuccessMessage(message) {
   alert(message);

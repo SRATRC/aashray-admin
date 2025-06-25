@@ -23,6 +23,7 @@
     <script src="../../style/js/formatDate.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="dailyGuestCountReport.js"></script>
+    <script src="../../style/js/tableSortFilter.js" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="../../style/js/exportToExcel.js"></script>
 
@@ -72,11 +73,13 @@
             <div class="frm-head mt-4">
               <h2>Report</h2>
             </div>
+<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
 
             <div class="table-responsive">
               <table id="reportTable" class="table table-striped table-bordered">
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Date</th>
                     <th>Guests in A.C.</th>
                     <th>Guests in Non A.C.</th>

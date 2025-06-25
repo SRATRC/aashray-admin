@@ -92,9 +92,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const rooms = data.data;
 
-    rooms.forEach((room) => {
+    rooms.forEach((room, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>${index + 1}</td>
         <td>
           <a href='updateRoom.html?roomno=${room.roomno}&roomtype=${room.roomtype}&gender=${room.gender}'>
             <span>&#x270E;</span>
@@ -109,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       tableBody.appendChild(row);
     });
+        enhanceTable('reportTable', 'tableSearch');
   } catch (error) {
     console.error('Error fetching room list:', error);
     alert('Failed to load room list. Please try again.');

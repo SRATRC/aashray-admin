@@ -19,7 +19,8 @@
   <script src="../../sessionstorage.js"></script>
   <script src="../../style/js/config.js"></script>
   <script src="creditsReport.js" defer></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
 
   <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -47,6 +48,7 @@
           </div>
 
           <div class="form">
+                          <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
             <div class="table-responsive">
               <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
                 <div></div>

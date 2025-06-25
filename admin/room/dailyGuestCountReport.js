@@ -35,7 +35,7 @@ async function fetchReport() {
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
 
-    data.data.forEach((report) => {
+    data.data.forEach((report, index) => {
       const acDetailReportParams = new URLSearchParams({
         date: report.date,
         roomtype: 'ac'
@@ -47,6 +47,7 @@ async function fetchReport() {
 
       const row = document.createElement('tr');
       row.innerHTML = `
+          <td>${index + 1}</td>
           <td><center>${formatDate(report.date)}</center></td>
           <td><center>${report.ac}</center></td>
           <td><center>${report.nac}</center></td>
@@ -65,7 +66,7 @@ async function fetchReport() {
         `;
         reportsTableBody.appendChild(row);
     });
-
+enhanceTable('reportTable', 'tableSearch');
   } catch (error) {
     console.error('Error fetching day-wise guest count report:', error);
     showErrorMessage(error);
