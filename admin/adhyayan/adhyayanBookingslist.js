@@ -5,11 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const tableBody = document.querySelector('#waitlistTable tbody');
     const urlParams = new URLSearchParams(window.location.search);
     const shibirId = urlParams.get('shibir_id');
-    
-    const status= urlParams.get('status'); 
-    console.log(`${CONFIG.basePath}`);
-    console.log("shibirId:", shibirId);
-console.log("status:", status);
+    const status = urlParams.get('status');
 
     const response = await fetch(
       `${CONFIG.basePath}/adhyayan/bookings?shibir_id=${shibirId}&status=${status}&page_size=100`,
@@ -22,31 +18,27 @@ console.log("status:", status);
       }
     );
 
-    
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
     const data = await response.json();
-    const adhyanWaitListers = data.data;
-    adhyayanbookings = data.data || [];    
-    let maleCount = 0;
-let femaleCount = 0;
+    const adhyanWaitListers = data.data || [];
+    adhyayanbookings = adhyanWaitListers;
 
-adhyanWaitListers.forEach((item) => {
-  if (item.gender === 'M') maleCount++;
-  else if (item.gender === 'F') femaleCount++;
-});
-document.getElementById('genderCount').textContent = `Males: ${maleCount} | Females: ${femaleCount}`;
+    // Count gender
+    let maleCount = 0, femaleCount = 0;
+    adhyanWaitListers.forEach(item => {
+      if (item.gender === 'M') maleCount++;
+      else if (item.gender === 'F') femaleCount++;
+    });
+    document.getElementById('genderCount').textContent = `Males: ${maleCount} | Females: ${femaleCount}`;
 
+    // Render table
+    tableBody.innerHTML = "";
+    let shibirName = "";
 
-    setupDownloadButton();
-    let shibirName="";
     adhyanWaitListers.forEach((item, index) => {
-      console.log('Booking item:', item)
+      shibirName = item.name;
       const row = document.createElement('tr');
-      shibirName=item.name;
       row.innerHTML = `
         <td>${index + 1}</td>
         <td>${item.bookingid || '-'}</td>
@@ -64,14 +56,45 @@ document.getElementById('genderCount').textContent = `Males: ${maleCount} | Fema
         </td>
       `;
       tableBody.appendChild(row);
-      document.getElementById("shibirName").textContent=" For "+shibirName;
     });
-enhanceTable('waitlistTable', 'tableSearch');
+
+    document.getElementById("shibirName").textContent = " For " + shibirName;
+
+    // Inject data-key into <th> elements
+    if (adhyanWaitListers.length > 0) {
+      injectDataKeysToHeaders('#waitlistTable', {
+        sr: 'sr',
+        bookingid: 'bookingid',
+        issuedto: 'issuedto',
+        mobno: 'mobno',
+        gender: 'gender',
+        center: 'center',
+        res_status: 'res_status',
+        status: 'status',
+        bookedby: 'bookedby',
+        action: 'action'
+      });
+    }
+
+    // Enhance table and download
+    enhanceTable('waitlistTable', 'tableSearch');
+    setupDownloadButton();
 
   } catch (error) {
     console.error('Error fetching data:', error);
   }
 });
+
+function injectDataKeysToHeaders(tableSelector, keyMap) {
+  const headerCells = document.querySelectorAll(`${tableSelector} thead th`);
+  const keys = Object.keys(keyMap);
+
+  headerCells.forEach((th, index) => {
+    if (!th.hasAttribute('data-key') && keys[index]) {
+      th.setAttribute('data-key', keyMap[keys[index]]);
+    }
+  });
+}
 
 const setupDownloadButton = () => {
   document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
@@ -79,6 +102,7 @@ const setupDownloadButton = () => {
     selector: '#downloadBtnContainer',
     getData: () => adhyayanbookings,
     fileName: 'adhyayanbookings.xlsx',
-    sheetName: 'Adhyayan Bookings'
+    sheetName: 'Adhyayan Bookings',
+    tableSelector: '#waitlistTable'
   });
 };
