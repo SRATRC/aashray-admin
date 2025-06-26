@@ -180,29 +180,28 @@ async function fetchReport() {
   const reportUrl = `${CONFIG.basePath}/stay/${reportType}?${searchParams}`;
 
   try {
-    const response = await fetch(
-      reportUrl,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
+    const response = await fetch(reportUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
       }
-    );
+    });
 
     const data = await response.json();
 
-if (!Array.isArray(data.data)) {
-  showErrorMessage(data.message || "Unexpected response format.");
-  return;
-}
+    if (!Array.isArray(data.data)) {
+      showErrorMessage(data.message || "Unexpected response format.");
+      return;
+    }
 
-if (!response.ok) {
-  showErrorMessage(data.message);
-  return;
-}
+    if (!response.ok) {
+      showErrorMessage(data.message);
+      return;
+    }
 
+    roomreports = data.data || [];  // <-- set this here
+    setupDownloadButton();          // <-- and call this right after
 
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
@@ -221,6 +220,7 @@ if (!response.ok) {
         : createFlatBookingRow(booking, index);
       reportsTableBody.appendChild(row);
     });
+
   } catch (error) {
     console.error('Error fetching report:', error);
     showErrorMessage(error);
