@@ -1,71 +1,3 @@
-// document.addEventListener('DOMContentLoaded', function () {
-//   const form = document.getElementById('foodBookingForm');
-
-//   const today = formatDate(new Date());
-//   document.getElementById('start_date').value = today;
-//   document.getElementById('end_date').value = today;
-
-//   form.addEventListener('submit', async (event) => {
-//     event.preventDefault();
-//     resetAlert();
-
-//     const cardno = document.getElementById('cardno').value.trim();
-//     const mobno = document.getElementById('mobile').value.trim();
-//     const start_date = document.getElementById('start_date').value;
-//     const end_date = document.getElementById('end_date').value;
-//     const breakfast = document.getElementById('breakfast').checked ? 1 : 0;
-//     const lunch = document.getElementById('lunch').checked ? 1 : 0;
-//     const dinner = document.getElementById('dinner').checked ? 1 : 0;
-//     const spicy = document.getElementById('spicy').value;
-//     const hightea = document.getElementById('beverage').value;
-
-//     if (cardno == '' && mobno == '') {
-//       showErrorMessage('Please specify Mobile No. or Card No.');
-//       return;
-//     }
-
-//     if (!(breakfast || lunch || dinner)) {
-//       showErrorMessage('Please select at least one meal option.');
-//       return;
-//     }
-
-//     try {
-//       const response = await fetch(
-//         `${CONFIG.basePath}/food/book`,
-//         {
-//           method: 'POST',
-//           headers: {
-//             'Content-Type': 'application/json',
-//             Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//           },
-//           body: JSON.stringify({
-//             cardno,
-//             mobno,
-//             start_date,
-//             end_date,
-//             breakfast,
-//             lunch,
-//             dinner,
-//             spicy,
-//             hightea
-//           })
-//         }
-//       );
-
-//       const data = await response.json();
-
-//       if (response.ok) {
-//         showSuccessMessage(data.message);
-//       } else {
-//         showErrorMessage(data.message);
-//       }
-//     } catch (error) {
-//       console.error('Error:', error);
-//       showErrorMessage(error.message || error);
-//     }
-//   });
-// });
-
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('foodBookingForm');
   const today = formatDate(new Date());
@@ -89,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const dinner = document.getElementById('dinner').checked ? 1 : 0;
     const spicy = document.getElementById('spicy').value;
     const hightea = document.getElementById('beverage').value;
+    const charge = document.getElementById('charge').value;
+
 
     if (cardno === '' && mobno === '') {
       showErrorMessage('Please specify Mobile No. or Card No.');
@@ -118,7 +52,8 @@ document.addEventListener('DOMContentLoaded', function () {
             lunch,
             dinner,
             spicy,
-            hightea
+            hightea,
+            charge
           })
         }
       );
@@ -139,34 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-
-// async function cancelBooking(bookingid, mealType) {
-//   resetAlert();
-//   try {
-//     const response = await fetch(
-//       `${CONFIG.basePath}/food/cancel/${bookingid}?mealType=${mealType}`,
-//       {
-//         method: 'PUT',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//         },
-//       }
-//     );
-
-//     const data = await response.json();
-
-//     if (response.ok) {
-//       await getExistingBookings();
-//       showSuccessMessage(data.message);
-//     } else {
-//       showErrorMessage(data.message);
-//     }
-//   } catch (error) {
-//     console.error('Error:', error);
-//     showErrorMessage(error.message || error);
-//   }
-// }
 
 async function getExistingBookings() {
   const tableBody = document.querySelector('#bookingsTableBody');
