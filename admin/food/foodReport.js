@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       const reportTable = document.querySelector(`#${meal}ReportTable`);
 
       let totalCount = 0;
-      let totalGuestCount = 0;
       let totalPlateIssued = 0;
       let totalNoShow = 0;
       let totalPhysicalPlates = 0;
@@ -40,7 +39,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       data.data.forEach((report) => {
         const count = report[meal];
         const nonSpicy = report['non_spicy'];
-        const guestCount = report[`${meal}_guest_count`] || 0;
         const plateIssued = report[meal + '_plate_issued'];
         const noShow = report[meal + '_noshow'];
         const physicalPlates = report[meal + '_physical_plates'];
@@ -60,14 +58,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         row.innerHTML = `
           <td><center>${formatDate(report.date)}</center></td>
-          <td><center>${count} (${nonSpicy}) + ${guestCount} Guests = ${count + guestCount}</center></td>
+          <td><center>${count} (${nonSpicy})</center></td>
           <td><center><a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a></center></td>
           <td><center><a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a></center></td>
           <td><center>${physicalPlates}</center></td>
         `;
         reportTable.appendChild(row);
 
-        totalCount += count+guestCount;
+        totalCount += count;
         totalPlateIssued += plateIssued;
         totalNoShow += noShow;
         totalPhysicalPlates += physicalPlates;
