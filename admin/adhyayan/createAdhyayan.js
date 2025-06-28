@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
       speaker: formData.get('speaker'),
       total_seats: formData.get('total_seats'),
       amount: formData.get('amount'),
-      food_allowed: formData.get('food'),
       comments: formData.get('comments')
     };
 
