@@ -27,6 +27,7 @@ function checkRoleAccess(allowedRoles) {
       travelAdminDri: '/admin/travel/fetchBookingsForDriver.html',
       accountsAdmin: '/admin/account/index.html',
       gateAdmin: '/admin/gate/index.html',
+      avtAdmin: '/admin/avt/index.html',
       maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
       housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
       electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
@@ -94,6 +95,7 @@ function getHomePageForRole() {
     travelAdminDri: '/admin/travel/fetchBookingsForDriver.html',
     accountsAdmin: '/admin/account/index.html',
     gateAdmin: '/admin/gate/index.html',
+    avtAdmin: '/admin/avt/index.html',
     maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
     housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
     electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
