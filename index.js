@@ -98,6 +98,8 @@ function login(event) {
         window.location.href = '/admin/adhyayan/rajnandgaonAdhyayanReport.html';
       } else if (roles.includes('adhyayanAdminDhu')) {
         window.location.href = '/admin/adhyayan/dhuleAdhyayanReport.html';
+      } else if (roles.includes('avtAdmin')) {
+        window.location.href = '/admin/avt/index.html';
       } else {
         window.location.href = '/admin/adminhome.html'; // fallback
       }
