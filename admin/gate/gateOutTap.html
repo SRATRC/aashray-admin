@@ -1,0 +1,89 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['gateAdmin', 'superAdmin']); // customize allowed roles
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gate Check-In</title>
+
+    <!-- Load jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="gateOutTap.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .big-alert {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: center;
+        padding: 20px;
+        margin-top: 20px;
+      }
+      .alert-success {
+        color: green;
+      }
+      .alert-danger {
+        color: red;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Tap your card for gate entry</h1>
+            </div>
+
+            <div id="alert" class="big-alert" style="display: none;"></div>
+
+            <div id="formWrapper">
+              <div class="form">
+                <form id="gateCheckinForm">
+                  <div class="form-group">
+                    <label for="cardno">Tap your card:</label>
+                    <input type="text" class="form-control" id="cardno" name="cardno" required />
+                  </div>
+
+                  <div class="form-group form-submit">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <audio id="errorSound">
+              <source src="/assets/sound/alert.mp3" type="audio/mp3" />
+            </audio>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -8,53 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// async function foodCheckin(cardno) {
-//   resetAlert();
-
-//   try {
-//     const response = await fetch(
-//       `${CONFIG.basePath}/food/issue/${cardno}`,
-//       {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//         },
-//         body: JSON.stringify({})
-//       }
-//     );
-
-//     const data = await response.json();
-//     const alertBox = document.getElementById('alert');
-//     const formWrapper = document.getElementById('formWrapper');
-
-//     formWrapper.style.display = 'none'; // Hide form
-
-//     if (response.ok) {
-//       showAlert(alertBox, data.message, 'success');
-//     } else {
-//       playErrorSound();
-//       showAlert(alertBox, data.message || 'Error issuing plate', 'danger');
-//     }
-
-//     setTimeout(() => {
-//       window.location.reload();
-//     }, 2000);
-
-//   } catch (error) {
-//     const alertBox = document.getElementById('alert');
-//     const formWrapper = document.getElementById('formWrapper');
-
-//     formWrapper.style.display = 'none'; // Hide form
-//     playErrorSound();
-//     showAlert(alertBox, 'Unexpected error occurred. Please try again.', 'danger');
-
-//     setTimeout(() => {
-//       window.location.reload();
-//     }, 2000);
-//   }
-// }
-
 function showAlert(element, message, type) {
   element.className = `big-alert alert-${type}`;
   element.textContent = message;

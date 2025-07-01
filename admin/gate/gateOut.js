@@ -59,13 +59,11 @@ document.addEventListener('DOMContentLoaded', function () {
   function onScanSuccess(decodedText) {
     stopQRScanner();
 
-    let cardno = processScannedText(decodedText);
-
-    qrStatus.className = 'success-status';
-    qrStatus.innerText = '✅ QR Code Scanned: ' + cardno;
+    const cardno = processScannedText(decodedText);
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = `✅ QR Code Scanned: ${cardno} (fetching name...)`;
 
     scanAgainBtn.style.display = 'inline-block';
-
     sendGateOutRequest(cardno);
   }
 
@@ -112,12 +110,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return response.json();
       })
       .then((data) => {
-        if (data.success) {
-          showSuccessMessage(
-  data.issuedto && data.cardno
-    ? `Check-out successful!\nCard No: ${data.cardno}\nIssued To: ${data.issuedto}`
-    : (data.message || 'Check-out successful!')
-);
+        if (data.cardno && data.issuedto) {
+          qrStatus.className = 'success-status';
+          qrStatus.innerText = `✅ QR Code Scanned: ${data.cardno} (${data.issuedto})`;
+        }
+
+        if (data.success || data.message === 'Success') {
+          showSuccessMessage(data.message || 'check-out successful.');
         } else {
           showErrorMessage(data.message || 'Failed to check-out.');
         }
