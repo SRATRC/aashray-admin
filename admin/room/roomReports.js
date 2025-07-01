@@ -1,4 +1,5 @@
 let roomreports = [];
+
 function getAction(booking) {
   switch (booking.status) {
     case "pending checkin":
@@ -24,7 +25,6 @@ function getCancelAction(booking) {
 
 function getEditAction(booking) {
   let editUrl = "";
-
   if (booking.nights > 0) {
     switch (booking.status) {
       case "checkedout":
@@ -32,13 +32,9 @@ function getEditAction(booking) {
       case "admin cancelled":
         break;
       default:
-        editUrl = `
-          <a href='updateRoomBooking.html?bookingid=${booking.bookingid}'>
-            <span>&#x270E;</span>
-          </a>`;
+        editUrl = `<a href='updateRoomBooking.html?bookingid=${booking.bookingid}'><span>&#x270E;</span></a>`;
     }
   }
-
   editUrl += (booking.roomno || "Not Assigned");
   return editUrl;
 }
@@ -69,21 +65,17 @@ function getFlatCancelAction(booking) {
 async function fetchUrl(url) {
   resetAlert();
   try {
-    const response = await fetch(
-      url,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
       }
-    );
+    });
 
     const data = await response.json();
-    roomreports = data.data || [];    
+    roomreports = data.data || [];
     setupDownloadButton();
-
 
     if (response.ok) {
       await fetchReport();
@@ -168,6 +160,11 @@ async function fetchReport() {
   const startDate = document.getElementById('start_date').value;
   const endDate = document.getElementById('end_date').value;
 
+  if (!startDate || !endDate) {
+    showErrorMessage("Please select both Start and End Date.");
+    return;
+  }
+
   const checkedValues = [...document.querySelectorAll('input[type="checkbox"]:checked')]
     .map(checkbox => checkbox.value);
 
@@ -200,13 +197,13 @@ async function fetchReport() {
       return;
     }
 
-    roomreports = data.data || [];  // <-- set this here
-    setupDownloadButton();          // <-- and call this right after
+    roomreports = data.data || [];
+    setupDownloadButton();
 
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
 
-    if (data.data.length == 0) {
+    if (data.data.length === 0) {
       showErrorMessage("No bookings found for the selected date range.");
       return;
     }
@@ -215,7 +212,7 @@ async function fetchReport() {
     const roomType = selectedReport.getAttribute('data-type');
 
     data.data.forEach((booking, index) => {
-      const row = roomType == 'room'
+      const row = roomType === 'room'
         ? createRoomBookingRow(booking, index)
         : createFlatBookingRow(booking, index);
       reportsTableBody.appendChild(row);
@@ -228,19 +225,28 @@ async function fetchReport() {
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
+  const startDateInput = document.getElementById('start_date');
+  const endDateInput = document.getElementById('end_date');
+  const reportForm = document.getElementById('reportForm');
+
+  if (!startDateInput || !endDateInput || !reportForm) {
+    console.error('Missing input elements for date range or form.');
+    return;
+  }
+
   const today = new Date();
-  const startDate = formatDate(today);
-  document.getElementById('start_date').value = startDate;
+  startDateInput.value = formatDate(today);
 
   const nextWeek = new Date(today);
   nextWeek.setDate(today.getDate() + 7);
-  const endDate = formatDate(nextWeek);
-  document.getElementById('end_date').value = endDate;
-
-  const reportForm = document.getElementById('reportForm');
+  endDateInput.value = formatDate(nextWeek);
 
   resetAlert();
-  await fetchReport();
+
+  // Only call fetchReport() after both dates are set
+  if (startDateInput.value && endDateInput.value) {
+    await fetchReport();
+  }
 
   reportForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -262,7 +268,7 @@ function showErrorMessage(message) {
 }
 
 const setupDownloadButton = () => {
-  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  document.getElementById('downloadBtnContainer').innerHTML = '';
   renderDownloadButton({
     selector: '#downloadBtnContainer',
     getData: () => roomreports,

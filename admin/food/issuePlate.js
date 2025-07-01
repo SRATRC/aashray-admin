@@ -52,7 +52,8 @@ async function foodCheckin(cardno) {
     formWrapper.style.display = 'none'; // Hide form
 
     if (response.ok) {
-      showAlert(alertBox, data.message, 'success');
+      const name = data.issuedto || 'Unknown';
+      showAlert(alertBox, `Plate issued for ${name}`, 'success');
     } else {
       playErrorSound();
       showAlert(alertBox, data.message || 'Error issuing plate', 'danger');
@@ -75,7 +76,7 @@ async function foodCheckin(cardno) {
 
     setTimeout(() => {
       resetAlert();
-      cardnoInput.focus();        // Focus input on error recovery too
+      cardnoInput.focus();
     }, 2000);
   }
 }
