@@ -44,7 +44,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             ? 'totalPR.html'
             : item.res_status === 'MUMUKSHU'
             ? 'totalMumukshu.html'
-            : 'totalSeva.html'; // Redirect based on the status
+            : item.res_status === 'SEVA KUTIR'
+            ? 'totalSeva.html'
+            : 'totalGuest.html'; // Redirect based on the status
         countLink.textContent = item.count;
         countCell.appendChild(countLink);
         row.appendChild(countCell);
