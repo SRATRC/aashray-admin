@@ -113,7 +113,11 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .then((data) => {
         if (data.success) {
-          showSuccessMessage(data.message || 'Check-out successful!');
+          showSuccessMessage(
+  data.issuedto && data.cardno
+    ? `Check-out successful!\nCard No: ${data.cardno}\nIssued To: ${data.issuedto}`
+    : (data.message || 'Check-out successful!')
+);
         } else {
           showErrorMessage(data.message || 'Failed to check-out.');
         }
