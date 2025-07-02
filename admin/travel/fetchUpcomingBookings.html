@@ -1,4 +1,3 @@
-<!-- //merging again  -->
 <script src="/style/js/roleCheck.js"></script>
 <script>
   checkRoleAccess(['travelAdmin', 'superAdmin']); // customize allowed roles per page
@@ -66,7 +65,9 @@
                     <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation for Payment</label>
                     <label><input type="checkbox" name="status" value="waiting" /> Awaiting Confirmation for Payment (datachef)</label>
                     <label><input type="checkbox" name="status" value="cancelled" /> Self-Cancel </label>
-                    <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled as wrong form filled</label>
+                    <label><input type="checkbox" name="status" value="wrong form cancel" /> Cancelled as wrong form filled</label>
+                    <label><input type="checkbox" name="status" value="admin cancelled" /> Admin Cancelled</label>
+                    <label><input type="checkbox" name="status" value="seats full cancel" /> Cancelled as all seats are booked</label>
                   </div>
                 </div>
 
@@ -206,7 +207,9 @@
           <option value="confirmed">Confirmed</option>
           <option value="proceed for payment">Proceed for Payment</option>
           <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
-          <option value="admin cancelled">Cancelled as wrong form filled</option>
+          <option value="wrong form cancel">Cancelled as wrong form filled</option>
+          <option value="admin cancelled">Admin Cancelled</option>
+          <option value="seats full cancel">Cancelled as all seats are booked</option>
         </select>
       </div>
 
