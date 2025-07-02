@@ -1,4 +1,3 @@
-//merging again
 let travelReport = [];
 
 document.addEventListener('DOMContentLoaded', async function () {
@@ -10,12 +9,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     'awaiting confirmation': 'Awaiting Confirmation for Payment',
     confirmed: 'Confirmed',
     cancelled: 'Self Cancel',
-    'admin cancelled': 'Cancelled as wrong form filled',
-    'proceed for payment': 'Proceed for Payment'
+    // 'wrong form cancel': 'Cancelled as wrong form filled',
+    // 'seats full cancel': 'Cancelled as all seats are booked',
+    'proceed for payment': 'Proceed for Payment',
+    'admin cancelled': '',
   };
 
   // Restore filters and auto-submit
-  restoreFilters();
+  sessionStorage.removeItem('filterStatusArray');
+restoreFilters();
   if (sessionStorage.getItem('filterStartDate') || sessionStorage.getItem('filterStatus')) {
     form.dispatchEvent(new Event('submit')); // Auto-fetch data
   }
@@ -26,19 +28,43 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const startDate = document.getElementById('start_date').value;
     const endDate = document.getElementById('end_date').value;
-    const checkedValues = [...document.querySelectorAll('input[name="status"]:checked')].map(c => c.value);
     const pickupRC = document.getElementById('pickupRC')?.checked;
     const dropRC = document.getElementById('dropRC')?.checked;
+    const rawCheckedValues = [...document.querySelectorAll('input[name="status"]:checked')].map(c => c.value);
 
-    const searchParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
-    checkedValues.forEach(x => searchParams.append('statuses', x));
-    if (pickupRC) searchParams.append('pickupRC', true);
-    if (dropRC) searchParams.append('dropRC', true);
+const normalizedStatuses = [];
+const adminCommentFilters = [];
+
+rawCheckedValues.forEach(val => {
+  if (val === 'wrong form cancel') {
+    adminCommentFilters.push('admin_cancel_wrong_form');
+  } else if (val === 'seats full cancel') {
+    adminCommentFilters.push('admin_cancel_seats_full');
+  } else {
+    normalizedStatuses.push(val);
+  }
+});
+
+const searchParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
+
+if (normalizedStatuses.length > 0) {
+  normalizedStatuses.forEach(s => searchParams.append('statuses', s));
+}
+
+// 🚨 This was the missing condition:
+if (adminCommentFilters.length > 0) {
+  searchParams.append('statuses', 'admin cancelled');
+  adminCommentFilters.forEach(c => searchParams.append('adminComments', c));
+}
+
+
+if (pickupRC) searchParams.append('pickupRC', true);
+if (dropRC) searchParams.append('dropRC', true);
 
     // Save filters
     sessionStorage.setItem('filterStartDate', startDate);
     sessionStorage.setItem('filterEndDate', endDate);
-    sessionStorage.setItem('filterStatusArray', JSON.stringify(checkedValues));
+    sessionStorage.setItem('filterStatusArray', JSON.stringify(rawCheckedValues));
     sessionStorage.setItem('filterPickupRC', pickupRC);
     sessionStorage.setItem('filterDropRC', dropRC);
 
@@ -56,10 +82,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         const summaryBody = document.getElementById('summaryBooking').querySelector('tbody');
         summaryBody.innerHTML = "";
         summary.data.forEach((s) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${s.destination}</td><td>${statusLabelMap[s.status]}</td><td>${s.count}</td>`;
-          summaryBody.appendChild(row);
-        });
+  let displayStatus = statusLabelMap[s.status] || s.status;
+
+  if (s.status === 'admin cancelled') {
+    if (s.admin_comments === 'admin_cancel_wrong_form') {
+      displayStatus = 'Cancelled as wrong form filled';
+    } else if (s.admin_comments === 'admin_cancel_seats_full') {
+      displayStatus = 'Cancelled as all seats are booked';
+    }
+  }
+
+  const row = document.createElement('tr');
+  row.innerHTML = `<td>${s.destination}</td><td>${displayStatus}</td><td>${s.count}</td>`;
+  summaryBody.appendChild(row);
+});
+
       }
 
       // Fetch bookings
@@ -140,8 +177,14 @@ travelReport.forEach((b, index) => {
     <td>${b.drop_point}</td>
     <td>${formatDateTime(arrival_time)}</td>
     <td>${b.leaving_post_adhyayan == 1 ? 'Yes' : 'No'}</td>
-    <td>${statusLabelMap[b.status]}</td>
-    <td>
+    <td>${
+  b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_wrong_form'
+    ? 'Cancelled as wrong form filled'
+    : b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_seats_full'
+    ? 'Cancelled as all seats are booked'
+    : statusLabelMap[b.status] || b.status
+}</td>
+<td>
       <a href="#" onclick="openUpdateModal('${b.bookingid}')">Update Booking Status</a>
     </td>
     <td>${comments}</td>
@@ -215,10 +258,23 @@ document.getElementById('updateBookingForm').addEventListener('submit', async fu
   event.preventDefault();
 
   const bookingid = document.getElementById('bookingid').value;
-  const status = document.getElementById('status').value;
+  // const status = document.getElementById('status').value;
   const charges = document.getElementById('charges').value;
   const description = document.getElementById('description').value;
-  const adminComments = document.getElementById('adminComments').value;
+  // const adminComments = document.getElementById('adminComments').value;
+  const statusInput = document.getElementById('status').value;
+  
+  let status = statusInput;
+  let adminComments = document.getElementById('adminComments').value;
+
+// If frontend selected a mapped value, adjust for DB
+if (statusInput === 'wrong form cancel') {
+  status = 'admin cancelled';
+  if (!adminComments) adminComments = 'admin_cancel_wrong_form';
+} else if (statusInput === 'seats full cancel') {
+  status = 'admin cancelled';
+  if (!adminComments) adminComments = 'admin_cancel_seats_full';
+}
 
   try {
     const response = await fetch(`${CONFIG.basePath}/travel/booking/status`, {
