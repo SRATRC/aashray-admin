@@ -7,27 +7,16 @@ document.addEventListener('DOMContentLoaded', async function () {
   const meal = urlParams.get('meal');
   const is_issued = urlParams.get('is_issued') || '0'; // Default to "0" if not provided
 
-  // Function to normalize dates for comparison
   function normalizeDate(dateStr) {
     const d = new Date(dateStr);
     return d.toISOString().split('T')[0]; // YYYY-MM-DD format
   }
 
-  // Get today's date in normalized format
   const today = normalizeDate(new Date());
   const normalizedUrlDate = date ? normalizeDate(date) : null;
 
-  // Debug logging
-  console.log('Date from URL:', date);
-  console.log('Normalized URL date:', normalizedUrlDate);
-  console.log("Today's date:", today);
-  console.log('is_issued:', is_issued);
-  console.log('Date comparison:', normalizedUrlDate === today);
-
-  // Check if we should show the Issue Plate column
   const showIssuePlateColumn = is_issued === '0' && normalizedUrlDate === today;
 
-  // Update table header if needed
   if (showIssuePlateColumn && tableHeader) {
     tableHeader.innerHTML = `
       <th>Sr No</th>
@@ -81,7 +70,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     data.data.forEach((report, index) => {
       const row = document.createElement('tr');
 
-      // Base row content
       const baseContent = `
         <td>${index + 1}</td>
         <td>${formatDate(report.date)}</td>
@@ -89,19 +77,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         <td>${report.CardDb.mobno}</td>
       `;
 
-      // Debug: Log condition check for each row
-      console.log('Checking row:', {
-        is_issued: is_issued,
-        normalizedUrlDate: normalizedUrlDate,
-        today: today,
-        showButton: showIssuePlateColumn
-      });
-
-      // Add Issue Plate button for No Show Report on current date
       if (showIssuePlateColumn) {
         row.innerHTML = `
           ${baseContent}
-          <td><a href='#' onclick="foodCheckin('${report.CardDb.cardno}', '${meal}'); return false;">Issue Plate</a></td>
+          <td><a href='#' onclick="foodCheckin('${report.CardDb.cardno}', '${meal}', '${report.CardDb.issuedto}'); return false;">Issue Plate</a></td>
         `;
       } else {
         row.innerHTML = baseContent;
@@ -109,16 +88,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       tableBody.appendChild(row);
     });
+
     enhanceTable('bookingsTable', 'tableSearch');
 
   } catch (error) {
     console.error('Error fetching food bookings:', error);
-    showErrorMessage(error);
+    showErrorMessage(error.message);
   }
 });
 
-// Function to handle food check-in
-async function foodCheckin(cardno, meal) {
+async function foodCheckin(cardno, meal, name) {
   try {
     const response = await fetch(`${CONFIG.basePath}/food/issue/${cardno}`, {
       method: 'POST',
@@ -126,9 +105,7 @@ async function foodCheckin(cardno, meal) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       },
-      body: JSON.stringify({
-        meal: meal
-      })
+      body: JSON.stringify({ meal })
     });
 
     const data = await response.json();
@@ -136,23 +113,42 @@ async function foodCheckin(cardno, meal) {
       throw new Error(data.message || 'Failed to check in');
     }
 
-    showSuccessMessage('Plate issued successfully');
-    // Refresh the page to show updated status
-    window.location.reload();
+    showSuccessMessage(`Plate issued for ${name}`);
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   } catch (error) {
     showErrorMessage(error.message);
   }
 }
 
-// ✅ Browser alert-based messages
+// ✅ Custom alert box system
 function showSuccessMessage(message) {
-  alert(message);
+  const alertBox = document.getElementById('alertBox');
+  alertBox.style.display = 'block';
+  alertBox.style.backgroundColor = '#d4edda';
+  alertBox.style.color = '#155724';
+  alertBox.textContent = message;
+
+  setTimeout(() => {
+    alertBox.style.display = 'none';
+  }, 2000);
 }
 
 function showErrorMessage(message) {
-  alert('Error: ' + message);
+  const alertBox = document.getElementById('alertBox');
+  alertBox.style.display = 'block';
+  alertBox.style.backgroundColor = '#f8d7da';
+  alertBox.style.color = '#721c24';
+  alertBox.textContent = message;
+
+  setTimeout(() => {
+    alertBox.style.display = 'none';
+  }, 2000);
 }
 
 function resetAlert() {
-  // Clear in-page alerts if needed (optional)
+  const alertBox = document.getElementById('alertBox');
+  alertBox.style.display = 'none';
+  alertBox.textContent = '';
 }
