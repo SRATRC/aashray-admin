@@ -12,11 +12,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     // 'wrong form cancel': 'Cancelled as wrong form filled',
     // 'seats full cancel': 'Cancelled as all seats are booked',
     'proceed for payment': 'Proceed for Payment',
-    'admin cancelled': 'Admin Cancelled',
+    'admin cancelled': '',
   };
 
   // Restore filters and auto-submit
-  restoreFilters();
+  sessionStorage.removeItem('filterStatusArray');
+restoreFilters();
   if (sessionStorage.getItem('filterStartDate') || sessionStorage.getItem('filterStatus')) {
     form.dispatchEvent(new Event('submit')); // Auto-fetch data
   }
@@ -27,19 +28,43 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const startDate = document.getElementById('start_date').value;
     const endDate = document.getElementById('end_date').value;
-    const checkedValues = [...document.querySelectorAll('input[name="status"]:checked')].map(c => c.value);
     const pickupRC = document.getElementById('pickupRC')?.checked;
     const dropRC = document.getElementById('dropRC')?.checked;
+    const rawCheckedValues = [...document.querySelectorAll('input[name="status"]:checked')].map(c => c.value);
 
-    const searchParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
-    checkedValues.forEach(x => searchParams.append('statuses', x));
-    if (pickupRC) searchParams.append('pickupRC', true);
-    if (dropRC) searchParams.append('dropRC', true);
+const normalizedStatuses = [];
+const adminCommentFilters = [];
+
+rawCheckedValues.forEach(val => {
+  if (val === 'wrong form cancel') {
+    adminCommentFilters.push('admin_cancel_wrong_form');
+  } else if (val === 'seats full cancel') {
+    adminCommentFilters.push('admin_cancel_seats_full');
+  } else {
+    normalizedStatuses.push(val);
+  }
+});
+
+const searchParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
+
+if (normalizedStatuses.length > 0) {
+  normalizedStatuses.forEach(s => searchParams.append('statuses', s));
+}
+
+// 🚨 This was the missing condition:
+if (adminCommentFilters.length > 0) {
+  searchParams.append('statuses', 'admin cancelled');
+  adminCommentFilters.forEach(c => searchParams.append('adminComments', c));
+}
+
+
+if (pickupRC) searchParams.append('pickupRC', true);
+if (dropRC) searchParams.append('dropRC', true);
 
     // Save filters
     sessionStorage.setItem('filterStartDate', startDate);
     sessionStorage.setItem('filterEndDate', endDate);
-    sessionStorage.setItem('filterStatusArray', JSON.stringify(checkedValues));
+    sessionStorage.setItem('filterStatusArray', JSON.stringify(rawCheckedValues));
     sessionStorage.setItem('filterPickupRC', pickupRC);
     sessionStorage.setItem('filterDropRC', dropRC);
 
