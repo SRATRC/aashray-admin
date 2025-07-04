@@ -152,7 +152,7 @@
   </div>
 
   <!-- Modal for "waiting" status update -->
-  <!-- Modal for "waiting" status update -->
+<!-- Modal for "waiting" status update -->
 <div id="roomUpdateModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">Update Booking Status</div>
@@ -164,17 +164,41 @@
       </div>
 
       <div class="form-group">
+        <label for="modal_credits">Room Credits Available:</label>
+        <input type="text" id="modal_credits" class="form-control" readonly disabled />
+      </div>
+
+      <div class="form-group">
+        <label for="modal_base_amount">Base Amount (₹):</label>
+        <input type="text" id="modal_base_amount" class="form-control" readonly disabled />
+      </div>
+
+      <div class="form-group">
+        <label for="modal_credits_used">Credits Used (₹):</label>
+        <input type="text" id="modal_credits_used" class="form-control" readonly disabled />
+      </div>
+
+      <div class="form-group">
+        <label for="modal_discounted_amount">Amount After Credits (₹):</label>
+        <input type="text" id="modal_discounted_amount" class="form-control" readonly disabled />
+      </div>
+
+      <div class="form-group">
         <label for="modal_status">New Status:</label>
         <select id="modal_status" required class="form-control">
           <option value="">-- Select --</option>
-          <option value="pending">Pending (Ask user to pay)</option>
-          <option value="admin cancelled">Cancel (By Admin)</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="modal_description">Remarks (optional):</label>
         <textarea id="modal_description" class="form-control" placeholder="Any note or reason..."></textarea>
+      </div>
+
+      <!-- ✅ New Room No Field (conditionally visible) -->
+      <div class="form-group" id="modal_roomno_group" style="display: none;">
+        <label for="modal_roomno">Room No:</label>
+        <input type="text" id="modal_roomno" class="form-control" />
       </div>
 
       <div class="modal-actions">

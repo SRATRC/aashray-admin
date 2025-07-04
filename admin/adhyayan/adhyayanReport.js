@@ -41,7 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
       tableRow.innerHTML = `
             <td style="text-align:center;">${index + 1}</td>
             <td style="text-align:center;">${item.name}</td>
+            <td style="text-align:center;">${item.comments}</td>
             <td style="text-align:center;">${item.location}</td>
+            <td style="text-align:center;">${formatDate(item.start_date)}</td>
+            <td style="text-align:center;">${formatDate(item.end_date)}</td>
             <td style="text-align:center;">${item.speaker}</td>
             <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
             <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=pending">${item.pending_count}</a></td>
