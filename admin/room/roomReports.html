@@ -13,7 +13,7 @@
   <script src="../../style/js/config.js"></script>
   <script src="../../style/js/formatDate.js"></script>
   <script src="/sessionstorage.js"></script>
-  <script src="roomReports.js"></script>
+  <script src="roomReports.js" defer></script>
   <script src="../../style/js/tableSortFilter.js" defer></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
@@ -23,6 +23,43 @@
   </script>
 
   <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      padding-top: 100px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      border-radius: 5px;
+    }
+
+    .modal-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .modal-actions {
+      text-align: right;
+      margin-top: 15px;
+    }
+
+    .modal-actions button {
+      margin-left: 10px;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
@@ -80,10 +117,8 @@
               <div class="form-group form-submit">
                 <button type="submit" class="btn btn-primary">Submit</button>
                 <div id="downloadBtnContainer"></div>
-            
               </div>
-
-              </form>
+            </form>
           </div>
 
           <div class="table-responsive">
@@ -111,17 +146,50 @@
               </tbody>
             </table>
           </div>
-
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Modal for "waiting" status update -->
+  <!-- Modal for "waiting" status update -->
+<div id="roomUpdateModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">Update Booking Status</div>
+    <form id="roomStatusForm">
+      <div class="form-group">
+        <label for="modal_bookingid_display">Booking ID:</label>
+        <input type="text" id="modal_bookingid_display" class="form-control" readonly disabled />
+        <input type="hidden" id="modal_bookingid" />
+      </div>
+
+      <div class="form-group">
+        <label for="modal_status">New Status:</label>
+        <select id="modal_status" required class="form-control">
+          <option value="">-- Select --</option>
+          <option value="pending">Pending (Ask user to pay)</option>
+          <option value="admin cancelled">Cancel (By Admin)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modal_description">Remarks (optional):</label>
+        <textarea id="modal_description" class="form-control" placeholder="Any note or reason..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="closeRoomModal" class="btn btn-secondary">Close</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
   <!-- Init features -->
   <script type="module">
-  document.addEventListener('DOMContentLoaded', () => {
-    enhanceTable('reportTable', 'tableSearch');
-  });
-</script>
+    document.addEventListener('DOMContentLoaded', () => {
+      enhanceTable('reportTable', 'tableSearch');
+    });
+  </script>
 </body>
 </html>

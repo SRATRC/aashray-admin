@@ -1,6 +1,10 @@
 let roomreports = [];
 
 function getAction(booking) {
+  if (booking.status === "waiting") {
+    return `<a href='#' onclick="openRoomUpdateModal('${booking.bookingid}')">Update Status</a>`;
+  }
+
   switch (booking.status) {
     case "pending checkin":
       return `<a href='#' onclick="return checkin('${booking.bookingid}')">Check-in</a>`;
@@ -142,8 +146,8 @@ function createFlatBookingRow(booking, index) {
     <td>${booking.CardDb.center}</td>
     <td>${booking.flatno}</td>
     <td>Flat</td>
-    <td>${booking.checkin}</td>
-    <td>${booking.checkout}</td>
+    <td>${formatDate(booking.checkin)}</td>
+    <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.bookedBy || "Self"}</td>
@@ -156,7 +160,6 @@ function createFlatBookingRow(booking, index) {
 async function fetchReport() {
   const reportSelect = document.getElementById('report_type');
   const reportType = reportSelect.value;
-
   const startDate = document.getElementById('start_date').value;
   const endDate = document.getElementById('end_date').value;
 
@@ -172,6 +175,7 @@ async function fetchReport() {
     start_date: startDate,
     end_date: endDate
   });
+
   checkedValues.forEach((x) => searchParams.append('statuses', x));
 
   const reportUrl = `${CONFIG.basePath}/stay/${reportType}?${searchParams}`;
@@ -187,13 +191,8 @@ async function fetchReport() {
 
     const data = await response.json();
 
-    if (!Array.isArray(data.data)) {
+    if (!response.ok || !Array.isArray(data.data)) {
       showErrorMessage(data.message || "Unexpected response format.");
-      return;
-    }
-
-    if (!response.ok) {
-      showErrorMessage(data.message);
       return;
     }
 
@@ -203,7 +202,7 @@ async function fetchReport() {
     const reportsTableBody = document.getElementById('reportTableBody');
     reportsTableBody.innerHTML = '';
 
-    if (data.data.length === 0) {
+    if (roomreports.length === 0) {
       showErrorMessage("No bookings found for the selected date range.");
       return;
     }
@@ -211,7 +210,7 @@ async function fetchReport() {
     const selectedReport = reportSelect.options[reportSelect.selectedIndex];
     const roomType = selectedReport.getAttribute('data-type');
 
-    data.data.forEach((booking, index) => {
+    roomreports.forEach((booking, index) => {
       const row = roomType === 'room'
         ? createRoomBookingRow(booking, index)
         : createFlatBookingRow(booking, index);
@@ -229,11 +228,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   const endDateInput = document.getElementById('end_date');
   const reportForm = document.getElementById('reportForm');
 
-  if (!startDateInput || !endDateInput || !reportForm) {
-    console.error('Missing input elements for date range or form.');
-    return;
-  }
-
   const today = new Date();
   startDateInput.value = formatDate(today);
 
@@ -243,7 +237,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   resetAlert();
 
-  // Only call fetchReport() after both dates are set
   if (startDateInput.value && endDateInput.value) {
     await fetchReport();
   }
@@ -253,9 +246,52 @@ document.addEventListener('DOMContentLoaded', async function () {
     resetAlert();
     await fetchReport();
   });
+
+  document.getElementById('roomStatusForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const bookingid = document.getElementById('modal_bookingid').value;
+    const status = document.getElementById('modal_status').value;
+    const description = document.getElementById('modal_description').value;
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/stay/update_booking_status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ bookingid, status, description })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(result.message);
+        document.getElementById('roomUpdateModal').style.display = 'none';
+        await fetchReport();
+      } else {
+        showErrorMessage(result.message);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showErrorMessage(error.message);
+    }
+  });
+
+  document.getElementById('closeRoomModal').addEventListener('click', () => {
+    document.getElementById('roomUpdateModal').style.display = 'none';
+  });
 });
 
-// ✅ Success/Error Handlers
+function openRoomUpdateModal(bookingid) {
+  document.getElementById('modal_bookingid').value = bookingid;
+  document.getElementById('modal_bookingid_display').value = bookingid;
+  document.getElementById('modal_status').value = "";
+  document.getElementById('modal_description').value = "";
+  document.getElementById('roomUpdateModal').style.display = 'block';
+}
+
 function showSuccessMessage(message) {
   const confirmed = confirm(message);
   if (confirmed) {
