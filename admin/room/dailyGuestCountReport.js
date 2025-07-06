@@ -36,36 +36,29 @@ async function fetchReport() {
     reportsTableBody.innerHTML = '';
 
     data.data.forEach((report, index) => {
-      const acDetailReportParams = new URLSearchParams({
-        date: report.date,
-        roomtype: 'ac'
-      });
-      const nacDetailReportParams = new URLSearchParams({
-        date: report.date,
-        roomtype: 'nac'
-      });
+  const acDetailReportParams = new URLSearchParams({
+    date: report.date,
+    roomtype: 'ac'
+  });
+  const nacDetailReportParams = new URLSearchParams({
+    date: report.date,
+    roomtype: 'nac'
+  });
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-          <td>${index + 1}</td>
-          <td><center>${formatDate(report.date)}</center></td>
-          <td><center>${report.ac}</center></td>
-          <td><center>${report.nac}</center></td>
-          <td><center>${report.ac + report.nac}</center></td>
-          <td>
-            <center>
-              <a href="/admin/room/roomDetailReport.html?${acDetailReportParams}">${report.ac_available}
-            </center>
-          </td>
-          <td>
-            <center>
-              <a href="/admin/room/roomDetailReport.html?${nacDetailReportParams}">${report.nac_available}
-            </center>
-          </td>
-          <td><center>${report.ac_available + report.nac_available}</center></td>
-        `;
-        reportsTableBody.appendChild(row);
-    });
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${index + 1}</td>
+    <td><center>${formatDate(report.date)}</center></td>
+    <td><center><a href="/admin/room/guestDetailReport.html?${acDetailReportParams}">${report.ac}</a></center></td>
+    <td><center><a href="/admin/room/guestDetailReport.html?${nacDetailReportParams}">${report.nac}</a></center></td>
+    <td><center><a href="#">${report.ac + report.nac}</a></center></td>
+    <td><center><a href="/admin/room/roomDetailReport.html?${acDetailReportParams}">${report.ac_available}</a></center></td>
+    <td><center><a href="/admin/room/roomDetailReport.html?${nacDetailReportParams}">${report.nac_available}</a></center></td>
+    <td><center>${report.ac_available + report.nac_available}</center></td>
+  `;
+  reportsTableBody.appendChild(row);
+});
+
 enhanceTable('reportTable', 'tableSearch');
   } catch (error) {
     console.error('Error fetching day-wise guest count report:', error);

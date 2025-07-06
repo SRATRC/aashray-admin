@@ -35,6 +35,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     populatePackageDropdown();
     renderFilteredTable();
+    renderFilteredTable();
+
+// ✅ Bind center summary button
+document.getElementById('centerSummaryBtn').addEventListener('click', () => {
+  openCenterSummaryModal(getCenterWiseSummary(filteredBookings));
+});
+
 
     packageFilter.addEventListener('change', () => {
       const selected = packageFilter.value;
@@ -139,9 +146,8 @@ function renderFilteredTable() {
 
   const summaryDiv = document.createElement('div');
   summaryDiv.innerHTML = `
-    <p><b>Total registrations:</b> ${total}</p>
-    <p><b>Summary:</b> Males: ${maleCount}, Females: ${femaleCount}</p>
-    <p><b>Center-wise:</b> ${countByField(filteredBookings, 'center')}</p>
+  <p><b>Total registrations:</b> ${total} &nbsp; | &nbsp;
+  <b>Summary:</b> Males: ${maleCount}, Females: ${femaleCount}</p>
   `;
 
   container.appendChild(summaryDiv);
@@ -187,4 +193,39 @@ function exportToExcel({ data, fileName, sheetName }) {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
   XLSX.writeFile(workbook, fileName);
+}
+
+
+function getCenterWiseSummary(bookings) {
+  const summary = {};
+  bookings.forEach(b => {
+    const center = b.center || 'Unknown';
+    if (!summary[center]) summary[center] = { count: 0 };
+    summary[center].count++;
+  });
+  return summary;
+}
+
+function openCenterSummaryModal(centerSummary) {
+  const container = document.getElementById('centerSummaryTableContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const rows = Object.entries(centerSummary)
+    .sort((a, b) => a[0].localeCompare(b[0])) // ✅ Alphabetical sort
+    .map(([center, data]) => `
+      <tr>
+        <td>${center}</td>
+        <td>${data.count}</td>
+      </tr>
+    `).join('');
+
+  container.innerHTML = `
+    <table>
+      <thead><tr><th>Center</th><th>Registrations</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  document.getElementById('centerSummaryModal').style.display = 'block';
 }

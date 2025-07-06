@@ -36,11 +36,24 @@ function getEditAction(booking) {
       case "admin cancelled":
         break;
       default:
-        editUrl = `<a href='updateRoomBooking.html?bookingid=${booking.bookingid}'><span>&#x270E;</span></a>`;
+        // Save filters before navigation
+        editUrl = `<a href='#' onclick="storeFiltersAndGo('${booking.bookingid}')"><span>&#x270E;</span></a>`;
     }
   }
   editUrl += (booking.roomno || "Not Assigned");
   return editUrl;
+}
+
+function storeFiltersAndGo(bookingid) {
+  const filters = {
+    start_date: document.getElementById('start_date').value,
+    end_date: document.getElementById('end_date').value,
+    report_type: document.getElementById('report_type').value,
+    statuses: Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value),
+    scrollTop: window.scrollY
+  };
+  sessionStorage.setItem('roomReportFilters', JSON.stringify(filters));
+  window.location.href = `updateRoomBooking.html?bookingid=${bookingid}`;
 }
 
 function getFlatAction(booking) {
@@ -224,164 +237,65 @@ async function fetchReport() {
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
- const closeBtn = document.getElementById('closeRoomModal');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      document.getElementById('roomUpdateModal').style.display = 'none';
-    });
+  const savedFilters = sessionStorage.getItem('roomReportFilters');
+  if (savedFilters) {
+    try {
+      const { start_date, end_date, report_type, statuses, scrollTop } = JSON.parse(savedFilters);
+
+      if (start_date) document.getElementById('start_date').value = start_date;
+      if (end_date) document.getElementById('end_date').value = end_date;
+      if (report_type) document.getElementById('report_type').value = report_type;
+
+      statuses.forEach(status => {
+        const cb = document.querySelector(`input[name="status"][value="${status}"]`);
+        if (cb) cb.checked = true;
+      });
+
+      setTimeout(() => {
+        document.getElementById('reportForm').dispatchEvent(new Event('submit'));
+        window.scrollTo(0, scrollTop || 0);
+      }, 100);
+
+      sessionStorage.removeItem('roomReportFilters');
+    } catch (e) {
+      console.warn('Failed to restore filters', e);
+    }
   }
+
   const startDateInput = document.getElementById('start_date');
   const endDateInput = document.getElementById('end_date');
-  const reportForm = document.getElementById('reportForm');
 
-  const today = new Date();
-  startDateInput.value = formatDate(today);
+  if (!startDateInput.value) {
+    const today = new Date();
+    startDateInput.value = formatDate(today);
+  }
 
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + 7);
-  endDateInput.value = formatDate(nextWeek);
+  if (!endDateInput.value) {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    endDateInput.value = formatDate(nextWeek);
+  }
 
-  resetAlert();
-
-  if (startDateInput.value && endDateInput.value) {
+  if (document.getElementById('start_date').value && document.getElementById('end_date').value) {
     await fetchReport();
   }
 
-  reportForm.addEventListener('submit', async function (event) {
+  document.getElementById('reportForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     resetAlert();
     await fetchReport();
   });
-
-document.getElementById('roomStatusForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-
-  const bookingid = document.getElementById('modal_bookingid').value;
-  const status = document.getElementById('modal_status').value;
-  const description = document.getElementById('modal_description').value;
-  const newRoomno = document.getElementById('modal_roomno').value;
-
-  const originalBooking = roomreports.find(b => b.bookingid === bookingid);
-  const originalRoomno = originalBooking?.roomno || '';
-
-  try {
-    // 1. First, update the booking status
-    const statusResponse = await fetch(`${CONFIG.basePath}/stay/update_booking_status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ bookingid, status, description })
-    });
-
-    const statusResult = await statusResponse.json();
-
-    if (!statusResponse.ok) {
-      showErrorMessage(statusResult.message);
-      return;
-    }
-
-    // 2. Then, update roomno only if it's changed and we're going to 'pending checkin'
-    if (
-      status === 'pending checkin' &&
-      newRoomno &&
-      newRoomno !== originalRoomno
-    ) {
-      const roomResponse = await fetch(`${CONFIG.basePath}/stay/update_room_booking`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ bookingid, roomno: newRoomno })
-      });
-
-      const roomResult = await roomResponse.json();
-
-      if (!roomResponse.ok) {
-        showErrorMessage(roomResult.message || "Failed to update room.");
-        return;
-      }
-    }
-
-    alert("Booking updated successfully.");
-    document.getElementById('roomUpdateModal').style.display = 'none';
-    await fetchReport();
-  } catch (error) {
-    console.error('Error submitting room update:', error);
-    showErrorMessage(error.message || "Something went wrong.");
-  }
 });
-});
-function openRoomUpdateModal(bookingid) {
-  const booking = roomreports.find(b => b.bookingid === bookingid);
-  if (!booking) return;
 
-  const rate = booking.roomtype?.toLowerCase() === 'ac' ? 1100 : 700;
-  const nights = booking.nights || 1;
-  const baseAmount = rate * nights;
-
-  let credits = 0;
-  let creditsUsed = 0;
-  let discountedAmount = baseAmount;
-
-  const status = booking.status;
-  const rawCredits = booking.CardDb?.credits;
-  let parsedCredits = {};
-
-  // ✅ Only apply credits for 'waiting' bookings
-  if (status === 'waiting') {
-    if (typeof rawCredits === 'string') {
-      try {
-        parsedCredits = JSON.parse(rawCredits);
-      } catch (e) {
-        parsedCredits = {};
-      }
-    } else if (typeof rawCredits === 'object' && rawCredits !== null) {
-      parsedCredits = rawCredits;
-    }
-
-    credits = parseInt(parsedCredits.room || 0);
-    creditsUsed = Math.min(credits, baseAmount);
-    discountedAmount = Math.max(0, baseAmount - creditsUsed);
-  }
-
-  document.getElementById('modal_bookingid').value = booking.bookingid;
-  document.getElementById('modal_bookingid_display').value = booking.bookingid;
-  document.getElementById('modal_credits').value = `₹${credits}`;
-  document.getElementById('modal_base_amount').value = `₹${baseAmount}`;
-  document.getElementById('modal_credits_used').value = `₹${creditsUsed}`;
-  document.getElementById('modal_discounted_amount').value = `₹${discountedAmount}`;
-  document.getElementById('modal_description').value = "";
-
-  const modalStatusSelect = document.getElementById('modal_status');
-  modalStatusSelect.innerHTML = `<option value="">-- Select --</option>`;
-
-  if (status === 'waiting') {
-    modalStatusSelect.innerHTML += `
-      <option value="pending">Pending (Ask user to pay)</option>
-      <option value="admin cancelled">Cancel (By Admin)</option>
-    `;
-  } else if (status === 'pending') {
-    modalStatusSelect.innerHTML += `
-      <option value="pending checkin">Mark as Pending Check-in (Cash received)</option>
-      <option value="admin cancelled">Cancel (By Admin)</option>
-    `;
-  }
-
-  // ✅ Show roomno field only if current status is 'pending'
-  const roomInputGroup = document.getElementById('modal_roomno_group');
-  if (status === 'pending') {
-    roomInputGroup.style.display = 'block';
-    document.getElementById('modal_roomno').value = booking.roomno || '';
-  } else {
-    roomInputGroup.style.display = 'none';
-    document.getElementById('modal_roomno').value = '';
-  }
-
-  document.getElementById('roomUpdateModal').style.display = 'block';
-}
+const setupDownloadButton = () => {
+  document.getElementById('downloadBtnContainer').innerHTML = '';
+  renderDownloadButton({
+    selector: '#downloadBtnContainer',
+    getData: () => roomreports,
+    fileName: 'roomreport.xlsx',
+    sheetName: 'Room Report'
+  });
+};
 
 function showSuccessMessage(message) {
   const confirmed = confirm(message);
@@ -393,13 +307,3 @@ function showSuccessMessage(message) {
 function showErrorMessage(message) {
   alert(message);
 }
-
-const setupDownloadButton = () => {
-  document.getElementById('downloadBtnContainer').innerHTML = '';
-  renderDownloadButton({
-    selector: '#downloadBtnContainer',
-    getData: () => roomreports,
-    fileName: 'roomreport.xlsx',
-    sheetName: 'Room Report'
-  });
-};
