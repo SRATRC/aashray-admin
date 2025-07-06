@@ -107,16 +107,16 @@ function downloadExcelFromJSON(dataArray, fileName = "export.xlsx", sheetName = 
   }
 
   // Rebuild array with column order and labels
-  const formatted = columnOrder
-    ? dataArray.map(row => {
-        const formattedRow = {};
-        columnOrder.forEach(key => {
-          const label = labelMap[key] || key;
-          formattedRow[label] = row[key] ?? '';
-        });
-        return formattedRow;
-      })
-    : dataArray;
+  const formatted = Array.isArray(columnOrder) && columnOrder.length > 0
+  ? dataArray.map(row => {
+      const formattedRow = {};
+      columnOrder.forEach(key => {
+        const label = labelMap[key] || key;
+        formattedRow[label] = row[key] ?? '';
+      });
+      return formattedRow;
+    })
+  : dataArray;
 
   const worksheet = XLSX.utils.json_to_sheet(formatted);
   const workbook = XLSX.utils.book_new();
