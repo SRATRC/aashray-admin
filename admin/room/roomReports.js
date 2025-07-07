@@ -307,3 +307,53 @@ function showSuccessMessage(message) {
 function showErrorMessage(message) {
   alert(message);
 }
+
+function openRoomUpdateModal(bookingid) {
+  const booking = roomreports.find(b => b.bookingid === bookingid);
+  if (!booking) {
+    alert("Booking not found.");
+    return;
+  }
+
+  // Fill the modal fields
+  document.getElementById('modal_bookingid').value = booking.bookingid;
+  document.getElementById('modal_bookingid_display').value = booking.bookingid;
+
+  const isAC = booking.roomtype?.toLowerCase() === 'ac';
+  const perNight = isAC ? 1100 : 700;
+  const baseAmount = perNight * booking.nights;
+
+  // Credits (assume `booking.CardDb.credits` holds this info, else update as needed)
+  const availableCredits = booking.CardDb?.credits || 0;
+  const creditsUsed = Math.min(availableCredits, baseAmount);
+  const discountedAmount = baseAmount - creditsUsed;
+
+  document.getElementById('modal_credits').value = availableCredits;
+  document.getElementById('modal_base_amount').value = baseAmount;
+  document.getElementById('modal_credits_used').value = creditsUsed;
+  document.getElementById('modal_discounted_amount').value = discountedAmount;
+
+  // Populate status dropdown
+  const statusSelect = document.getElementById('modal_status');
+  statusSelect.innerHTML = ''; // Clear existing options
+
+  const allowedStatuses = ['pending']; // For now, only allow "waiting" → "pending"
+  allowedStatuses.forEach(status => {
+    const opt = document.createElement('option');
+    opt.value = status;
+    opt.textContent = status;
+    statusSelect.appendChild(opt);
+  });
+
+  // If current status is 'waiting', show room no input
+  const roomNoGroup = document.getElementById('modal_roomno_group');
+  roomNoGroup.style.display = booking.status === 'waiting' ? 'block' : 'none';
+
+  // Show modal
+  document.getElementById('roomUpdateModal').style.display = 'block';
+}
+
+// Close modal handler
+document.getElementById('closeRoomModal').addEventListener('click', () => {
+  document.getElementById('roomUpdateModal').style.display = 'none';
+});
