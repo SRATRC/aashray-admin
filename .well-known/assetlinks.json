@@ -2,7 +2,7 @@
   {
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
-      "namespace": "aashray",
+      "namespace": "android_app",
       "package_name": "org.vitraagvigyaan.aashray",
       "sha256_cert_fingerprints": [
         "A9:4A:06:4C:64:E4:AC:57:5B:14:2E:D8:59:38:01:37:03:80:E5:47:87:C5:C1:F3:8B:77:9E:E6:E9:55:45:7D"
