@@ -36,7 +36,6 @@ function getEditAction(booking) {
       case "admin cancelled":
         break;
       default:
-        // Save filters before navigation
         editUrl = `<a href='#' onclick="storeFiltersAndGo('${booking.bookingid}')"><span>&#x270E;</span></a>`;
     }
   }
@@ -109,23 +108,18 @@ async function fetchUrl(url) {
 async function cancel(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/bookings/cancel/room/${bookingid}`);
 }
-
 async function checkin(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/checkin/${bookingid}`);
 }
-
 async function checkout(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/checkout/${bookingid}`);
 }
-
 async function flat_cancel(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_cancel/${bookingid}`);
 }
-
 async function flat_checkin(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_checkin/${bookingid}`);
 }
-
 async function flat_checkout(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
@@ -276,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     endDateInput.value = formatDate(nextWeek);
   }
 
-  if (document.getElementById('start_date').value && document.getElementById('end_date').value) {
+  if (startDateInput.value && endDateInput.value) {
     await fetchReport();
   }
 
@@ -298,10 +292,7 @@ const setupDownloadButton = () => {
 };
 
 function showSuccessMessage(message) {
-  const confirmed = confirm(message);
-  if (confirmed) {
-    window.location.href = '/admin/room/roomReports.html';
-  }
+  alert(message); // don't redirect
 }
 
 function showErrorMessage(message) {
@@ -315,7 +306,6 @@ function openRoomUpdateModal(bookingid) {
     return;
   }
 
-  // Fill the modal fields
   document.getElementById('modal_bookingid').value = booking.bookingid;
   document.getElementById('modal_bookingid_display').value = booking.bookingid;
 
@@ -323,7 +313,6 @@ function openRoomUpdateModal(bookingid) {
   const perNight = isAC ? 1100 : 700;
   const baseAmount = perNight * booking.nights;
 
-  // Credits (assume `booking.CardDb.credits` holds this info, else update as needed)
   const availableCredits = booking.CardDb?.credits || 0;
   const creditsUsed = Math.min(availableCredits, baseAmount);
   const discountedAmount = baseAmount - creditsUsed;
@@ -333,27 +322,83 @@ function openRoomUpdateModal(bookingid) {
   document.getElementById('modal_credits_used').value = creditsUsed;
   document.getElementById('modal_discounted_amount').value = discountedAmount;
 
-  // Populate status dropdown
   const statusSelect = document.getElementById('modal_status');
-  statusSelect.innerHTML = ''; // Clear existing options
+  const allowedStatuses = [];
 
-  const allowedStatuses = ['pending']; // For now, only allow "waiting" → "pending"
+  if (booking.status === 'waiting') {
+    allowedStatuses.push('pending', 'admin cancelled');
+  } else if (booking.status === 'pending') {
+    allowedStatuses.push('pending checkin', 'admin cancelled');
+  }
+
+  statusSelect.innerHTML = '<option value="">-- Select --</option>';
+
+  const statusLabels = {
+    'pending': 'Pending (Proceed to Payment)',
+    'pending checkin': 'Pending Check-in (Payment Done)',
+    'admin cancelled': 'Cancelled by Admin'
+  };
+
   allowedStatuses.forEach(status => {
     const opt = document.createElement('option');
     opt.value = status;
-    opt.textContent = status;
+    opt.textContent = statusLabels[status] || status;
     statusSelect.appendChild(opt);
   });
 
-  // If current status is 'waiting', show room no input
   const roomNoGroup = document.getElementById('modal_roomno_group');
   roomNoGroup.style.display = booking.status === 'waiting' ? 'block' : 'none';
 
-  // Show modal
   document.getElementById('roomUpdateModal').style.display = 'block';
 }
 
-// Close modal handler
 document.getElementById('closeRoomModal').addEventListener('click', () => {
   document.getElementById('roomUpdateModal').style.display = 'none';
+});
+
+document.getElementById('roomStatusForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const bookingid = document.getElementById('modal_bookingid').value;
+  const status = document.getElementById('modal_status').value;
+  const description = document.getElementById('modal_description').value;
+
+  if (!bookingid || !status) {
+    alert("Missing booking ID or status.");
+    return;
+  }
+
+  // Save filters before update
+  const filters = {
+    start_date: document.getElementById('start_date').value,
+    end_date: document.getElementById('end_date').value,
+    report_type: document.getElementById('report_type').value,
+    statuses: Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value),
+    scrollTop: window.scrollY
+  };
+  sessionStorage.setItem('roomReportFilters', JSON.stringify(filters));
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/stay/update_booking_status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ bookingid, status, description })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      document.getElementById('roomUpdateModal').style.display = 'none';
+      showSuccessMessage(result.message || "Booking updated successfully.");
+      window.location.reload(); // filters will restore on load
+    } else {
+      showErrorMessage(result.message || "Failed to update booking.");
+    }
+  } catch (err) {
+    console.error("Update failed:", err);
+    showErrorMessage("Error while updating booking.");
+  }
 });
