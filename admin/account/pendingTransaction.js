@@ -50,6 +50,7 @@ const populateTable = (transactions) => {
       <td>${tx.checkout}</td>
       <td>${tx.amount}</td>
       <td>${tx.discount}</td>
+      <td>${tx.description}</td>
       <td>${tx.status}</td>
       <td>${tx.razorpay_order_id}</td>
       <td>${tx.bookedBy_cardno}</td>
