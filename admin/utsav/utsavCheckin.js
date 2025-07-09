@@ -83,11 +83,11 @@ document.addEventListener('DOMContentLoaded', function () {
      console.log('Sending check-in request for cardno:', cardno);
     resetAlert();
 
-    const token = sessionStorage.getItem('token');
-    if (!token || token.split('.').length !== 3) {
-      showErrorMessage('⚠️ Not authenticated. Please log in.');
-      return;
-    }
+    // const token = sessionStorage.getItem('token');
+    // if (!token || token.split('.').length !== 3) {
+    //   showErrorMessage('⚠️ Not authenticated. Please log in.');
+    //   return;
+    // }
 
     showInfoMessage('Processing check-in...');
 console.log('🔥 About to call fetch:', `${CONFIG.basePath}/utsav/utsavCheckin`);
