@@ -14,7 +14,7 @@
 //     });
 //   }
 
-//   // SEARCH with highlight
+//   // SEARCH with highlight (skips <a> and <button>)
 //   if (searchBoxId) {
 //     const searchInput = document.getElementById(searchBoxId);
 //     searchInput.addEventListener('input', function () {
@@ -27,6 +27,8 @@
 //       });
 
 //       table.querySelectorAll('td').forEach(cell => {
+//         if (cell.querySelector('a') || cell.querySelector('button')) return; // ✅ Skip anchor/button
+
 //         const raw = cell.textContent;
 //         cell.innerHTML = raw;
 //         if (filter && raw.toLowerCase().includes(filter)) {
@@ -149,6 +151,7 @@
 //   });
 // }
 
+
 window.enhanceTable = function(tableId, searchBoxId = null) {
   const table = document.getElementById(tableId);
   const tbody = table.querySelector('tbody');
@@ -193,12 +196,16 @@ window.enhanceTable = function(tableId, searchBoxId = null) {
   }
 
   headers.forEach((th, colIndex) => {
-    const originalText = th.innerText;
-    if (!originalText.trim()) return;
+    // ✅ Skip if already enhanced
+    if (th.querySelector('.enhanced-header')) return;
 
-    th.innerText = ''; // Clear header
+    const originalText = th.innerText.trim();
+    if (!originalText) return;
+
+    th.innerHTML = ''; // Clear header content once
 
     const wrapper = document.createElement('div');
+    wrapper.classList.add('enhanced-header'); // ✅ Tag for duplicate check
     wrapper.style.display = 'flex';
     wrapper.style.flexDirection = 'column';
     wrapper.style.alignItems = 'center';
