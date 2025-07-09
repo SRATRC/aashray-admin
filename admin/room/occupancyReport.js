@@ -53,9 +53,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 const setupDownloadButton = () => {
   document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+
+  const flattenedData = occupancy.map((booking, index) => ({
+    SNo: index + 1,
+    BookingID: booking.bookingid,
+    Name: booking.CardDb?.issuedto || '',
+    Mobile: booking.CardDb?.mobno || '',
+    Center: booking.CardDb?.center || '',
+    RoomNo: booking.roomno,
+    RoomType: booking.roomtype,
+    Checkin: formatDate(booking.checkin),
+    Checkout: formatDate(booking.checkout),
+    Nights: booking.nights,
+    BookedBy: booking.bookedBy || 'Self'
+  }));
+
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => occupancy,
+    getData: () => flattenedData,
     fileName: 'occupancyReport.xlsx',
     sheetName: 'Occupancy Report'
   });
