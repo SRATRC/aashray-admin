@@ -260,9 +260,11 @@ const fetchTransactionDetails = async (razorpay_order_id, parentRow) => {
                 <th>Quantity</th>
                 <th>Checkin Date</th>
                 <th>Checkout Date</th>
+                <th>RA Id</th>
                 <th>Amount</th>
                 <th>Received in bank on</th>
                 <th>Selltement id</th>
+                <th>Description/Admin Comments</th>
                 <th>Status</th>
                 <th>Booked By (Card No)</th>
                 <th>Booked By (Name)</th>
@@ -284,9 +286,11 @@ const fetchTransactionDetails = async (razorpay_order_id, parentRow) => {
                       <td>${txn.quantity || ''}</td>
                       <td>${txn.checkin}</td>
                       <td>${txn.checkout}</td>
+                      <td>${txn.shibir_comments}</td>
                       <td>${txn.amount}</td>
                       <td>${formatDateTime(txn.settlementDate)}</td>
                       <td>${txn.settlement_id}</td>
+                      <td>${txn.description}</td>
                       <td>${txn.status}</td>
                       <td>${txn.bookedBy_cardno}</td>
                       <td>${txn.bookedBy_issuedto}</td>
@@ -388,9 +392,11 @@ async function exportFullReportWithTransactions() {
           quantity: tx.quantity,
           checkin: tx.checkin,
           checkout: tx.checkout,
+          shibir_comments: tx.shibir_comments,
           amount: tx.amount,
           settlementDate: tx.settlementDate,
           settlement_id: tx.settlement_id,
+          description: tx.description,
           status: tx.status,
           bookedByCardNo: tx.bookedBy_cardno,
           bookedByName: tx.bookedBy_issuedto,
@@ -462,9 +468,11 @@ async function exportFullReportWithTransactions() {
         'Quantity',
         'Checkin Date',
         'Checkout Date',
+        'RA Id',
         'Amount',
         'Received in bank on',
         'Settlement id',
+        'Description/Admin Comments',
         'Status',
         'Booked By (Card No)',
         'Booked By (Name)',
@@ -488,9 +496,11 @@ async function exportFullReportWithTransactions() {
         tx.quantity,
         tx.checkin,
         tx.checkout,
+        tx.shibir_comments,
         tx.amount,
         tx.settlementDate,
         tx.settlement_id,
+        tx.description,
         tx.status,
         tx.bookedByCardNo,
         tx.bookedByName,

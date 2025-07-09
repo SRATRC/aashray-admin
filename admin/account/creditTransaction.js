@@ -50,7 +50,10 @@ const populateTable = (transactions) => {
       <td>${tx.checkout}</td>
       <td>${tx.amount}</td>
       <td>${tx.discount}</td>
+      <td>${tx.description}</td>
       <td>${tx.status}</td>
+      <td>${formatDateTime(tx.createdAt)}</td>
+      <td>${formatDateTime(tx.updatedAt)}</td>
       <td>${tx.razorpay_order_id}</td>
       <td>${tx.bookedBy_cardno}</td>
       <td>${tx.bookedBy_issuedto}</td>
@@ -110,3 +113,25 @@ window.addEventListener('DOMContentLoaded', () => {
   const filterBtn = document.getElementById('filterBtn');
   filterBtn.parentNode.appendChild(clearBtn);
 });
+
+
+function formatDateTime(dateInput) {
+  if (!dateInput) return '-';
+
+  try {
+    const dateObj = new Date(dateInput);
+
+    return dateObj.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', ''); // Optional: remove comma between date & time
+  } catch (err) {
+    console.error('Invalid date format:', dateInput);
+    return '-';
+  }
+}
