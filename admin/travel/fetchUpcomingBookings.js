@@ -122,41 +122,29 @@ if (dropRC) searchParams.append('dropRC', true);
         const normalize = str => (str || "").toLowerCase().trim().replace(/\s+/g, ' ');
 
 const mumbaiPoints = new Set([
-  'dadar',
-  'dadar (swami narayan temple)',
-  'dadar (swaminarayan temple)',
-  'amar mahal',
-  'airoli',
-  'borivali',
-  'vile parle (sahara star)',
-  'airport terminal 1',
-  'airport terminal 2',
-  'railway station (bandra terminus)',
-  'railway station (kurla terminus)',
-  'railway station (ltt - kurla)',
-  'railway station (csmt)',
-  'railway station (mumbai central)',
-  'mulund',
-  'airport t1',
-  'airport t2',
-  'other',
-  'vile parle (sahara star hotel)',
-  'full car booking',
-  'dadar (pritam hotel)'
+  'dadar', 'dadar (swami narayan temple)', 'dadar (swaminarayan temple)', 'amar mahal',
+            'airoli', 'borivali', 'vile parle (sahara star)', 'airport terminal 1', 'airport terminal 2',
+            'railway station (bandra terminus)', 'railway station (kurla terminus)', 'railway station (ltt - kurla)',
+            'railway station (csmt)', 'railway station (mumbai central)', 'mullund', 'mulund',
+            'airport t1', 'airport t2', 'other', 'other (enter location in comments)',
+            'railway station (ltt - kurla)', 'vile parle (sahara star hotel)', 'full car booking',
+            'dadar (pritam hotel)','borivali (indraprasth shopping centre)','dadar (pritam da dhaba)','mulund (sarvoday nagar)'
 ]);
 
 travelReport.forEach((b, index) => {
   const pickup = normalize(b.pickup_point);
-  const drop = normalize(b.drop_point);
+const drop = normalize(b.drop_point);
 
-  let travellingFrom = "Unknown";
-  if (mumbaiPoints.has(pickup)) {
-    travellingFrom = "Mumbai to Research Centre";
-  } else if (mumbaiPoints.has(drop)) {
-    travellingFrom = "Research Centre to Mumbai";
-  } else if (b.center) {
-    travellingFrom = `From ${b.center}`;
-  }
+let travellingFrom = "";
+
+if (mumbaiPoints.has(pickup)) {
+  travellingFrom = "Mumbai to Research Centre";
+} else if (mumbaiPoints.has(drop)) {
+  travellingFrom = "Research Centre to Mumbai";
+} else {
+  travellingFrom = ""; // No fallback, nothing shown
+}
+
 
   const rowStyle = travellingFrom === "Research Centre to Mumbai" ? 'background-color: #ffff99;' : "";
 
