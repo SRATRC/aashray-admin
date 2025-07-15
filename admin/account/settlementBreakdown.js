@@ -1,203 +1,170 @@
+
 document.addEventListener('DOMContentLoaded', () => {
-  // your code here, including defining settlementListElement and the functions
-document.getElementById('exportFullReportBtn')?.addEventListener('click', exportFullReportWithTransactions);
+  document.getElementById('exportFullReportBtn')?.addEventListener('click', exportFullReportWithTransactions);
 
+  const settlementListElement = document.getElementById('settlementList')?.querySelector('tbody');
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
+  const filterBtn = document.getElementById('filterBtn');
 
-const settlementListElement = document.getElementById('settlementList')?.querySelector('tbody');
-const startDateInput = document.getElementById('startDate');
-const endDateInput = document.getElementById('endDate');
-const filterBtn = document.getElementById('filterBtn');
-// Insert the Clear button next to Filter
-const clearBtn = document.createElement('button');
-clearBtn.textContent = 'Clear';
-clearBtn.id = 'clearBtn';
-clearBtn.type = 'button';
-clearBtn.className = 'btn btn-update';
-clearBtn.style.marginLeft = '10px';
-filterBtn.parentNode.appendChild(clearBtn);
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Clear';
+  clearBtn.id = 'clearBtn';
+  clearBtn.type = 'button';
+  clearBtn.className = 'btn btn-update';
+  clearBtn.style.marginLeft = '10px';
+  filterBtn.parentNode.appendChild(clearBtn);
 
-const setDefaultDates = () => {
-  const today = new Date();
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 6);
-
-  startDateInput.value = sevenDaysAgo.toISOString().split('T')[0];
-  endDateInput.value = today.toISOString().split('T')[0];
-};
-const setInitialMessage = () => {
-  settlementListElement.innerHTML = `
-    <tr>
-      <td colspan="8" style="text-align:center;">Select date range for which you want data.</td>
-    </tr>
-  `;
-};
-
-const fetchSettlementList = async () => {
-  console.log('Fetching Settlement data...');
-
-  const startDate = document.getElementById('startDate')?.value;
-  const endDate = document.getElementById('endDate')?.value;
-
-  const queryParams = new URLSearchParams();
-  
-  if (startDate && endDate) {
-    queryParams.append('startDate', startDate);
-    queryParams.append('endDate', endDate);
-  }
-  
-if (!startDate || !endDate) {
-    alert('Please select both start and end date.');
-    return;
-  }
-
-  const options = {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${sessionStorage.getItem('token')}`
-    }
+  const setDefaultDates = () => {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    startDateInput.value = sevenDaysAgo.toISOString().split('T')[0];
+    endDateInput.value = today.toISOString().split('T')[0];
   };
 
-  try {
-    const response = await fetch(
-      `${CONFIG.basePath}/accounts/fetchset?${queryParams.toString()}`,
-      options
-    );
-    const settlementData = await response.json();
-    console.log('Settlement Data received:', settlementData);
-    populateTable(settlementData);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
-};
-
-const populateTable = (data) => {
-  settlementListElement.innerHTML = ''; // Clear existing rows
-
-  if (!Array.isArray(data) || data.length === 0) {
-    settlementListElement.innerHTML =
-      '<tr><td colspan="7" style="text-align:center;">No data available</td></tr>';
-    return;
-  }
-
-  data.forEach((item, index) => {
-    const tableRow = document.createElement('tr');
-
-    tableRow.innerHTML = `
-      <td>${index + 1}</td>
-      <td style="text-align:center;">
-          <a href="#" class="settlement-link" data-id="${item.id}">${item.id}</a>
-      </td>
-      <td style="text-align:center;">${item.amount}</td>
-      <td style="text-align:center;">${item.status}</td>
-      <td style="text-align:center;">${item.fees}</td>
-      <td style="text-align:center;">${item.tax}</td>
-      <td style="text-align:center;">${item.utr}</td>
-      <td style="text-align:center;">${formatDateTime(item.cerated_at)}</td>
+  const setInitialMessage = () => {
+    settlementListElement.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center;">Select date range for which you want data.</td>
+      </tr>
     `;
+  };
 
-    settlementListElement.appendChild(tableRow);
-  });
-  enhanceTable('settlementList', 'tableSearch');
- // Before rendering, clear any existing button inside the container
-const downloadBtnContainer = document.querySelector('#downloadExcelBtnContainer');
-if (downloadBtnContainer) {
-  downloadBtnContainer.innerHTML = ''; // Clear previous button if any
-}
+  const fetchSettlementList = async () => {
+    const startDate = startDateInput?.value;
+    const endDate = endDateInput?.value;
 
-renderDownloadButton({
-  selector: '#downloadExcelBtnContainer',
-  getData: () => data,
-  fileName: 'SettlementBreakdown.xlsx',
-  sheetName: 'SettlementBreakdownReport',
-  className: 'btn btn-success'
-});
-
-
-
-  // Add click listeners for each settlement link
-  document.querySelectorAll('.settlement-link').forEach((link) => {
-    link.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const settlementId = e.target.dataset.id;
-      await fetchAndShowTransactions(settlementId, e.target.closest('tr'));
-    });
-  });
-};
-
-// Attach filter button handler
-document.getElementById('filterBtn')?.addEventListener('click', fetchSettlementList);
-
-clearBtn.addEventListener('click', () => {
-  startDateInput.value = '';
-  endDateInput.value = '';
-  setInitialMessage();
-});
-
-// Initial load
-fetchSettlementList();
-setDefaultDates();
-setInitialMessage();
-
-const fetchAndShowTransactions = async (settlementId, parentRow) => {
-  try {
-    const response = await fetch(`${CONFIG.basePath}/accounts/fetchTransactions/${settlementId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`);
-    }
-
-    const result = await response.json();
-    const transactions = result.data || [];
-
-    const existing = parentRow.nextSibling;
-    if (existing && existing.classList.contains('transaction-row')) {
-      existing.remove();
+    if (!startDate || !endDate) {
+      alert('Please select both start and end date.');
       return;
     }
 
-    const tr = document.createElement('tr');
-    tr.classList.add('transaction-row');
-    tr.innerHTML = `
-      <td colspan="8">
-        <table style="width:100%; border:1px solid #ccc; margin-top:10px;">
-          <thead>
-            <tr>
-              <th>Razorpay Order ID</th>
-              <th>No of Transactions</th>
-              <th>Total Amount</th>
-              <th>Total Discount (Credits Used)</th>
-              <th>Total Fees</th>
-              <th>Total Tax</th>
-              <th>Total Credit Amount</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${
-              transactions.length > 0
-                ? transactions
-                    .map((txn) => {
-                      const isReconOnly = txn.source === 'Satshrut Transaction';
+    const queryParams = new URLSearchParams({ startDate, endDate });
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/accounts/fetchset?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+
+      const settlementData = await response.json();
+      populateTable(settlementData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const populateTable = (data) => {
+    settlementListElement.innerHTML = '';
+
+    if (!Array.isArray(data) || data.length === 0) {
+      settlementListElement.innerHTML = '<tr><td colspan="8" style="text-align:center;">No data available</td></tr>';
+      return;
+    }
+
+    data.forEach((item, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td style="text-align:center;"><a href="#" class="settlement-link" data-id="${item.id}">${item.id}</a></td>
+        <td style="text-align:center;">${item.amount}</td>
+        <td style="text-align:center;">${item.status}</td>
+        <td style="text-align:center;">${item.fees}</td>
+        <td style="text-align:center;">${item.tax}</td>
+        <td style="text-align:center;">${item.utr}</td>
+        <td style="text-align:center;">${formatDateTime(item.cerated_at)}</td>
+      `;
+      settlementListElement.appendChild(row);
+    });
+
+    enhanceTable('settlementList', 'tableSearch');
+
+    const btnContainer = document.querySelector('#downloadExcelBtnContainer');
+    if (btnContainer) btnContainer.innerHTML = '';
+
+    renderDownloadButton({
+      selector: '#downloadExcelBtnContainer',
+      getData: () => data,
+      fileName: 'SettlementBreakdown.xlsx',
+      sheetName: 'SettlementBreakdownReport',
+      className: 'btn btn-success'
+    });
+
+    document.querySelectorAll('.settlement-link').forEach((link) => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const id = e.target.dataset.id;
+        await fetchAndShowTransactions(id, e.target.closest('tr'));
+      });
+    });
+  };
+
+  clearBtn.addEventListener('click', () => {
+    startDateInput.value = '';
+    endDateInput.value = '';
+    setInitialMessage();
+  });
+
+  document.getElementById('filterBtn')?.addEventListener('click', fetchSettlementList);
+
+  fetchSettlementList();
+  setDefaultDates();
+  setInitialMessage();
+
+  const fetchAndShowTransactions = async (settlementId, parentRow) => {
+    try {
+      const res = await fetch(`${CONFIG.basePath}/accounts/fetchTransactions/${settlementId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const result = await res.json();
+      const transactions = result.data || [];
+
+      const existing = parentRow.nextSibling;
+      if (existing?.classList.contains('transaction-row')) {
+        existing.remove();
+        return;
+      }
+
+      const tr = document.createElement('tr');
+      tr.classList.add('transaction-row');
+      tr.innerHTML = `
+        <td colspan="8">
+          <table style="width:100%; border:1px solid #ccc; margin-top:10px;">
+            <thead>
+              <tr>
+                <th>Razorpay Order ID</th>
+                <th>No of Transactions</th>
+                <th>Total Amount</th>
+                <th>Total Discount (Credits Used)</th>
+                <th>Total Fees</th>
+                <th>Total Tax</th>
+                <th>Total Credit Amount</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                transactions.length > 0
+                  ? transactions.map(txn => {
+                      const isSatshrut = txn.source === 'Satshrut Transaction';
                       return `
-                        <tr${isReconOnly ? ' style="background-color:#fffbe6;"' : ''}>
+                        <tr${isSatshrut ? ' style="background-color:#fffbe6;"' : ''}>
                           <td>${txn.razorpay_order_id}</td>
                           <td style="text-align:center;">
-                            ${
-                              isReconOnly
-                                ? txn.transactionCount
-                                : `<a href="#" class="txn-count-link" data-paymentid="${txn.razorpay_order_id}">
-                                    ${txn.transactionCount}
-                                  </a>`
-                            }
+                            <a href="#" class="txn-count-link" data-paymentid="${txn.razorpay_order_id}">
+  ${txn.transactionCount}
+</a>
+
                           </td>
-                          <td>${txn.totalAmount !== null ? parseFloat(txn.totalAmount).toFixed(2) : '-'}</td>
+                          <td>${txn.totalAmount?.toFixed(2) ?? '-'}</td>
                           <td>${parseFloat(txn.totalDiscount).toFixed(2)}</td>
                           <td>${parseFloat(txn.totalFees || 0).toFixed(2)}</td>
                           <td>${parseFloat(txn.totalTax || 0).toFixed(2)}</td>
@@ -205,123 +172,134 @@ const fetchAndShowTransactions = async (settlementId, parentRow) => {
                           <td>${txn.source}</td>
                         </tr>
                       `;
-                    })
-                    .join('')
-                : '<tr><td colspan="7" style="text-align:center;">No transactions found</td></tr>'
-            }
-          </tbody>
-        </table>
-      </td>
-    `;
-
-    parentRow.parentNode.insertBefore(tr, parentRow.nextSibling);
-
-    // Add click listeners for valid txn rows only (not recon-only)
-    tr.querySelectorAll('.txn-count-link').forEach((link) => {
-      link.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const paymentId = e.target.dataset.paymentid;
-        await fetchTransactionDetails(paymentId, tr);
-      });
-    });
-
-  } catch (err) {
-    console.error('Error fetching transactions:', err);
-    alert('Unable to load transaction details.');
-  }
-};
-
-const fetchTransactionDetails = async (razorpay_order_id, parentRow) => {
-  try {
-    const response = await fetch(`${CONFIG.basePath}/accounts/fetchTransactions/payment/${razorpay_order_id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      }
-    });
-
-    if (!response.ok) throw new Error('Server Error');
-
-    const result = await response.json();
-    const transactions = result.data || [];
-
-    const detailRow = document.createElement('tr');
-    detailRow.classList.add('txn-details-row');
-    detailRow.innerHTML = `
-      <td colspan="8">
-        <div style="margin-top:10px;">
-          <h4>Transaction Details for ${razorpay_order_id}</h4>
-          <table style="width:100%; border:1px solid #ddd;">
-            <thead>
-              <tr>
-                <th>Booking ID</th>
-                <th>Category</th>
-                <th>Quantity</th>
-                <th>Checkin Date</th>
-                <th>Checkout Date</th>
-                <th>RA Id</th>
-                <th>Amount</th>
-                <th>Received in bank on</th>
-                <th>Selltement id</th>
-                <th>Description/Admin Comments</th>
-                <th>Status</th>
-                <th>Booked By (Card No)</th>
-                <th>Booked By (Name)</th>
-                <th>Booked For (Name)</th>
-                <th>Booked By (Address)</th>
-                <th>Booked By (Email)</th>
-                <th>Booked By (Mobile)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${
-                transactions.length > 0
-                  ? transactions
-                      .map(
-                        (txn) => `
-                    <tr>
-                      <td>${txn.bookingid}</td>
-                      <td>${txn.category}</td>
-                      <td>${txn.quantity || ''}</td>
-                      <td>${txn.checkin}</td>
-                      <td>${txn.checkout}</td>
-                      <td>${txn.shibir_comments}</td>
-                      <td>${txn.amount}</td>
-                      <td>${formatDateTime(txn.settlementDate)}</td>
-                      <td>${txn.settlement_id}</td>
-                      <td>${txn.description}</td>
-                      <td>${txn.status}</td>
-                      <td>${txn.bookedBy_cardno}</td>
-                      <td>${txn.bookedBy_issuedto}</td>
-                      <td>${txn.bookedFor_issuedto}</td>
-                      <td>${txn.bookedBy_address}</td>
-                      <td>${txn.bookedBy_email}</td>
-                      <td>${txn.bookedBy_mobno}</td>
-                    </tr>`
-                      )
-                      .join('')
-                  : '<tr><td colspan="11" style="text-align:center;">No transaction records</td></tr>'
+                    }).join('')
+                  : '<tr><td colspan="8" style="text-align:center;">No transactions found</td></tr>'
               }
             </tbody>
           </table>
-        </div>
-      </td>
-    `;
+        </td>
+      `;
+      parentRow.parentNode.insertBefore(tr, parentRow.nextSibling);
 
-    const existing = parentRow.nextSibling;
-    if (existing && existing.classList.contains('txn-details-row')) {
-      existing.remove();
-    } else {
-      parentRow.parentNode.insertBefore(detailRow, parentRow.nextSibling);
+      tr.querySelectorAll('.txn-count-link').forEach((link) => {
+        link.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const paymentId = e.target.dataset.paymentid;
+          await fetchTransactionDetails(paymentId, tr);
+        });
+      });
+
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      alert('Unable to load transaction details.');
     }
-  } catch (error) {
-    console.error('Error loading transaction details:', error);
-    alert('Could not load detailed transactions.');
-  }
-};
+  };
 
-async function exportFullReportWithTransactions() {
+  const fetchTransactionDetails = async (razorpay_order_id, parentRow) => {
+    try {
+      const response = await fetch(`${CONFIG.basePath}/accounts/fetchTransactions/payment/${razorpay_order_id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+
+      const result = await response.json();
+      const transactions = result.data || [];
+
+      const detailRow = document.createElement('tr');
+      detailRow.classList.add('txn-details-row');
+      detailRow.innerHTML = `
+        <td colspan="8">
+          <div style="margin-top:10px;">
+            <h4>Transaction Details for ${razorpay_order_id}</h4>
+            <table style="width:100%; border:1px solid #ddd;">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Category</th>
+                  <th>Quantity</th>
+                  <th>Checkin Date</th>
+                  <th>Checkout Date</th>
+                  <th>RA Id</th>
+                  <th>Amount</th>
+                  <th>Received in bank on</th>
+                  <th>Settlement id</th>
+                  <th>Description/Admin Comments</th>
+                  <th>Status</th>
+                  <th>Booked By (Card No)</th>
+                  <th>Booked By (Name)</th>
+                  <th>Booked For (Name)</th>
+                  <th>Booked By (Address)</th>
+                  <th>Booked By (Email)</th>
+                  <th>Booked By (Mobile)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  transactions.length > 0
+                    ? transactions.map(txn => `
+                        <tr${txn.category === 'satshrut' ? ' style="background-color:#fffbe6;"' : ''}>
+                          <td>${txn.bookingid}</td>
+                          <td>${txn.category}</td>
+                          <td>${txn.quantity ?? ''}</td>
+                          <td>${txn.checkin}</td>
+                          <td>${txn.checkout}</td>
+                          <td>${txn.shibir_comments}</td>
+                          <td>${txn.amount}</td>
+                          <td>${formatDateTime(txn.settlementDate)}</td>
+                          <td>${txn.settlement_id}</td>
+                          <td>${txn.description}</td>
+                          <td>${txn.status}</td>
+                          <td>${txn.bookedBy_cardno}</td>
+                          <td>${txn.bookedBy_issuedto}</td>
+                          <td>${txn.category === 'satshrut' ? '-' : txn.bookedFor_issuedto}</td>
+                          <td>${txn.bookedBy_address}</td>
+                          <td>${txn.bookedBy_email}</td>
+                          <td>${txn.bookedBy_mobno}</td>
+                        </tr>
+                      `).join('')
+                    : '<tr><td colspan="17" style="text-align:center;">No transaction records</td></tr>'
+                }
+              </tbody>
+            </table>
+          </div>
+        </td>
+      `;
+
+      const existing = parentRow.nextSibling;
+      if (existing?.classList.contains('txn-details-row')) {
+        existing.remove();
+      } else {
+        parentRow.parentNode.insertBefore(detailRow, parentRow.nextSibling);
+      }
+
+    } catch (err) {
+      console.error('Error loading transaction details:', err);
+      alert('Could not load detailed transactions.');
+    }
+  };
+
+  function formatDateTime(input) {
+    if (!input) return '-';
+    try {
+      const d = new Date(input);
+      return d.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).replace(',', '');
+    } catch {
+      return '-';
+    }
+  }
+
+  // exportFullReportWithTransactions() remains unchanged
+  async function exportFullReportWithTransactions() {
   const startDate = startDateInput.value;
   const endDate = endDateInput.value;
 
@@ -531,28 +509,4 @@ async function exportFullReportWithTransactions() {
     alert('Error exporting full report');
   }
 }
-
-
 });
-
-
-function formatDateTime(dateInput) {
-  if (!dateInput) return '-';
-
-  try {
-    const dateObj = new Date(dateInput);
-
-    return dateObj.toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).replace(',', ''); // Optional: remove comma between date & time
-  } catch (err) {
-    console.error('Invalid date format:', dateInput);
-    return '-';
-  }
-}
