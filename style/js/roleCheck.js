@@ -3,7 +3,7 @@ function checkRoleAccess(allowedRoles) {
   const userToken =
     sessionStorage.getItem('token') || localStorage.getItem('token');
   if (!userToken) {
-    window.location.href = '/admin/index.html';
+    window.location.href = '/admin/index.html'; // Login page
     return;
   }
 
@@ -28,27 +28,28 @@ function checkRoleAccess(allowedRoles) {
       accountsAdmin: '/admin/account/index.html',
       gateAdmin: '/admin/gate/index.html',
       avtAdmin: '/admin/avt/index.html',
+      wifiAdmin: '/admin/wifi/index.html',
       maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
       housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
       electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
     };
 
     // Find the first matching role's page
-    let redirectUrl = '/admin/adminhome.html'; // fallback
     for (const role of roles) {
       if (roleRedirectMap[role]) {
-        redirectUrl = roleRedirectMap[role];
-        break;
+        alert(
+          'You are not authorized to access this page.\nRedirecting you to your assigned page...'
+        );
+        setTimeout(() => {
+          window.location.href = roleRedirectMap[role];
+        });
+        return;
       }
     }
 
-    // Show alert and delay redirect
-    alert(
-      'You are not authorized to access this page.\nRedirecting you to your assigned page...'
-    );
-    setTimeout(() => {
-      window.location.href = redirectUrl;
-    });
+    // No matching role found, force logout
+    alert('You are not authorized to access any admin section. Logging out.');
+    logout();
   }
 }
 
@@ -96,6 +97,7 @@ function getHomePageForRole() {
     accountsAdmin: '/admin/account/index.html',
     gateAdmin: '/admin/gate/index.html',
     avtAdmin: '/admin/avt/index.html',
+    wifiAdmin: '/admin/wifi/index.html',
     maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
     housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
     electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
@@ -105,10 +107,15 @@ function getHomePageForRole() {
     if (roleRedirectMap[role]) return roleRedirectMap[role];
   }
 
-  return '/admin/adminhome.html'; // fallback
+  return null; // ❌ No valid role found
 }
 
 function goToHome() {
   const homePage = getHomePageForRole();
-  window.location.href = homePage;
+  if (homePage) {
+    window.location.href = homePage;
+  } else {
+    alert('No valid home page found for your roles. Logging out.');
+    logout();
+  }
 }
