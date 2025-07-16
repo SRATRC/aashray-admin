@@ -1,40 +1,3 @@
-// function login(event) {
-//   event.preventDefault();
-
-//   var usernameElement = document.getElementById('username');
-//   var username = usernameElement.value;
-
-//   var passwordElement = document.getElementById('password');
-//   var password = passwordElement.value;
-
-//   const options = {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//       'Access-Control-Allow-Origin': 'http://localhost:5173',
-//       'Access-Control-Allow-Methods': 'GET, POST, PUT',
-//       'Access-Control-Allow-Headers': 'Content-Type'
-//     },
-//     body: JSON.stringify({
-//       username: username,
-//       password: password
-//     })
-//   };
-//   fetch(
-//     `${CONFIG.basePath}/auth/login`,
-//     options
-//   )
-//     .then((response) => response.json())
-//     .then((data) => {
-//       sessionStorage.setItem('token', data.token);
-//       sessionStorage.setItem('roles', data.roles);
-      
-//       window.location.pathname.replace(/\/$/, '');
-//       window.location.href = '/admin/adminhome.html';
-//     })
-//     .catch((error) => console.error(error));
-// }
-
 function login(event) {
   event.preventDefault();
 
@@ -44,8 +7,7 @@ function login(event) {
   const options = {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      // These CORS headers should be handled by the backend; they aren't needed in frontend fetch
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({ username, password })
   };
@@ -57,52 +19,41 @@ function login(event) {
     })
     .then((data) => {
       sessionStorage.setItem('token', data.token);
-      sessionStorage.setItem('roles', JSON.stringify(data.roles)); // ✅ Store as JSON string
+      sessionStorage.setItem('roles', JSON.stringify(data.roles));
 
       const roles = data.roles;
 
-      // ✅ Redirect based on roles
-      if (roles.includes('superAdmin')) {
-        window.location.href = '/admin/adminhome.html';
-      } else if (roles.includes('accountsAdmin')) {
-        window.location.href = '/admin/account/index.html';
-      } else if (roles.includes('roomAdmin')) {
-        window.location.href = '/admin/room/index.html';
-      } else if (roles.includes('cardAdmin')) {
-        window.location.href = '/admin/card/index.html';
-      } else if (roles.includes('officeAdmin')) {
-        window.location.href = '/admin/office_index.html';
-      } else if (roles.includes('foodAdmin')) {
-        window.location.href = '/admin/food/index.html';
-      } else if (roles.includes('gateAdmin')) {
-        window.location.href = '/admin/gate/index.html';
-      } else if (roles.includes('adhyayanAdmin')) {
-        window.location.href = '/admin/adhyayan/index.html';
-      } else if (roles.includes('travelAdmin')) {
-        window.location.href = '/admin/travel/index.html';
-      } else if (roles.includes('maintenanceAdmin')) {
-        window.location.href = '/admin/maintenance/maintenance.html?department=maintenance';
-      } else if (roles.includes('housekeepingAdmin')) {
-        window.location.href = '/admin/maintenance/maintenance.html?department=housekeeping';
-      } else if (roles.includes('electricalAdmin')) {
-        window.location.href = '/admin/maintenance/maintenance.html?department=electrical';
-      } else if (roles.includes('utsavAdmin')) {
-        window.location.href = '/admin/utsav/index.html';
-      } else if (roles.includes('travelAdminDri')) {
-        window.location.href = '/admin/travel/fetchBookingsForDriver.html';
-      } else if (roles.includes('travelAdminDri')) {
-        window.location.href = '/admin/travel/fetchBookingsForDriver.html';
-      } else if (roles.includes('adhyayanAdminKol')) {
-        window.location.href = '/admin/adhyayan/kolkataAdhyayanReport.html';
-      } else if (roles.includes('adhyayanAdminRaj')) {
-        window.location.href = '/admin/adhyayan/rajnandgaonAdhyayanReport.html';
-      } else if (roles.includes('adhyayanAdminDhu')) {
-        window.location.href = '/admin/adhyayan/dhuleAdhyayanReport.html';
-      } else if (roles.includes('avtAdmin')) {
-        window.location.href = '/admin/avt/index.html';
-      } else {
-        window.location.href = '/admin/adminhome.html'; // fallback
+      const roleRedirectMap = {
+        superAdmin: '/admin/adminhome.html',
+        accountsAdmin: '/admin/account/index.html',
+        roomAdmin: '/admin/room/index.html',
+        cardAdmin: '/admin/card/index.html',
+        officeAdmin: '/admin/office_index.html',
+        foodAdmin: '/admin/food/index.html',
+        gateAdmin: '/admin/gate/index.html',
+        adhyayanAdmin: '/admin/adhyayan/index.html',
+        travelAdmin: '/admin/travel/index.html',
+        travelAdminDri: '/admin/travel/fetchBookingsForDriver.html',
+        maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
+        housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
+        electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical',
+        utsavAdmin: '/admin/utsav/index.html',
+        adhyayanAdminKol: '/admin/adhyayan/kolkataAdhyayanReport.html',
+        adhyayanAdminRaj: '/admin/adhyayan/rajnandgaonAdhyayanReport.html',
+        adhyayanAdminDhu: '/admin/adhyayan/dhuleAdhyayanReport.html',
+        avtAdmin: '/admin/avt/index.html',
+        wifiAdmin: '/admin/wifi/index.html'
+      };
+
+      for (const role of roles) {
+        if (roleRedirectMap[role]) {
+          window.location.href = roleRedirectMap[role];
+          return;
+        }
       }
+
+      // ❌ No recognized roles
+      alert('Login successful, but no valid role assigned. Please contact admin.');
     })
     .catch((error) => {
       console.error('Login failed:', error);

@@ -164,18 +164,20 @@ const filterTransactions = async () => {
 
     const data = await response.json();
     let transactions = data.data || [];
+if (selectedCategory !== 'all') {
+  if (selectedCategory === 'food') {
+    transactions = transactions.filter(tx =>
+      ['food', 'breakfast', 'lunch', 'dinner'].includes(tx.category?.toLowerCase())
+    );
+  } else if (selectedCategory === 'adhyayan') {
+    transactions = transactions.filter(tx => tx.category?.toLowerCase() === 'adhyayan');
+  } else if (selectedCategory === 'utsav') {
+    transactions = transactions.filter(tx => tx.category?.toLowerCase() === 'utsav');
+  } else if (selectedCategory === 'flat') {
+    transactions = transactions.filter(tx => tx.category?.toLowerCase() === 'flat');
+  }
+}
 
-    if (selectedCategory !== 'all') {
-      if (selectedCategory === 'food') {
-        transactions = transactions.filter(tx =>
-          ['breakfast', 'lunch', 'dinner'].includes(tx.category?.toLowerCase())
-        );
-      } else if (selectedCategory !== 'adhyayan' && selectedCategory !== 'utsav') {
-        transactions = transactions.filter(tx =>
-          tx.category?.toLowerCase() === selectedCategory
-        );
-      }
-    }
 
     currentTransactions = transactions;
     populateTable(currentTransactions);
