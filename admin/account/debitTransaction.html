@@ -1,0 +1,110 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['accountsAdmin', 'superAdmin', 'accountsAdminPra']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Details for Credits Usage</title>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="debitTransaction.js" defer></script>
+    <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
+
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Credits Usage Report</h1>
+            </div>
+
+            <div class="form">
+              <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+              <div class="table-responsive">
+                <div class="form-group" style="margin-bottom: 15px;">
+  <!-- Filter Section -->
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+  <label>From: <input type="date" id="startDate" /></label>
+  <label>To: <input type="date" id="endDate" /></label>
+  <button id= "filterBtn" type="button" class="btn btn-update" onclick="filterTransactions()">Filter</button>
+  <div id="downloadBtnContainer"></div>
+</div>
+
+<!-- Table -->
+<table id="transactionsTable" class="table table-striped table-bordered">
+  
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Booking ID</th>
+      <th>Category</th>
+      <th>Quantity</th>
+      <th>Checkin Date</th>
+      <th>Checkout Date</th>
+      <th>Amount Paid</th>
+      <th>Credits Used</th>
+      <th>Credits Remaining</th>
+      <th>Description/Admin Comments</th>
+      <th>Status</th>
+      <th>Booked At</th>
+      <th>Cancelled At</th>
+      <th>Razorpay Order ID</th>
+      <th>BookedBy - Card No</th>
+      <th>BookedBy - Name</th>
+      <th>BookedBy - Address</th>
+      <th>BookedBy - Email</th>
+      <th>BookedBy - Mobile</th>
+      <th>BookedFor - Card No</th>
+      <th>BookedFor - Name</th>
+      <th>BookedFor - Address</th>
+      <th>BookedFor - Email</th>
+      <th>BookedFor - Mobile</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="18" style="text-align: center;">Select date range for which you want data.</td></tr>
+  </tbody>
+</table>
+              <!-- Place this where you want the button -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -87,8 +87,10 @@ enhanceTable('creditsTable', 'tableSearch');
                       <tr>
                         <th>Booking ID</th>
                         <th>Order ID</th>
-                        <th>Amount</th>
+                        <th>Amount Paid</th>
+                        <th>Credits Used</th>
                         <th>Date</th>
+                        <th>Credits available</th>
                         <th>Type</th>
                       </tr>
                     </thead>
@@ -98,18 +100,23 @@ enhanceTable('creditsTable', 'tableSearch');
           let total = 0;
           data.forEach(tx => {
             const isCredit = tx.transaction_type === 'CREDITED';
-            const amt = isCredit ? tx.credited_amount : -1 * tx.discount_used;
-            total += amt;
+            const creditAmt = Number(tx.credited_amount || 0);
+const usedCredits = Number(tx.credits_used || 0);
+const paidAmount = Number(tx.amount_paid || 0);
+total += creditAmt - usedCredits;
 
-            rowsHtml += `
-              <tr>
-                <td>${tx.bookingid}</td>
-                <td>${tx.razorpay_order_id}</td>
-                <td>${amt}</td>
-                <td>${new Date(tx.date).toLocaleString()}</td>
-                <td>${tx.transaction_type}</td>
-              </tr>
-            `;
+rowsHtml += `
+  <tr>
+    <td>${tx.bookingid}</td>
+    <td>${tx.razorpay_order_id || ''}</td>
+    <td>${isCredit ? '-' : paidAmount}</td>
+    <td>${isCredit ? '-' : usedCredits}</td>
+    <td>${new Date(tx.date).toLocaleString()}</td>
+    <td>${total}</td>
+    <td>${tx.transaction_type}</td>
+  </tr>
+`;
+
           });
 
           rowsHtml += `
