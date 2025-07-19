@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/fetchRCadhyayan`,
+        `${CONFIG.basePath}/adhyayan/fetchALLAdhyayan`,
         options
       );
       const adhyayanData = await response.json();
