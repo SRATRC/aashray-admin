@@ -59,11 +59,36 @@
                 <div class="form-group form-submit">
                   <button type="submit" class="btn btn-primary">Login</button>
                 </div>
+                <div class="form-group text-center" style="margin-top: 10px;">
+  <a href="#" onclick="showResetModal()">Forgot Password?</a>
+</div>
+
               </form>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- Reset Password Modal -->
+<div id="resetModal" style="display:none; position:fixed; z-index:9999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+  <div style="background:#fff; padding:20px; margin:100px auto; width:90%; max-width:400px; border-radius:8px; position:relative;">
+    <h3>Reset Password</h3>
+    <form id="resetPasswordForm" onsubmit="resetPassword(event)">
+      <div class="form-group">
+        <label for="resetUsername">Username:</label>
+        <input type="text" id="resetUsername" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" class="form-control" required />
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" onclick="hideResetModal()" class="btn btn-secondary" style="margin-left: 10px;">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
   </body>
 </html>
