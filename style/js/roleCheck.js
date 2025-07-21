@@ -12,45 +12,43 @@ function checkRoleAccess(allowedRoles) {
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
   if (!hasAccess) {
-    const roleRedirectMap = {
-      superAdmin: '/admin/adminhome.html',
-      roomAdmin: '/admin/room/index.html',
-      cardAdmin: '/admin/card/index.html',
-      officeAdmin: '/admin/office_index.html',
-      adhyayanAdmin: '/admin/adhyayan/index.html',
-      adhyayanAdminKol: '/admin/adhyayan/kolkataAdhyayanReport.html',
-      adhyayanAdminRaj: '/admin/adhyayan/rajnandgaonAdhyayanReport.html',
-      adhyayanAdminDhu: '/admin/adhyayan/dhuleAdhyayanReport.html',
-      utsavAdmin: '/admin/utsav/index.html',
-      foodAdmin: '/admin/food/index.html',
-      travelAdmin: '/admin/travel/index.html',
-      travelAdminDri: '/admin/travel/fetchBookingsForDriver.html',
-      accountsAdmin: '/admin/account/index.html',
-      gateAdmin: '/admin/gate/index.html',
-      avtAdmin: '/admin/avt/index.html',
-      wifiAdmin: '/admin/wifi/index.html',
-      maintenanceAdmin:
-        '/admin/maintenance/maintenance.html?department=maintenance',
-      housekeepingAdmin:
-        '/admin/maintenance/maintenance.html?department=housekeeping',
-      electricalAdmin:
-        '/admin/maintenance/maintenance.html?department=electrical'
-    };
+    // Check if user has any valid admin roles
+    const validRoles = [
+      'superAdmin',
+      'accountsAdmin',
+      'roomAdmin',
+      'cardAdmin',
+      'officeAdmin',
+      'foodAdmin',
+      'gateAdmin',
+      'adhyayanAdmin',
+      'travelAdmin',
+      'travelAdminDri',
+      'maintenanceAdmin',
+      'housekeepingAdmin',
+      'electricalAdmin',
+      'utsavAdmin',
+      'adhyayanAdminKol',
+      'adhyayanAdminRaj',
+      'adhyayanAdminDhu',
+      'avtAdmin',
+      'wifiAdmin'
+    ];
 
-    // Find the first matching role's page
-    for (const role of roles) {
-      if (roleRedirectMap[role]) {
-        alert(
-          'You are not authorized to access this page.\nRedirecting you to your assigned page...'
-        );
-        setTimeout(() => {
-          window.location.href = roleRedirectMap[role];
-        });
-        return;
-      }
+    const hasValidRole = roles.some((role) => validRoles.includes(role));
+
+    if (hasValidRole) {
+      // User has valid roles but not for this specific page
+      alert(
+        'You are not authorized to access this page.\nRedirecting you to the admin home page...'
+      );
+      setTimeout(() => {
+        window.location.href = '/admin/adminhome.html';
+      });
+      return;
     }
 
-    // No matching role found, force logout
+    // No valid admin roles found, force logout
     alert('You are not authorized to access any admin section. Logging out.');
     logout();
   }
@@ -64,32 +62,34 @@ function logout() {
 function getHomePageForRole() {
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 
-  const roleRedirectMap = {
-    superAdmin: '/admin/adminhome.html',
-    roomAdmin: '/admin/room/index.html',
-    cardAdmin: '/admin/card/index.html',
-    officeAdmin: '/admin/office_index.html',
-    adhyayanAdmin: '/admin/adhyayan/index.html',
-    adhyayanAdminKol: '/admin/adhyayan/kolkataAdhyayanReport.html',
-    adhyayanAdminRaj: '/admin/adhyayan/rajnandgaonAdhyayanReport.html',
-    adhyayanAdminDhu: '/admin/adhyayan/dhuleAdhyayanReport.html',
-    utsavAdmin: '/admin/utsav/index.html',
-    foodAdmin: '/admin/food/index.html',
-    travelAdmin: '/admin/travel/index.html',
-    travelAdminDri: '/admin/travel/fetchBookingsForDriver.html',
-    accountsAdmin: '/admin/account/index.html',
-    gateAdmin: '/admin/gate/index.html',
-    avtAdmin: '/admin/avt/index.html',
-    wifiAdmin: '/admin/wifi/index.html',
-    maintenanceAdmin:
-      '/admin/maintenance/maintenance.html?department=maintenance',
-    housekeepingAdmin:
-      '/admin/maintenance/maintenance.html?department=housekeeping',
-    electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
-  };
+  // Check if user has any valid roles
+  const validRoles = [
+    'superAdmin',
+    'accountsAdmin',
+    'roomAdmin',
+    'cardAdmin',
+    'officeAdmin',
+    'foodAdmin',
+    'gateAdmin',
+    'adhyayanAdmin',
+    'travelAdmin',
+    'travelAdminDri',
+    'maintenanceAdmin',
+    'housekeepingAdmin',
+    'electricalAdmin',
+    'utsavAdmin',
+    'adhyayanAdminKol',
+    'adhyayanAdminRaj',
+    'adhyayanAdminDhu',
+    'avtAdmin',
+    'wifiAdmin'
+  ];
 
-  for (const role of roles) {
-    if (roleRedirectMap[role]) return roleRedirectMap[role];
+  const hasValidRole = roles.some((role) => validRoles.includes(role));
+
+  if (hasValidRole) {
+    // Always return admin home for multi-role support
+    return '/admin/adminhome.html';
   }
 
   return null; // ❌ No valid role found

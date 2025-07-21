@@ -14,7 +14,7 @@ function login(event) {
 
   fetch(`${CONFIG.basePath}/auth/login`, options)
     .then((response) => {
-      if (!response.ok) throw new Error("Invalid credentials or server error");
+      if (!response.ok) throw new Error('Invalid credentials or server error');
       return response.json();
     })
     .then((data) => {
@@ -23,37 +23,40 @@ function login(event) {
 
       const roles = data.roles;
 
-      const roleRedirectMap = {
-        superAdmin: '/admin/adminhome.html',
-        accountsAdmin: '/admin/account/index.html',
-        roomAdmin: '/admin/room/index.html',
-        cardAdmin: '/admin/card/index.html',
-        officeAdmin: '/admin/office_index.html',
-        foodAdmin: '/admin/food/index.html',
-        gateAdmin: '/admin/gate/index.html',
-        adhyayanAdmin: '/admin/adhyayan/index.html',
-        travelAdmin: '/admin/travel/index.html',
-        travelAdminDri: '/admin/travel/fetchBookingsForDriver.html',
-        maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
-        housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
-        electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical',
-        utsavAdmin: '/admin/utsav/index.html',
-        adhyayanAdminKol: '/admin/adhyayan/kolkataAdhyayanReport.html',
-        adhyayanAdminRaj: '/admin/adhyayan/rajnandgaonAdhyayanReport.html',
-        adhyayanAdminDhu: '/admin/adhyayan/dhuleAdhyayanReport.html',
-        avtAdmin: '/admin/avt/index.html',
-        wifiAdmin: '/admin/wifi/index.html'
-      };
+      // Check if user has any valid roles
+      const validRoles = [
+        'superAdmin',
+        'accountsAdmin',
+        'roomAdmin',
+        'cardAdmin',
+        'officeAdmin',
+        'foodAdmin',
+        'gateAdmin',
+        'adhyayanAdmin',
+        'travelAdmin',
+        'travelAdminDri',
+        'maintenanceAdmin',
+        'housekeepingAdmin',
+        'electricalAdmin',
+        'utsavAdmin',
+        'adhyayanAdminKol',
+        'adhyayanAdminRaj',
+        'adhyayanAdminDhu',
+        'avtAdmin',
+        'wifiAdmin'
+      ];
 
-      for (const role of roles) {
-        if (roleRedirectMap[role]) {
-          window.location.href = roleRedirectMap[role];
-          return;
-        }
+      const hasValidRole = roles.some((role) => validRoles.includes(role));
+
+      if (hasValidRole) {
+        // Always redirect to admin home for multi-role support
+        window.location.href = '/admin/adminhome.html';
+      } else {
+        // ❌ No recognized roles
+        alert(
+          'Login successful, but no valid role assigned. Please contact admin.'
+        );
       }
-
-      // ❌ No recognized roles
-      alert('Login successful, but no valid role assigned. Please contact admin.');
     })
     .catch((error) => {
       console.error('Login failed:', error);
