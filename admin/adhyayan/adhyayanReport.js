@@ -3,17 +3,25 @@ let adhyayanfetch = [];
 document.addEventListener('DOMContentLoaded', () => {
   const adhyayanTableBody = document.getElementById('adhyayanTable');
 
+  const getLocationFromURL = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('location') || 'Rajnandgaon'; // default if none passed
+  };
+
   const fetchAdhyayanReport = async () => {
+    const location = getLocationFromURL();
+
     const options = {
-      method: 'Get',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       }
     };
+
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/fetchRCadhyayan`,
+        `${CONFIG.basePath}/adhyayan/fetchAdhyayan?location=${encodeURIComponent(location)}`,
         options
       );
       const result = await response.json();
@@ -26,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const populateTable = (data) => {
-    adhyayanTableBody.innerHTML = ''; // Clear existing rows
+    adhyayanTableBody.innerHTML = '';
 
     if (!Array.isArray(data) || data.length === 0) {
       adhyayanTableBody.innerHTML =
@@ -35,34 +43,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     data.forEach((item, index) => {
-      console.log('Item:', item);
       const tableRow = document.createElement('tr');
 
       tableRow.innerHTML = `
-            <td style="text-align:center;">${index + 1}</td>
-            <td style="text-align:center;">${item.name}</td>
-            <td style="text-align:center;">${item.comments}</td>
-            <td style="text-align:center;">${item.location}</td>
-            <td style="text-align:center;">${formatDate(item.start_date)}</td>
-            <td style="text-align:center;">${formatDate(item.end_date)}</td>
-            <td style="text-align:center;">${item.speaker}</td>
-            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
-            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=pending">${item.pending_count}</a></td>
-            <td style="text-align:center;">${item.total_seats}</td>
-            <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
-            <td style="text-align:center;">${item.status}</td>
-            <td style="text-align:center;">
-              <button class="toggle-status" data-id="${item.id}" data-status="${
-        item.status
-      }">
-                ${item.status === 'open' ? 'Close' : 'Open'}
-              </button>
-            </td>
-          `;
+        <td style="text-align:center;">${index + 1}</td>
+        <td style="text-align:center;">${item.name}</td>
+        <td style="text-align:center;">${item.comments}</td>
+        <td style="text-align:center;">${item.location}</td>
+        <td style="text-align:center;">${formatDate(item.start_date)}</td>
+        <td style="text-align:center;">${formatDate(item.end_date)}</td>
+        <td style="text-align:center;">${item.speaker}</td>
+        <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
+        <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=pending">${item.pending_count}</a></td>
+        <td style="text-align:center;">${item.total_seats}</td>
+        <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
+        <td style="text-align:center;">${item.status}</td>
+        <td style="text-align:center;">
+          <button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
+            ${item.status === 'open' ? 'Close' : 'Open'}
+          </button>
+        </td>
+      `;
 
       adhyayanTableBody.appendChild(tableRow);
     });
-enhanceTable('waitlistTable', 'tableSearch');
+
+    enhanceTable('waitlistTable', 'tableSearch');
 
     document.querySelectorAll('.toggle-status').forEach((button) => {
       button.addEventListener('click', toggleStatus);
@@ -77,9 +83,7 @@ enhanceTable('waitlistTable', 'tableSearch');
 
     if (
       !confirm(
-        `Are you sure you want to ${
-          newStatus === 'open' ? 'open' : 'close'
-        } this Adhyayan?`
+        `Are you sure you want to ${newStatus === 'open' ? 'open' : 'close'} this Adhyayan?`
       )
     ) {
       return;
@@ -101,7 +105,7 @@ enhanceTable('waitlistTable', 'tableSearch');
 
       if (response.ok) {
         alert(`Success: ${result.message}`);
-        fetchAdhyayanReport(); // Refresh table after update
+        fetchAdhyayanReport(); // Refresh table
       } else {
         alert(`Error: ${result.message}`);
       }
@@ -115,7 +119,7 @@ enhanceTable('waitlistTable', 'tableSearch');
 });
 
 const setupDownloadButton = () => {
-  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  document.getElementById('downloadBtnContainer').innerHTML = '';
   renderDownloadButton({
     selector: '#downloadBtnContainer',
     getData: () => adhyayanfetch,
