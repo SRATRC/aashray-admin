@@ -84,7 +84,18 @@ document.addEventListener('DOMContentLoaded', async function () {
           }
         });
 
-        actionCell.appendChild(actionLink);
+        // Create Reset Password button
+const resetBtn = document.createElement('a');
+resetBtn.textContent = 'Reset Password';
+resetBtn.href = '#';
+resetBtn.style.marginLeft = '10px';
+resetBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  openResetModal(admin.username);
+});
+
+actionCell.appendChild(actionLink);      // Activate/Deactivate
+actionCell.appendChild(resetBtn);        // Reset Password
         row.appendChild(actionCell);
         adminTableBody.appendChild(row);
       });
@@ -108,4 +119,43 @@ function showErrorMessage(message) {
 
 function resetAlert() {
   // This could clear UI banners if used in future (currently placeholder)
+}
+
+function openResetModal(username) {
+  document.getElementById('resetTargetUsername').value = username;
+  document.getElementById('resetUsernameDisplay').innerText = username;
+  document.getElementById('resetPasswordModal').style.display = 'block';
+}
+
+function closeResetModal() {
+  document.getElementById('resetPasswordModal').style.display = 'none';
+}
+
+async function submitResetPassword(event) {
+  event.preventDefault();
+  const username = document.getElementById('resetTargetUsername').value;
+  const newPassword = document.getElementById('newAdminPassword').value;
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ username, newPassword })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(`Password reset successfully for ${username}`);
+      closeResetModal();
+    } else {
+      alert(`Failed to reset password: ${data.message}`);
+    }
+  } catch (err) {
+    console.error('Reset error:', err);
+    alert('Something went wrong. Try again.');
+  }
 }
