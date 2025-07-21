@@ -1,19 +1,39 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['superAdmin']); // customize allowed roles per page
+  // Allow access to all valid admin roles since we'll show role-specific buttons
+  checkRoleAccess([
+    'superAdmin',
+    'accountsAdmin',
+    'roomAdmin',
+    'cardAdmin',
+    'officeAdmin',
+    'foodAdmin',
+    'gateAdmin',
+    'adhyayanAdmin',
+    'travelAdmin',
+    'travelAdminDri',
+    'maintenanceAdmin',
+    'housekeepingAdmin',
+    'electricalAdmin',
+    'utsavAdmin',
+    'adhyayanAdminKol',
+    'adhyayanAdminRaj',
+    'adhyayanAdminDhu',
+    'avtAdmin',
+    'wifiAdmin'
+  ]);
 </script>
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aashray Admin Console</title>
-    
+
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    
     <!-- Additional Styles and Scripts -->
     <script src="../style/js/plugin.js"></script>
     <script src="../style/js/bootstrap-datepicker.min.js"></script>
@@ -21,9 +41,9 @@
     <script src="../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
     <script src="../sessionstorage.js"></script>
-    
+
     <!-- Link to our new shared CSS -->
-    <link rel="stylesheet" href="../style/css/styles.css">
+    <link rel="stylesheet" href="../style/css/styles.css" />
   </head>
 
   <body>
@@ -34,7 +54,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
@@ -43,25 +63,137 @@
               <h1>Welcome, Admin!</h1>
             </div>
             <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="account/index.html">Account Management</a>
-                <a class="menu-btn" href="sudo/index.html">Admin Management</a>
-                <a class="menu-btn" href="card/index.html">Card Management</a>
-                <a class="menu-btn" href="food/index.html">Food Management</a>
-                <a class="menu-btn" href="gate/index.html">Gate Management</a>
-                <a class="menu-btn" href="adhyayan/index.html">Adhyayan Management</a>
-                <a class="menu-btn" href="room/index.html">Room Management</a>
-                <a class="menu-btn" href="travel/index.html">Travel Management</a>
-                <a class="menu-btn" href="maintenance/index.html">Maintenance Management</a>
-                <a class="menu-btn" href="avt/index.html">AVT Management</a>
-                <a class="menu-btn" href="wifi/index.html">WiFi Management</a>
-                <a class="menu-btn" href="smilestones/index.html">Smilestones Management</a>
-                <a class="menu-btn" href="utsav/index.html">Utsav Management</a>
+              <div class="menu-grid" id="adminMenuGrid">
+                <!-- Buttons will be dynamically populated based on user roles -->
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <script>
+      // Role-based button configuration
+      const roleButtonMap = {
+        superAdmin: [
+          { href: 'account/index.html', text: 'Account Management' },
+          { href: 'sudo/index.html', text: 'Admin Management' },
+          { href: 'card/index.html', text: 'Card Management' },
+          { href: 'food/index.html', text: 'Food Management' },
+          { href: 'gate/index.html', text: 'Gate Management' },
+          { href: 'adhyayan/index.html', text: 'Adhyayan Management' },
+          { href: 'room/index.html', text: 'Room Management' },
+          { href: 'travel/index.html', text: 'Travel Management' },
+          { href: 'maintenance/index.html', text: 'Maintenance Management' },
+          { href: 'avt/index.html', text: 'AVT Management' },
+          { href: 'wifi/index.html', text: 'WiFi Management' },
+          { href: 'utsav/index.html', text: 'Utsav Management' }
+        ],
+        accountsAdmin: [
+          { href: 'account/index.html', text: 'Account Management' }
+        ],
+        roomAdmin: [{ href: 'room/index.html', text: 'Room Management' }],
+        cardAdmin: [{ href: 'card/index.html', text: 'Card Management' }],
+        officeAdmin: [
+          { href: 'adhyayan/index.html', text: 'Adhyayan Management' },
+          { href: 'card/index.html', text: 'Card Management' },
+          { href: 'room/index.html', text: 'Room Management' }
+        ],
+        foodAdmin: [{ href: 'food/index.html', text: 'Food Management' }],
+        gateAdmin: [{ href: 'gate/index.html', text: 'Gate Management' }],
+        adhyayanAdmin: [
+          { href: 'adhyayan/index.html', text: 'Adhyayan Management' }
+        ],
+        adhyayanAdminKol: [
+          {
+            href: 'adhyayan/kolkataAdhyayanReport.html',
+            text: 'Kolkata Adhyayan Report'
+          }
+        ],
+        adhyayanAdminRaj: [
+          {
+            href: 'adhyayan/rajnandgaonAdhyayanReport.html',
+            text: 'Rajnandgaon Adhyayan Report'
+          }
+        ],
+        adhyayanAdminDhu: [
+          {
+            href: 'adhyayan/dhuleAdhyayanReport.html',
+            text: 'Dhule Adhyayan Report'
+          }
+        ],
+        travelAdmin: [{ href: 'travel/index.html', text: 'Travel Management' }],
+        travelAdminDri: [
+          {
+            href: 'travel/fetchBookingsForDriver.html',
+            text: 'Driver Bookings'
+          }
+        ],
+        maintenanceAdmin: [
+          {
+            href: 'maintenance/maintenance.html?department=maintenance',
+            text: 'Maintenance Management'
+          }
+        ],
+        housekeepingAdmin: [
+          {
+            href: 'maintenance/maintenance.html?department=housekeeping',
+            text: 'Housekeeping Management'
+          }
+        ],
+        electricalAdmin: [
+          {
+            href: 'maintenance/maintenance.html?department=electrical',
+            text: 'Electrical Management'
+          }
+        ],
+        utsavAdmin: [{ href: 'utsav/index.html', text: 'Utsav Management' }],
+        avtAdmin: [{ href: 'avt/index.html', text: 'AVT Management' }],
+        wifiAdmin: [{ href: 'wifi/index.html', text: 'WiFi Management' }]
+      };
+
+      // Function to populate buttons based on user roles
+      function populateAdminButtons() {
+        const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+        const menuGrid = document.getElementById('adminMenuGrid');
+
+        if (!menuGrid) {
+          console.error('Admin menu grid not found');
+          return;
+        }
+
+        // Clear existing buttons
+        menuGrid.innerHTML = '';
+
+        // Collect all unique buttons for user's roles
+        const userButtons = new Map(); // Use Map to avoid duplicates
+
+        roles.forEach((role) => {
+          if (roleButtonMap[role]) {
+            roleButtonMap[role].forEach((button) => {
+              // Use href as key to avoid duplicate buttons
+              userButtons.set(button.href, button);
+            });
+          }
+        });
+
+        // Create and append buttons
+        userButtons.forEach((button) => {
+          const buttonElement = document.createElement('a');
+          buttonElement.className = 'menu-btn';
+          buttonElement.href = button.href;
+          buttonElement.textContent = button.text;
+          menuGrid.appendChild(buttonElement);
+        });
+
+        // If no buttons were added, show a message
+        if (userButtons.size === 0) {
+          menuGrid.innerHTML =
+            '<p>No management options available for your roles.</p>';
+        }
+      }
+
+      // Populate buttons when page loads
+      document.addEventListener('DOMContentLoaded', populateAdminButtons);
+    </script>
   </body>
 </html>
