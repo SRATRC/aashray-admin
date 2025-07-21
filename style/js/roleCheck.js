@@ -29,9 +29,12 @@ function checkRoleAccess(allowedRoles) {
       gateAdmin: '/admin/gate/index.html',
       avtAdmin: '/admin/avt/index.html',
       wifiAdmin: '/admin/wifi/index.html',
-      maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
-      housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
-      electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
+      maintenanceAdmin:
+        '/admin/maintenance/maintenance.html?department=maintenance',
+      housekeepingAdmin:
+        '/admin/maintenance/maintenance.html?department=housekeeping',
+      electricalAdmin:
+        '/admin/maintenance/maintenance.html?department=electrical'
     };
 
     // Find the first matching role's page
@@ -58,26 +61,6 @@ function logout() {
   window.location.href = '/admin/index.html'; // Login page
 }
 
-// --- Auto-Logout after 15 minutes of inactivity ---
-let logoutTimer;
-const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
-
-function resetLogoutTimer() {
-  clearTimeout(logoutTimer);
-  logoutTimer = setTimeout(() => {
-    alert('You have been logged out due to inactivity.');
-    logout();
-  }, INACTIVITY_LIMIT);
-}
-
-// Attach to common activity events
-['click', 'mousemove', 'keydown', 'scroll'].forEach((event) =>
-  window.addEventListener(event, resetLogoutTimer)
-);
-
-// Start timer on load
-resetLogoutTimer();
-
 function getHomePageForRole() {
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 
@@ -98,8 +81,10 @@ function getHomePageForRole() {
     gateAdmin: '/admin/gate/index.html',
     avtAdmin: '/admin/avt/index.html',
     wifiAdmin: '/admin/wifi/index.html',
-    maintenanceAdmin: '/admin/maintenance/maintenance.html?department=maintenance',
-    housekeepingAdmin: '/admin/maintenance/maintenance.html?department=housekeeping',
+    maintenanceAdmin:
+      '/admin/maintenance/maintenance.html?department=maintenance',
+    housekeepingAdmin:
+      '/admin/maintenance/maintenance.html?department=housekeeping',
     electricalAdmin: '/admin/maintenance/maintenance.html?department=electrical'
   };
 
