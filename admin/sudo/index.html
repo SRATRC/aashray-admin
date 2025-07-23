@@ -75,5 +75,24 @@
         </div>
       </div>
     </div>
+    <!-- Reset Password Modal -->
+<div id="resetPasswordModal" style="display:none; position:fixed; z-index:9999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+  <div style="background:#fff; padding:20px; margin:100px auto; width:90%; max-width:400px; border-radius:8px; position:relative;">
+    <h3>Reset Password</h3>
+    <p>Resetting password for: <strong id="resetUsernameDisplay"></strong></p>
+    <form id="adminResetPasswordForm" onsubmit="submitResetPassword(event)">
+      <input type="hidden" id="resetTargetUsername" />
+      <div class="form-group">
+        <label for="newAdminPassword">New Password:</label>
+        <input type="password" id="newAdminPassword" class="form-control" required />
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <button type="submit" class="btn btn-primary">Reset</button>
+        <button type="button" onclick="closeResetModal()" class="btn btn-secondary" style="margin-left: 10px;">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
   </body>
 </html>
