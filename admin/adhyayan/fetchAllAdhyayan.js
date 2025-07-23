@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch(`${CONFIG.basePath}/adhyayan/${shibirId}`, {
-        method: 'PUT', // Soft delete
+        method: 'DELETE', // Soft delete
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
