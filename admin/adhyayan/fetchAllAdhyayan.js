@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const adhyayanListElement = document
     .getElementById('adhyayanList')
@@ -31,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adhyayanListElement.innerHTML = ''; // Clear existing rows
     if (!Array.isArray(data) || data.length === 0) {
       adhyayanListElement.innerHTML =
-        '<tr><td colspan="8" style="text-align:center;">No data available</td></tr>';
+        '<tr><td colspan="9" style="text-align:center;">No data available</td></tr>';
       return;
     }
 
@@ -47,23 +46,64 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;">${formatDate(item.end_date)}</td>
         <td style="text-align:center;">${item.total_seats}</td>
         <td style="text-align:center;">
-          <button class="toggle-status" data-id="${item.id}" data-status="${
-        item.status
-      }">
-            ${item.status === 'open' ? 'Close' : 'Open'}
-          </button>
+          ${
+            item.status === 'deleted'
+              ? `<button class="reinstate-status" data-id="${item.id}">Re-instate</button>`
+              : `<button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
+                  ${item.status === 'open' ? 'Close' : 'Open'}
+                </button>`
+          }
         </td>
         <td style="text-align:center;">
           <a href="updateAdhyayan.html?id=${item.id}">Edit</a>
+          ${
+            item.status !== 'deleted'
+              ? ` | <a href="#" class="delete-shibir" data-id="${item.id}">Delete</a>`
+              : ''
+          }
         </td>
       `;
 
       adhyayanListElement.appendChild(tableRow);
     });
 
-    // Attach event listeners to all status toggle buttons
+    // Attach event listeners
     document.querySelectorAll('.toggle-status').forEach((button) => {
       button.addEventListener('click', toggleStatus);
+    });
+
+    document.querySelectorAll('.delete-shibir').forEach((button) => {
+      button.addEventListener('click', softDeleteShibir);
+    });
+
+    document.querySelectorAll('.reinstate-status').forEach((button) => {
+      button.addEventListener('click', async (event) => {
+        const shibirId = event.target.dataset.id;
+
+        if (!confirm('Re-instate this Adhyayan to open status?')) return;
+
+        try {
+          const response = await fetch(`${CONFIG.basePath}/adhyayan/${shibirId}/open`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${sessionStorage.getItem('token')}`
+            }
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert(`Success: ${result.message}`);
+            fetchAdhyayanList();
+          } else {
+            alert(`Error: ${result.message}`);
+          }
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+          console.error('Error reinstating Shibir:', error);
+        }
+      });
     });
   };
 
@@ -74,11 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newStatus = currentStatus === 'open' ? 'closed' : 'open';
 
     if (
-      !confirm(
-        `Are you sure you want to ${
-          newStatus === 'open' ? 'open' : 'closed'
-        } this Adhyayan?`
-      )
+      !confirm(`Are you sure you want to ${newStatus === 'open' ? 'open' : 'close'} this Adhyayan?`)
     ) {
       return;
     }
@@ -99,13 +135,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (response.ok) {
         alert(`Success: ${result.message}`);
-        fetchAdhyayanList(); // Refresh table after update
+        fetchAdhyayanList(); // Refresh table
       } else {
         alert(`Error: ${result.message}`);
       }
     } catch (error) {
       alert(`Error: ${error.message}`);
       console.error('Error updating status:', error);
+    }
+  };
+
+  const softDeleteShibir = async (event) => {
+    const shibirId = event.target.dataset.id;
+
+    if (!confirm('Are you sure you want to delete this Adhyayan?')) return;
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/adhyayan/${shibirId}`, {
+        method: 'PUT', // Soft delete
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Success: ${result.message}`);
+        fetchAdhyayanList(); // Refresh table
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+      console.error('Error deleting Shibir:', error);
     }
   };
 
