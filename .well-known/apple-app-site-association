@@ -6,7 +6,7 @@
         "appID": "XQKVYDRXH8.org.vitraagvigyaan.aashray",
         "paths": [
           "/adhyayan/*",
-          "/event/*",
+          "/utsav/*",
           "/"
         ]
       }
