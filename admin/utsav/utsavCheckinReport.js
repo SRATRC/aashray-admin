@@ -81,12 +81,17 @@ function renderFilteredTable() {
           <td>${item.bookingid}</td>
           <td>${item.bookedby}</td>
           <td>
-            ${
-              item.checkin_status === 'yes'
-                ? '<span style="color: green;">Checked In</span>'
-                : `<a href="javascript:void(0);" onclick="manualCheckin('${item.cardno}', this)">Manual Checkin</a>`
-            }
-          </td>
+  ${
+    item.checkin_status === 'yes'
+      ? '<span style="color: green;">Checked In</span>'
+      : (
+          JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+            ? '-'
+            : `<a href="javascript:void(0);" onclick="manualCheckin('${item.cardno}', this)">Manual Checkin</a>`
+        )
+  }
+</td>
+
         </tr>
       `).join('')}
     </tbody>
