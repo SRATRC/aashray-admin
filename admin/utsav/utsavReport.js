@@ -55,7 +55,7 @@ console.log(data);
 <td style="text-align:center;">${item.status}</td>
             <td>
   ${
-    (JSON.parse(sessionStorage.getItem('roles') || '[]').includes('readOnlyAdmin'))
+    (JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
       ? '-' 
       : `<a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">
           Update Booking Status

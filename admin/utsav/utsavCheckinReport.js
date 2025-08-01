@@ -85,7 +85,7 @@ function renderFilteredTable() {
     item.checkin_status === 'yes'
       ? '<span style="color: green;">Checked In</span>'
       : (
-          JSON.parse(sessionStorage.getItem('roles') || '[]').includes('readOnlyAdmin')
+          JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
             ? '-'
             : `<a href="javascript:void(0);" onclick="manualCheckin('${item.cardno}', this)">Manual Checkin</a>`
         )

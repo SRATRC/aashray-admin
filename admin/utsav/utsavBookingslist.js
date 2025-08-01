@@ -141,7 +141,7 @@ function renderFilteredTable() {
           <td>${item.transaction_status}</td>
           <td>${item.bookedby}</td>
           <td>${
-  JSON.parse(sessionStorage.getItem('roles') || '[]').includes('readOnlyAdmin')
+  JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
     ? '-'
     : `<a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">Update Booking Status</a>`
 }</td>
