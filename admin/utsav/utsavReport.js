@@ -49,14 +49,20 @@ console.log(data);
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">${item.waitlist_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=admin cancelled">${item.admincancel_count}</a></td>
-            <td style="text-align:center;">${item.status}</td>
             <td style="text-align:center;">
-              <button class="toggle-status" data-id="${item.id}" data-status="${
-        item.status
-      }">
-                ${item.status === 'open' ? 'Close' : 'Open'}
-              </button>
-            </td>
+  <a href="utsavVolunteers.html?utsavId=${item.id}">${item.volunteer_opted_count}</a>
+</td>
+<td style="text-align:center;">${item.status}</td>
+            <td>
+  ${
+    (JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
+      ? '-' 
+      : `<a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">
+          Update Booking Status
+        </a>`
+  }
+</td>
+
           `;
 
       utsavTableBody.appendChild(tableRow);
