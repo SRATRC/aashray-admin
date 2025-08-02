@@ -3,8 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const scanAgainBtn = document.getElementById('scan-again-btn');
   const alertDiv = document.getElementById('alert');
 
+
   let html5QrCode = null;
   let isScanning = false;
+
+  const utsavid = new URLSearchParams(window.location.search).get('utsavid');
 
   startQRScanner();
   scanAgainBtn.addEventListener('click', startQRScanner);
@@ -83,14 +86,9 @@ document.addEventListener('DOMContentLoaded', function () {
      console.log('Sending check-in request for cardno:', cardno);
     resetAlert();
 
-    // const token = sessionStorage.getItem('token');
-    // if (!token || token.split('.').length !== 3) {
-    //   showErrorMessage('⚠️ Not authenticated. Please log in.');
-    //   return;
-    // }
-
     showInfoMessage('Processing check-in...');
 console.log('🔥 About to call fetch:', `${CONFIG.basePath}/utsav/utsavCheckin`);
+console.log('👉 Sending utsavid:', utsavid);
 
         fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
       method: 'POST',
@@ -98,7 +96,7 @@ console.log('🔥 About to call fetch:', `${CONFIG.basePath}/utsav/utsavCheckin`
         'Content-Type': 'application/json',
         // Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ cardno })
+      body: JSON.stringify({ cardno, utsavid })
     })
   .then(async (response) => {
   const data = await response.json().catch(() => ({ message: 'Invalid JSON' }));
@@ -110,10 +108,7 @@ console.log('🔥 About to call fetch:', `${CONFIG.basePath}/utsav/utsavCheckin`
 })
 
       .then(({ status, body }) => {
-        if (body.cardno && body.issuedto) {
-          qrStatus.className = 'success-status';
-          qrStatus.innerText = `✅ ${body.cardno} (${body.issuedto})`;
-        }
+        qrStatus.innerText = `✅ ${body.message}`;
 
         if (status === 200 && body.message === 'Already checked in.') {
           showInfoMessage('Already checked in.');
