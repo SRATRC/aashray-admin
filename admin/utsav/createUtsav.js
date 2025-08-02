@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', function () {
       start_date: formData.get('start_date'),
       end_date: formData.get('end_date'),
       total_seats: formData.get('total_seats'),
-      comments: formData.get('comments')
+      comments: formData.get('comments'),
+      location: formData.get('location'),
+      registration_deadline: formData.get('registration_deadline')     
     };
 
     try {
