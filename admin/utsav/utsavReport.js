@@ -53,17 +53,25 @@ console.log(data);
   <a href="utsavVolunteers.html?utsavId=${item.id}">${item.volunteer_opted_count}</a>
 </td>
 <td style="text-align:center;">${item.status}</td>
-            <td>
+            <td style="text-align:center;">
   ${
-    (JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
-      ? '-' 
-      : `<a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">
-          Update Booking Status
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+      ? '-'
+      : `<button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
+          ${item.status === 'open' ? 'Close' : 'Open'}
+        </button>`
+  }
+</td>
+<td style="text-align:center;">
+  ${
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+      ? '-'
+      : `<a href="utsavCheckin.html?utsavid=${item.id}" target="_blank">
+          <button class="btn btn-primary btn-sm">Scanner Link</button>
         </a>`
   }
 </td>
-
-          `;
+         `;
 
       utsavTableBody.appendChild(tableRow);
     });
