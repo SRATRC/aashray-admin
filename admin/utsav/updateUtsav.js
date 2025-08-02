@@ -34,7 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('end_date').value = data.end_date;
     document.getElementById('total_seats').value = data.total_seats;
     document.getElementById('comments').value = data.comments;
-
+    document.getElementById('location').value = data.location;
+    document.getElementById('registration_deadline').value = data.registration_deadline;
+    
     document.getElementById('saveButton').addEventListener('click', () => {
       updateUtsavDetails(document.getElementById('id').value);
     });
@@ -51,7 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
       start_date: utsavForm.get('start_date'),
       end_date: utsavForm.get('end_date'),
       total_seats: utsavForm.get('total_seats'),
-      comments: utsavForm.get('comments')
+      comments: utsavForm.get('comments'),
+      location: utsavForm.get('location'),
+      registration_deadline: utsavForm.get('registration_deadline')    
     };
 
     try {
