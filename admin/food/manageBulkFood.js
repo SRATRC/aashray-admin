@@ -1,4 +1,26 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const waitForRoles = setInterval(() => {
+    const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    if (userRoles.length === 0) return; // wait until roles are set
+
+    clearInterval(waitForRoles); // stop waiting once available
+
+    // 🔒 Lock department dropdown for foodAdminSS
+    if (userRoles.includes('foodAdminSS')) {
+      const dropdown = document.getElementById('department');
+      if (dropdown) {
+        [...dropdown.options].forEach(option => {
+          if (option.value !== 'Smilestones') {
+            option.remove();
+          }
+        });
+        dropdown.value = 'Smilestones';
+        dropdown.disabled = true;
+      }
+    }
+  }, 100); // check every 100ms
+
+
   const form = document.getElementById('bulkFoodBookingForm');
   const today = formatDate(new Date());
   document.getElementById('date').value = today;
@@ -8,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     resetAlert();
 
     const cardno = document.getElementById('cardno').value.trim();
+    const mobno = document.getElementById('mobno')?.value.trim(); 
     const date = document.getElementById('date').value;
     const breakfast = document.getElementById('breakfast').checked ? 1 : 0;
     const lunch = document.getElementById('lunch').checked ? 1 : 0;
@@ -15,10 +38,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const department = document.getElementById('department').value;
     const guestCount = document.getElementById('guestCount').value;
 
-    if (cardno === '') {
-      showErrorMessage('Please specify Mobile No. or Card No.');
-      return;
-    }
+    if (!cardno && !mobno) {
+  showErrorMessage('Please specify either Card No. or Mobile No.');
+  return;
+}
 
     if (!(breakfast || lunch || dinner)) {
       showErrorMessage('Please select at least one meal option.');
@@ -34,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         body: JSON.stringify({
           cardno,
+          mobno,
           date,
           guestCount,
           breakfast,
@@ -73,9 +97,12 @@ if (!cardno && !mobno) {
   resetAlert();
 
   try {
-    const searchParams = new URLSearchParams({ cardno });
-    const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams}`;
-    const response = await fetch(url, {
+    const searchParams = new URLSearchParams();
+if (cardno) searchParams.append('cardno', cardno);
+if (mobno) searchParams.append('mobno', mobno);
+
+const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams.toString()}`;
+const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
