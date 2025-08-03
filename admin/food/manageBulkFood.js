@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('bulkFoodBookingForm');
-
   const today = formatDate(new Date());
   document.getElementById('date').value = today;
 
@@ -16,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const department = document.getElementById('department').value;
     const guestCount = document.getElementById('guestCount').value;
 
-    if (cardno == '' ) {
+    if (cardno === '') {
       showErrorMessage('Please specify Mobile No. or Card No.');
       return;
     }
@@ -27,25 +26,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     try {
-      const response = await fetch(
-        `${CONFIG.basePath}/food/bulk_booking`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            cardno,
-            date,
-            guestCount,
-            breakfast,
-            lunch,
-            dinner,
-            department
-          })
-        }
-      );
+      const response = await fetch(`${CONFIG.basePath}/food/bulk_booking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          cardno,
+          date,
+          guestCount,
+          breakfast,
+          lunch,
+          dinner,
+          department,
+        }),
+      });
 
       const data = await response.json();
 
@@ -61,52 +57,31 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-async function cancelBulkBooking(bookingid) {
-  resetAlert();
-  try {
-    const response = await fetch(
-      `${CONFIG.basePath}/food/cancel_bulk_booking/${bookingid}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (response.ok) {
-      showSuccessMessage(data.message);
-    } else {
-      showErrorMessage(data.message);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    showErrorMessage(error.message || error);
-  }
-}
-
 async function getExistingGuestBookings() {
   const tableBody = document.querySelector('#bookingsTableBody');
   const cardno = document.getElementById('cardno').value.trim();
+const mobno = document.getElementById('mobno')?.value.trim();
+
+const searchParams = new URLSearchParams();
+if (cardno) searchParams.append('cardno', cardno);
+else if (mobno) searchParams.append('mobno', mobno);
+if (!cardno && !mobno) {
+  alert("Please enter either Card No. or Mobile No.");
+  return;
+}
 
   resetAlert();
 
   try {
     const searchParams = new URLSearchParams({ cardno });
     const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams}`;
-    const response = await fetch(
-      url,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
-      }
-    );
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+      },
+    });
 
     const data = await response.json();
     if (!response.ok) {
@@ -115,7 +90,7 @@ async function getExistingGuestBookings() {
     }
 
     const bookings = data.data;
-    if (bookings.length == 0) {
+    if (bookings.length === 0) {
       showErrorMessage("No bookings found.");
       return;
     }
@@ -123,45 +98,156 @@ async function getExistingGuestBookings() {
     tableBody.innerHTML = '';
     bookings.forEach((booking) => {
       const row = document.createElement('tr');
-      const meals = [];
-      if (booking.breakfast) meals.push('Breakfast');
-      if (booking.lunch) meals.push('Lunch');
-      if (booking.dinner) meals.push('Dinner');
-
       row.innerHTML = `
-            <td>
-              <a href="#" onclick="cancelBulkBooking('${booking.bookingid}');">
-                <i class="fa fa-trash"></i>
-              </a>
-            </td>
-            <td>${formatDate(booking.date)}</td>
-            <td>${booking.CardDb.issuedto}</td>
-            <td>${booking.CardDb.mobno}</td>
-            <td>${booking.department}</td>
-            <td>${booking.guestCount}</td>
-            <td>${meals.join(', ')}</td>
-          `;
+  <td>${formatDate(booking.date)}</td>
+  <td>${booking.CardDb.issuedto}</td>
+  <td>${booking.CardDb.mobno}</td>
+  <td>${booking.department}</td>
+  <td id="gc-${booking.bookingid}">${booking.guestCount}</td>
+  <td>
+    <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', -1)">➖</button>
+    <span id="bf-${booking.bookingid}">${booking.breakfast || 0}</span>
+    <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', 1)">➕</button>
+  </td>
+  <td>
+    <button onclick="adjustMeal('${booking.bookingid}', 'lunch', -1)">➖</button>
+    <span id="ln-${booking.bookingid}">${booking.lunch || 0}</span>
+    <button onclick="adjustMeal('${booking.bookingid}', 'lunch', 1)">➕</button>
+  </td>
+  <td>
+    <button onclick="adjustMeal('${booking.bookingid}', 'dinner', -1)">➖</button>
+    <span id="dn-${booking.bookingid}">${booking.dinner || 0}</span>
+    <button onclick="adjustMeal('${booking.bookingid}', 'dinner', 1)">➕</button>
+  </td>
+  <td>
+    <button onclick="updatePlateIssued('${booking.bookingid}', 'breakfast', -1)">➖</button>
+    <span id="b-${booking.bookingid}">${booking.breakfast_plate_issued || 0}</span>
+    <button onclick="updatePlateIssued('${booking.bookingid}', 'breakfast', 1)">➕</button>
+  </td>
+  <td>
+    <button onclick="updatePlateIssued('${booking.bookingid}', 'lunch', -1)">➖</button>
+    <span id="l-${booking.bookingid}">${booking.lunch_plate_issued || 0}</span>
+    <button onclick="updatePlateIssued('${booking.bookingid}', 'lunch', 1)">➕</button>
+  </td>
+  <td>
+    <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', -1)">➖</button>
+    <span id="d-${booking.bookingid}">${booking.dinner_plate_issued || 0}</span>
+    <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', 1)">➕</button>
+  </td>`;
       tableBody.appendChild(row);
     });
     enhanceTable('bookingsTable', 'tableSearch');
-
   } catch (error) {
     console.error('Error fetching food bookings:', error);
     showErrorMessage(error.message || error);
   }
 }
 
-// ✅ Message Functions with browser alert + redirect
 function showSuccessMessage(message) {
   alert(message);
-  window.location.href = "/admin/food/manageBulkFood.html"; // Change this path if needed
+  window.location.href = "/admin/food/manageBulkFood.html";
 }
 
 function showErrorMessage(message) {
   alert("Error: " + message);
-  window.location.href = "/admin/food/manageBulkFood.html"; // Change this path if needed
+  window.location.href = "/admin/food/manageBulkFood.html";
 }
 
 function resetAlert() {
-  // Placeholder if needed for UI resets
+  // Placeholder for UI alert clear logic
+}
+
+async function updatePlateIssued(bookingId, mealType, delta) {
+  const spanId = {
+    breakfast: `b-${bookingId}`,
+    lunch: `l-${bookingId}`,
+    dinner: `d-${bookingId}`
+  }[mealType];
+
+  const countSpan = document.getElementById(spanId);
+  const currentCount = parseInt(countSpan.textContent);
+  const mealBooked = parseInt(document.getElementById({
+    breakfast: `bf-${bookingId}`,
+    lunch: `ln-${bookingId}`,
+    dinner: `dn-${bookingId}`
+  }[mealType]).textContent);
+
+  const newCount = currentCount + delta;
+
+  if (newCount < 0) return alert("❌ Cannot go below 0");
+  if (newCount > mealBooked) return alert("❌ Cannot issue more than booked");
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/food/update_plate_issued/${bookingId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        mealType,
+        plateIssued: newCount
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      countSpan.textContent = newCount;
+    } else {
+      alert(`❌ Error: ${result.message}`);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Network error");
+  }
+}
+
+async function adjustMeal(bookingId, mealType, delta) {
+  const spanId = {
+    breakfast: `bf-${bookingId}`,
+    lunch: `ln-${bookingId}`,
+    dinner: `dn-${bookingId}`
+  }[mealType];
+
+  const countSpan = document.getElementById(spanId);
+  const currentCount = parseInt(countSpan.textContent) || 0;
+  let newCount = currentCount + delta;
+
+  if (newCount < 0) return alert("❌ Cannot be negative");
+
+  const bf = parseInt(document.getElementById(`bf-${bookingId}`)?.textContent || '0', 10);
+  const ln = parseInt(document.getElementById(`ln-${bookingId}`)?.textContent || '0', 10);
+  const dn = parseInt(document.getElementById(`dn-${bookingId}`)?.textContent || '0', 10);
+
+  const updated = {
+    breakfast: mealType === 'breakfast' ? newCount : bf,
+    lunch: mealType === 'lunch' ? newCount : ln,
+    dinner: mealType === 'dinner' ? newCount : dn,
+  };
+
+  const guestCount = Math.max(updated.breakfast, updated.lunch, updated.dinner);
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/food/edit_bulk_booking/${bookingId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ ...updated, guestCount })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      countSpan.textContent = newCount;
+      document.getElementById(`gc-${bookingId}`).textContent = guestCount;
+    } else {
+      alert(`❌ ${result.message}`);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Network error");
+  }
 }
