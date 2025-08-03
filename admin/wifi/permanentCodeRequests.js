@@ -1,10 +1,8 @@
-let currentPage = 1;
 let currentStatus = '';
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('statusFilter').addEventListener('change', () => {
     currentStatus = document.getElementById('statusFilter').value;
-    currentPage = 1;
     fetchRequests();
   });
 
@@ -22,28 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
 async function fetchRequests() {
   const tableBody = document.querySelector('#wifiRequestTable tbody');
   tableBody.innerHTML = '';
-  const query = new URLSearchParams({
-    status: currentStatus,
-    page: currentPage,
-    limit: 10
-  }).toString();
+
+  const query = new URLSearchParams({ status: currentStatus }).toString();
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/wifi/permanent?${query}`,
-        {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
+    const res = await fetch(`${CONFIG.basePath}/wifi/permanent?${query}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
       }
-    );
-    const json = await res.json();
+    });
 
-    json.data.requests.forEach((req, idx) => {
+    const json = await res.json();
+    const records = json.data.requests;
+
+    records.forEach((req, idx) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${(currentPage - 1) * 10 + idx + 1}</td>
+        <td>${idx + 1}</td>
         <td>${req.cardno}</td>
         <td>${req.CardDb?.issuedto || '-'}</td>
         <td>${req.CardDb?.mobno || '-'}</td>
@@ -52,35 +47,17 @@ async function fetchRequests() {
         <td>${req.status}</td>
         <td>${req.code || '-'}</td>
         <td>
-          ${
-            req.status === 'pending'
-              ? `<button onclick="openModal('${req.id}')">Take Action</button>`
-              : '-'
-          }
+          ${req.status === 'pending' ? `<button onclick="openModal('${req.id}')">Take Action</button>` : '-'}
         </td>
       `;
       tableBody.appendChild(row);
     });
 
-    renderPagination(json.data.pagination.totalPages);
+    enhanceTable('wifiRequestTable', 'tableSearch');
+    setupDownloadAndUploadButtons(records);
+
   } catch (err) {
     showMessage('Error fetching requests', 'error');
-  }
-}
-
-function renderPagination(totalPages) {
-  const pagination = document.getElementById('pagination');
-  pagination.innerHTML = '';
-
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement('button');
-    btn.innerText = i;
-    btn.disabled = i === currentPage;
-    btn.onclick = () => {
-      currentPage = i;
-      fetchRequests();
-    };
-    pagination.appendChild(btn);
   }
 }
 
@@ -111,20 +88,15 @@ async function submitAction() {
 
   try {
     const res = await fetch(`${CONFIG.basePath}/wifi/permanent/${requestId}`, {
-        
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' ,
+      headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       },
-      body: JSON.stringify({
-        action,
-        permanent_code: code,
-        admin_comments: comments
-      })
+      body: JSON.stringify({ action, permanent_code: code, admin_comments: comments })
     });
 
     const json = await res.json();
-
     if (!res.ok) throw new Error(json.message || 'Failed to update');
 
     showMessage(json.message, 'success');
@@ -140,4 +112,72 @@ function showMessage(msg, type) {
   el.innerText = msg;
   el.style.color = type === 'error' ? 'red' : 'green';
   setTimeout(() => (el.innerText = ''), 3000);
+}
+
+function setupDownloadAndUploadButtons(data) {
+  const container = document.getElementById('downloadBtnContainer');
+  container.innerHTML = `
+    <button id="downloadExcelBtn" class="btn btn-primary">Download Excel</button>
+    <button id="uploadExcelBtn" class="btn btn-secondary">Upload Codes</button>
+    <input type="file" id="uploadExcelInput" accept=".xlsx, .xls" style="display: none;" />
+  `;
+
+  const fileName = `permanent_wifi_requests_${currentStatus || 'all'}.xlsx`;
+
+  const flattenedData = data.map(req => ({
+    cardno: req.cardno || '',
+    issuedto: req.CardDb?.issuedto || '',
+    mobno: req.CardDb?.mobno || '',
+    res_status: req.CardDb?.res_status || '',
+    requested_at: req.requested_at,
+    status: req.status,
+    code: req.code || ''
+  }));
+
+  document.getElementById('downloadExcelBtn').addEventListener('click', () => {
+    downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
+      'cardno', 'issuedto', 'mobno', 'res_status', 'requested_at', 'status', 'code'
+    ], {
+      cardno: 'Card No',
+      issuedto: 'Issued To',
+      mobno: 'Mobile',
+      res_status: 'Res Status',
+      requested_at: 'Requested At',
+      status: 'Status',
+      code: 'Code'
+    });
+  });
+
+  document.getElementById('uploadExcelBtn').addEventListener('click', () => {
+    document.getElementById('uploadExcelInput').click();
+  });
+
+  document.getElementById('uploadExcelInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/wifi/uploadpercode`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: formData
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      alert(result.message || 'Upload successful');
+      fetchRequests();
+    } else {
+      alert('Upload failed: ' + (result.message || result.error));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Upload failed due to an error');
+  }
+});
 }

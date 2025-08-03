@@ -58,23 +58,24 @@
             </label>
 
             <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-
+            <div id="downloadBtnContainer" style="margin: 10px 0;"></div>
+            
             <div class="table-responsive">
               <table id="wifiRequestTable" class="table table-striped table-bordered">
                 <thead>
-                  <tr>
-                    <th>Sr</th>
-                    <th>Card No</th>
-                    <th>Issued To</th>
-                    <th>Mobile</th>
-                    <th>Res Status</th>
-                    <th>Requested At</th>
-                    <th>Status</th>
-                    <th>Code</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
+  <tr>
+    <th data-key="sr">Sr</th>
+    <th data-key="cardno">Card No</th>
+    <th data-key="issuedto">Issued To</th>
+    <th data-key="mobno">Mobile</th>
+    <th data-key="res_status">Res Status</th>
+    <th data-key="requested_at">Requested At</th>
+    <th data-key="status">Status</th>
+    <th data-key="code">Code</th>
+    <th>Action</th>
+  </tr>
+</thead>
+<tbody></tbody>
               </table>
               <div id="pagination" style="margin-top: 10px;"></div>
               <div id="message" style="margin-top: 10px;"></div>
