@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', function () {
   const waitForRoles = setInterval(() => {
     const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-    if (userRoles.length === 0) return; // wait until roles are set
+    if (userRoles.length === 0) return;
 
-    clearInterval(waitForRoles); // stop waiting once available
+    clearInterval(waitForRoles);
 
-    // 🔒 Lock department dropdown for foodAdminSS
-    if (userRoles.includes('foodAdminSS')) {
+    // 🔒 Lock department dropdown for smilesAdmin
+    if (userRoles.includes('smilesAdmin')) {
+       document.querySelectorAll('.issued-header').forEach(th => {
+    th.style.display = 'none';
+  });
       const dropdown = document.getElementById('department');
       if (dropdown) {
         [...dropdown.options].forEach(option => {
@@ -18,8 +21,10 @@ document.addEventListener('DOMContentLoaded', function () {
         dropdown.disabled = true;
       }
     }
-  }, 100); // check every 100ms
 
+    // 🧠 Store flag for column rendering
+    window.isFoodAdminSS = userRoles.includes('smilesAdmin');
+  }, 100);
 
   const form = document.getElementById('bulkFoodBookingForm');
   const today = formatDate(new Date());
@@ -39,9 +44,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const guestCount = document.getElementById('guestCount').value;
 
     if (!cardno && !mobno) {
-  showErrorMessage('Please specify either Card No. or Mobile No.');
-  return;
-}
+      showErrorMessage('Please specify either Card No. or Mobile No.');
+      return;
+    }
 
     if (!(breakfast || lunch || dinner)) {
       showErrorMessage('Please select at least one meal option.');
@@ -84,25 +89,22 @@ document.addEventListener('DOMContentLoaded', function () {
 async function getExistingGuestBookings() {
   const tableBody = document.querySelector('#bookingsTableBody');
   const cardno = document.getElementById('cardno').value.trim();
-const mobno = document.getElementById('mobno')?.value.trim();
+  const mobno = document.getElementById('mobno')?.value.trim();
 
-const searchParams = new URLSearchParams();
-if (cardno) searchParams.append('cardno', cardno);
-else if (mobno) searchParams.append('mobno', mobno);
-if (!cardno && !mobno) {
-  alert("Please enter either Card No. or Mobile No.");
-  return;
-}
+  if (!cardno && !mobno) {
+    alert("Please enter either Card No. or Mobile No.");
+    return;
+  }
 
   resetAlert();
 
   try {
     const searchParams = new URLSearchParams();
-if (cardno) searchParams.append('cardno', cardno);
-if (mobno) searchParams.append('mobno', mobno);
+    if (cardno) searchParams.append('cardno', cardno);
+    if (mobno) searchParams.append('mobno', mobno);
 
-const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams.toString()}`;
-const response = await fetch(url, {
+    const url = `${CONFIG.basePath}/food/bulk_booking?${searchParams.toString()}`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -126,43 +128,46 @@ const response = await fetch(url, {
     bookings.forEach((booking) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-  <td>${formatDate(booking.date)}</td>
-  <td>${booking.CardDb.issuedto}</td>
-  <td>${booking.CardDb.mobno}</td>
-  <td>${booking.department}</td>
-  <td id="gc-${booking.bookingid}">${booking.guestCount}</td>
-  <td>
-    <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', -1)">➖</button>
-    <span id="bf-${booking.bookingid}">${booking.breakfast || 0}</span>
-    <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', 1)">➕</button>
-  </td>
-  <td>
-    <button onclick="adjustMeal('${booking.bookingid}', 'lunch', -1)">➖</button>
-    <span id="ln-${booking.bookingid}">${booking.lunch || 0}</span>
-    <button onclick="adjustMeal('${booking.bookingid}', 'lunch', 1)">➕</button>
-  </td>
-  <td>
-    <button onclick="adjustMeal('${booking.bookingid}', 'dinner', -1)">➖</button>
-    <span id="dn-${booking.bookingid}">${booking.dinner || 0}</span>
-    <button onclick="adjustMeal('${booking.bookingid}', 'dinner', 1)">➕</button>
-  </td>
-  <td>
-    <button onclick="updatePlateIssued('${booking.bookingid}', 'breakfast', -1)">➖</button>
-    <span id="b-${booking.bookingid}">${booking.breakfast_plate_issued || 0}</span>
-    <button onclick="updatePlateIssued('${booking.bookingid}', 'breakfast', 1)">➕</button>
-  </td>
-  <td>
-    <button onclick="updatePlateIssued('${booking.bookingid}', 'lunch', -1)">➖</button>
-    <span id="l-${booking.bookingid}">${booking.lunch_plate_issued || 0}</span>
-    <button onclick="updatePlateIssued('${booking.bookingid}', 'lunch', 1)">➕</button>
-  </td>
-  <td>
-    <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', -1)">➖</button>
-    <span id="d-${booking.bookingid}">${booking.dinner_plate_issued || 0}</span>
-    <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', 1)">➕</button>
-  </td>`;
+        <td>${formatDate(booking.date)}</td>
+        <td>${booking.CardDb.issuedto}</td>
+        <td>${booking.CardDb.mobno}</td>
+        <td>${booking.department}</td>
+        <td id="gc-${booking.bookingid}">${booking.guestCount}</td>
+        <td>
+          <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', -1)">➖</button>
+          <span id="bf-${booking.bookingid}">${booking.breakfast || 0}</span>
+          <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', 1)">➕</button>
+        </td>
+        <td>
+          <button onclick="adjustMeal('${booking.bookingid}', 'lunch', -1)">➖</button>
+          <span id="ln-${booking.bookingid}">${booking.lunch || 0}</span>
+          <button onclick="adjustMeal('${booking.bookingid}', 'lunch', 1)">➕</button>
+        </td>
+        <td>
+          <button onclick="adjustMeal('${booking.bookingid}', 'dinner', -1)">➖</button>
+          <span id="dn-${booking.bookingid}">${booking.dinner || 0}</span>
+          <button onclick="adjustMeal('${booking.bookingid}', 'dinner', 1)">➕</button>
+        </td>
+        ${!window.isFoodAdminSS ? `
+        <td>
+          <button onclick="updatePlateIssued('${booking.bookingid}', 'breakfast', -1)">➖</button>
+          <span id="b-${booking.bookingid}">${booking.breakfast_plate_issued || 0}</span>
+          <button onclick="updatePlateIssued('${booking.bookingid}', 'breakfast', 1)">➕</button>
+        </td>
+        <td>
+          <button onclick="updatePlateIssued('${booking.bookingid}', 'lunch', -1)">➖</button>
+          <span id="l-${booking.bookingid}">${booking.lunch_plate_issued || 0}</span>
+          <button onclick="updatePlateIssued('${booking.bookingid}', 'lunch', 1)">➕</button>
+        </td>
+        <td>
+          <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', -1)">➖</button>
+          <span id="d-${booking.bookingid}">${booking.dinner_plate_issued || 0}</span>
+          <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', 1)">➕</button>
+        </td>` : ''}
+      `;
       tableBody.appendChild(row);
     });
+
     enhanceTable('bookingsTable', 'tableSearch');
   } catch (error) {
     console.error('Error fetching food bookings:', error);

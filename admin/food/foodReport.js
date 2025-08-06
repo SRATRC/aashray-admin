@@ -55,18 +55,37 @@ document.addEventListener('DOMContentLoaded', async function () {
           meal,
           is_issued: 1
         });
+
+        const issuedGuestParams = new URLSearchParams({
+          date: report.date,
+          meal,
+          is_issued: '1'
+        });
+
         const noshowReportParams = new URLSearchParams({
           date: report.date,
           meal,
           is_issued: 0
         });
 
+        const noshowGuestParams = new URLSearchParams({
+          date: report.date,
+          meal,
+          is_issued: '0'
+        });
+
         const row = document.createElement('tr');
         row.innerHTML = `
           <td><center>${formatDate(report.date)}</center></td>
-          <td><center>${count} (${nonSpicy}) + ${guestCount} Guests = ${regdTotal}</center></td>
-          <td><center><a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a> + ${guestIssued} Guests = ${issuedTotal}</center></td>
-          <td><center><a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a> + ${guestNoShow} Guests = ${noShowTotal}</center></td>
+          <td><center>${count} (${nonSpicy}) M + ${guestCount} G = ${regdTotal}</center></td>
+          <td><center>
+            <a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a> M +
+            <a href='issuedGuestPlateReport.html?${issuedGuestParams}'>${guestIssued}</a> G = ${issuedTotal}
+          </center></td>
+          <td><center>
+            <a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a> M +
+            <a href='issuedGuestPlateReport.html?${noshowGuestParams}'>${guestNoShow}</a> G = ${noShowTotal}
+          </center></td>
           <td><center>${physicalPlates}</center></td>
         `;
         reportTable.appendChild(row);
