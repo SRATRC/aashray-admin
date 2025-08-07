@@ -83,12 +83,12 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="spicy">Spice Level:</label>
-                  <select id="spicy" name="spicy" class="form-control" required>
-                    <option value="0" selected>Regular</option>
-                    <option value="1">Spicy</option>
-                  </select>
-                </div>
+  <label for="spicy">Spice Level:</label>
+  <select id="spicy" name="spicy" class="form-control" required>
+    <option value="1" selected>Regular</option>
+    <option value="0">Non-Spicy</option>
+  </select>
+</div>
 
                 <div class="form-group">
                   <label for="beverage">Tea/Coffee:</label>
@@ -116,12 +116,15 @@
               <table id="bookingsTable" class="table table-striped table-bordered">
                 <thead>
                   <tr>
+                    <th><input type="checkbox" id="selectAllMeals" /></th> <!-- ✅ NEW COLUMN -->
                     <th>Date</th>
                     <th>Meal</th>
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="bookingsTableBody">
+                <hr style="margin-top: 20px; margin-bottom: 10px;" />
+<button id="deleteSelectedBtn" class="btn btn-danger" style="margin-bottom: 10px;">Delete Selected</button>
+ <tbody id="bookingsTableBody">
                   <!-- Table rows will be dynamically added here -->
                 </tbody>
               </table>

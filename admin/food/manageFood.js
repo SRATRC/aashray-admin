@@ -69,36 +69,74 @@ document.addEventListener('DOMContentLoaded', function () {
       showErrorMessage(error.message || error);
     }
   });
+
+// Select all checkbox
+document.addEventListener('change', function (e) {
+  if (e.target.id === 'selectAllMeals') {
+    const checkboxes = document.querySelectorAll('.meal-checkbox');
+    checkboxes.forEach(cb => cb.checked = e.target.checked);
+  }
+});
+
+// Delete selected button
+deleteSelectedBtn.addEventListener('click', async () => {
+  const selected = Array.from(document.querySelectorAll('.meal-checkbox:checked'));
+  if (selected.length === 0) {
+    Swal.fire('No Meals Selected', 'Please select at least one meal to delete.', 'info');
+    return;
+  }
+
+  const confirm = await Swal.fire({
+    icon: 'warning',
+    title: 'Are you sure?',
+    text: `This will cancel ${selected.length} meal(s).`,
+    showCancelButton: true,
+    confirmButtonText: 'Yes, cancel',
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  const mealsToCancel = selected.map(cb => ({
+    bookingid: cb.dataset.bookingid,
+    mealType: cb.dataset.mealtype
+  }));
+
+  const scrollY = window.scrollY;
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/food/cancel_multiple`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ meals: mealsToCancel })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      await getExistingBookings();
+      window.scrollTo(0, scrollY);
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted!',
+        text: `${selected.length} meal(s) cancelled.`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } else {
+      Swal.fire('Error', data.message || 'Failed to cancel some meals', 'error');
+    }
+  } catch (err) {
+    console.error('Bulk cancel error:', err);
+    Swal.fire('Error', err.message || 'Unexpected error', 'error');
+  }
+});
+
 });
 
 
-// async function cancelBooking(bookingid, mealType) {
-//   resetAlert();
-//   try {
-//     const response = await fetch(
-//       `${CONFIG.basePath}/food/cancel/${bookingid}?mealType=${mealType}`,
-//       {
-//         method: 'PUT',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//         },
-//       }
-//     );
-
-//     const data = await response.json();
-
-//     if (response.ok) {
-//       await getExistingBookings();
-//       showSuccessMessage(data.message);
-//     } else {
-//       showErrorMessage(data.message);
-//     }
-//   } catch (error) {
-//     console.error('Error:', error);
-//     showErrorMessage(error.message || error);
-//   }
-// }
 
 async function getExistingBookings() {
   const tableBody = document.querySelector('#bookingsTableBody');
@@ -146,15 +184,17 @@ async function getExistingBookings() {
       ['breakfast', 'lunch', 'dinner'].forEach((mealType) => {
         if (booking[mealType]) {
           const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${formatDate(booking.date)}</td>
-            <td>${mealType}</td>
-            <td>
-              <a href="#" onclick="cancelBooking('${booking.id}', '${mealType}');">
-                <i class="fa fa-trash"></i>
-              </a>
-            </td>`;
-          tableBody.appendChild(row);
+row.innerHTML = `
+  <td><input type="checkbox" class="meal-checkbox" data-bookingid="${booking.id}" data-mealtype="${mealType}"></td>
+  <td>${formatDate(booking.date)}</td>
+  <td>${mealType}</td>
+  <td>
+    <a href="#" onclick="cancelBooking('${booking.id}', '${mealType}');">
+      <i class="fa fa-trash"></i>
+    </a>
+  </td>`;
+tableBody.appendChild(row);
+
         }
       });
     });
@@ -235,3 +275,4 @@ function showSuccessMessage(message) {
 function showErrorMessage(message) {
   alert("Error: " + message); // ✅ No redirect anymore
 }
+
