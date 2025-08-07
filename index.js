@@ -95,17 +95,20 @@ function resetPassword(event) {
     },
     body: JSON.stringify({ username, newPassword })
   })
-    .then((res) => {
-      if (!res.ok) throw new Error('Reset failed');
-      return res.json();
-    })
-    .then((data) => {
-      alert(data.message || 'Password reset successful');
+    .then(async (res) => {
+      const result = await res.json();
+
+      if (!res.ok) {
+        // Show specific backend error if available
+        throw new Error(result.message || 'Failed to reset password.');
+      }
+
+      alert(result.message || 'Password reset successful');
       document.getElementById('resetPasswordForm').reset();
       hideResetModal();
     })
     .catch((err) => {
       console.error('Reset error:', err);
-      alert('Failed to reset password. Please check username and try again.');
+      alert(err.message); // ✅ Show actual backend error
     });
 }
