@@ -8,7 +8,18 @@ document.addEventListener('DOMContentLoaded', async function () {
   const packageFilter = document.getElementById('packageFilter');
   const downloadAllBtn = document.getElementById('downloadAll');
   const downloadPkgBtn = document.getElementById('downloadPackage');
+  const downloadRoomNoBtn = document.getElementById('downloadRoomNoFormat'); // ✅ new button
   const tableContainer = document.getElementById('tableContainer');
+  // Inside DOMContentLoaded
+const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
+if (uploadRoomNoBtn) {
+  uploadRoomNoBtn.addEventListener('click', () => {
+    const utsavid = new URLSearchParams(window.location.search).get('utsavId');
+    // Pass utsavId to upload page so it can attach it to upload call
+    window.location.href = `uploadRoomNo.html?utsavId=${utsavid}`;
+  });
+}
+
 
   try {
     const response = await fetch(
@@ -26,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const result = await response.json();
     utsavbookings = result.data || [];
-    console.log('Sample record:', utsavbookings[0]); // Add this
+    console.log('Sample record:', utsavbookings[0]);
     if (utsavbookings.length === 0) {
       tableContainer.innerHTML = '<p>No bookings available.</p>';
       return;
@@ -36,14 +47,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     populatePackageDropdown();
     renderFilteredTable();
-    renderFilteredTable();
 
-// ✅ Bind center summary button
-document.getElementById('centerSummaryBtn').addEventListener('click', () => {
-  openCenterSummaryModal(getCenterWiseSummary(filteredBookings));
-});
+    // ✅ Bind center summary button
+    document.getElementById('centerSummaryBtn').addEventListener('click', () => {
+      openCenterSummaryModal(getCenterWiseSummary(filteredBookings));
+    });
 
-
+    // Package filter change
     packageFilter.addEventListener('change', () => {
       const selected = packageFilter.value;
       downloadAllBtn.style.display = selected === 'all' ? 'inline-block' : 'none';
@@ -51,13 +61,30 @@ document.getElementById('centerSummaryBtn').addEventListener('click', () => {
       renderFilteredTable();
     });
 
+    // Download all
     downloadAllBtn.addEventListener('click', () => {
       triggerExcelDownload(utsavbookings, 'utsav_all_packages.xlsx', 'All Bookings');
     });
 
+    // Download filtered
     downloadPkgBtn.addEventListener('click', () => {
       triggerExcelDownload(filteredBookings, 'package_filtered.xlsx', 'Filtered Bookings');
     });
+
+    // ✅ Download RoomNo Upload Format
+    if (downloadRoomNoBtn) {
+      downloadRoomNoBtn.addEventListener('click', () => {
+        const minimalData = utsavbookings.map(b => ({
+          bookingid: b.bookingid,
+          cardno: b.cardno,
+          issuedto: b.issuedto,
+          utsavid: b.utsavid,
+          packageid: b.packageid,
+          roomno: b.roomno || ''
+        }));
+        triggerExcelDownload(minimalData, 'roomno_upload_format.xlsx', 'RoomNo Upload');
+      });
+    }
 
     downloadAllBtn.style.display = 'inline-block';
     downloadPkgBtn.style.display = 'none';
@@ -74,9 +101,9 @@ function populatePackageDropdown() {
 
   utsavbookings.forEach(item => {
     if (!packageMap.has(item.packageid)) {
-  const displayName = item.package_name || `Package ${item.packageid}`;
-  packageMap.set(item.packageid, displayName);
-}
+      const displayName = item.package_name || `Package ${item.packageid}`;
+      packageMap.set(item.packageid, displayName);
+    }
   });
 
   for (const [id, name] of packageMap.entries()) {
@@ -102,10 +129,12 @@ function renderFilteredTable() {
       <tr>
         <th>#</th>
         <th>Booking ID</th>
-        <th>Registration Time</th>
+        <th>Booked For</th>
         <th>Name</th>
-        <th>Package Name</th>
         <th>Age</th>
+        <th>Package Name</th>
+        <th>Room No</th>
+        <th>Registration Time</th>
         <th>Arriving by own car?</th>
         <th>Car Number</th>
         <th>Interested in Volunteering at?</th>
@@ -125,10 +154,12 @@ function renderFilteredTable() {
         <tr>
           <td>${index + 1}</td>
           <td>${item.bookingid}</td>
-          <td>${formatDateTime(item.createdAt)}</td>
+          <td>${item.cardno}</td>
           <td>${item.issuedto}</td>
-          <td>${item.package_name}</td>
           <td>${item.age}</td>
+          <td>${item.package_name}</td>
+          <td>${item.roomno}</td>
+          <td>${formatDateTime(item.createdAt)}</td>
           <td>${item.arrival}</td>
           <td>${item.carno}</td>
           <td>${item.volunteer}</td>
@@ -141,10 +172,10 @@ function renderFilteredTable() {
           <td>${item.transaction_status}</td>
           <td>${item.bookedby}</td>
           <td>${
-  JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
-    ? '-'
-    : `<a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">Update Booking Status</a>`
-}</td>
+            JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+              ? '-'
+              : `<a href="utsavStatusUpdate.html?bookingIdParam=${item.bookingid}&utsavIdParam=${item.utsavid}&statusParam=${item.status}">Update Booking Status</a>`
+          }</td>
         </tr>
       `).join('')}
     </tbody>
@@ -156,14 +187,13 @@ function renderFilteredTable() {
 
   const summaryDiv = document.createElement('div');
   summaryDiv.innerHTML = `
-  <p><b>Total registrations:</b> ${total} &nbsp; | &nbsp;
-  <b>Summary:</b> Males: ${maleCount}, Females: ${femaleCount}</p>
+    <p><b>Total registrations:</b> ${total} &nbsp; | &nbsp;
+    <b>Summary:</b> Males: ${maleCount}, Females: ${femaleCount}</p>
   `;
 
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  // ✅ Enhance table with full features
   setTimeout(() => {
     enhanceTable('utsavTable', 'tableSearch');
   }, 100);
@@ -205,7 +235,6 @@ function exportToExcel({ data, fileName, sheetName }) {
   XLSX.writeFile(workbook, fileName);
 }
 
-
 function getCenterWiseSummary(bookings) {
   const summary = {};
   bookings.forEach(b => {
@@ -222,7 +251,7 @@ function openCenterSummaryModal(centerSummary) {
   container.innerHTML = '';
 
   const rows = Object.entries(centerSummary)
-    .sort((a, b) => a[0].localeCompare(b[0])) // ✅ Alphabetical sort
+    .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([center, data]) => `
       <tr>
         <td>${center}</td>
@@ -239,3 +268,4 @@ function openCenterSummaryModal(centerSummary) {
 
   document.getElementById('centerSummaryModal').style.display = 'block';
 }
+
