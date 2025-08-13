@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adhyayan Feedback</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table {
+      min-width: 1200px; /* increased for extra columns */
+      width: 100%;
+    }
+  </style>
+
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+  <script src="../../style/js/formatDate.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess([
+      'officeAdmin', 'adhyayanAdmin', 'superAdmin',
+      'adhyayanAdminKol','adhyayanAdminRaj', 'adhyayanAdminDhu','adhyayanAdminReadOnly'
+    ]);
+  </script>
+  <script src="adhyayanFeedback.js" defer></script>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Adhyayan Feedback</h1>
+          </div>
+
+          <div class="form">
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+            <div class="table-responsive">
+              <table id="feedbackTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Card No</th>
+                    <th>Name</th>
+                    <th>Mob No</th>
+                    <th>Gender</th>
+                    <th>Center</th>
+                    <th>Res Status</th>
+                    <th>Shibir Name</th>
+                    <th>Swadhay Karta Rating</th>
+                    <th>Personal Interaction Rating</th>
+                    <th>Swadhay Karta Suggestions</th>
+                    <th>Raj Adhyayan Interest</th>
+                    <th>Future Topics</th>
+                    <th>Loved Most</th>
+                    <th>Improvement Suggestions</th>
+                    <th>Food Rating</th>
+                    <th>Stay Rating</th>
+                    <th>Submitted At</th>
+                    
+                  </tr>
+                </thead>
+                <tbody id="feedbackTableBody">
+                  <!-- Feedback data populated here -->
+                </tbody>
+              </table>
+              <div id="downloadBtnContainer"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
