@@ -129,6 +129,7 @@ function setupDownloadAndUploadButtons(data) {
     cardno: req.cardno || '',
     issuedto: req.CardDb?.issuedto || '',
     mobno: req.CardDb?.mobno || '',
+    email: req.CardDb?.email || '',
     res_status: req.CardDb?.res_status || '',
     requested_at: req.requested_at,
     status: req.status,
@@ -137,11 +138,12 @@ function setupDownloadAndUploadButtons(data) {
 
   document.getElementById('downloadExcelBtn').addEventListener('click', () => {
     downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
-      'cardno', 'issuedto', 'mobno', 'res_status', 'requested_at', 'status', 'code'
+      'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'status', 'code'
     ], {
       cardno: 'Card No',
       issuedto: 'Issued To',
       mobno: 'Mobile',
+      email: 'Email Id',
       res_status: 'Res Status',
       requested_at: 'Requested At',
       status: 'Status',
