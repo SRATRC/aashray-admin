@@ -140,14 +140,14 @@ function setupDownloadAndUploadButtons(data) {
     downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
       'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'status', 'code'
     ], {
-      cardno: 'Card No',
-      issuedto: 'Issued To',
-      mobno: 'Mobile',
-      email: 'Email Id',
-      res_status: 'Res Status',
-      requested_at: 'Requested At',
-      status: 'Status',
-      code: 'Code'
+      cardno: 'cardno',
+      issuedto: 'issuedto',
+      mobno: 'mobno',
+      email: 'email',
+      res_status: 'res_status',
+      requested_at: 'requested_at',
+      status: 'status',
+      code: 'code'
     });
   });
 
