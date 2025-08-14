@@ -1,0 +1,89 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['officeAdmin', 'superAdmin']); // customize allowed roles per page
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Tickets</title>
+
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
+  <script src="supportTickets.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Support Tickets</h1>
+          </div>
+
+          <div class="form">
+            <!-- Search input & download button injected dynamically by JS -->
+
+            <!-- Service Type Filter -->
+            <!-- Service Type Filter -->
+<div id="serviceFilter" style="margin:10px 0; white-space: nowrap; overflow-x: auto;">
+  <strong>Filter by Service:</strong>
+  <!-- Checkboxes will be injected dynamically by JS -->
+</div>
+
+            <div class="table-responsive">
+              <table id="supportTicketsTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th><center>Sr</center></th>
+                    <th><center>Issued By</center></th>
+                    <th><center>Issued To</center></th>
+                    <th><center>Mobile</center></th>
+                    <th><center>Gender</center></th>
+                    <th><center>DOB</center></th>
+                    <th><center>Center</center></th>
+                    <th><center>Res Status</center></th>
+                    <th><center>Service</center></th>
+                    <th><center>Issue</center></th>
+                    <th><center>Created At</center></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Rows will be populated dynamically using JS -->
+                </tbody>
+              </table>
+            </div>
+            <div id="downloadBtnContainer" style="margin-top: 10px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
