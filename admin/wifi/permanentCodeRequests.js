@@ -42,6 +42,7 @@ async function fetchRequests() {
         <td>${req.cardno}</td>
         <td>${req.CardDb?.issuedto || '-'}</td>
         <td>${req.CardDb?.mobno || '-'}</td>
+        <td>${req.CardDb?.email || '-'}</td>
         <td>${req.CardDb?.res_status || '-'}</td>
         <td>${new Date(req.requested_at).toLocaleString()}</td>
         <td>${req.status}</td>
