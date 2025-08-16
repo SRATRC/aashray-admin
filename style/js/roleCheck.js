@@ -34,7 +34,8 @@ function checkRoleAccess(allowedRoles) {
       'avtAdmin',
       'wifiAdmin',
       'utsavAdminReadOnly',
-      'smilesAdmin'
+      'smilesAdmin',
+      'adhyayanAdminReadOnly',
     ];
 
     const hasValidRole = roles.some((role) => validRoles.includes(role));
@@ -86,7 +87,8 @@ function getHomePageForRole() {
     'avtAdmin',
     'wifiAdmin',
     'utsavAdminReadOnly',
-    'smilesAdmin'
+    'smilesAdmin',
+    'adhyayanAdminReadOnly',
   ];
 
   const hasValidRole = roles.some((role) => validRoles.includes(role));

@@ -37,26 +37,36 @@ document.addEventListener('DOMContentLoaded', async function () {
     let shibirName = "";
 
     adhyanWaitListers.forEach((item, index) => {
-      shibirName = item.name;
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${item.bookingid || '-'}</td>
-        <td>${item.issuedto || '-'}</td>
-        <td>${item.mobno || '-'}</td>
-        <td>${item.gender || '-'}</td>
-        <td>${item.center || '-'}</td>
-        <td>${item.res_status || '-'}</td>
-        <td>${item.status || '-'}</td>
-        <td>${item.bookedby || '-'}</td>
-        <td>
-          <a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
-            Update Booking Status
-          </a>
-        </td>
-      `;
-      tableBody.appendChild(row);
-    });
+  shibirName = item.name;
+  const row = document.createElement('tr');
+
+  // Check roles
+  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const isReadOnly = roles.includes('adhyayanAdminReadOnly');
+
+  row.innerHTML = `
+    <td>${index + 1}</td>
+    <td>${item.bookingid || '-'}</td>
+    <td>${item.issuedto || '-'}</td>
+    <td>${item.mobno || '-'}</td>
+    <td>${item.gender || '-'}</td>
+    <td>${item.center || '-'}</td>
+    <td>${item.res_status || '-'}</td>
+    <td>${item.status || '-'}</td>
+    <td>${item.transaction_status || '-'}</td>
+    <td>${item.bookedby || '-'}</td>
+    <td>
+      ${
+        isReadOnly
+          ? '-'  // show a dash for read-only users
+          : `<a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
+               Update Booking Status
+             </a>`
+      }
+    </td>
+  `;
+  tableBody.appendChild(row);
+});
 
     document.getElementById("shibirName").textContent = " For " + shibirName;
 
@@ -71,6 +81,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         center: 'center',
         res_status: 'res_status',
         status: 'status',
+        transaction_status: 'transaction status',
         bookedby: 'bookedby',
         action: 'action'
       });
