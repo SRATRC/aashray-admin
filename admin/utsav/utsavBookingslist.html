@@ -50,6 +50,8 @@
   <label for="packageFilter"><b>Filter by Package:</b></label>
   <select id="packageFilter"></select>
   <button id="downloadAll" class="btn btn-primary">Download All Registrations</button>
+  <button id="downloadRoomNoFormat" class="btn btn-secondary"> Download RoomNo Upload Format</button>
+  <button id="uploadRoomNoBtn" class="btn btn-primary">Upload Room No</button>
   <button id="downloadPackage" class="btn btn-primary">Download This Package Registrations</button>
   <button id="centerSummaryBtn" class="btn btn-secondary">Center-wise Summary</button>
 </div>
@@ -111,6 +113,42 @@
     background-color: #f2f2f2;
   }
 </style>
+<!-- RoomNo Edit Modal -->
+<div id="roomNoModal" class="modal" style="display:none;">
+  <div class="modal-content whitesec">
+    <span class="close" id="closeRoomNoModal">&times;</span>
+    <div class="inner-padding">
+      <div class="frm-head">
+        <h3>Update Room No</h3>
+      </div>
+      <form id="roomNoForm" class="form">
+        
+        <div class="form-group">
+          <label>Booking ID:</label>
+          <input type="text" id="modalBookingId" class="form-control" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Card No:</label>
+          <input type="text" id="modalCardno" class="form-control" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Name:</label>
+          <input type="text" id="modalName" class="form-control" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Room No:</label>
+          <input type="text" id="modalRoomno" class="form-control" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update</button>
+      </form>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
+
