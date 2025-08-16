@@ -8,18 +8,17 @@ document.addEventListener('DOMContentLoaded', async function () {
   const packageFilter = document.getElementById('packageFilter');
   const downloadAllBtn = document.getElementById('downloadAll');
   const downloadPkgBtn = document.getElementById('downloadPackage');
-  const downloadRoomNoBtn = document.getElementById('downloadRoomNoFormat'); // ✅ new button
+  const downloadRoomNoBtn = document.getElementById('downloadRoomNoFormat');
   const tableContainer = document.getElementById('tableContainer');
-  // Inside DOMContentLoaded
-const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
-if (uploadRoomNoBtn) {
-  uploadRoomNoBtn.addEventListener('click', () => {
-    const utsavid = new URLSearchParams(window.location.search).get('utsavId');
-    // Pass utsavId to upload page so it can attach it to upload call
-    window.location.href = `uploadRoomNo.html?utsavId=${utsavid}`;
-  });
-}
 
+  // Upload Room No navigation
+  const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
+  if (uploadRoomNoBtn) {
+    uploadRoomNoBtn.addEventListener('click', () => {
+      const utsavid = new URLSearchParams(window.location.search).get('utsavId');
+      window.location.href = `uploadRoomNo.html?utsavId=${utsavid}`;
+    });
+  }
 
   try {
     const response = await fetch(
@@ -38,6 +37,7 @@ if (uploadRoomNoBtn) {
     const result = await response.json();
     utsavbookings = result.data || [];
     console.log('Sample record:', utsavbookings[0]);
+
     if (utsavbookings.length === 0) {
       tableContainer.innerHTML = '<p>No bookings available.</p>';
       return;
@@ -48,7 +48,7 @@ if (uploadRoomNoBtn) {
     populatePackageDropdown();
     renderFilteredTable();
 
-    // ✅ Bind center summary button
+    // Center summary button
     document.getElementById('centerSummaryBtn').addEventListener('click', () => {
       openCenterSummaryModal(getCenterWiseSummary(filteredBookings));
     });
@@ -71,7 +71,7 @@ if (uploadRoomNoBtn) {
       triggerExcelDownload(filteredBookings, 'package_filtered.xlsx', 'Filtered Bookings');
     });
 
-    // ✅ Download RoomNo Upload Format
+    // Download RoomNo Upload Format
     if (downloadRoomNoBtn) {
       downloadRoomNoBtn.addEventListener('click', () => {
         const minimalData = utsavbookings.map(b => ({
@@ -158,7 +158,19 @@ function renderFilteredTable() {
           <td>${item.issuedto}</td>
           <td>${item.age}</td>
           <td>${item.package_name}</td>
-          <td>${item.roomno}</td>
+          <td>
+            ${item.roomno || '-'}
+            ${
+              JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+                ? ''
+                : `<span class="edit-room" 
+                      data-bookingid="${item.bookingid}" 
+                      data-cardno="${item.cardno}" 
+                      data-name="${item.issuedto}" 
+                      data-roomno="${item.roomno || ''}"
+                      style="cursor:pointer; color:blue; margin-left:5px;">✎</span>`
+            }
+          </td>
           <td>${formatDateTime(item.createdAt)}</td>
           <td>${item.arrival}</td>
           <td>${item.carno}</td>
@@ -194,17 +206,71 @@ function renderFilteredTable() {
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
+  // ✅ Enhance table & modal after rendering
   setTimeout(() => {
-    enhanceTable('utsavTable', 'tableSearch');
-  }, 100);
+    if (typeof enhanceTable === 'function') {
+      enhanceTable('utsavTable', 'tableSearch');
+    }
+    initRoomNoModal();
+  }, 50);
+}
+
+function initRoomNoModal() {
+  const modal = document.getElementById('roomNoModal');
+  const closeBtn = document.getElementById('closeRoomNoModal');
+  const form = document.getElementById('roomNoForm');
+
+  if (!modal || !form) return;
+
+  // Re-bind edit buttons
+  document.querySelectorAll('.edit-room').forEach(icon => {
+    icon.addEventListener('click', () => {
+      document.getElementById('modalBookingId').value = icon.dataset.bookingid;
+      document.getElementById('modalCardno').value = icon.dataset.cardno;
+      document.getElementById('modalName').value = icon.dataset.name;
+      document.getElementById('modalRoomno').value = icon.dataset.roomno || '';
+      modal.style.display = 'block';
+    });
+  });
+
+  // Close modal
+  if (closeBtn) {
+    closeBtn.onclick = () => (modal.style.display = 'none');
+  }
+  window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+  // Submit form
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const bookingid = document.getElementById('modalBookingId').value;
+    const roomno = document.getElementById('modalRoomno').value;
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/utsav/updateRoomNo`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ bookingid, roomno })
+      });
+
+      if (!res.ok) throw new Error('Failed to update room number');
+      alert('Room number updated successfully!');
+
+      const updated = utsavbookings.find(b => b.bookingid == bookingid);
+      if (updated) updated.roomno = roomno;
+      modal.style.display = 'none';
+      renderFilteredTable();
+    } catch (err) {
+      console.error(err);
+      alert('Error updating room number');
+    }
+  };
 }
 
 function triggerExcelDownload(data, fileName, sheetName) {
-  exportToExcel({
-    data,
-    fileName,
-    sheetName
-  });
+  exportToExcel({ data, fileName, sheetName });
 }
 
 function formatDateTime(dateInput) {
@@ -268,4 +334,3 @@ function openCenterSummaryModal(centerSummary) {
 
   document.getElementById('centerSummaryModal').style.display = 'block';
 }
-
