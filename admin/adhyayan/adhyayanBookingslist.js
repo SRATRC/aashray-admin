@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${item.center || '-'}</td>
     <td>${item.res_status || '-'}</td>
     <td>${item.status || '-'}</td>
+    <td>${item.transaction_status || '-'}</td>
     <td>${item.bookedby || '-'}</td>
     <td>
       ${
@@ -80,6 +81,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         center: 'center',
         res_status: 'res_status',
         status: 'status',
+        transaction_status: 'transaction status',
         bookedby: 'bookedby',
         action: 'action'
       });
