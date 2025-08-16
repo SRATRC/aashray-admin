@@ -1,20 +1,20 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['utsavAdmin', 'superAdmin']);
 </script>
-
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Utsav Management</title>
+    <title>Upload Room Numbers</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Additional Scripts -->
+    <!-- Shared Styles and Scripts -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
@@ -22,11 +22,12 @@
     <script src="../../style/js/config.js"></script>
     <script src="../../sessionstorage.js"></script>
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <!-- SheetJS for Excel parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   </head>
 
   <body>
+    <!-- Header -->
     <div class="header">
       <div class="container">
         <div class="logout">
@@ -39,30 +40,29 @@
       </div>
     </div>
 
+    <!-- Page Content -->
     <div class="middlecontent">
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>Utsav Management</h1>
+              <h1>Upload Room Numbers</h1>
             </div>
 
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="createUtsav.html">Add New Utsav</a>
-                <a class="menu-btn" href="fetchAllUtsav.html">Edit Existing Utsav</a>
-                <a class="menu-btn" href="utsavReport.html">Utsav Summary Report</a>
-                <a class="menu-btn" href="utsavStatusUpdate.html">Utsav Status Update</a>
-                <a class="menu-btn" href="createPackage.html">Add New Utsav Package</a>
-                <a class="menu-btn" href="fetchAllPackage.html">Edit Existing Utsav Package</a>
-                <a class="menu-btn" href="uploadRoomNo.html">Upload Room No</a>
-                <a class="menu-btn" href="utsavCheckin.html">Utsav Checkin</a>               
-              </div>
+            <div class="form-group">
+              <input class="btn btn-primary" type="file" id="excelFile" accept=".xlsx,.xls" />
+              <button class="btn btn-primary" id="parseBtn">Preview</button>
+              <button class="btn btn-primary" id="uploadBtn">Upload to DB</button>
             </div>
 
+            <div id="tableContainer" style="margin-top: 20px;"></div>
+            <div id="uploadStatus" style="margin-top: 10px;"></div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- JS module for Excel upload logic -->
+    <script type="module" src="uploadRoomNo.js"></script>
   </body>
 </html>
