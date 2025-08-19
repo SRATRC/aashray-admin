@@ -89,6 +89,8 @@
   <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
     <button id="downloadAll" class="btn btn-primary">Download All Registrations</button>
     <button class="btn btn-secondary" onclick='openCenterSummaryModal(centerSummaryGlobal)'>Center-wise Summary</button>
+    <button class="btn btn-secondary"onclick="openPackageSummaryModal()">View Package Summary</button>
+
   </div>
 </div>
 
@@ -109,6 +111,14 @@
     <div id="centerSummaryTableContainer"></div>
   </div>
 </div>
+<div id="packageSummaryModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('packageSummaryModal').style.display='none'">&times;</span>
+    <h3>Package-wise Check-in Summary</h3>
+    <div id="packageSummaryTableContainer"></div>
+  </div>
+</div>
+
 
 </body>
 </html>
