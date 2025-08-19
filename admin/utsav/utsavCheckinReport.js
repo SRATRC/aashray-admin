@@ -1,3 +1,4 @@
+let packageSummaryGlobal = {};
 let centerSummaryGlobal = {};
 let utsavbookings = [];
 let filteredBookings = [];
@@ -48,6 +49,8 @@ function renderFilteredTable() {
   container.innerHTML = '';
 
   centerSummaryGlobal = getCenterWiseSummary(filteredBookings);
+  packageSummaryGlobal = getPackageWiseSummary(filteredBookings);
+
 
   const table = document.createElement('table');
   table.className = 'table table-striped table-bordered';
@@ -61,6 +64,7 @@ function renderFilteredTable() {
         <th data-key="center">Center</th>
         <th data-key="checkin_status">Checkedin?</th>
         <th data-key="updatedAt">Checkin Time</th>
+        <th data-key="pname">Package Name</th>
         <th data-key="age">Age</th>
         <th data-key="mobno">Mobile Number</th>
         <th data-key="bookingid">Booking ID</th>
@@ -76,6 +80,7 @@ function renderFilteredTable() {
           <td>${item.center}</td>
           <td>${item.checkin_status}</td>
           <td>${formatDateTime(item.updatedAt)}</td>
+          <td>${item.package_name}</td>
           <td>${item.age}</td>
           <td>${item.mobno}</td>
           <td>${item.bookingid}</td>
@@ -130,6 +135,19 @@ function getCenterWiseSummary(bookings) {
   return summary;
 }
 
+function getPackageWiseSummary(bookings) {
+  const summary = {};
+  bookings.forEach(b => {
+    const pkg = b.package_name || 'Unknown';
+    if (!summary[pkg]) {
+      summary[pkg] = { checkedin: 0, pending: 0 };
+    }
+    if (b.checkin_status === 'yes') summary[pkg].checkedin++;
+    if (b.checkin_status === 'no') summary[pkg].pending++;
+  });
+  return summary;
+}
+
 function openCenterSummaryModal() {
   const container = document.getElementById('centerSummaryTableContainer');
   if (!container) {
@@ -161,6 +179,39 @@ function openCenterSummaryModal() {
   `;
 
   document.getElementById('centerSummaryModal').style.display = 'block';
+}
+
+function openPackageSummaryModal() {
+  const container = document.getElementById('packageSummaryTableContainer');
+  if (!container) {
+    console.error('❌ packageSummaryTableContainer not found in DOM.');
+    return;
+  }
+
+  const rows = Object.entries(packageSummaryGlobal)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([pkg, counts]) => `
+      <tr>
+        <td>${pkg}</td>
+        <td>${counts.checkedin}</td>
+        <td>${counts.pending}</td>
+      </tr>
+    `).join('');
+
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Package</th>
+          <th>Checked-in</th>
+          <th>Check-in Pending</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  document.getElementById('packageSummaryModal').style.display = 'block';
 }
 
 function triggerExcelDownload(data, fileName, sheetName) {
