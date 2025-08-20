@@ -2,10 +2,11 @@ let packageSummaryGlobal = {};
 let centerSummaryGlobal = {};
 let utsavbookings = [];
 let filteredBookings = [];
-
+let utsavid = null;
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
-  const utsavid = urlParams.get('utsavId');
+  utsavid = urlParams.get('utsavId');
+  console.log(utsavid)
   const status = urlParams.get('status');
 
   try {
@@ -246,7 +247,7 @@ function manualCheckin(cardno, linkElement) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ cardno })
+    body: JSON.stringify({ cardno, utsavid })
   })
     .then(res => res.json().then(data => ({ status: res.status, body: data })))
     .then(({ status, body }) => {
