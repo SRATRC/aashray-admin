@@ -224,26 +224,33 @@ function setupDownloadButton() {
 // Open modal and save state
 function openUpdateModal(bookingId) {
   sessionStorage.setItem('scrollPosition', window.scrollY);
+
   document.getElementById('bookingid').value = bookingId;
   document.getElementById('status').value = "";
   document.getElementById('charges').value = "";
   document.getElementById('description').value = "";
   document.getElementById('adminComments').value = "";
   document.getElementById('statusMessage').textContent = "";
+
+  // 🚨 Reset Issue Credits state every time modal opens
+  issueCreditsField.style.display = "none";
+  issueCreditsDropdown.value = "no";
+
   document.getElementById('updateModal').style.display = 'block';
 }
 const statusDropdown = document.getElementById("status");
 const issueCreditsField = document.getElementById("issueCreditsField");
+const issueCreditsDropdown = document.getElementById("issueCredits");
 
+// Status change handler
 statusDropdown.addEventListener("change", () => {
   if (statusDropdown.value === "admin cancelled") {
     issueCreditsField.style.display = "block";
   } else {
     issueCreditsField.style.display = "none";
-    document.getElementById("issueCredits").value = "no"; // reset to No
+    issueCreditsDropdown.value = "no"; // reset to No
   }
 });
-
 // Close modal
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('updateModal').style.display = 'none';
