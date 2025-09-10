@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
       name: formData.get('name'),
       start_date: formatDateForDB(formData.get('start_date')),
       end_date: formatDateForDB(formData.get('end_date')),
-      total_seats: parseInt(formData.get('total_seats')),
+      total_seats: formData.get('total_seats'),
       comments: formData.get('comments'),
       location: formData.get('location'),
       registration_deadline: formatDateForDB(formData.get('registration_deadline'))
