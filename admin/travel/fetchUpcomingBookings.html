@@ -204,14 +204,21 @@
         <label for="status">New Status:</label>
         <select id="status" name="status" class="form-control" required>
           <option value="">Select Status</option>
-          <option value="confirmed">Confirmed</option>
           <option value="proceed for payment">Proceed for Payment</option>
+          <option value="admin cancelled">Admin Cancelled</option>
+          <option value="confirmed">Confirmed</option>
           <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
           <option value="wrong form cancel">Cancelled as wrong form filled</option>
-          <option value="admin cancelled">Admin Cancelled</option>
           <option value="seats full cancel">Cancelled as all seats are booked</option>
         </select>
       </div>
+      <div id="issueCreditsField" class="form-group" style="display: none;">
+  <label for="issueCredits">Credits to be issued?</label>
+  <select id="issueCredits" name="issueCredits" class="form-control">
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
+</div>
 
       <div class="form-group">
         <label for="charges">Charges:</label>
