@@ -57,19 +57,47 @@ document.addEventListener('DOMContentLoaded', () => {
         cardCell.textContent = item.cardno;
         row.appendChild(cardCell);
 
-        // Action (Edit)
-        const actionCell = document.createElement('td');
-        const editButton = document.createElement('button');
-        editButton.textContent = 'Edit';
-        editButton.classList.add('edit-btn');
-        actionCell.appendChild(editButton);
-        row.appendChild(actionCell);
+        // Action Cell
+const actionCell = document.createElement('td');
 
-        // Add event listener to the edit button
-        editButton.addEventListener('click', () => {
-          sessionStorage.setItem('personId', item.issuedto);
-          window.location.href = 'updateCard.html';
-        });
+// Edit Button
+const editButton = document.createElement('button');
+editButton.textContent = 'Edit';
+editButton.classList.add('edit-btn');
+editButton.addEventListener('click', () => {
+  sessionStorage.setItem('cardno', item.cardno); // use cardno instead
+  window.location.href = 'updateCard.html';
+});
+actionCell.appendChild(editButton);
+
+// Reset Password Button
+const resetPwdButton = document.createElement('button');
+resetPwdButton.textContent = 'Reset PWD';
+resetPwdButton.classList.add('reset-btn');
+resetPwdButton.style.marginLeft = '10px';
+resetPwdButton.addEventListener('click', async () => {
+  if (!confirm(`Are you sure you want to reset password for ${item.issuedto}?`)) return;
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/card/reset-pwd`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ cardno: item.cardno })
+    });
+
+    if (!response.ok) throw new Error('Reset failed');
+
+    showSuccessMessage(`Password reset to 'vitraag' for ${item.issuedto}`);
+  } catch (err) {
+    showErrorMessage(`Failed to reset password: ${err.message}`);
+  }
+});
+actionCell.appendChild(resetPwdButton);
+
+row.appendChild(actionCell);
 
         dataList.appendChild(row);
       });
