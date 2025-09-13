@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
   if (uploadRoomNoBtn) uploadRoomNoBtn.addEventListener('click',()=>window.location.href=`uploadRoomNo.html?utsavId=${utsavid}`);
 
-  // Restore filters & scroll from sessionStorage
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
   const storedScroll = sessionStorage.getItem('utsavScrollTop');
 
@@ -39,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     document.getElementById('centerSummaryBtn').addEventListener('click',()=>openCenterSummaryModal(getCenterWiseSummary(filteredBookings)));
 
-    packageFilter.addEventListener('change',()=>{
+    packageFilter.addEventListener('change',()=> {
       downloadAllBtn.style.display=packageFilter.value==='all'?'inline-block':'none';
       downloadPkgBtn.style.display=packageFilter.value==='all'?'none':'inline-block';
       renderFilteredTable();
@@ -57,7 +56,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     downloadPkgBtn.style.display='none';
 
   } catch(error){ console.error(error); }
-
 });
 
 // Populate package dropdown
@@ -155,79 +153,81 @@ function initRoomNoModal(){
   };
 }
 
-// Booking Status Modal init
+// Booking Status Modal init (with Credits dropdown)
 function initStatusModal(){
   const modal=document.getElementById('statusModal');
   if(!modal) return;
   const form=document.getElementById('statusModalForm');
   const closeBtn=document.getElementById('closeStatusModal');
+
+  // Add Credits dropdown dynamically
+  let creditsDiv = document.getElementById('creditsDiv');
+  if(!creditsDiv){
+    creditsDiv = document.createElement('div');
+    creditsDiv.className = 'form-group';
+    creditsDiv.id = 'creditsDiv';
+    creditsDiv.style.display='none';
+    creditsDiv.innerHTML=`
+      <label>Credits to be issued?</label>
+      <select id="modalIssueCredits" class="form-control">
+        <option value="no" selected>No</option>
+        <option value="yes">Yes</option>
+      </select>
+    `;
+    form.insertBefore(creditsDiv, form.querySelector('button[type="submit"]'));
+  }
+
   document.querySelectorAll('.update-status-link').forEach(link=>{
-    link.onclick=e=>{
-      e.preventDefault();
-      // Save current filter & scroll
-      sessionStorage.setItem('utsavPackageFilter', document.getElementById('packageFilter').value);
-      sessionStorage.setItem('utsavScrollTop', window.scrollY);
+    link.onclick=()=>{
       document.getElementById('modalUtsavId').value=link.dataset.utsavid;
       document.getElementById('modalBookingIdStatus').value=link.dataset.bookingid;
       document.getElementById('modalStatus').value=link.dataset.status;
-      document.getElementById('modalDescription').value='';
+      creditsDiv.style.display = link.dataset.status==='admin cancelled' ? 'block':'none';
       modal.style.display='block';
     };
   });
-  if(closeBtn) closeBtn.onclick=()=>modal.style.display='none';
+
+  closeBtn.onclick=()=>modal.style.display='none';
   window.onclick=e=>{if(e.target===modal) modal.style.display='none';};
+
+  const statusSelect=document.getElementById('modalStatus');
+  statusSelect.addEventListener('change',()=>{
+    if(statusSelect.value==='admin cancelled') creditsDiv.style.display='block';
+    else {creditsDiv.style.display='none'; creditsDiv.querySelector('#modalIssueCredits').value='no';}
+  });
 
   form.onsubmit=async e=>{
     e.preventDefault();
     const utsavid=document.getElementById('modalUtsavId').value;
     const bookingid=document.getElementById('modalBookingIdStatus').value;
-    const status=document.getElementById('modalStatus').value;
+    const status=statusSelect.value;
     const description=document.getElementById('modalDescription').value;
+    const issueCredits = creditsDiv.querySelector('#modalIssueCredits').value==='yes';
+
     try{
-      const res=await fetch(`${CONFIG.basePath}/utsav/status`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('token')}`},body:JSON.stringify({utsav_id: utsavid,bookingid,status,description})});
+      const res=await fetch(`${CONFIG.basePath}/utsav/status`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('token')}`},
+        body:JSON.stringify({ utsav_id:utsavid, bookingid, status, description, issueCredits })
+      });
       const respData=await res.json();
-      if(res.ok){ alert(respData.message); modal.style.display='none'; fetchAndRestoreTable(); }
-      else{ alert(`Error: ${respData.message}`); modal.style.display='none'; fetchAndRestoreTable(); }
-    }catch(err){ console.error(err); alert('Failed to update status'); modal.style.display='none'; fetchAndRestoreTable(); }
+      if(res.ok) alert(respData.message);
+      else alert(`Error: ${respData.message}`);
+      modal.style.display='none';
+      renderFilteredTable();
+    }catch(err){console.error(err); alert('Failed to update status'); modal.style.display='none'; renderFilteredTable();}
   };
 }
 
-// Fetch & restore table after status update
-async function fetchAndRestoreTable(){
-  const utsavid=document.getElementById('modalUtsavId').value;
-  const status='';
-  try{
-    const response=await fetch(`${CONFIG.basePath}/utsav/bookings?utsavid=${utsavid}&status=${status}`,{
-      method:'GET', headers:{'Content-Type':'application/json', Authorization:`Bearer ${sessionStorage.getItem('token')}`}
-    });
-    if(!response.ok) throw new Error('Failed to fetch');
-    const result=await response.json();
-    utsavbookings=result.data||[];
-    renderFilteredTable();
-    // restore filter & scroll
-    const storedFilter=sessionStorage.getItem('utsavPackageFilter');
-    const storedScroll=sessionStorage.getItem('utsavScrollTop');
-    if(storedFilter) document.getElementById('packageFilter').value=storedFilter;
-    if(storedScroll) setTimeout(()=>window.scrollTo(0, parseInt(storedScroll)),50);
-  }catch(err){console.error(err);}
+// Helper to format date
+function formatDateTime(dt){ if(!dt) return '-'; const d=new Date(dt); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; }
+
+function triggerExcelDownload(data, fileName, sheetName) {
+  console.log("Download triggered with data:", data);
+  downloadExcelFromJSON(data, fileName, sheetName);
 }
 
-// Utility: format date
-function formatDateTime(dt){if(!dt) return '-'; const d=new Date(dt); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`;}
-
-// Utility: center summary
-function getCenterWiseSummary(bookings){
-  const map={};
-  bookings.forEach(b=>{
-    if(!map[b.center]) map[b.center]={total:0,M:0,F:0};
-    map[b.center].total+=1;
-    if(b.gender==='M') map[b.center].M+=1;
-    if(b.gender==='F') map[b.center].F+=1;
-  });
-  return map;
-}
-
-// Open center summary modal
+// Move this above the DOMContentLoaded or make sure it's declared as a function
 function openCenterSummaryModal(summary){
   const modal=document.getElementById('centerSummaryModal');
   const container=document.getElementById('centerSummaryTableContainer');
@@ -244,7 +244,13 @@ function openCenterSummaryModal(summary){
   window.onclick=e=>{if(e.target===modal) modal.style.display='none';};
 }
 
-function triggerExcelDownload(data, fileName, sheetName) {
-  console.log("Download triggered with data:", data);
-  downloadExcelFromJSON(data, fileName, sheetName);
+function getCenterWiseSummary(bookings){
+  const map = {};
+  bookings.forEach(b => {
+    if(!map[b.center]) map[b.center] = { total: 0, M: 0, F: 0 };
+    map[b.center].total += 1;
+    if(b.gender === 'M') map[b.center].M += 1;
+    if(b.gender === 'F') map[b.center].F += 1;
+  });
+  return map;
 }

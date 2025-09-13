@@ -13,7 +13,6 @@
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <link rel="stylesheet" href="../../style/css/styles.css" />
-
   <script src="../../style/js/plugin.js"></script>
   <script src="../../style/js/bootstrap-datepicker.min.js"></script>
   <script src="../../style/js/clockpicker.js"></script>
@@ -24,7 +23,6 @@
   <script src="utsavBookingslist.js"></script>
   <script src="../../style/js/tableSortFilter.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  
 </head>
 
 <body>
@@ -58,10 +56,7 @@
             </div>
 
             <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-
-            <div class="table-responsive" id="tableContainer">
-              <!-- Tables inserted here dynamically -->
-            </div>
+            <div class="table-responsive" id="tableContainer"></div>
           </div>
         </div>
       </div>
@@ -116,6 +111,7 @@
             <label>Description:</label>
             <textarea id="modalDescription" rows="4" class="form-control"></textarea>
           </div>
+          <!-- Credits to be issued dropdown (added dynamically via JS) -->
           <button type="submit" class="btn btn-primary">Update Status</button>
         </form>
       </div>
