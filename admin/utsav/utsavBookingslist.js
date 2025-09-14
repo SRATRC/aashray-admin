@@ -62,11 +62,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 function populatePackageDropdown(){
   const dropdown = document.getElementById('packageFilter');
   dropdown.innerHTML=`<option value="all">All Packages</option>`;
-  const map=new Map();
-  utsavbookings.forEach(item=>{ if(!map.has(item.packageid)) map.set(item.packageid,item.package_name||`Package ${item.packageid}`); });
-  for(const [id,name] of map.entries()){
-    const count=utsavbookings.filter(b=>b.packageid==id).length;
-    dropdown.innerHTML+=`<option value="${id}">${name} (${count})</option>`;
+  const packageInfo = new Map();
+  utsavbookings.forEach(item => {
+    const packageId = item.packageid;
+    if (!packageInfo.has(packageId)) {
+      packageInfo.set(packageId, {
+        name: item.package_name || `Package ${packageId}`,
+        count: 0
+      });
+    }
+    packageInfo.get(packageId).count++;
+  });
+  for (const [id, info] of packageInfo.entries()) {
+    dropdown.innerHTML += `<option value="${id}">${info.name} (${info.count})</option>`;
   }
 }
 
@@ -84,10 +92,25 @@ function renderFilteredTable(){
   table.innerHTML=`
     <thead>
       <tr>
-        <th>#</th><th>Booking ID</th><th>Booked For</th><th>Name</th><th>Age</th>
-        <th>Package Name</th><th>Room No</th><th>Registration Time</th><th>Arrival?</th><th>Car Number</th>
-        <th>Volunteering</th><th>Mumukshu Comments</th><th>Mobile</th><th>Gender</th><th>Center</th>
-        <th>Mumkshu Status</th><th>Booking Status</th><th>Transaction Status</th><th>Booked By</th><th>Action</th>
+        <th>#</th><th>Booking ID</th>
+        <th>Booked For</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Package Name</th>
+        <th>Room No</th>
+        <th>Registration Time</th>
+        <th>Arrival?</th>
+        <th>Car Number</th>
+        <th>Volunteering</th>
+        <th>Mumukshu Comments</th>
+        <th>Mobile</th>
+        <th>Gender</th>
+        <th>Center</th>
+        <th>Mumkshu Status</th>
+        <th>Booking Status</th>
+        <th>Transaction Status</th>
+        <th>Booked By</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -220,7 +243,7 @@ function initStatusModal(){
 }
 
 // Helper to format date
-function formatDateTime(dt){ if(!dt) return '-'; const d=new Date(dt); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}`; }
+function formatDateTime(dt){ if(!dt) return '-'; const d=new Date(dt); return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth()+1).padStart(2, '0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
 
 function triggerExcelDownload(data, fileName, sheetName) {
   console.log("Download triggered with data:", data);
@@ -235,10 +258,13 @@ function openCenterSummaryModal(summary){
   const table=document.createElement('table');
   table.innerHTML=`<thead><tr><th>Center</th><th>Total</th><th>Males</th><th>Females</th></tr></thead>`;
   const tbody=document.createElement('tbody');
-  for(const c in summary){
-    const s=summary[c];
-    tbody.innerHTML+=`<tr><td>${c}</td><td>${s.total}</td><td>${s.M}</td><td>${s.F}</td></tr>`;
-  }
+    const sortedSummary = Object.entries(summary).sort((a, b) => a[0].localeCompare(b[0]));
+
+  const rowsHtml = sortedSummary.map(([center, data]) => {
+    return `<tr><td>${center}</td><td>${data.total}</td><td>${data.M}</td><td>${data.F}</td></tr>`;
+  }).join('');
+  
+  tbody.innerHTML = rowsHtml;
   table.appendChild(tbody); container.appendChild(table); modal.style.display='block';
   document.querySelector('#centerSummaryModal .close').onclick=()=>modal.style.display='none';
   window.onclick=e=>{if(e.target===modal) modal.style.display='none';};
@@ -247,10 +273,11 @@ function openCenterSummaryModal(summary){
 function getCenterWiseSummary(bookings){
   const map = {};
   bookings.forEach(b => {
-    if(!map[b.center]) map[b.center] = { total: 0, M: 0, F: 0 };
-    map[b.center].total += 1;
-    if(b.gender === 'M') map[b.center].M += 1;
-    if(b.gender === 'F') map[b.center].F += 1;
+    const center = b.center || 'Unknown';
+    if(!map[center]) map[center] = { total: 0, M: 0, F: 0 };
+    map[center].total += 1;
+    if(b.gender === 'M') map[center].M += 1;
+    if(b.gender === 'F') map[center].F += 1;
   });
   return map;
 }
