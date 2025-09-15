@@ -39,72 +39,77 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const displayData = (data) => {
-    console.log(`Displaying ${data.length} records`);
-    dataList.innerHTML = '';
+const displayData = (data) => {
+  console.log(`Displaying ${data.length} records`);
+  dataList.innerHTML = '';
 
-    if (Array.isArray(data) && data.length > 0) {
-      document.getElementById('data-list').style.display = 'table'; // Show the table
-      data.forEach((item) => {
-        const row = document.createElement('tr');
+  if (Array.isArray(data) && data.length > 0) {
+    document.getElementById('data-list').style.display = 'table'; // Show the table
+    data.forEach((item) => {
+      const row = document.createElement('tr');
 
-        // Name and Card Number
-        const nameCell = document.createElement('td');
-        nameCell.textContent = item.issuedto;
-        row.appendChild(nameCell);
+      // Name
+      const nameCell = document.createElement('td');
+      nameCell.textContent = item.issuedto;
+      row.appendChild(nameCell);
 
-        const cardCell = document.createElement('td');
-        cardCell.textContent = item.cardno;
-        row.appendChild(cardCell);
+      // Card Number
+      const cardCell = document.createElement('td');
+      cardCell.textContent = item.cardno;
+      row.appendChild(cardCell);
 
-        // Action Cell
-const actionCell = document.createElement('td');
+      // Mobile Number
+      const mobnoCell = document.createElement('td');
+      mobnoCell.textContent = item.mobno || '-';
+      row.appendChild(mobnoCell);
 
-// Edit Button
-const editButton = document.createElement('button');
-editButton.textContent = 'Edit';
-editButton.classList.add('edit-btn');
-editButton.addEventListener('click', () => {
-  sessionStorage.setItem('cardno', item.cardno); // use cardno instead
-  window.location.href = 'updateCard.html';
-});
-actionCell.appendChild(editButton);
+      // Action Cell
+      const actionCell = document.createElement('td');
 
-// Reset Password Button
-const resetPwdButton = document.createElement('button');
-resetPwdButton.textContent = 'Reset PWD';
-resetPwdButton.classList.add('reset-btn');
-resetPwdButton.style.marginLeft = '10px';
-resetPwdButton.addEventListener('click', async () => {
-  if (!confirm(`Are you sure you want to reset password for ${item.issuedto}?`)) return;
-
-  try {
-    const response = await fetch(`${CONFIG.basePath}/card/reset-pwd`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
-      },
-      body: JSON.stringify({ cardno: item.cardno })
-    });
-
-    if (!response.ok) throw new Error('Reset failed');
-
-    showSuccessMessage(`Password reset to 'vitraag' for ${item.issuedto}`);
-  } catch (err) {
-    showErrorMessage(`Failed to reset password: ${err.message}`);
-  }
-});
-actionCell.appendChild(resetPwdButton);
-
-row.appendChild(actionCell);
-
-        dataList.appendChild(row);
+      // Edit Button
+      const editButton = document.createElement('button');
+      editButton.textContent = 'Edit';
+      editButton.classList.add('edit-btn');
+      editButton.addEventListener('click', () => {
+        sessionStorage.setItem('cardno', item.cardno); // use cardno instead
+        window.location.href = 'updateCard.html';
       });
-    } else {
-      document.getElementById('data-list').style.display = 'none'; // Hide if no results
-    }
-  };
+      actionCell.appendChild(editButton);
+
+      // Reset Password Button
+      const resetPwdButton = document.createElement('button');
+      resetPwdButton.textContent = 'Reset PWD';
+      resetPwdButton.classList.add('reset-btn');
+      resetPwdButton.style.marginLeft = '10px';
+      resetPwdButton.addEventListener('click', async () => {
+        if (!confirm(`Are you sure you want to reset password for ${item.issuedto}?`)) return;
+
+        try {
+          const response = await fetch(`${CONFIG.basePath}/card/reset-pwd`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+            },
+            body: JSON.stringify({ cardno: item.cardno })
+          });
+
+          if (!response.ok) throw new Error('Reset failed');
+
+          showSuccessMessage(`Password reset to 'vitraag' for ${item.issuedto}`);
+        } catch (err) {
+          showErrorMessage(`Failed to reset password: ${err.message}`);
+        }
+      });
+      actionCell.appendChild(resetPwdButton);
+
+      row.appendChild(actionCell);
+      dataList.appendChild(row);
+    });
+  } else {
+    document.getElementById('data-list').style.display = 'none'; // Hide if no results
+  }
+};
 
   // Debounce function: waits for user to stop typing before triggering search
   const debounce = (callback, delay) => {
