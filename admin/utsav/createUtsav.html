@@ -10,17 +10,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Utsav</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-
-    <!-- Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="createUtsav.js"></script>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -57,12 +48,12 @@
 
                 <div class="form-group">
                   <label for="start_date">Start Date:</label>
-                  <input type="date" id="start_date" name="start_date" class="form-control" required />
+                  <input type="text" id="start_date" name="start_date" class="form-control" placeholder="dd/mm/yyyy" required />
                 </div>
 
                 <div class="form-group">
                   <label for="end_date">End Date:</label>
-                  <input type="date" id="end_date" name="end_date" class="form-control" required />
+                  <input type="text" id="end_date" name="end_date" class="form-control" placeholder="dd/mm/yyyy" required />
                 </div>
 
                 <div class="form-group">
@@ -74,15 +65,15 @@
                   <label for="comments">Comments:</label>
                   <textarea id="comments" name="comments" rows="4" class="form-control"></textarea>
                 </div>
-                
+
                 <div class="form-group">
                   <label for="location">Location:</label>
-                  <input type="location" id="location" name="location" class="form-control" required />
+                  <input type="text" id="location" name="location" class="form-control" required />
                 </div>
-                
+
                 <div class="form-group">
                   <label for="registration_deadline">Registration Deadline:</label>
-                  <input type="date" id="registration_deadline" name="registration_deadline" class="form-control" required />
+                  <input type="text" id="registration_deadline" name="registration_deadline" class="form-control" placeholder="dd/mm/yyyy" required />
                 </div>
 
                 <div class="form-group form-submit">
@@ -95,5 +86,16 @@
         </div>
       </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="createUtsav.js"></script>
+
+    
   </body>
 </html>
