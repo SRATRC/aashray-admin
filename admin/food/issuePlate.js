@@ -63,7 +63,7 @@ async function foodCheckin(cardno) {
       cardnoInput.value = '';      // Clear input
       resetAlert();                // Show form again
       cardnoInput.focus();         // Set focus back to input
-    }, 2000);
+    }, 400);
 
   } catch (error) {
     const alertBox = document.getElementById('alert');
@@ -77,6 +77,6 @@ async function foodCheckin(cardno) {
     setTimeout(() => {
       resetAlert();
       cardnoInput.focus();
-    }, 2000);
+    }, 400);
   }
 }

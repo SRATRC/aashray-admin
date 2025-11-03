@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
     alertDiv.style.display = 'block';
 
     if (type === 'success') {
-      setTimeout(resetAlert, 5000);
+      setTimeout(resetAlert, 500);
     }
   }
 
