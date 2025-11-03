@@ -1,11 +1,14 @@
 let utsavfetch = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-  const utsavTableBody = document.getElementById('utsavTable');
+  const urlParams = new URLSearchParams(window.location.search);
+  const location = urlParams.get('location'); // ✅ correctly get location value
 
+  const utsavTableBody = document.getElementById('utsavTable');
+  
   const fetchUtsavReport = async () => {
     const options = {
-      method: 'Get',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
@@ -13,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/utsav/fetch`,
+        `${CONFIG.basePath}/utsav/fetchUtsav?location=${encodeURIComponent(location)}`,
         options
       );
       const result = await response.json();
@@ -25,7 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const populateTable = (data) => {
+
+const populateTable = (data) => {
     utsavTableBody.innerHTML = ''; // Clear existing rows
 console.log(data);
 
@@ -46,6 +50,7 @@ console.log(data);
 </td>
 <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">${item.pending_count}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
+            <td style="text-align:center;">${item.available_seats}</td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">${item.waitlist_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=admin cancelled">${item.admincancel_count}</a></td>
@@ -67,7 +72,16 @@ console.log(data);
     JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
       ? '-'
       : `<a href="utsavCheckin.html?utsavid=${item.id}" target="_blank">
-          <button class="btn btn-primary btn-sm">Scanner Link</button>
+          <button class="btn btn-primary btn-sm">Link</button>
+        </a>`
+  }
+</td>
+            <td style="text-align:center;">
+  ${
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+      ? '-'
+      : `<a href="/admin/utsav/utsavRegistration.html?utsavId=${item.id}">
+          <button class="btn btn-secondary btn-sm">Open Form</button>
         </a>`
   }
 </td>

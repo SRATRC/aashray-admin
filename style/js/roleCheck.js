@@ -36,6 +36,7 @@ function checkRoleAccess(allowedRoles) {
       'utsavAdminReadOnly',
       'smilesAdmin',
       'adhyayanAdminReadOnly',
+      'utsavAdminRaj'
     ];
 
     const hasValidRole = roles.some((role) => validRoles.includes(role));
@@ -89,6 +90,7 @@ function getHomePageForRole() {
     'utsavAdminReadOnly',
     'smilesAdmin',
     'adhyayanAdminReadOnly',
+    'utsavAdminRaj'
   ];
 
   const hasValidRole = roles.some((role) => validRoles.includes(role));
