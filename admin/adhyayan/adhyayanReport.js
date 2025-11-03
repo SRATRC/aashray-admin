@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=pending">${item.pending_count}</a></td>
       <td style="text-align:center;">${item.total_seats}</td>
+      <td style="text-align:center;">${item.available_seats}</td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=admin cancelled">${item.admin_cancelled_count}</a></td>

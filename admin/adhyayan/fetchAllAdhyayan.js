@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;">${formatDate(item.end_date)}</td>
         <td style="text-align:center;">${item.food_allowed ? 'Yes' : 'No'}</td>
         <td style="text-align:center;">${item.total_seats}</td>
+        <td style="text-align:center;">${item.available_seats}</td>
         <td style="text-align:center;">
           ${
             item.status === 'deleted'

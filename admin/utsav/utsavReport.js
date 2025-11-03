@@ -5,8 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const location = urlParams.get('location'); // ✅ correctly get location value
 
   const utsavTableBody = document.getElementById('utsavTable');
-  let utsavfetch = [];
-
+  
   const fetchUtsavReport = async () => {
     const options = {
       method: 'GET',
@@ -51,6 +50,7 @@ console.log(data);
 </td>
 <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">${item.pending_count}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
+            <td style="text-align:center;">${item.available_seats}</td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">${item.waitlist_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=admin cancelled">${item.admincancel_count}</a></td>
