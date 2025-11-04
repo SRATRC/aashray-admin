@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Late Checkout Fees Report</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/formatDate.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="lateCheckOutFeeReport.js" defer></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']);
+  </script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      padding-top: 100px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      border-radius: 5px;
+    }
+
+    .modal-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .modal-actions {
+      text-align: right;
+      margin-top: 15px;
+    }
+
+    .modal-actions button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a> |
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a> |
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Late Checkout Fees Report</h1>
+          </div>
+
+          <div class="form">
+            <div id="alert" class="alert" style="display:none;"></div>
+            <form id="reportForm">
+              <div class="form-group">
+                <label for="payment_type">Payment Type:</label>
+                <select id="payment_type" name="payment_type" class="form-control" required>
+                  <option value="payment_pending" data-type="room">Late Checkout Fee Payment Pending</option>
+                  <option value="payment_done" data-type="flat">Late Checkout Fee Payment Done</option>
+                </select>
+              </div>
+
+              
+          <div class="table-responsive">
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+            <table id="reportTable" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Late Checkout Fees</th>
+                  <th>Booking Id</th>
+                  <th>Guest Name</th>
+                  <th>Mobile No.</th>
+                  <th>Room No</th>
+                  <th>Room Type</th>
+                  <th>Check-in</th>
+                  <th>Check-out</th>
+                  <th>Nights</th>
+                </tr>
+              </thead>
+              <tbody id="reportTableBody">
+                <!-- JS will populate -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </body>
+</html>
