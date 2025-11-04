@@ -15,10 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     try {
-      const response = await fetch(
-        `${CONFIG.basePath}/utsav/fetchUtsav?location=${encodeURIComponent(location)}`,
-        options
-      );
+      let url = `${CONFIG.basePath}/utsav/fetchUtsav`;
+
+if (location) {
+  url += `?location=${encodeURIComponent(location)}`;
+}
+
+const response = await fetch(url, options);
       const result = await response.json();
       utsavfetch = result.data || [];
       populateTable(result.data);
