@@ -28,7 +28,24 @@
 
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
-    
+    <style>
+  #summaryBooking {
+    width: fit-content !important;
+    max-width: 100%; 
+    margin-left: 0;   /* pushes table to the right */
+    margin-right: auto;
+  }
+
+  /* Ensure the outer container doesn't stretch it */
+  #summaryBooking + .table-responsive,
+  #summaryBooking.table {
+    width: fit-content !important;
+    max-width: 100%;
+    margin-left: 0;   /* right align */
+    margin-right: auto;
+  }
+</style>
+
   </head>
 
   <body>
@@ -71,12 +88,6 @@
                   </div>
                 </div>
 
-                <!-- <div class="form-group" style="display: flex; align-items: center; gap: 2rem;">
-                  <label><input type="radio" name="rcOption" id="pickupRC" value="pickup" /> Pickup at RC</label>
-                  <label><input type="radio" name="rcOption" id="dropRC" value="drop" /> Drop at RC</label>
-                </div> -->
-                                
-
                 <div class="form-group">
                   <label for="start_date">*Start Date:</label>
                   <input type="date" id="start_date" name="start_date" class="form-control" required />
@@ -103,9 +114,7 @@
   <div class="table-responsive">
     <table
       id="summaryBooking"
-      class="table table-striped table-bordered"
-      style="text-align: center; width: auto;"
-    >
+      >
       <thead>
         <tr>
           <th>Destination</th>
