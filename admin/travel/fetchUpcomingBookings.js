@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const upcomingTableBody = document.getElementById('upcomingBookings').querySelector('tbody');
 
   const statusLabelMap = {
-    waiting: 'Awaiting Confirmation for Payment (datachef)',
+    waiting: 'Waiting',
     'awaiting confirmation': 'Awaiting Confirmation for Payment',
     confirmed: 'Confirmed',
     cancelled: 'Self Cancel',
@@ -178,8 +178,16 @@ if (mumbaiPoints.has(pickup)) {
     <td>${comments}</td>
     <td>${b.total_people}</td>
     <td>${b.mobno}</td>
-    <td>${b.amount}</td>
-    <td>${b.paymentStatus}</td>
+    <td>
+  ${b.amount}
+  <span 
+    class="edit-amount" 
+    style="cursor:pointer; color:blue;" 
+    onclick="openAmountEditModal('${b.bookingid}', ${b.amount || 0})">
+    ✏️
+  </span>
+</td>
+<td>${b.paymentStatus}</td>
     <td>${formatDate(b.paymentDate)}</td>
     <td>${b.bookingid}</td>
     <td>${bookedBy}</td>
@@ -238,6 +246,55 @@ function openUpdateModal(bookingId) {
 
   document.getElementById('updateModal').style.display = 'block';
 }
+
+function openAmountEditModal(bookingId, currentAmount) {
+  const booking = travelReport.find(b => b.bookingid === bookingId);
+
+  document.getElementById('amountBookingId').value = bookingId;
+  document.getElementById('amountIssuedTo').value = booking?.issuedto || '';
+  document.getElementById('newAmount').value = currentAmount;
+
+  document.getElementById('amountModal').style.display = 'block';
+}
+
+document.getElementById('closeAmountModal').addEventListener('click', () => {
+  document.getElementById('amountModal').style.display = 'none';
+});
+
+document.getElementById('cancelAmountUpdate').addEventListener('click', () => {
+  document.getElementById('amountModal').style.display = 'none';
+});
+
+document.getElementById('amountForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const bookingid = document.getElementById('amountBookingId').value;
+  const newAmount = document.getElementById('newAmount').value;
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/travel/transaction/amount`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ bookingid, amount: newAmount })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert('Amount updated successfully!');
+      document.getElementById('amountModal').style.display = 'none';
+      // refresh bookings
+      document.getElementById('reportForm').dispatchEvent(new Event('submit'));
+    } else {
+      alert(`Error: ${data.message}`);
+    }
+  } catch (error) {
+    alert(`Error: ${error}`);
+  }
+});
+
 const statusDropdown = document.getElementById("status");
 const issueCreditsField = document.getElementById("issueCreditsField");
 const issueCreditsDropdown = document.getElementById("issueCredits");

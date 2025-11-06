@@ -28,7 +28,24 @@
 
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
-    
+    <style>
+  #summaryBooking {
+    width: fit-content !important;
+    max-width: 100%; 
+    margin-left: 0;   /* pushes table to the right */
+    margin-right: auto;
+  }
+
+  /* Ensure the outer container doesn't stretch it */
+  #summaryBooking + .table-responsive,
+  #summaryBooking.table {
+    width: fit-content !important;
+    max-width: 100%;
+    margin-left: 0;   /* right align */
+    margin-right: auto;
+  }
+</style>
+
   </head>
 
   <body>
@@ -63,19 +80,13 @@
                     <label><input type="checkbox" name="status" value="confirmed" /> Confirmed </label>
                     <label><input type="checkbox" name="status" value="proceed for payment" /> Proceed for Payment</label>
                     <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation for Payment</label>
-                    <label><input type="checkbox" name="status" value="waiting" /> Awaiting Confirmation for Payment (datachef)</label>
+                    <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
                     <label><input type="checkbox" name="status" value="cancelled" /> Self-Cancel </label>
                     <label><input type="checkbox" name="status" value="wrong form cancel" /> Cancelled as wrong form filled</label>
                     <label><input type="checkbox" name="status" value="admin cancelled" /> Admin Cancelled</label>
                     <label><input type="checkbox" name="status" value="seats full cancel" /> Cancelled as all seats are booked</label>
                   </div>
                 </div>
-
-                <!-- <div class="form-group" style="display: flex; align-items: center; gap: 2rem;">
-                  <label><input type="radio" name="rcOption" id="pickupRC" value="pickup" /> Pickup at RC</label>
-                  <label><input type="radio" name="rcOption" id="dropRC" value="drop" /> Drop at RC</label>
-                </div> -->
-                                
 
                 <div class="form-group">
                   <label for="start_date">*Start Date:</label>
@@ -103,9 +114,7 @@
   <div class="table-responsive">
     <table
       id="summaryBooking"
-      class="table table-striped table-bordered"
-      style="text-align: center; width: auto;"
-    >
+      >
       <thead>
         <tr>
           <th>Destination</th>
@@ -241,6 +250,62 @@
       </div>
 
       <p id="statusMessage" style="margin-top:10px;"></p>
+    </form>
+  </div>
+</div>
+
+<div id="amountModal" class="modal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  overflow: auto;
+">
+  <div class="modal-content" style="
+    background: white;
+    padding: 2rem;
+    margin: 10% auto;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    border-radius: 10px;
+  ">
+    <span id="closeAmountModal" style="
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+    ">&times;</span>
+
+    <h3>Update Transaction Amount</h3>
+    <form id="amountForm">
+      <!-- Booking ID -->
+      <div class="form-group">
+        <label for="amountBookingId">Booking ID:</label>
+        <input type="text" id="amountBookingId" class="form-control" readonly>
+      </div>
+
+      <!-- Name -->
+      <div class="form-group">
+        <label for="amountIssuedTo">Mumukshu Name:</label>
+        <input type="text" id="amountIssuedTo" class="form-control" readonly>
+      </div>
+
+      <!-- Amount -->
+      <div class="form-group">
+        <label for="newAmount">New Amount:</label>
+        <input type="number" id="newAmount" class="form-control" required>
+      </div>
+
+      <div class="form-group form-submit" style="margin-top: 15px;">
+        <button type="submit" class="btn btn-primary">Update Amount</button>
+        <button type="button" id="cancelAmountUpdate" class="btn btn-secondary">Cancel</button>
+      </div>
     </form>
   </div>
 </div>
