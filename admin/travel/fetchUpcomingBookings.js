@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const upcomingTableBody = document.getElementById('upcomingBookings').querySelector('tbody');
 
   const statusLabelMap = {
-    waiting: 'Awaiting Confirmation for Payment (datachef)',
+    waiting: 'Waiting',
     'awaiting confirmation': 'Awaiting Confirmation for Payment',
     confirmed: 'Confirmed',
     cancelled: 'Self Cancel',
