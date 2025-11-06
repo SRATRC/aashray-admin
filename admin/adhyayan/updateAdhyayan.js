@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('end_date').value = data.end_date;
     document.getElementById('speaker').value = data.speaker;
     document.getElementById('total_seats').value = data.total_seats;
+    document.getElementById('available_seats').value = data.available_seats;
+    const foodAllowedSelect = document.getElementById('food_allowed');
+    foodAllowedSelect.value = data.food_allowed ? "1" : "0";
     document.getElementById('amount').value = data.amount;
     document.getElementById('comments').value = data.comments;
 
@@ -58,6 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
       end_date: adhyayanForm.get('end_date'),
       speaker: adhyayanForm.get('speaker'),
       total_seats: adhyayanForm.get('total_seats'),
+      available_seats: adhyayanForm.get('available_seats'),
+      food_allowed: adhyayanForm.get('food_allowed'),
       amount: adhyayanForm.get('amount'),
       comments: adhyayanForm.get('comments')
     };

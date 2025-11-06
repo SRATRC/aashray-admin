@@ -1,7 +1,7 @@
 
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['utsavAdmin', 'superAdmin', 'utsavAdminReadOnly']); // customize allowed roles per page
+  checkRoleAccess(['utsavAdmin', 'superAdmin', 'utsavAdminReadOnly', 'utsavAdminRaj']); // customize allowed roles per page
 </script>
 
 <!DOCTYPE html>
@@ -72,7 +72,8 @@ width: 100%;
                     <th>Confirmed Count</th>
                     <th>Checkedin Count</th>
                     <th>Pending Count</th>
-                    <th>Max Count</th>
+                    <th>Max Seats Count</th>
+                    <th>Available Seats Count</th>
                     <th>WaitList Count</th>
                     <th>Self_Cancelled Count</th>
                     <th>Admin/Cron Cancelled Count</th>
@@ -80,6 +81,7 @@ width: 100%;
                     <th>Status</th>
                     <th>Action</th>
                     <th>Scanner</th> 
+                    <th>Register for Mumukshu</th>
                   </tr>
                 </thead>
                 <tbody id="utsavTable">

@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('start_date').value = data.start_date;
     document.getElementById('end_date').value = data.end_date;
     document.getElementById('total_seats').value = data.total_seats;
+    document.getElementById('available_seats').value = data.available_seats;
     document.getElementById('comments').value = data.comments;
     document.getElementById('location').value = data.location;
     document.getElementById('registration_deadline').value = data.registration_deadline;
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
       start_date: utsavForm.get('start_date'),
       end_date: utsavForm.get('end_date'),
       total_seats: utsavForm.get('total_seats'),
+      available_seats: utsavForm.get('available_seats'),
       comments: utsavForm.get('comments'),
       location: utsavForm.get('location'),
       registration_deadline: utsavForm.get('registration_deadline')    

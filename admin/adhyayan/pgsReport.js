@@ -59,10 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
         <td style="text-align:center;">${item.status}</td>
         <td style="text-align:center;">
-          <button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
-            ${item.status === 'open' ? 'Close' : 'Open'}
-          </button>
-        </td>
+  ${
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+      ? '-' 
+      : `<button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
+           ${item.status === 'open' ? 'Close' : 'Open'}
+         </button>`
+  }
+</td>
+
       `;
 
       adhyayanTableBody.appendChild(tableRow);

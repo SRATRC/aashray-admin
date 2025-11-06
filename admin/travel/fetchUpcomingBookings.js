@@ -232,12 +232,18 @@ function setupDownloadButton() {
 // Open modal and save state
 function openUpdateModal(bookingId) {
   sessionStorage.setItem('scrollPosition', window.scrollY);
+
   document.getElementById('bookingid').value = bookingId;
   document.getElementById('status').value = "";
   document.getElementById('charges').value = "";
   document.getElementById('description').value = "";
   document.getElementById('adminComments').value = "";
   document.getElementById('statusMessage').textContent = "";
+
+  // 🚨 Reset Issue Credits state every time modal opens
+  issueCreditsField.style.display = "none";
+  issueCreditsDropdown.value = "no";
+
   document.getElementById('updateModal').style.display = 'block';
 }
 
@@ -289,6 +295,19 @@ document.getElementById('amountForm').addEventListener('submit', async (event) =
   }
 });
 
+const statusDropdown = document.getElementById("status");
+const issueCreditsField = document.getElementById("issueCreditsField");
+const issueCreditsDropdown = document.getElementById("issueCredits");
+
+// Status change handler
+statusDropdown.addEventListener("change", () => {
+  if (statusDropdown.value === "admin cancelled") {
+    issueCreditsField.style.display = "block";
+  } else {
+    issueCreditsField.style.display = "none";
+    issueCreditsDropdown.value = "no"; // reset to No
+  }
+});
 // Close modal
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('updateModal').style.display = 'none';
@@ -307,6 +326,8 @@ document.getElementById('updateBookingForm').addEventListener('submit', async fu
   const description = document.getElementById('description').value;
   // const adminComments = document.getElementById('adminComments').value;
   const statusInput = document.getElementById('status').value;
+  const issueCredits = document.getElementById("issueCredits").value;
+
   
   let status = statusInput;
   let adminComments = document.getElementById('adminComments').value;
@@ -327,7 +348,7 @@ if (statusInput === 'wrong form cancel') {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       },
-      body: JSON.stringify({ bookingid, status, charges, description, adminComments })
+      body: JSON.stringify({ bookingid, status, charges, description, adminComments, issueCredits })
     });
 
     const data = await response.json();

@@ -1,0 +1,94 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavAdmin', 'superAdmin', 'utsavAdminRaj']);
+  // utsavAdminReadOnly should not access booking form
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Utsav Registration (Admin)</title>
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Utsav Registration (Admin)</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
+              <form id="utsavRegistrationForm">
+                <div class="form-row">
+                  <div class="form-group" style="flex:1; min-width: 240px;">
+                    <label for="utsavSelect">Select Utsav</label>
+                    <select id="utsavSelect" name="utsavid" class="form-control" required>
+                      <option value="">-- Select Utsav --</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Registrations</label>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered" id="mumukshuTable">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Mobile No</th>
+                        <th>Name</th>
+                        <th>Card No</th>
+                        <th>Package</th>
+                        <th>Center</th>
+                        <th>Arrival Mode</th>
+                        <th>Car No</th>
+                        <th>Volunteer At</th>
+                        <th>Comments</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="mumukshuTableBody"></tbody>
+                  </table>
+                </div>
+
+                <div class="form-group form-submit" style="display:flex; gap: 8px; align-items:center;">
+                  <button type="button" id="addRowBtn" class="btn btn-secondary">+ Add Row</button>
+                  <button type="submit" class="btn btn-primary">Submit Registrations</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="./utsavRegistration.js"></script>
+  </body>
+  </html>
+
+

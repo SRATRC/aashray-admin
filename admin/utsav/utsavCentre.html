@@ -1,15 +1,14 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['utsavAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['officeAdmin', 'utsavAdmin', 'superAdmin', 'utsavAdminReadOnly']); // customize allowed roles per page
 </script>
-
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Utsav Management</title>
+    <title> Utsav Registration Report</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -44,23 +43,18 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>Utsav Management</h1>
+              <h1>Utsav Registration Report</h1>
             </div>
 
             <div class="admin-menu">
               <div class="menu-grid">
-                <a class="menu-btn" href="createUtsav.html">Add New Utsav</a>
-                <a class="menu-btn" href="fetchAllUtsav.html">Edit Existing Utsav</a>
-                <a class="menu-btn" href="utsavCentre.html">Utsav Summary Report</a>
-                <a class="menu-btn" href="utsavStatusUpdate.html">Utsav Status Update</a>
-                <a class="menu-btn" href="createPackage.html">Add New Utsav Package</a>
-                <a class="menu-btn" href="fetchAllPackage.html">Edit Existing Utsav Package</a>
-                <a class="menu-btn" href="utsavRegistration.html">Utsav Registration (Admin)</a>
-                <a class="menu-btn" href="uploadRoomNo.html">Upload Room No</a>
-                <a class="menu-btn" href="utsavCheckin.html">Utsav Checkin</a>               
-              </div>
+                <a class="menu-btn" href="utsavReport.html?location=Research%20Centre">RC Utsav Summary Report</a>
+                <a class="menu-btn" href="utsavReport.html?location=Rajnandgaon">Rajnandgaon Utsav Summary Report</a>
+                <a class="menu-btn" href="utsavReport.html?location=Bangalore">Bangalore Utsav Summary Report</a>
+                <a class="menu-btn" href="../adhyayan/pgsReport.html">PGS Summary Report</a>
+                </div>
             </div>
-
+            
           </div>
         </div>
       </div>

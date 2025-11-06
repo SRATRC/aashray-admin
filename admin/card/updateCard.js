@@ -1,168 +1,174 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('updateForm');
-  const personId = sessionStorage.getItem('personId');
+document.addEventListener('DOMContentLoaded', async () => {
+  const cardno = sessionStorage.getItem('cardno');
+  if (!cardno) return alert('No card number found in session');
 
-  if (!personId) {
-    window.location.href = 'index.html';
-    return;
-  }
+  await fetchPersonDetails(cardno);
 
-  const fetchPersonDetails = async (personId) => {
-    try {
-      const response = await fetch(
-        `${CONFIG.basePath}/card/search/${personId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          }
-        }
-      );
+  // Attach submit listener
+  document.getElementById('updateForm').addEventListener('submit', handleUpdate);
 
-      const personData = await response.json();
-      const data = personData.data[0];
-      populateForm(data);
-      fetchStatesAndCities(data.country, data.state, data.city);
-    } catch (error) {
-      console.error('Error fetching person details:', error);
-    }
-  };
-
-  const populateForm = (data) => {
-    document.getElementById('cardno').value = data.cardno;
-    document.getElementById('issuedto').value = data.issuedto;
-    document.getElementById('gender').value = data.gender;
-    document.getElementById('dob').value = data.dob;
-    document.getElementById('mobno').value = data.mobno;
-    document.getElementById('email').value = data.email;
-    document.getElementById('idType').value = data.idType;
-    document.getElementById('idNo').value = data.idNo;
-    document.getElementById('address').value = data.address;
-    document.getElementById('pin').value = data.pin;
-    document.getElementById('center').value = data.center;
-
-    const resStatus = document.getElementById('res_status');
-    resStatus.value = data.res_status;
-  };
-
-  const fetchStatesAndCities = async (country, currentState, currentCity) => {
-    try {
-      const token = sessionStorage.getItem('token');
-
-      const statesResponse = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/states/${country}`,
-        // `${CONFIG.basePath}/location/states/${country}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      const statesData = await statesResponse.json();
-      const stateDropdown = document.getElementById('state');
-      stateDropdown.innerHTML = "";
-
-      statesData.data.forEach(state => {
-        const selected = state.value === currentState ? 'selected' : '';
-        stateDropdown.innerHTML += `<option value="${state.value}" ${selected}>${state.value}</option>`;
-      });
-
-      stateDropdown.addEventListener('change', () => {
-        const selectedState = stateDropdown.value;
-        fetchCities(country, selectedState);
-      });
-
-      fetchCities(country, currentState, currentCity);
-    } catch (error) {
-      console.error('Error fetching states:', error);
-    }
-  };
-
-  const fetchCities = async (country, state, currentCity) => {
-    try {
-      const token = sessionStorage.getItem('token');
-
-      const citiesResponse = await fetch(
-        `https://sratrc-portal-backend-dev.onrender.com/api/v1/location/cities/${country}/${state}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      const citiesData = await citiesResponse.json();
-      const cityDropdown = document.getElementById('city');
-      cityDropdown.innerHTML = "";
-
-      citiesData.data.forEach(city => {
-        const selected = city.value === currentCity ? 'selected' : '';
-        cityDropdown.innerHTML += `<option value="${city.value}" ${selected}>${city.value}</option>`;
-      });
-    } catch (error) {
-      console.error('Error fetching cities:', error);
-    }
-  };
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const updatedData = {
-      cardno: document.getElementById('cardno').value,
-      issuedto: document.getElementById('issuedto').value,
-      gender: document.getElementById('gender').value,
-      dob: document.getElementById('dob').value,
-      mobno: document.getElementById('mobno').value,
-      email: document.getElementById('email').value,
-      idType: document.getElementById('idType').value,
-      idNo: document.getElementById('idNo').value,
-      address: document.getElementById('address').value,
-      state: document.getElementById('state').value,
-      city: document.getElementById('city').value,
-      pin: document.getElementById('pin').value,
-      center: document.getElementById('center').value,
-      res_status: document.getElementById('res_status').value
-    };
-
-    try {
-      const response = await fetch(
-        `${CONFIG.basePath}/card/update`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          },
-          body: JSON.stringify(updatedData)
-        }
-      );
-
-      if (response.ok) {
-        alert('Card details updated successfully!');
-        window.location.href = 'index.html';
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.message}`);
-      }
-    } catch (error) {
-      console.error('Error updating data:', error);
-      alert('An error occurred while updating the card.');
-    }
+  // Attach change listeners once
+  document.getElementById('country').addEventListener('change', (e) => {
+    const country = e.target.value;
+    fetchStates(country);
   });
 
-  fetchPersonDetails(personId);
+  document.getElementById('state').addEventListener('change', (e) => {
+    const country = document.getElementById('country').value;
+    const state = e.target.value;
+    fetchCities(country, state);
+  });
 });
 
-function showSuccessMessage(message) {
-  alert(message);
+// --- Handle form submit ---
+async function handleUpdate(e) {
+  e.preventDefault();
+  const updatedData = {
+    cardno: document.getElementById('cardno').value,
+    issuedto: document.getElementById('issuedto').value,
+    gender: document.getElementById('gender').value,
+    dob: document.getElementById('dob').value,
+    mobno: document.getElementById('mobno').value,
+    email: document.getElementById('email').value,
+    idType: document.getElementById('idType').value,
+    idNo: document.getElementById('idNo').value,
+    address: document.getElementById('address').value,
+    country: document.getElementById('country').value,
+    state: document.getElementById('state').value,
+    city: document.getElementById('city').value,
+    pin: document.getElementById('pin').value,
+    center: document.getElementById('center').value,
+    res_status: document.getElementById('res_status').value,
+    referenceCardno: document.getElementById('referenceCardno')?.value || null,
+    guestType: document.getElementById('guestType')?.value || null
+  };
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch(`${CONFIG.basePath}/card/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updatedData)
+    });
+    if (!response.ok) throw new Error('Failed to update card');
+    alert('Card updated successfully!');
+    window.location.href = 'index.html';
+  } catch (err) {
+    console.error(err);
+    alert('Error updating card: ' + err.message);
+  }
 }
 
-function showErrorMessage(message) {
-  alert("Error: " + message);
+// --- Fetch person details ---
+async function fetchPersonDetails(cardno) {
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.basePath}/card/search/${cardno}`, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to fetch person details');
+    const result = await res.json();
+    if (!result.data || !result.data[0]) return alert('No person found');
+    populateForm(result.data[0]);
+  } catch (err) {
+    console.error(err);
+    alert('Error fetching person details');
+  }
 }
 
-function resetAlert() {
-  // This could clear UI banners if used in future (currently placeholder)
+// --- Populate form ---
+function populateForm(data) {
+  ['cardno','issuedto','gender','dob','mobno','email','idType','idNo','address','pin','res_status'].forEach(field => {
+    document.getElementById(field).value = data[field] || '';
+  });
+
+  fetchCountries(data.country, data.state, data.city);
+  fetchCenters(data.center); // <-- call this to populate center dropdown correctly
 }
 
+// --- Fetch countries ---
+async function fetchCountries(currentCountry, currentState, currentCity) {
+  const countryDropdown = document.getElementById('country');
+  countryDropdown.innerHTML = '<option value="">Select Country</option>';
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.basePath}/location/countries`, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+    const data = (await res.json()).data || ['India','USA','UK','UAE','Canada'];
+    data.forEach(c => {
+      const val = c.value || c;
+      const selected = val === currentCountry ? 'selected' : '';
+      countryDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+    });
+    if (currentCountry) fetchStates(currentCountry, currentState, currentCity);
+  } catch (err) { console.warn(err); }
+}
+
+// --- Fetch states ---
+async function fetchStates(country, currentState, currentCity) {
+  const stateDropdown = document.getElementById('state');
+  stateDropdown.innerHTML = '<option value="">Select State</option>';
+  if (!country) return;
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.basePath}/location/states/${country}`, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+    const data = (await res.json()).data || [];
+    data.forEach(s => {
+      const val = s.value || s;
+      const selected = val === currentState ? 'selected' : '';
+      stateDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+    });
+    if (currentState) fetchCities(country, currentState, currentCity);
+  } catch (err) { console.error(err); }
+}
+
+// --- Fetch cities ---
+async function fetchCities(country, state, currentCity) {
+  const cityDropdown = document.getElementById('city');
+  cityDropdown.innerHTML = '<option value="">Select City</option>';
+  if (!country || !state) return;
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.basePath}/location/cities/${country}/${state}`, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+    const data = (await res.json()).data || [];
+    data.forEach(c => {
+      const val = c.value || c;
+      const selected = val === currentCity ? 'selected' : '';
+      cityDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+    });
+  } catch (err) { console.error(err); }
+}
+
+const fetchCenters = async (currentCenter) => {
+  const centerDropdown = document.getElementById('center');
+  centerDropdown.innerHTML = '<option value="">Select Center</option>';
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.basePath}/location/centres`, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+    const centersData = (await res.json()).data || [];
+
+    centersData.forEach(c => {
+      const val = c.value || c;
+      const selected = val === currentCenter ? 'selected' : '';
+      centerDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+    });
+
+    // If currentCenter is not in the fetched list, add it
+    if (currentCenter && !centersData.find(c => (c.value || c) === currentCenter)) {
+      centerDropdown.innerHTML += `<option value="${currentCenter}" selected>${currentCenter}</option>`;
+    }
+  } catch (err) {
+    console.error('Error fetching centers:', err);
+  }
+};
