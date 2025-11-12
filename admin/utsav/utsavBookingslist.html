@@ -13,17 +13,16 @@
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <link rel="stylesheet" href="../../style/css/styles.css" />
-
   <script src="../../style/js/plugin.js"></script>
   <script src="../../style/js/bootstrap-datepicker.min.js"></script>
   <script src="../../style/js/clockpicker.js"></script>
   <script src="../../style/js/custom.js"></script>
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
   <script src="utsavBookingslist.js"></script>
   <script src="../../style/js/tableSortFilter.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <script src="../../style/js/exportToExcel.js"></script>
 </head>
 
 <body>
@@ -46,109 +45,86 @@
           </div>
 
           <div class="form">
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-  <label for="packageFilter"><b>Filter by Package:</b></label>
-  <select id="packageFilter"></select>
-  <button id="downloadAll" class="btn btn-primary">Download All Registrations</button>
-  <button id="downloadRoomNoFormat" class="btn btn-secondary"> Download RoomNo Upload Format</button>
-  <button id="uploadRoomNoBtn" class="btn btn-primary">Upload Room No</button>
-  <button id="downloadPackage" class="btn btn-primary">Download This Package Registrations</button>
-  <button id="centerSummaryBtn" class="btn btn-secondary">Center-wise Summary</button>
-</div>
-
-
-<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-
-<div class="table-responsive" id="tableContainer">
-              <!-- Tables inserted here dynamically -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+              <label for="packageFilter"><b>Filter by Package:</b></label>
+              <select id="packageFilter"></select>
+              <button id="downloadAll" class="btn btn-primary">Download All Registrations</button>
+              <button id="downloadRoomNoFormat" class="btn btn-secondary">Download RoomNo Upload Format</button>
+              <button id="uploadRoomNoBtn" class="btn btn-primary">Upload Room No</button>
+              <button id="downloadPackage" class="btn btn-primary">Download This Package Registrations</button>
+              <button id="centerSummaryBtn" class="btn btn-secondary">Center-wise Summary</button>
             </div>
+
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+            <div class="table-responsive" id="tableContainer"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
   <!-- Center-wise Summary Modal -->
-<div id="centerSummaryModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span onclick="document.getElementById('centerSummaryModal').style.display='none'">&times;</span>
-    <h3>Center-wise Summary</h3>
-    <div id="centerSummaryTableContainer"></div>
-  </div>
-</div>
-
-<style>
-  .modal {
-    position: fixed;
-    z-index: 999;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-  }
-  .modal-content {
-    max-width: 600px;
-    margin: 5% auto;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    position: relative;
-  }
-  .modal-content span {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 24px;
-    cursor: pointer;
-  }
-  #centerSummaryTableContainer table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  #centerSummaryTableContainer th, #centerSummaryTableContainer td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-  }
-  #centerSummaryTableContainer th {
-    background-color: #f2f2f2;
-  }
-</style>
-<!-- RoomNo Edit Modal -->
-<div id="roomNoModal" class="modal" style="display:none;">
-  <div class="modal-content whitesec">
-    <span class="close" id="closeRoomNoModal">&times;</span>
-    <div class="inner-padding">
-      <div class="frm-head">
-        <h3>Update Room No</h3>
-      </div>
-      <form id="roomNoForm" class="form">
-        
-        <div class="form-group">
-          <label>Booking ID:</label>
-          <input type="text" id="modalBookingId" class="form-control" readonly />
-        </div>
-
-        <div class="form-group">
-          <label>Card No:</label>
-          <input type="text" id="modalCardno" class="form-control" readonly />
-        </div>
-
-        <div class="form-group">
-          <label>Name:</label>
-          <input type="text" id="modalName" class="form-control" readonly />
-        </div>
-
-        <div class="form-group">
-          <label>Room No:</label>
-          <input type="text" id="modalRoomno" class="form-control" required />
-        </div>
-
-        <button type="submit" class="btn btn-primary">Update</button>
-      </form>
+  <div id="centerSummaryModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Center-wise Summary</h3>
+      <div id="centerSummaryTableContainer"></div>
     </div>
   </div>
-</div>
 
+  <!-- RoomNo Modal -->
+  <div id="roomNoModal" class="modal" style="display:none;">
+    <div class="modal-content whitesec">
+      <span class="close" id="closeRoomNoModal">&times;</span>
+      <div class="inner-padding">
+        <div class="frm-head"><h3>Update Room No</h3></div>
+        <form id="roomNoForm" class="form">
+          <div class="form-group"><label>Booking ID:</label><input type="text" id="modalBookingId" class="form-control" readonly /></div>
+          <div class="form-group"><label>Card No:</label><input type="text" id="modalCardno" class="form-control" readonly /></div>
+          <div class="form-group"><label>Name:</label><input type="text" id="modalName" class="form-control" readonly /></div>
+          <div class="form-group"><label>Room No:</label><input type="text" id="modalRoomno" class="form-control" required /></div>
+          <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Status Update Modal -->
+  <div id="statusModal" class="modal" style="display:none;">
+    <div class="modal-content whitesec">
+      <span class="close" id="closeStatusModal">&times;</span>
+      <div class="inner-padding">
+        <div class="frm-head"><h3>Update Booking Status</h3></div>
+        <form id="statusModalForm" class="form">
+          <div class="form-group"><label>Utsav ID:</label><input type="text" id="modalUtsavId" class="form-control" readonly /></div>
+          <div class="form-group"><label>Booking ID:</label><input type="text" id="modalBookingIdStatus" class="form-control" readonly /></div>
+          <div class="form-group">
+            <label>Status:</label>
+            <select id="modalStatus" class="form-control" required>
+              <option value="confirmed">Confirmed</option>
+              <option value="admin cancelled">Admin Cancelled</option>
+              <option value="pending">Payment Pending</option>
+              <option value="waiting">Waiting</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description:</label>
+            <textarea id="modalDescription" rows="4" class="form-control"></textarea>
+          </div>
+          <!-- Credits to be issued dropdown (added dynamically via JS) -->
+          <button type="submit" class="btn btn-primary">Update Status</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .modal {position: fixed; z-index: 999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color: rgba(0,0,0,0.4);}
+    .modal-content {max-width: 600px; margin:5% auto; padding:20px; background:white; border-radius:10px; position:relative;}
+    .modal-content span {position:absolute; top:10px; right:20px; font-size:24px; cursor:pointer;}
+    #centerSummaryTableContainer table {width:100%; border-collapse:collapse;}
+    #centerSummaryTableContainer th, #centerSummaryTableContainer td {border:1px solid #ccc; padding:8px; text-align:center;}
+    #centerSummaryTableContainer th {background-color:#f2f2f2;}
+  </style>
 </body>
 </html>
-
