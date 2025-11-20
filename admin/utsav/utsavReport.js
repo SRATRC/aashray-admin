@@ -65,7 +65,7 @@ console.log(data);
   ${
     JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
       ? '-'
-      : `<button class="btn btn-secondary btn-sm" data-id="${item.id}" data-status="${item.status}">
+      : `<button class="btn btn-secondary btn-sm toggle-status" data-id="${item.id}" data-status="${item.status}">
           ${item.status === 'open' ? 'Close' : 'Open'}
         </button>`
   }
