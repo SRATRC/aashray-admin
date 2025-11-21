@@ -65,18 +65,9 @@ console.log(data);
   ${
     JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
       ? '-'
-      : `<button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
+      : `<button class="btn btn-secondary btn-sm toggle-status" data-id="${item.id}" data-status="${item.status}">
           ${item.status === 'open' ? 'Close' : 'Open'}
         </button>`
-  }
-</td>
-<td style="text-align:center;">
-  ${
-    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
-      ? '-'
-      : `<a href="utsavCheckin.html?utsavid=${item.id}" target="_blank">
-          <button class="btn btn-primary btn-sm">Link</button>
-        </a>`
   }
 </td>
             <td style="text-align:center;">
@@ -88,6 +79,20 @@ console.log(data);
         </a>`
   }
 </td>
+</td>
+            <td style="text-align:center;">
+  ${
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+      ? '-'
+      : `<a href="/admin/utsav/utsavRegistration.html?utsavId=${item.id}">
+          <button class="btn btn-secondary btn-sm">Open Form</button>
+        </a>`
+  }
+</td>
+<td style="text-align:center;">
+  <a href="roomOccupancy.html?utsav_id=${item.id}">Click Here</a>
+</td>
+            
          `;
 
       utsavTableBody.appendChild(tableRow);
