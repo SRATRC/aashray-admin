@@ -26,6 +26,24 @@
     <script src="../../style/js/exportToExcel.js"></script>
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
+      <style>
+  #summaryBooking {
+    width: fit-content !important;
+    max-width: 100%; 
+    margin-left: 0;   /* pushes table to the right */
+    margin-right: auto;
+  }
+
+  /* Ensure the outer container doesn't stretch it */
+  #summaryBooking + .table-responsive,
+  #summaryBooking.table {
+    width: fit-content !important;
+    max-width: 100%;
+    margin-left: 0;   /* right align */
+    margin-right: auto;
+  }
+</style>
+
   </head>
 
   <body>
@@ -57,7 +75,7 @@
               <!-- Mumbai to RC -->
               <h3 id="toRCHeader">Travelling from Mumbai to Research Centre (0)</h3>
               <div class="table-responsive">
-                <table class="table table-striped table-bordered">
+                <table id="summaryBooking" class="table table-striped table-bordered">
                   <thead>
                     <tr>
                       <th>Date of Travel</th>
@@ -75,7 +93,7 @@
               <!-- RC to Mumbai -->
               <h3 id="fromRCHeader">Travelling from Research Centre to Mumbai (0)</h3>
               <div class="table-responsive">
-                <table class="table table-striped table-bordered">
+                <table id="summaryBooking" class="table table-striped table-bordered">
                   <thead>
                     <tr>
                       <th>Date of Travel</th>
