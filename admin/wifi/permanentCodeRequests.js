@@ -1,4 +1,5 @@
 let currentStatus = '';
+let currentRecords = []; // <-- store last fetched records for modal prefill
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('statusFilter').addEventListener('change', () => {
@@ -21,10 +22,14 @@ async function fetchRequests() {
   const tableBody = document.querySelector('#wifiRequestTable tbody');
   tableBody.innerHTML = '';
 
-  const query = new URLSearchParams({ status: currentStatus }).toString();
+  // Only send status if it's non-empty
+  const params = new URLSearchParams();
+  if (currentStatus) params.set('status', currentStatus);
+  const query = params.toString();
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/wifi/permanent?${query}`, {
+    const url = `${CONFIG.basePath}/wifi/permanent${query ? '?' + query : ''}`;
+    const res = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +38,8 @@ async function fetchRequests() {
     });
 
     const json = await res.json();
-    const records = json.data.requests;
+    const records = json.data.requests || [];
+    currentRecords = records; // store globally for modal prefill
 
     records.forEach((req, idx) => {
       const row = document.createElement('tr');
@@ -44,9 +50,11 @@ async function fetchRequests() {
         <td>${req.CardDb?.mobno || '-'}</td>
         <td>${req.CardDb?.email || '-'}</td>
         <td>${req.CardDb?.res_status || '-'}</td>
-        <td>${new Date(req.requested_at).toLocaleString()}</td>
-        <td>${req.status}</td>
+        <td>${req.requested_at ? new Date(req.requested_at).toLocaleString() : '-'}</td>
+        <td>${req.username || '-'}</td>
+        <td>${req.ssid || '-'}</td>
         <td>${req.code || '-'}</td>
+        <td>${req.status}</td>
         <td>
           ${req.status === 'pending' ? `<button onclick="openModal('${req.id}')">Take Action</button>` : '-'}
         </td>
@@ -58,15 +66,19 @@ async function fetchRequests() {
     setupDownloadAndUploadButtons(records);
 
   } catch (err) {
+    console.error(err);
     showMessage('Error fetching requests', 'error');
   }
 }
 
 function openModal(id) {
+  const rec = currentRecords.find(r => String(r.id) === String(id));
   document.getElementById('modalRequestId').value = id;
   document.getElementById('modalAction').value = 'approved';
-  document.getElementById('modalCode').value = '';
-  document.getElementById('modalComments').value = '';
+  document.getElementById('modalCode').value = rec?.code || '';
+  document.getElementById('modalComments').value = rec?.admin_comments || '';
+  document.getElementById('modalUsername').value = rec?.username || (rec?.CardDb?.issuedto || '');
+  document.getElementById('modalSsid').value = rec?.ssid || '';
   document.getElementById('actionModal').style.display = 'block';
   document.getElementById('modalBackdrop').style.display = 'block';
 }
@@ -81,6 +93,8 @@ async function submitAction() {
   const action = document.getElementById('modalAction').value;
   const code = document.getElementById('modalCode').value.trim();
   const comments = document.getElementById('modalComments').value;
+  const username = document.getElementById('modalUsername').value.trim();
+  const ssid = document.getElementById('modalSsid').value.trim();
 
   if (action === 'approved' && !code) {
     showMessage('Permanent code is required for approval', 'error');
@@ -88,13 +102,22 @@ async function submitAction() {
   }
 
   try {
+    const body = {
+      action,
+      permanent_code: code,
+      admin_comments: comments,
+      // only send username/ssid if not empty (but server accepts empty/null too)
+      username: username || null,
+      ssid: ssid || null
+    };
+
     const res = await fetch(`${CONFIG.basePath}/wifi/permanent/${requestId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       },
-      body: JSON.stringify({ action, permanent_code: code, admin_comments: comments })
+      body: JSON.stringify(body)
     });
 
     const json = await res.json();
@@ -104,7 +127,8 @@ async function submitAction() {
     closeModal();
     fetchRequests();
   } catch (err) {
-    showMessage(err.message, 'error');
+    console.error(err);
+    showMessage(err.message || 'Update failed', 'error');
   }
 }
 
@@ -114,6 +138,8 @@ function showMessage(msg, type) {
   el.style.color = type === 'error' ? 'red' : 'green';
   setTimeout(() => (el.innerText = ''), 3000);
 }
+
+/* setupDownloadAndUploadButtons remains unchanged - it already includes username & ssid columns */
 
 function setupDownloadAndUploadButtons(data) {
   const container = document.getElementById('downloadBtnContainer');
@@ -132,13 +158,16 @@ function setupDownloadAndUploadButtons(data) {
     email: req.CardDb?.email || '',
     res_status: req.CardDb?.res_status || '',
     requested_at: req.requested_at,
-    status: req.status,
-    code: req.code || ''
+    username: req.username,
+    ssid: req.ssid,
+    code: req.code || '',
+    status: req.status
+    
   }));
 
   document.getElementById('downloadExcelBtn').addEventListener('click', () => {
     downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
-      'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'status', 'code'
+      'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'username', 'ssid', 'code', 'status' 
     ], {
       cardno: 'cardno',
       issuedto: 'issuedto',
@@ -146,8 +175,11 @@ function setupDownloadAndUploadButtons(data) {
       email: 'email',
       res_status: 'res_status',
       requested_at: 'requested_at',
-      status: 'status',
-      code: 'code'
+      username: 'username',
+      ssid: 'ssid',
+      code: 'code',
+      status: 'status'
+
     });
   });
 
