@@ -53,6 +53,8 @@
                 <option value="">All</option>
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
+                <option value="deleted">Deleted</option>
+                <option value="reset">Reset</option>
                 <option value="rejected">Rejected</option>
               </select>
             </label>
@@ -71,8 +73,10 @@
     <th data-key="email">Email Id</th>
     <th data-key="res_status">Res Status</th>
     <th data-key="requested_at">Requested At</th>
-    <th data-key="status">Status</th>
+    <th data-key="username">User Name</th>
+    <th data-key="ssid">SSID</th>
     <th data-key="code">Code</th>
+    <th data-key="status">Status</th>
     <th>Action</th>
   </tr>
 </thead>
@@ -85,45 +89,12 @@
 
           <!-- Action Modal -->
           <!-- Modal Backdrop -->
-<div id="modalBackdrop" style="  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  z-index: 9999;
-  overflow: auto;
-"></div>
+<!-- Action Modal -->
+<div id="modalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;"></div>
 
-<!-- Scrollable Modal for Updating WiFi Request -->
-<div id="actionModal" class="modal" style="
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  z-index: 9999;
-  overflow: auto;
-">
-  <div class="modal-content" style="
-    background: white;
-    padding: 2rem;
-    margin: 5% auto;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    border-radius: 10px;
-  ">
-    <span onclick="closeModal()" style="
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 24px;
-      cursor: pointer;
-    ">&times;</span>
+<div id="actionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;">
+  <div class="modal-content" style="background: white; padding: 2rem; margin: 5% auto; width: 90%; max-width: 500px; position: relative; border-radius: 10px;">
+    <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
 
     <h2>Update WiFi Request</h2>
     <input type="hidden" id="modalRequestId" />
@@ -135,6 +106,20 @@
         <option value="rejected">Reject</option>
       </select>
     </div>
+
+    <div class="form-group">
+      <label for="modalUsername">User Name:</label>
+      <input type="text" id="modalUsername" class="form-control" />
+    </div>
+
+    <div class="form-group">
+  <label for="modalSsid">SSID:</label>
+  <select id="modalSsid" class="form-control">
+    <option value="">-- Select SSID --</option>
+    <option value="SRATRC">SRATRC</option>
+    <option value="BACKOFFICE">BACKOFFICE</option>
+  </select>
+</div>
 
     <div class="form-group">
       <label for="modalCode">Permanent Code (if approving):</label>
