@@ -24,7 +24,11 @@ async function fetchRequests() {
 
   // Only send status if it's non-empty
   const params = new URLSearchParams();
-  if (currentStatus) params.set('status', currentStatus);
+  if (currentStatus === 'pending-new' || currentStatus === 'pending-reset') {
+  params.set('requestType', currentStatus);
+} else if (currentStatus) {
+  params.set('status', currentStatus);
+}
   const query = params.toString();
 
   try {
@@ -56,8 +60,21 @@ async function fetchRequests() {
         <td>${req.code || '-'}</td>
         <td>${req.status}</td>
         <td>
-          ${req.status === 'pending' ? `<button onclick="openModal('${req.id}')">Take Action</button>` : '-'}
-        </td>
+  ${
+    req.status === 'pending' && !req.code
+      ? `<button onclick="openModal('${req.id}')">Take Action</button>`
+      : req.status === 'pending' && req.code
+      ? `
+        <button onclick="quickResetAction('${req.id}', 'approved')">Approve</button>
+        <button onclick="quickResetAction('${req.id}', 'rejected')">Reject</button>
+      `
+      : req.status === 'approved'
+      ? `<button onclick="deleteRequest('${req.id}')">Delete</button>`
+      : '-'
+  }
+</td>
+
+
       `;
       tableBody.appendChild(row);
     });
@@ -68,6 +85,54 @@ async function fetchRequests() {
   } catch (err) {
     console.error(err);
     showMessage('Error fetching requests', 'error');
+  }
+}
+
+async function quickResetAction(requestId, action) {
+  if (!confirm(`Are you sure you want to ${action} this reset request?`)) return;
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/wifi/permanent/${requestId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ action })
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Action failed');
+
+    showMessage(json.message, 'success');
+    fetchRequests();
+  } catch (err) {
+    console.error(err);
+    showMessage(err.message || 'Update failed', 'error');
+  }
+}
+
+async function deleteRequest(requestId) {
+  if (!confirm('Are you sure you want to delete this approved request?')) return;
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/wifi/permanent/${requestId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ action: 'deleted' })
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Delete failed');
+
+    showMessage(json.message, 'success');
+    fetchRequests();
+  } catch (err) {
+    console.error(err);
+    showMessage(err.message || 'Delete failed', 'error');
   }
 }
 
@@ -133,10 +198,11 @@ async function submitAction() {
 }
 
 function showMessage(msg, type) {
-  const el = document.getElementById('message');
-  el.innerText = msg;
-  el.style.color = type === 'error' ? 'red' : 'green';
-  setTimeout(() => (el.innerText = ''), 3000);
+  if (type === 'error') {
+    alert(`❌ ${msg}`);
+  } else {
+    alert(`✅ ${msg}`);
+  }
 }
 
 /* setupDownloadAndUploadButtons remains unchanged - it already includes username & ssid columns */
@@ -215,4 +281,126 @@ function setupDownloadAndUploadButtons(data) {
     alert('Upload failed due to an error');
   }
 });
+}
+
+/* ============================================================
+   ADD CODE MANUALLY – MODAL LOGIC
+============================================================ */
+
+// open manual add modal
+function openManualAddModal() {
+  resetManualAddForm();
+  document.getElementById('manualAddModal').style.display = 'block';
+  document.getElementById('manualAddBackdrop').style.display = 'block';
+}
+
+// close modal
+function closeManualAddModal() {
+  document.getElementById('manualAddModal').style.display = 'none';
+  document.getElementById('manualAddBackdrop').style.display = 'none';
+}
+
+// reset form
+function resetManualAddForm() {
+  document.getElementById('manualMobno').value = '';
+  document.getElementById('manualIssuedto').value = '';
+  document.getElementById('manualCardno').value = '';
+  document.getElementById('manualResStatus').value = '';
+  document.getElementById('manualSsid').value = '';
+  document.getElementById('manualDeviceType').value = '';
+  document.getElementById('manualUsername').value = '';
+  document.getElementById('manualCode').value = '';
+}
+
+// fetch card details by mobile number
+async function fetchCardByMobno() {
+  const mobno = document.getElementById('manualMobno').value.trim();
+  if (!mobno) return;
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/card/by-mobile/${mobno}`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      }
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Card not found');
+
+    const card = json.data;
+
+    document.getElementById('manualIssuedto').value = card.issuedto;
+    document.getElementById('manualCardno').value = card.cardno;
+    document.getElementById('manualResStatus').value = card.res_status;
+
+    autoGenerateUsername();
+
+  } catch (err) {
+    alert(err.message || 'Failed to fetch card details');
+    resetManualAddForm();
+  }
+}
+
+// auto-generate username
+function autoGenerateUsername() {
+  const issuedto = document.getElementById('manualIssuedto').value || '';
+  const deviceType = document.getElementById('manualDeviceType').value;
+
+  if (!issuedto || !deviceType) return;
+
+  const parts = issuedto.trim().split(/\s+/);
+  const firstName = parts[0] || '';
+  const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
+
+  let suffix = '';
+  switch (deviceType) {
+    case 'MOBILE': suffix = 'ph'; break;
+    case 'LAPTOP': suffix = 'pc'; break;
+    case 'TABLET': suffix = 'tab'; break;
+    case 'OTHER': suffix = 'oth'; break;
+  }
+
+  document.getElementById('manualUsername').value =
+  `${firstName}${lastName}${suffix}`.toLowerCase();
+
+}
+
+// submit manual add
+async function submitManualAdd() {
+  const payload = {
+    mobno: document.getElementById('manualMobno').value.trim(),
+    cardno: document.getElementById('manualCardno').value.trim(),
+    issuedto: document.getElementById('manualIssuedto').value.trim(),
+    res_status: document.getElementById('manualResStatus').value.trim(),
+    ssid: document.getElementById('manualSsid').value,
+    deviceType: document.getElementById('manualDeviceType').value,
+    username: document.getElementById('manualUsername').value.trim(),
+    code: document.getElementById('manualCode').value.trim()
+  };
+
+  if (!payload.mobno || !payload.cardno || !payload.ssid || !payload.code) {
+    alert('Please fill all required fields');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/wifi/manual`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Failed to add code');
+
+    alert(json.message || 'Code added successfully');
+    closeManualAddModal();
+    fetchRequests();
+
+  } catch (err) {
+    alert(err.message || 'Failed to add code');
+  }
 }

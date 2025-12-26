@@ -51,17 +51,31 @@
             <label>Status:
               <select id="statusFilter">
                 <option value="">All</option>
-                <option value="pending">Pending</option>
+                <option value="pending-new">Pending – New</option>
+                <option value="pending-reset">Pending – Reset</option>
                 <option value="approved">Approved</option>
                 <option value="deleted">Deleted</option>
-                <option value="reset">Reset</option>
                 <option value="rejected">Rejected</option>
               </select>
             </label>
 
-            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-            <div id="downloadBtnContainer" style="margin: 10px 0;"></div>
-            
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+  <input
+    type="text"
+    id="tableSearch"
+    class="form-control search-box"
+    placeholder="Search..."
+    style="max-width:250px;"
+  />
+
+  <div id="downloadBtnContainer"></div>
+
+  <button class="btn btn-success" onclick="openManualAddModal()">
+    Add Code Manually
+  </button>
+</div>
+
+
             <div class="table-responsive">
               <table id="wifiRequestTable" class="table table-striped table-bordered">
                 <thead>
@@ -142,5 +156,76 @@
       </div>
     </div>
   </div>
+  <!-- Manual Add Backdrop -->
+<div id="manualAddBackdrop"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999;">
+</div>
+
+<!-- Manual Add Modal -->
+<div id="manualAddModal"
+     style="display:none; position:fixed; inset:0; z-index:10000; overflow:auto;">
+  <div style="background:#fff; padding:2rem; margin:5% auto; max-width:500px; border-radius:10px; position:relative;">
+    <span onclick="closeManualAddModal()"
+          style="position:absolute; right:15px; top:10px; font-size:24px; cursor:pointer;">&times;</span>
+
+    <h2>Add Permanent WiFi Code</h2>
+
+    <div class="form-group">
+      <label>Mobile No</label>
+      <input type="text" id="manualMobno" class="form-control" onblur="fetchCardByMobno()" />
+    </div>
+
+    <div class="form-group">
+      <label>Issued To</label>
+      <input type="text" id="manualIssuedto" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+      <label>Card No</label>
+      <input type="text" id="manualCardno" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+      <label>Res Status</label>
+      <input type="text" id="manualResStatus" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+      <label>SSID</label>
+      <select id="manualSsid" class="form-control">
+        <option value="">-- Select --</option>
+        <option value="SRATRC">SRATRC</option>
+        <option value="BACKOFFICE">BACKOFFICE</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Device Type</label>
+      <select id="manualDeviceType" class="form-control" onchange="autoGenerateUsername()">
+        <option value="">-- Select --</option>
+        <option value="MOBILE">Mobile</option>
+        <option value="LAPTOP">Laptop</option>
+        <option value="TABLET">Tablet</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="manualUsername" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label>Permanent Code</label>
+      <input type="text" id="manualCode" class="form-control" />
+    </div>
+
+    <div style="text-align:right;">
+      <button class="btn btn-primary" onclick="submitManualAdd()">Submit</button>
+      <button class="btn btn-secondary" onclick="closeManualAddModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
