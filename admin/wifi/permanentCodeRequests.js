@@ -61,18 +61,25 @@ async function fetchRequests() {
         <td>${req.status}</td>
         <td>
   ${
-    req.status === 'pending' && !req.code
+    // Pending NEW → modal
+    (req.status === 'pending' && !req.code)
       ? `<button onclick="openModal('${req.id}')">Take Action</button>`
-      : req.status === 'pending' && req.code
+
+    // Pending RESET → direct approve / reject
+    : req.status === 'reset'
       ? `
         <button onclick="quickResetAction('${req.id}', 'approved')">Approve</button>
         <button onclick="quickResetAction('${req.id}', 'rejected')">Reject</button>
       `
-      : req.status === 'approved'
+
+    // Approved → delete
+    : req.status === 'approved'
       ? `<button onclick="deleteRequest('${req.id}')">Delete</button>`
-      : '-'
+
+    : '-'
   }
 </td>
+
 
 
       `;
@@ -218,6 +225,7 @@ function setupDownloadAndUploadButtons(data) {
   const fileName = `permanent_wifi_requests_${currentStatus || 'all'}.xlsx`;
 
   const flattenedData = data.map(req => ({
+    id: req.id,
     cardno: req.cardno || '',
     issuedto: req.CardDb?.issuedto || '',
     mobno: req.CardDb?.mobno || '',
@@ -233,8 +241,9 @@ function setupDownloadAndUploadButtons(data) {
 
   document.getElementById('downloadExcelBtn').addEventListener('click', () => {
     downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
-      'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'username', 'ssid', 'code', 'status' 
+      'id', 'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'username', 'ssid', 'code', 'status' 
     ], {
+      id: 'id',
       cardno: 'cardno',
       issuedto: 'issuedto',
       mobno: 'mobno',
