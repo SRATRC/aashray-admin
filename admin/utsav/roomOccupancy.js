@@ -18,14 +18,14 @@ function createRoomBookingRow(booking, index) {
   row.innerHTML = `
     <td>${index + 1}</td>
     <td>${booking.bookingid}</td>
-    <td>${booking.CardDb.issuedto}</td>
-    <td>${booking.CardDb.mobno}</td>
-    <td>${booking.CardDb.center}</td>
+    <td>${booking.CardDb?.issuedto || ""}</td>
+    <td>${booking.CardDb?.mobno || ""}</td>
+    <td>${booking.CardDb?.center || ""}</td>
     <td>${booking.roomno || "Not Assigned"}</td>
-    <td>${booking.roomtype}</td>
+    <td>${booking.roomtype || "NA"}</td>
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
-    <td>${booking.nights}</td>
+    <td>${booking.nights ?? 0}</td>
     <td>${booking.status}</td>
     <td>${booking.bookedBy || "Self"}</td>
   `;
@@ -44,18 +44,14 @@ async function fetchReport() {
     return;
   }
 
-  // Collect checkboxes
+  // Collect checked statuses
   const checkedStatuses = [
     ...document.querySelectorAll('input[name="status"]:checked')
   ].map(cb => cb.value);
 
   const searchParams = new URLSearchParams();
 
-  // If nothing selected → fallback to default "checkedin"
-  // If all statuses checked → send them all
-checkedStatuses.forEach(s => searchParams.append("statuses", s));
-
-
+  checkedStatuses.forEach(s => searchParams.append("statuses", s));
   searchParams.append("utsavid", utsav_id);
   searchParams.append("type", reportType);
 
@@ -103,12 +99,16 @@ checkedStatuses.forEach(s => searchParams.append("statuses", s));
 ----------------------------------------------------*/
 document.addEventListener("DOMContentLoaded", async function () {
 
-// Check ALL statuses by default
-document.querySelectorAll('input[name="status"]').forEach(cb => cb.checked = true);
+  // Check ALL statuses by default
+  document
+    .querySelectorAll('input[name="status"]')
+    .forEach(cb => cb.checked = true);
 
-  // 3. Read utsav_id
+  // Read utsav_id
   const params = new URLSearchParams(window.location.search);
-  let utsav_id = params.get("utsav_id") || sessionStorage.getItem("current_utsav_id");
+  let utsav_id =
+    params.get("utsav_id") ||
+    sessionStorage.getItem("current_utsav_id");
 
   if (!utsav_id) {
     showErrorMessage("utsav_id missing in URL or session.");
@@ -116,18 +116,40 @@ document.querySelectorAll('input[name="status"]').forEach(cb => cb.checked = tru
   }
 
   sessionStorage.setItem("current_utsav_id", utsav_id);
+
   const hiddenField = document.getElementById("utsav_id");
   if (hiddenField) hiddenField.value = utsav_id;
 
-  // 4. Load initial report → sends only "checkedin"
+  // Initial fetch
   await fetchReport();
 
-  // 5. Submit button triggers fetchReport()
-  document.getElementById("reportForm").addEventListener("submit", function (event) {
-    event.preventDefault();
-    fetchReport();
-  });
+  // Submit button
+  document
+    .getElementById("reportForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+      fetchReport();
+    });
 });
+
+/* ---------------------------------------------------
+    FLATTEN DATA FOR EXCEL EXPORT (🔥 FIX)
+----------------------------------------------------*/
+function getRoomOccupancyExportData() {
+  return roomreports.map(b => ({
+    bookingid: b.bookingid,
+    guest_name: b.CardDb?.issuedto || "",
+    mobile_no: b.CardDb?.mobno || "",
+    center: b.CardDb?.center || "",
+    roomno: b.roomno || "NA",
+    roomtype: b.roomtype || "NA",
+    checkin: formatDate(b.checkin),
+    checkout: formatDate(b.checkout),
+    nights: b.nights ?? 0,
+    status: b.status,
+    booked_by: b.bookedBy || "Self"
+  }));
+}
 
 /* ---------------------------------------------------
     DOWNLOAD EXCEL BUTTON SETUP
@@ -137,7 +159,7 @@ const setupDownloadButton = () => {
 
   renderDownloadButton({
     selector: "#downloadBtnContainer",
-    getData: () => roomreports,
+    getData: () => getRoomOccupancyExportData(), // ✅ FIXED
     fileName: "room_occupancy_report.xlsx",
     sheetName: "Room Occupancy"
   });

@@ -75,7 +75,16 @@ console.log(data);
     JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
       ? '-'
       : `<a href="/admin/utsav/utsavCheckin.html?utsavId=${item.id}">
-          <button class="btn btn-secondary btn-sm">Open Form</button>
+          <button class="btn btn-secondary btn-sm">Open Scanner</button>
+        </a>`
+  }
+</td>
+<td style="text-align:center;">
+  ${
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
+      ? '-'
+      : `<a href="/admin/utsav/issuePlateScanUtsav.html">
+          <button class="btn btn-secondary btn-sm">Open Scanner</button>
         </a>`
   }
 </td>

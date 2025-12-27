@@ -17,6 +17,7 @@ function showAlert(element, message, type) {
 function resetAlert() {
   const alertBox = document.getElementById('alert');
   const formWrapper = document.getElementById('formWrapper');
+
   alertBox.style.display = 'none';
   alertBox.textContent = '';
   alertBox.className = 'big-alert';
@@ -56,13 +57,29 @@ async function foodCheckin(cardno) {
       showAlert(alertBox, `Plate issued for ${name}`, 'success');
     } else {
       playErrorSound();
-      showAlert(alertBox, data.message || 'Error issuing plate', 'danger');
+
+      // 🔥 DIFFERENTIATE ERROR TYPE
+      let alertType = 'danger'; // default = red
+
+if (data.message) {
+  const msg = data.message.toLowerCase();
+
+  if (msg.includes('already issued')) {
+    alertType = 'warning'; // 🟤 brown
+  } else if (msg.includes('invalid meal time')) {
+    alertType = 'info'; // 🔵 blue
+  } else if (msg.includes('booking not found')) {
+    alertType = 'danger'; // 🔴 red
+  }
+}
+
+      showAlert(alertBox, data.message || 'Error issuing plate', alertType);
     }
 
     setTimeout(() => {
-      cardnoInput.value = '';      // Clear input
-      resetAlert();                // Show form again
-      cardnoInput.focus();         // Set focus back to input
+      cardnoInput.value = '';
+      resetAlert();
+      cardnoInput.focus();
     }, 400);
 
   } catch (error) {
