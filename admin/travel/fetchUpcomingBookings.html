@@ -254,57 +254,73 @@
   </div>
 </div>
 
-<div id="amountModal" class="modal" style="
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  z-index: 9999;
-  overflow: auto;
+<div id="transactionModal" class="modal" style="
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
 ">
   <div class="modal-content" style="
-    background: white;
-    padding: 2rem;
-    margin: 10% auto;
-    width: 90%;
-    max-width: 400px;
-    position: relative;
-    border-radius: 10px;
+    background:white;
+    padding:2rem;
+    margin:10% auto;
+    width:90%;
+    max-width:500px;
+    border-radius:10px;
+    position:relative;
   ">
-    <span id="closeAmountModal" style="
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 24px;
-      cursor: pointer;
-    ">&times;</span>
+    <span onclick="document.getElementById('transactionModal').style.display='none'"
+      style="position:absolute;top:10px;right:15px;font-size:24px;cursor:pointer;">&times;</span>
 
-    <h3>Update Transaction Amount</h3>
-    <form id="amountForm">
-      <!-- Booking ID -->
+    <h3>Edit Transaction</h3>
+
+    <form id="transactionForm">
       <div class="form-group">
-        <label for="amountBookingId">Booking ID:</label>
-        <input type="text" id="amountBookingId" class="form-control" readonly>
+        <label>Booking ID</label>
+        <input id="txnBookingId" class="form-control" readonly>
       </div>
 
-      <!-- Name -->
       <div class="form-group">
-        <label for="amountIssuedTo">Mumukshu Name:</label>
-        <input type="text" id="amountIssuedTo" class="form-control" readonly>
+        <label>Mumukshu Name</label>
+        <input id="txnIssuedTo" class="form-control" readonly>
       </div>
 
-      <!-- Amount -->
       <div class="form-group">
-        <label for="newAmount">New Amount:</label>
-        <input type="number" id="newAmount" class="form-control" required>
+        <label>Amount</label>
+        <input id="txnAmount" type="number" class="form-control">
       </div>
 
-      <div class="form-group form-submit" style="margin-top: 15px;">
-        <button type="submit" class="btn btn-primary">Update Amount</button>
-        <button type="button" id="cancelAmountUpdate" class="btn btn-secondary">Cancel</button>
+      <div class="form-group">
+  <label>Pickup Point</label>
+  <select id="txnPickup" class="form-control">
+    <option value="">Select Pickup Point</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Drop Point</label>
+  <select id="txnDrop" class="form-control">
+    <option value="">Select Drop Point</option>
+  </select>
+</div>
+  
+      <div class="form-group">
+  <label>Type</label>
+  <select id="txnType" class="form-control">
+    <option value="">Select Type</option>
+    <option value="Regular">Regular</option>
+    <option value="Full Car">Full Car</option>
+  </select>
+</div>
+  
+      <div class="form-group form-submit">
+        <button class="btn btn-primary" type="submit">Update</button>
+        <button type="button" class="btn btn-secondary"
+          onclick="document.getElementById('transactionModal').style.display='none'">
+          Cancel
+        </button>
       </div>
     </form>
   </div>

@@ -1,6 +1,60 @@
 let travelReport = [];
+let statusDropdown;
+let issueCreditsField;
+let issueCreditsDropdown;
+
+const PICKUP_DROP_POINTS = [
+  'Dadar (Swaminarayan Temple)',
+  'Dadar (Pritam Da Dhaba)',
+  'Amar Mahal',
+  'Airoli',
+  'Borivali (Indraprasth Shopping Centre)',
+  'Vile Parle (Sahara Star)',
+  'Airport Terminal 1',
+  'Airport Terminal 2',
+  'Railway Station (CSMT)',
+  'Railway Station (Mumbai Central)',
+  'Railway Station (Bandra Terminus)',
+  'Railway Station (LTT - Kurla Terminus)',
+  'Mulund (Sarvoday Nagar)',
+  'Other',
+  'Research Centre'
+];
+
 
 document.addEventListener('DOMContentLoaded', async function () {
+
+statusDropdown = document.getElementById("status");
+issueCreditsField = document.getElementById("issueCreditsField");
+issueCreditsDropdown = document.getElementById("issueCredits");
+
+    statusDropdown.addEventListener("change", () => {
+    if (statusDropdown.value === "admin cancelled") {
+      issueCreditsField.style.display = "block";
+    } else {
+      issueCreditsField.style.display = "none";
+      issueCreditsDropdown.value = "no";
+    }
+  });
+
+  function populatePickupDropDropdowns() {
+  const pickupSelect = document.getElementById('txnPickup');
+  const dropSelect = document.getElementById('txnDrop');
+
+  if (!pickupSelect || !dropSelect) return;
+
+  PICKUP_DROP_POINTS.forEach(point => {
+    const opt1 = new Option(point, point);
+    const opt2 = new Option(point, point);
+    pickupSelect.add(opt1);
+    dropSelect.add(opt2);
+  });
+}
+
+populatePickupDropDropdowns();
+  // ✅ Populate Pickup / Drop dropdowns (Transaction Edit Modal)
+  
+
   const form = document.getElementById('reportForm');
   const upcomingTableBody = document.getElementById('upcomingBookings').querySelector('tbody');
 
@@ -132,17 +186,15 @@ const mumbaiPoints = new Set([
 ]);
 
 travelReport.forEach((b, index) => {
-  const pickup = normalize(b.pickup_point);
+const pickup = normalize(b.pickup_point);
 const drop = normalize(b.drop_point);
 
 let travellingFrom = "";
 
-if (mumbaiPoints.has(pickup)) {
-  travellingFrom = "Mumbai to Research Centre";
-} else if (mumbaiPoints.has(drop)) {
+if (pickup === "research centre" && drop !== "research centre") {
   travellingFrom = "Research Centre to Mumbai";
-} else {
-  travellingFrom = ""; // No fallback, nothing shown
+} else if (drop === "research centre" && pickup !== "research centre") {
+  travellingFrom = "Mumbai to Research Centre";
 }
 
 
@@ -157,8 +209,17 @@ if (mumbaiPoints.has(pickup)) {
   row.setAttribute("style", rowStyle);
 
   row.innerHTML = `
-    <td>${index + 1}</td> 
-    <td>${formatDate(b.date)}</td>
+    <td>
+  ${index + 1}
+  <span
+    style="cursor:pointer; color:blue; margin-left:5px;"
+    onclick="openTransactionEditModal('${b.bookingid}')"
+    title="Edit Transaction"
+  >
+    ✏️
+  </span>
+</td>
+<td>${formatDate(b.date)}</td>
     <td>${b.issuedto}</td>
     <td>${b.type}</td>
     <td>${b.pickup_point}</td>
@@ -178,15 +239,8 @@ if (mumbaiPoints.has(pickup)) {
     <td>${comments}</td>
     <td>${b.total_people}</td>
     <td>${b.mobno}</td>
-    <td>
-  ${b.amount}
-  <span 
-    class="edit-amount" 
-    style="cursor:pointer; color:blue;" 
-    onclick="openAmountEditModal('${b.bookingid}', ${b.amount || 0})">
-    ✏️
-  </span>
-</td>
+    <td>${b.amount}</td>
+
 <td>${b.paymentStatus}</td>
     <td>${formatDate(b.paymentDate)}</td>
     <td>${b.bookingid}</td>
@@ -215,6 +269,22 @@ setTimeout(() => {
       console.error('Error fetching bookings:', error);
     }
   });
+    // ✅ Update Booking Status modal buttons
+  document.getElementById('closeModal')?.addEventListener('click', () => {
+    document.getElementById('updateModal').style.display = 'none';
+  });
+
+  document.getElementById('cancelUpdate')?.addEventListener('click', () => {
+    document.getElementById('updateModal').style.display = 'none';
+  });
+
+  // ✅ Transaction edit modal buttons
+  document
+    .querySelector('#transactionModal .btn-secondary')
+    ?.addEventListener('click', () => {
+      document.getElementById('transactionModal').style.display = 'none';
+    });
+
 });
 
 // Setup Excel download
@@ -247,67 +317,75 @@ function openUpdateModal(bookingId) {
   document.getElementById('updateModal').style.display = 'block';
 }
 
-function openAmountEditModal(bookingId, currentAmount) {
+function openTransactionEditModal(bookingId) {
   const booking = travelReport.find(b => b.bookingid === bookingId);
+  if (!booking) return;
 
-  document.getElementById('amountBookingId').value = bookingId;
-  document.getElementById('amountIssuedTo').value = booking?.issuedto || '';
-  document.getElementById('newAmount').value = currentAmount;
+  document.getElementById('txnBookingId').value = booking.bookingid;
+  document.getElementById('txnIssuedTo').value = booking.issuedto || '';
 
-  document.getElementById('amountModal').style.display = 'block';
+  document.getElementById('txnAmount').value = booking.amount ?? '';
+  document.getElementById('txnPickup').value = booking.pickup_point ?? '';
+  document.getElementById('txnDrop').value = booking.drop_point ?? '';
+  document.getElementById('txnType').value = booking.type ?? '';
+
+  document.getElementById('transactionModal').style.display = 'block';
 }
+  
 
-document.getElementById('closeAmountModal').addEventListener('click', () => {
-  document.getElementById('amountModal').style.display = 'none';
-});
-
-document.getElementById('cancelAmountUpdate').addEventListener('click', () => {
-  document.getElementById('amountModal').style.display = 'none';
-});
-
-document.getElementById('amountForm').addEventListener('submit', async (event) => {
+document.getElementById('transactionForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const bookingid = document.getElementById('amountBookingId').value;
-  const newAmount = document.getElementById('newAmount').value;
+
+  const payload = {
+    bookingid: document.getElementById('txnBookingId').value,
+    amount: document.getElementById('txnAmount').value,
+    pickup_point: document.getElementById('txnPickup').value,
+    drop_point: document.getElementById('txnDrop').value,
+    type: document.getElementById('txnType').value,
+  };
+
+  // Remove empty values
+  Object.keys(payload).forEach(
+    key => (payload[key] === '' || payload[key] == null) && delete payload[key]
+  );
 
   try {
-    const response = await fetch(`${CONFIG.basePath}/travel/transaction/amount`, {
+    const response = await fetch(`${CONFIG.basePath}/travel/bookingupdate`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
       },
-      body: JSON.stringify({ bookingid, amount: newAmount })
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      alert('Amount updated successfully!');
-      document.getElementById('amountModal').style.display = 'none';
-      // refresh bookings
+      alert('Transaction updated successfully!');
+      document.getElementById('transactionModal').style.display = 'none';
       document.getElementById('reportForm').dispatchEvent(new Event('submit'));
     } else {
       alert(`Error: ${data.message}`);
     }
-  } catch (error) {
-    alert(`Error: ${error}`);
+  } catch (err) {
+    alert(`Error: ${err}`);
   }
 });
 
-const statusDropdown = document.getElementById("status");
-const issueCreditsField = document.getElementById("issueCreditsField");
-const issueCreditsDropdown = document.getElementById("issueCredits");
+// const statusDropdown = document.getElementById("status");
+// const issueCreditsField = document.getElementById("issueCreditsField");
+// const issueCreditsDropdown = document.getElementById("issueCredits");
 
 // Status change handler
-statusDropdown.addEventListener("change", () => {
-  if (statusDropdown.value === "admin cancelled") {
-    issueCreditsField.style.display = "block";
-  } else {
-    issueCreditsField.style.display = "none";
-    issueCreditsDropdown.value = "no"; // reset to No
-  }
-});
+// statusDropdown.addEventListener("change", () => {
+//   if (statusDropdown.value === "admin cancelled") {
+//     issueCreditsField.style.display = "block";
+//   } else {
+//     issueCreditsField.style.display = "none";
+//     issueCreditsDropdown.value = "no"; // reset to No
+//   }
+// });
 // Close modal
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('updateModal').style.display = 'none';
