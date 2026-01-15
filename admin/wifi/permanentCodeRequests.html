@@ -3,6 +3,32 @@
   checkRoleAccess(['wifiAdmin', 'superAdmin']); // Adjust roles as needed
 </script>
 
+<style>
+  .action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.action-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.search-box {
+  max-width: 250px;
+}
+
+</style>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,16 +85,15 @@
               </select>
             </label>
 
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div class="action-bar">
   <input
     type="text"
     id="tableSearch"
     class="form-control search-box"
     placeholder="Search..."
-    style="max-width:250px;"
   />
 
-  <div id="downloadBtnContainer"></div>
+  <div id="downloadBtnContainer" class="action-controls"></div>
 
   <button class="btn btn-success" onclick="openManualAddModal()">
     Add Code Manually
@@ -116,9 +141,13 @@
     <div class="form-group">
       <label for="modalAction">Action:</label>
       <select id="modalAction" class="form-control">
-        <option value="approved">Approve</option>
-        <option value="rejected">Reject</option>
-      </select>
+  <option value="pending">Pending</option>
+  <option value="approved">Approved</option>
+  <option value="rejected">Rejected</option>
+  <option value="deleted">Deleted</option>
+  <option value="reset">Reset</option>
+</select>
+
     </div>
 
     <div class="form-group">

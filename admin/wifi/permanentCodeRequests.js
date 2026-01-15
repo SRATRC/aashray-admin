@@ -59,25 +59,8 @@ async function fetchRequests() {
         <td>${req.ssid || '-'}</td>
         <td>${req.code || '-'}</td>
         <td>${req.status}</td>
-        <td>
-  ${
-    // Pending NEW → modal
-    (req.status === 'pending' && !req.code)
-      ? `<button onclick="openModal('${req.id}')">Take Action</button>`
-
-    // Pending RESET → direct approve / reject
-    : req.status === 'reset'
-      ? `
-        <button onclick="quickResetAction('${req.id}', 'approved')">Approve</button>
-        <button onclick="quickResetAction('${req.id}', 'rejected')">Reject</button>
-      `
-
-    // Approved → delete
-    : req.status === 'approved'
-      ? `<button onclick="deleteRequest('${req.id}')">Delete</button>`
-
-    : '-'
-  }
+<td>
+  <button onclick="openModal('${req.id}')">Take Action</button>
 </td>
 
 
@@ -146,7 +129,7 @@ async function deleteRequest(requestId) {
 function openModal(id) {
   const rec = currentRecords.find(r => String(r.id) === String(id));
   document.getElementById('modalRequestId').value = id;
-  document.getElementById('modalAction').value = 'approved';
+  document.getElementById('modalAction').value = rec?.status || 'pending';
   document.getElementById('modalCode').value = rec?.code || '';
   document.getElementById('modalComments').value = rec?.admin_comments || '';
   document.getElementById('modalUsername').value = rec?.username || (rec?.CardDb?.issuedto || '');
@@ -168,10 +151,14 @@ async function submitAction() {
   const username = document.getElementById('modalUsername').value.trim();
   const ssid = document.getElementById('modalSsid').value.trim();
 
-  if (action === 'approved' && !code) {
-    showMessage('Permanent code is required for approval', 'error');
-    return;
-  }
+  if (
+  action === 'approved' &&
+  !code &&
+  !currentRecords.find(r => r.id == requestId)?.code
+) {
+  showMessage('Permanent code is required for approval', 'error');
+  return;
+}
 
   try {
     const body = {
@@ -216,11 +203,21 @@ function showMessage(msg, type) {
 
 function setupDownloadAndUploadButtons(data) {
   const container = document.getElementById('downloadBtnContainer');
-  container.innerHTML = `
-    <button id="downloadExcelBtn" class="btn btn-primary">Download Excel</button>
-    <button id="uploadExcelBtn" class="btn btn-secondary">Upload Codes</button>
-    <input type="file" id="uploadExcelInput" accept=".xlsx, .xls" style="display: none;" />
-  `;
+container.innerHTML = `
+  <button id="downloadExcelBtn" class="btn btn-primary">Download Excel</button>
+  <button id="uploadExcelBtn" class="btn btn-secondary">Upload Excel</button>
+  <input type="file" id="uploadExcelInput" accept=".xlsx,.xls" hidden />
+
+  <label>
+    <input type="checkbox" id="dryRunCheckbox" />
+    Dry Run
+  </label>
+
+  <label>
+    <input type="checkbox" id="allowInsertCheckbox" />
+    Allow creating new rows
+  </label>
+`;
 
   const fileName = `permanent_wifi_requests_${currentStatus || 'all'}.xlsx`;
 
@@ -270,19 +267,57 @@ function setupDownloadAndUploadButtons(data) {
   formData.append('file', file);
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/wifi/uploadpercode`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      },
-      body: formData
-    });
+const isDryRun = document.getElementById('dryRunCheckbox')?.checked;
+const allowInsert = document.getElementById('allowInsertCheckbox')?.checked;
+
+const endpoint = allowInsert
+  ? '/wifi/insertpercode'
+  : '/wifi/uploadpercode';
+
+const url =
+  `${CONFIG.basePath}${endpoint}` +
+  `?${isDryRun ? 'dryRun=true&' : ''}` +
+  `${allowInsert ? 'allowInsert=true' : ''}`;
+
+const res = await fetch(url, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+  },
+  body: formData
+});
 
     const result = await res.json();
     if (res.ok) {
-      alert(result.message || 'Upload successful');
-      fetchRequests();
-    } else {
+  let msg = '';
+
+  if (result.dryRun) {
+    msg += `DRY RUN PREVIEW\n\n`;
+  }
+
+  if (result.dryRun) {
+  msg += `Matched (will be updated): ${result.summary?.matched || 0}\n`;
+} else {
+  if (result.dryRun) {
+  msg += `Matched (will be updated): ${result.summary?.matched || 0}\n`;
+} else {
+  msg += `Updated: ${result.updatedCount || 0}\n`;
+}
+
+if (result.insertedCount !== undefined) {
+  msg += `Inserted: ${result.insertedCount}\n`;
+}
+}
+  msg += `Invalid rows: ${result.skipped?.invalidRows || 0}\n`;
+  msg += `Mismatched rows: ${result.skipped?.mismatched || 0}`;
+
+  alert(msg);
+
+  if (!result.dryRun) {
+    fetchRequests();
+  }
+}
+ else {
       alert('Upload failed: ' + (result.message || result.error));
     }
   } catch (err) {
@@ -353,25 +388,61 @@ async function fetchCardByMobno() {
 // auto-generate username
 function autoGenerateUsername() {
   const issuedto = document.getElementById('manualIssuedto').value || '';
-  const deviceType = document.getElementById('manualDeviceType').value;
+  const deviceType = document.getElementById('manualDeviceType').value || '';
+  const cardno = document.getElementById('manualCardno').value || '';
 
-  if (!issuedto || !deviceType) return;
+  if (!issuedto || !deviceType || !cardno) return;
 
-  const parts = issuedto.trim().split(/\s+/);
-  const firstName = parts[0] || '';
-  const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
+  /* ================= SAME LOGIC AS APP ================= */
 
-  let suffix = '';
-  switch (deviceType) {
-    case 'MOBILE': suffix = 'ph'; break;
-    case 'LAPTOP': suffix = 'pc'; break;
-    case 'TABLET': suffix = 'tab'; break;
-    case 'OTHER': suffix = 'oth'; break;
+  // Device suffix map (same as backend)
+  const DEVICE_SUFFIX_MAP = {
+    MOBILE: 'ph',
+    LAPTOP: 'pc',
+    TABLET: 'tb',
+    OTHER: 'ot'
+  };
+
+  const deviceSuffix = DEVICE_SUFFIX_MAP[deviceType] || 'ot';
+
+  // Prefixes to ignore
+  const IGNORE_FIRST_NAMES = [
+    'rcof',
+    'rchk',
+    'cons',
+    'chak',
+    'divi',
+    'paon',
+    'guest'
+  ];
+
+  // Normalize name
+  let nameParts = issuedto
+    .trim()
+    .toLowerCase()
+    .replace(/^guest-/, '')
+    .split(/\s+/);
+
+  // Remove ignored prefixes
+  while (
+    nameParts.length > 1 &&
+    IGNORE_FIRST_NAMES.includes(nameParts[0])
+  ) {
+    nameParts.shift();
   }
 
-  document.getElementById('manualUsername').value =
-  `${firstName}${lastName}${suffix}`.toLowerCase();
+  const firstName = nameParts[0] || '';
+  const lastName =
+    nameParts.length > 1
+      ? nameParts[nameParts.length - 1]
+      : '';
 
+  // Last 4 digits of card number (keep leading zeros)
+  const cardLast4 = cardno.slice(-4);
+
+  const username = `${firstName}${lastName}${cardLast4}${deviceSuffix}`;
+
+  document.getElementById('manualUsername').value = username.toLowerCase();
 }
 
 // submit manual add
