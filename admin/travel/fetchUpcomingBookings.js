@@ -369,23 +369,10 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
       alert(`Error: ${data.message}`);
     }
   } catch (err) {
-    alert(`Error: ${err}`);
+    alert(`Error: ${err.message}`);
   }
 });
 
-// const statusDropdown = document.getElementById("status");
-// const issueCreditsField = document.getElementById("issueCreditsField");
-// const issueCreditsDropdown = document.getElementById("issueCredits");
-
-// Status change handler
-// statusDropdown.addEventListener("change", () => {
-//   if (statusDropdown.value === "admin cancelled") {
-//     issueCreditsField.style.display = "block";
-//   } else {
-//     issueCreditsField.style.display = "none";
-//     issueCreditsDropdown.value = "no"; // reset to No
-//   }
-// });
 // Close modal
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('updateModal').style.display = 'none';
