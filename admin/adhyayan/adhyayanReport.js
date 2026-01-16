@@ -45,6 +45,21 @@ document.addEventListener('DOMContentLoaded', () => {
   data.forEach((item, index) => {
     const tableRow = document.createElement('tr');
 
+    const startDate = new Date(item.start_date);
+const endDate = new Date(item.end_date);
+const days =
+  Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+let maxSessions = 0;
+if (days === 1) maxSessions = 3;
+else if (days === 2) maxSessions = 6;
+else maxSessions = 9;
+
+let sessionOptions = '<option value="">Select</option>';
+for (let i = 1; i <= maxSessions; i++) {
+  sessionOptions += `<option value="${i}">Session ${i}</option>`;
+}
+
     tableRow.innerHTML = `
       <td style="text-align:center;">${index + 1}</td>
       <td style="text-align:center;">${item.name}</td>
@@ -60,6 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=admin cancelled">${item.admin_cancelled_count}</a></td>
+      <td style="text-align:center;">
+      <select class="attendance-session-dropdown"
+        data-shibir-id="${item.id}">
+        ${sessionOptions}
+      </select>
+    </td>
+
       <td style="text-align:center;">
         <span class="adhyayan-link" data-shibir="${item.id}" 
           style="color:blue; text-decoration:underline; cursor:pointer;">
@@ -97,6 +119,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     adhyayanTableBody.appendChild(tableRow);
   });
+  document.querySelectorAll('.attendance-session-dropdown').forEach((dropdown) => {
+  dropdown.addEventListener('change', (e) => {
+    const sessionNo = e.target.value;
+    const shibirId = e.target.dataset.shibirId;
+
+    if (!sessionNo) return;
+
+    const url =
+      `adhyayanAttendanceScan.html?shibir_id=${shibirId}&session=${sessionNo}`;
+
+    window.open(url, '_blank');
+
+    // reset dropdown
+    e.target.value = '';
+  });
+});
+
 
   // Event listeners
   document.querySelectorAll('.toggle-status').forEach((button) => {
