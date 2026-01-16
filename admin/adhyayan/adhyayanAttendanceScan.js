@@ -9,11 +9,7 @@ let isProcessing = false; // 🔒 scan lock
 
 startScanner();
 
-function startScanner() {
-  qrStatus.className = 'scanning-status';
-  qrStatus.innerText = 'Ready to scan...';
-
-  if (!html5QrCode) {
+function startScanner() {  if (!html5QrCode) {
     html5QrCode = new Html5Qrcode('reader');
   }
 

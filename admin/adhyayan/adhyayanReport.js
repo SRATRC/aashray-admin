@@ -81,6 +81,21 @@ for (let i = 1; i <= maxSessions; i++) {
         ${sessionOptions}
       </select>
     </td>
+<td style="text-align:center;">
+  <a href="adhyayanAttendanceReport.html?shibir_id=${item.id}"
+     style="color:blue; text-decoration:underline;">
+    Click to Open
+  </a>
+</td>
+<td style="text-align:center;">
+ <span
+  class="attendance-summary-btn attendance-link"
+  data-shibir="${item.id}"
+  data-name="${item.name}">
+  Click to Open
+</span>
+
+</td>
 
       <td style="text-align:center;">
         <span class="adhyayan-link" data-shibir="${item.id}" 
@@ -265,4 +280,59 @@ document.querySelectorAll('.feedback-received').forEach((el) => {
   };
 
   fetchAdhyayanReport();
+  document.addEventListener('click', async (e) => {
+  if (!e.target.classList.contains('attendance-summary-btn')) return;
+
+  const shibirId = e.target.dataset.shibir;
+  const shibirName = e.target.dataset.name;
+
+  const modal = document.getElementById('attendanceSummaryModal');
+  const tbody = document.querySelector('#attendanceSummaryTable tbody');
+  const heading = document.getElementById('attendanceSummaryHeading');
+
+  heading.innerText = `Attendance Summary – ${shibirName}`;
+  tbody.innerHTML = '';
+
+  const response = await fetch(
+    `${CONFIG.basePath}/adhyayan/attendance/summary/${shibirId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      }
+    }
+  );
+
+  const result = await response.json();
+
+  result.data.summary.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.session}</td>
+      <td>${row.total_registrants}</td>
+      <td>${row.total_attended}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  renderDownloadButton({
+    selector: '#attendanceSummaryDownload',
+    getData: () => result.data.summary,
+    fileName: `${shibirName}_attendance_summary.xlsx`,
+    sheetName: 'Attendance Summary'
+  });
+
+  // enhanceTable('attendanceSummaryTable');
+modal.style.display = 'block';
 });
+
+const attendanceModalClose =
+  document.querySelector('#attendanceSummaryModal .close-modal');
+
+if (attendanceModalClose) {
+  attendanceModalClose.addEventListener('click', () => {
+    document.getElementById('attendanceSummaryModal').style.display = 'none';
+  });
+}
+
+});
+

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Adhyayan Attendance Report</title>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script src="../../style/js/tableSortFilter.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+  <script>
+    checkRoleAccess(['adhyayanAdmin', 'superAdmin']);
+  </script>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1 id="pageHeading">Attendance Report</h1>
+          </div>
+
+          <input
+            type="text"
+            id="tableSearch"
+            class="form-control search-box"
+            placeholder="Search..."
+          />
+
+          <div class="table-responsive">
+            <table id="attendanceTable" class="table table-bordered table-striped">
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="downloadBtnContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="adhyayanAttendanceReport.js"></script>
+</body>
+</html>
