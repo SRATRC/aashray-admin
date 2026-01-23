@@ -52,7 +52,7 @@
               <button id="downloadRoomNoFormat" class="btn btn-secondary">Download RoomNo Upload Format</button>
               <button id="uploadRoomNoBtn" class="btn btn-primary">Upload Room No</button>
               <button id="downloadPackage" class="btn btn-primary">Download This Package Registrations</button>
-              <button id="centerSummaryBtn" class="btn btn-secondary">Center-wise Summary</button>
+              <button id="centerSummaryBtn" class="btn btn-secondary">Center-wise & Package-wise Summary</button>
             </div>
 
             <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
@@ -67,7 +67,10 @@
   <div id="centerSummaryModal" class="modal" style="display:none;">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <h3>Center-wise Summary</h3>
+      <h3>Center-wise & Package-wise Summary</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:10px;">
+  Click on a center row to view package-wise breakup
+</p>
       <div id="centerSummaryTableContainer"></div>
     </div>
   </div>
@@ -124,7 +127,12 @@
     .modal-content span {position:absolute; top:10px; right:20px; font-size:24px; cursor:pointer;}
     #centerSummaryTableContainer table {width:100%; border-collapse:collapse;}
     #centerSummaryTableContainer th, #centerSummaryTableContainer td {border:1px solid #ccc; padding:8px; text-align:center;}
-    #centerSummaryTableContainer th {background-color:#f2f2f2;}
+    #centerSummaryTableContainer th {
+  background-color: #1f3c60; /* same as page headers */
+  color: #ffffff;
+  font-weight: bold;
+}
+
   </style>
 </body>
 </html>

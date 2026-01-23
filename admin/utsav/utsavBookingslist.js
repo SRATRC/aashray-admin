@@ -252,32 +252,274 @@ function triggerExcelDownload(data, fileName, sheetName) {
 
 // Move this above the DOMContentLoaded or make sure it's declared as a function
 function openCenterSummaryModal(summary){
-  const modal=document.getElementById('centerSummaryModal');
-  const container=document.getElementById('centerSummaryTableContainer');
-  container.innerHTML='';
-  const table=document.createElement('table');
-  table.innerHTML=`<thead><tr><th>Center</th><th>Total</th><th>Males</th><th>Females</th></tr></thead>`;
-  const tbody=document.createElement('tbody');
-    const sortedSummary = Object.entries(summary).sort((a, b) => a[0].localeCompare(b[0]));
+  const modal = document.getElementById('centerSummaryModal');
+  const container = document.getElementById('centerSummaryTableContainer');
+  container.innerHTML = '';
 
-  const rowsHtml = sortedSummary.map(([center, data]) => {
-    return `<tr><td>${center}</td><td>${data.total}</td><td>${data.M}</td><td>${data.F}</td></tr>`;
-  }).join('');
+  const table = document.createElement('table');
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Center</th>
+        <th>Package</th>
+        <th>Total</th>
+        <th>Males</th>
+        <th>Females</th>
+      </tr>
+    </thead>
+  `;
+
+  const tbody = document.createElement('tbody');
+
+  let grandTotal = 0, grandM = 0, grandF = 0;
+  const packageTotals = {};        // totals across all centers
+  const packageCenterMap = {};     // package → center breakup
+
+  const sortedCenters = Object.keys(summary).sort();
+
+  // ================= CENTER → PACKAGE =================
+  sortedCenters.forEach(center => {
+    const centerData = summary[center];
+    const centerRowId = `center-${center.replace(/\s+/g,'_')}`;
+
+    grandTotal += centerData.total;
+    grandM += centerData.M;
+    grandF += centerData.F;
+
+    tbody.innerHTML += `
+      <tr style="cursor:pointer;font-weight:bold;background:#f9f9f9;"
+          onclick="toggleRows('${centerRowId}')">
+        <td>${center}</td>
+        <td>All Packages</td>
+        <td>${centerData.total}</td>
+        <td>${centerData.M}</td>
+        <td>${centerData.F}</td>
+      </tr>
+    `;
+
+    Object.entries(centerData.packages)
+      .sort((a,b)=>a[0].localeCompare(b[0]))
+      .forEach(([pkg, pkgData]) => {
+
+        // collect package totals
+        if(!packageTotals[pkg]){
+          packageTotals[pkg] = { total:0, M:0, F:0 };
+          packageCenterMap[pkg] = {};
+        }
+
+        packageTotals[pkg].total += pkgData.total;
+        packageTotals[pkg].M += pkgData.M;
+        packageTotals[pkg].F += pkgData.F;
+
+        packageCenterMap[pkg][center] = pkgData;
+
+        tbody.innerHTML += `
+          <tr data-parent="${centerRowId}" style="display:none;">
+            <td></td>
+            <td>${pkg}</td>
+            <td>${pkgData.total}</td>
+            <td>${pkgData.M}</td>
+            <td>${pkgData.F}</td>
+          </tr>
+        `;
+      });
+  });
+
+  // ================= GRAND TOTAL =================
+  tbody.innerHTML += `
+    <tr style="font-weight:bold;background:#eaeaea;">
+      <td>GRAND TOTAL</td>
+      <td>All Packages</td>
+      <td>${grandTotal}</td>
+      <td>${grandM}</td>
+      <td>${grandF}</td>
+    </tr>
+  `;
+
+  // ================= PACKAGE → CENTER =================
+  Object.entries(packageTotals)
+    .sort((a,b)=>a[0].localeCompare(b[0]))
+    .forEach(([pkg, data]) => {
+
+      const pkgRowId = `pkg-${pkg.replace(/\s+/g,'_')}`;
+
+      // package total row (CLICKABLE)
+      tbody.innerHTML += `
+        <tr style="cursor:pointer;font-weight:bold;background:#f4f6ff;"
+            onclick="toggleRows('${pkgRowId}')">
+          <td>All Centers</td>
+          <td>${pkg}</td>
+          <td>${data.total}</td>
+          <td>${data.M}</td>
+          <td>${data.F}</td>
+        </tr>
+      `;
+
+      // center rows under package
+      Object.entries(packageCenterMap[pkg])
+  .sort((a,b)=>a[0].localeCompare(b[0]))
+  .forEach(([center, cData]) => {
+    tbody.innerHTML += `
+      <tr data-parent="${pkgRowId}" style="display:none;">
+        <td>${center}</td>
+        <td></td>
+        <td>${cData.total}</td>
+        <td>${cData.M}</td>
+        <td>${cData.F}</td>
+      </tr>
+    `;
+  });
+
+    });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+  // Add Download Excel button (once)
+if (!document.getElementById('downloadCenterSummaryExcel')) {
+  const btn = document.createElement('button');
+  btn.id = 'downloadCenterSummaryExcel';
+  btn.className = 'btn btn-primary';
+  btn.style.marginBottom = '10px';
+  btn.innerText = 'Download Summary Excel';
+
+  btn.onclick = () => downloadCenterSummaryExcel(summary);
+
+  container.prepend(btn);
+}
+
+  modal.style.display = 'block';
   
-  tbody.innerHTML = rowsHtml;
-  table.appendChild(tbody); container.appendChild(table); modal.style.display='block';
-  document.querySelector('#centerSummaryModal .close').onclick=()=>modal.style.display='none';
-  window.onclick=e=>{if(e.target===modal) modal.style.display='none';};
+
+  document.querySelector('#centerSummaryModal .close').onclick = () =>
+    modal.style.display = 'none';
+
+  window.onclick = e => {
+    if(e.target === modal) modal.style.display = 'none';
+  };
 }
 
 function getCenterWiseSummary(bookings){
   const map = {};
+
   bookings.forEach(b => {
     const center = b.center || 'Unknown';
-    if(!map[center]) map[center] = { total: 0, M: 0, F: 0 };
-    map[center].total += 1;
-    if(b.gender === 'M') map[center].M += 1;
-    if(b.gender === 'F') map[center].F += 1;
+    const pkg = b.package_name || 'Unknown Package';
+    const gender = b.gender;
+
+    if(!map[center]){
+      map[center] = {
+        total: 0,
+        M: 0,
+        F: 0,
+        packages: {}
+      };
+    }
+
+    map[center].total++;
+    if(gender === 'M') map[center].M++;
+    if(gender === 'F') map[center].F++;
+
+    if(!map[center].packages[pkg]){
+      map[center].packages[pkg] = { total: 0, M: 0, F: 0 };
+    }
+
+    map[center].packages[pkg].total++;
+    if(gender === 'M') map[center].packages[pkg].M++;
+    if(gender === 'F') map[center].packages[pkg].F++;
   });
+
   return map;
+}
+
+
+function togglePackageRows(className){
+  document.querySelectorAll(`.${className}`).forEach(row => {
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+  });
+}
+
+function toggleRows(groupKey){
+  const rows = document.querySelectorAll(`tr[data-parent="${groupKey}"]`);
+  const shouldShow = [...rows].some(r => r.style.display === 'none');
+
+  rows.forEach(row => {
+    row.style.display = shouldShow ? 'table-row' : 'none';
+  });
+}
+
+
+function downloadCenterSummaryExcel(summary){
+  const wb = XLSX.utils.book_new();
+
+  /* =======================
+     SHEET 1: CENTER SUMMARY
+     ======================= */
+  const centerRows = [];
+  centerRows.push(['Center', 'Package', 'Total', 'Males', 'Females']);
+
+  let grandTotal = 0, grandM = 0, grandF = 0;
+  const packageTotals = {};
+  const packageCenterMap = {};
+
+  Object.keys(summary).sort().forEach(center => {
+    const c = summary[center];
+
+    centerRows.push([center, 'All Packages', c.total, c.M, c.F]);
+
+    grandTotal += c.total;
+    grandM += c.M;
+    grandF += c.F;
+
+    Object.entries(c.packages).forEach(([pkg, p]) => {
+      centerRows.push(['', pkg, p.total, p.M, p.F]);
+
+      if(!packageTotals[pkg]){
+        packageTotals[pkg] = { total:0, M:0, F:0 };
+        packageCenterMap[pkg] = {};
+      }
+
+      packageTotals[pkg].total += p.total;
+      packageTotals[pkg].M += p.M;
+      packageTotals[pkg].F += p.F;
+
+      packageCenterMap[pkg][center] = p;
+    });
+  });
+
+  centerRows.push([]);
+  centerRows.push(['GRAND TOTAL', 'All Packages', grandTotal, grandM, grandF]);
+
+  Object.entries(packageTotals).forEach(([pkg, d]) => {
+    centerRows.push(['All Centers', pkg, d.total, d.M, d.F]);
+  });
+
+  const ws1 = XLSX.utils.aoa_to_sheet(centerRows);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Center Summary');
+
+  /* =========================
+     SHEET 2: PACKAGE BREAKDOWN
+     ========================= */
+  const pkgRows = [];
+
+  Object.keys(packageCenterMap).sort().forEach(pkg => {
+    pkgRows.push([pkg]); // Package title row
+    pkgRows.push(['Center', 'Total', 'Males', 'Females']);
+
+    Object.keys(packageCenterMap[pkg])
+      .sort()
+      .forEach(center => {
+        const d = packageCenterMap[pkg][center];
+        pkgRows.push([center, d.total, d.M, d.F]);
+      });
+
+    pkgRows.push([]); // spacing between packages
+  });
+
+  const ws2 = XLSX.utils.aoa_to_sheet(pkgRows);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Package Breakdown');
+
+  /* ===================
+     DOWNLOAD FILE
+     =================== */
+  XLSX.writeFile(wb, 'center_package_summary.xlsx');
 }
