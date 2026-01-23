@@ -56,8 +56,14 @@ else if (days === 2) maxSessions = 6;
 else maxSessions = 9;
 
 let sessionOptions = '<option value="">Select</option>';
+const mvSessions = [3, 6];
+
 for (let i = 1; i <= maxSessions; i++) {
-  sessionOptions += `<option value="${i}">Session ${i}</option>`;
+  const isMV = mvSessions.includes(i);
+  sessionOptions += `
+    <option value="${i}">
+      Session ${i}${isMV ? ' (MV)' : ''}
+    </option>`;
 }
 
     tableRow.innerHTML = `
@@ -304,22 +310,41 @@ document.querySelectorAll('.feedback-received').forEach((el) => {
 
   const result = await response.json();
 
-  result.data.summary.forEach(row => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${row.session}</td>
-      <td>${row.total_registrants}</td>
-      <td>${row.total_attended}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  const mvSessions = [3, 6];
 
-  renderDownloadButton({
-    selector: '#attendanceSummaryDownload',
-    getData: () => result.data.summary,
-    fileName: `${shibirName}_attendance_summary.xlsx`,
-    sheetName: 'Attendance Summary'
-  });
+result.data.summary.forEach(row => {
+  // row.session might be "Session 1" or "1"
+  const match = String(row.session).match(/\d+/);
+  const sessionNo = match ? Number(match[0]) : null;
+
+  const isMV = mvSessions.includes(sessionNo);
+  const sessionLabel = `Session ${sessionNo}${isMV ? ' (MV)' : ''}`;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${sessionLabel}</td>
+    <td>${row.total_registrants}</td>
+    <td>${row.total_attended}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+
+renderDownloadButton({
+  selector: '#attendanceSummaryDownload',
+  getData: () =>
+    result.data.summary.map(row => {
+      const match = String(row.session).match(/\d+/);
+      const sessionNo = match ? Number(match[0]) : row.session;
+
+      return {
+        ...row,
+        session: `Session ${sessionNo}${mvSessions.includes(sessionNo) ? ' (MV)' : ''}`
+      };
+    }),
+  fileName: `${shibirName}_attendance_summary.xlsx`,
+  sheetName: 'Attendance Summary'
+});
 
   // enhanceTable('attendanceSummaryTable');
 modal.style.display = 'block';

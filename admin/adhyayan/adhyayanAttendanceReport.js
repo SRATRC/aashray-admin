@@ -31,8 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   `;
 
   for (let i = 1; i <= result.maxSessions; i++) {
-    headerHtml += `<th>Session ${i}</th>`;
-  }
+  const isMV = [3, 6].includes(i);
+  headerHtml += `<th>Session ${i}${isMV ? ' (MV)' : ''}</th>`;
+}
 
   headerHtml += '</tr>';
   tableHead.innerHTML = headerHtml;
@@ -59,10 +60,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   enhanceTable('attendanceTable', 'tableSearch');
 
-  renderDownloadButton({
-    selector: '#downloadBtnContainer',
-    getData: () => result.data,
-    fileName: `attendance_shibir_${shibirId}.xlsx`,
-    sheetName: 'Attendance'
-  });
+  const mvSessions = [3, 6];
+
+renderDownloadButton({
+  selector: '#downloadBtnContainer',
+  getData: () =>
+    result.data.map(row => {
+      const newRow = { ...row };
+
+      for (let i = 1; i <= result.maxSessions; i++) {
+        const oldKey = `session_${i}`;
+        if (!(oldKey in row)) continue;
+
+        const isMV = mvSessions.includes(i);
+        const newKey = `Session ${i}${isMV ? ' (MV)' : ''}`;
+
+        newRow[newKey] = row[oldKey];
+        delete newRow[oldKey];
+      }
+
+      return newRow;
+    }),
+  fileName: `attendance_shibir_${shibirId}.xlsx`,
+  sheetName: 'Attendance'
+});
+
 });
