@@ -49,7 +49,7 @@ console.log(data);
             <td style="text-align:center;">${item.name}</td>
             <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
             <td style="text-align:center;">
-  <a href="utsavCheckinReport.html?utsavId=${item.id}&status=checkedin">${item.checkedin_count}</a>
+  <a href="utsavCheckinReport.html?utsavid=${item.id}&status=checkedin">${item.checkedin_count}</a>
 </td>
 <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">${item.pending_count}</a></td>
             <td style="text-align:center;">${item.total_seats}</td>
@@ -74,7 +74,7 @@ console.log(data);
   ${
     JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
       ? '-'
-      : `<a href="/admin/utsav/utsavCheckin.html?utsavId=${item.id}">
+      : `<a href="/admin/utsav/utsavCheckin.html?utsavid=${item.id}">
           <button class="btn btn-secondary btn-sm">Open Scanner</button>
         </a>`
   }

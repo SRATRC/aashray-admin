@@ -18,33 +18,39 @@
   <link rel="stylesheet" href="../../style/css/styles.css">
 
   <style>
-    #qr-scanner-section {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+  #qr-scanner-section {
+    text-align: center;
+    margin-bottom: 20px;
+  }
 
-    #qr-status {
-      margin: 10px 0;
-      font-weight: bold;
-      min-height: 25px;
-    }
+  #qr-status {
+    margin: 10px 0;
+    font-weight: bold;
+    min-height: 25px;
+  }
 
-    .success-status {
-      color: green;
-    }
+  .success-status {
+    color: green;
+  }
 
-    .error-status {
-      color: red;
-    }
+  .info-status {
+    color: #31708f; /* blue */
+  }
 
-    .scanning-status {
-      color: #666;
-    }
+  .warning-status {
+    color: #8a6d3b; /* brown */
+  }
 
-    #scan-again-btn {
-      margin-top: 10px;
-    }
-  </style>
+  .danger-status,
+  .error-status {
+    color: red;
+  }
+
+  .scanning-status {
+    color: #666;
+  }
+</style>
+
 </head>
 <body>
   <div class="header">
@@ -73,7 +79,6 @@
             <div id="qr-scanner-section">
               <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
               <div id="qr-status" class="scanning-status">Initializing scanner...</div>
-              <button type="button" id="scan-again-btn" class="btn btn-small" style="display: none;">Scan Another</button>
             </div>
           </div>
         </div>

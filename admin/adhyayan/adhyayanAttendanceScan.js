@@ -55,10 +55,10 @@ async function onScanSuccess(decodedText) {
       `✖ ${err.message || 'Failed to mark attendance'}`;
   }
 
-  // ⏸ Pause scanning for 2 seconds, then resume
+  // ⏸ Pause scanning for 1.5 seconds, then resume
   setTimeout(() => {
     isProcessing = false;
     qrStatus.className = 'scanning-status';
     qrStatus.innerText = 'Ready to scan...';
-  }, 2000);
+  }, 1500);
 }

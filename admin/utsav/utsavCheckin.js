@@ -1,27 +1,23 @@
 document.addEventListener('DOMContentLoaded', function () {
   const qrStatus = document.getElementById('qr-status');
-  const scanAgainBtn = document.getElementById('scan-again-btn');
   const alertDiv = document.getElementById('alert');
 
-
   let html5QrCode = null;
-  let isScanning = false;
+  let isProcessing = false; // 🔒 scan lock
 
   const utsavid = new URLSearchParams(window.location.search).get('utsavid');
 
   startQRScanner();
-  scanAgainBtn.addEventListener('click', startQRScanner);
+
+  /* -------------------- SCANNER -------------------- */
 
   function startQRScanner() {
-    if (isScanning) return;
-
-    scanAgainBtn.style.display = 'none';
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
-
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('reader');
     }
+
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = 'Initializing scanner...';
 
     html5QrCode
       .start(
@@ -31,48 +27,43 @@ document.addEventListener('DOMContentLoaded', function () {
         onScanFailure
       )
       .then(() => {
-        isScanning = true;
         qrStatus.innerText = 'Ready to scan...';
       })
       .catch((err) => {
-        qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ Scanner initialization failed: ' + err.message;
+        qrStatus.className = 'danger-status';
+        qrStatus.innerText = '❌ Scanner initialization failed';
         console.error('QR Scanner Error:', err);
       });
   }
 
-  function stopQRScanner() {
-    if (html5QrCode && isScanning) {
-      html5QrCode
-        .stop()
-        .then(() => {
-          isScanning = false;
-        })
-        .catch((err) => {
-          console.error('Error stopping scanner:', err);
-        });
-    }
-  }
-
-  function onScanSuccess(decodedText) {
-    console.log('Scanned:', decodedText);
-    stopQRScanner();
+  async function onScanSuccess(decodedText) {
+    if (isProcessing) return;
+    isProcessing = true;
 
     const cardno = processScannedText(decodedText);
-    console.log('Processed cardno:', cardno);
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = `✅ QR Code Scanned: ${cardno} (processing...)`;
 
-    scanAgainBtn.style.display = 'inline-block';
-    sendCheckinRequest(cardno);
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = `Processing check-in for ${cardno}...`;
+
+    try {
+      await sendCheckinRequest(cardno);
+    } catch (_) {
+      // handled below
+    }
+
+    // ⏸ Pause, then resume scanning
+    setTimeout(() => {
+      isProcessing = false;
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = 'Ready to scan...';
+    }, 1500);
   }
 
   function onScanFailure() {
-    if (Math.random() < 0.1) {
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = 'Scanning...';
-    }
+    // silent to avoid flicker
   }
+
+  /* -------------------- HELPERS -------------------- */
 
   function processScannedText(text) {
     let cardno = text.trim();
@@ -82,69 +73,66 @@ document.addEventListener('DOMContentLoaded', function () {
     return cardno;
   }
 
-  function sendCheckinRequest(cardno) {
-     console.log('Sending check-in request for cardno:', cardno);
+  function getAlertTypeFromMessage(message = '') {
+    const msg = message.toLowerCase();
+
+    if (msg.includes('already checked')) return 'info';
+    if (msg.includes('checkedin')) return 'success';
+
+    return 'danger';
+  }
+
+  /* -------------------- API -------------------- */
+
+  async function sendCheckinRequest(cardno) {
     resetAlert();
+    showMessage('Processing check-in...', 'info');
 
-    showInfoMessage('Processing check-in...');
-console.log('🔥 About to call fetch:', `${CONFIG.basePath}/utsav/utsavCheckin`);
-console.log('👉 Sending utsavid:', utsavid);
+    try {
+      const response = await fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cardno, utsavid })
+      });
 
-        fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ cardno, utsavid })
-    })
-  .then(async (response) => {
-  const data = await response.json().catch(() => ({ message: 'Invalid JSON' }));
-  if (!response.ok) {
-    console.error('🔴 Backend Response Status:', response.status);
-    console.error('🔴 Backend Error Data:', data);
+      const data = await response.json();
+
+      const alertType = getAlertTypeFromMessage(data.message);
+
+      if (!response.ok) {
+        qrStatus.className = `${alertType}-status`;
+        qrStatus.innerText = '❌ ' + (data.message || 'Check-in failed');
+        showMessage(data.message || 'Check-in failed', alertType);
+        throw data;
+      }
+
+      // ✅ SUCCESS / INFO
+      qrStatus.className = `${alertType}-status`;
+      qrStatus.innerText = `✅ ${data.message}`;
+      showMessage(data.message, alertType);
+
+    } catch (err) {
+      if (!err?.message) {
+        qrStatus.className = 'danger-status';
+        qrStatus.innerText = '❌ Unexpected error occurred';
+        showMessage('Unexpected error occurred.', 'danger');
+      }
+      throw err;
+    }
   }
-  return { status: response.status, body: data };
-})
 
-      .then(({ status, body }) => {
-        qrStatus.innerText = `✅ ${body.message}`;
-
-        if (status === 200 && body.message === 'Already checked in.') {
-          showInfoMessage('Already checked in.');
-        } else if (status === 200 && body.message.includes('checkedin')) {
-          showSuccessMessage('Check-in successful.');
-        } else {
-          showErrorMessage(body.message || 'Failed to check-in.');
-        }
-      })
-      .catch((error) => {
-  console.error('🔴 JS/Network Fetch Error:', error);
-  showErrorMessage('Fetch failed');
-});
-
-  }
+  /* -------------------- ALERTS -------------------- */
 
   function showMessage(message, type) {
     alertDiv.className = `alert alert-${type}`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
-    if (type === 'success') {
-      setTimeout(resetAlert, 5000);
+    if (type === 'success' || type === 'info') {
+      setTimeout(resetAlert, 500);
     }
-  }
-
-  function showSuccessMessage(message) {
-    showMessage(message, 'success');
-  }
-
-  function showErrorMessage(message) {
-    showMessage(message, 'danger');
-  }
-
-  function showInfoMessage(message) {
-    showMessage(message, 'info');
   }
 
   function resetAlert() {
@@ -153,7 +141,11 @@ console.log('👉 Sending utsavid:', utsavid);
     alertDiv.textContent = '';
   }
 
+  /* -------------------- CLEANUP -------------------- */
+
   window.addEventListener('beforeunload', () => {
-    stopQRScanner();
+    if (html5QrCode) {
+      html5QrCode.stop().catch(() => {});
+    }
   });
 });
