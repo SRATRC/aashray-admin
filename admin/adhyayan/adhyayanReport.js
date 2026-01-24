@@ -50,15 +50,11 @@ const endDate = new Date(item.end_date);
 const days =
   Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
-let maxSessions = 0;
-if (days === 1) maxSessions = 3;
-else if (days === 2) maxSessions = 6;
-else maxSessions = 9;
-
 let sessionOptions = '<option value="">Select</option>';
-const mvSessions = [3, 6];
+const mvSessions = [7, 8, 9];
 
-for (let i = 1; i <= maxSessions; i++) {
+// Always show Session 1 → 9
+for (let i = 1; i <= 9; i++) {
   const isMV = mvSessions.includes(i);
   sessionOptions += `
     <option value="${i}">
@@ -310,7 +306,7 @@ document.querySelectorAll('.feedback-received').forEach((el) => {
 
   const result = await response.json();
 
-  const mvSessions = [3, 6];
+  const mvSessions = [7,  8, 9];
 
 result.data.summary.forEach(row => {
   // row.session might be "Session 1" or "1"
@@ -325,6 +321,7 @@ result.data.summary.forEach(row => {
     <td>${sessionLabel}</td>
     <td>${row.total_registrants}</td>
     <td>${row.total_attended}</td>
+    <td>${row.total_absentees}</td>
   `;
   tbody.appendChild(tr);
 });

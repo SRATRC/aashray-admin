@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       <th>Res Status</th>
   `;
 
-  for (let i = 1; i <= result.maxSessions; i++) {
-  const isMV = [3, 6].includes(i);
+for (let i = 1; i <= 9; i++) {
+  const isMV = [7, 8, 9].includes(i);
   headerHtml += `<th>Session ${i}${isMV ? ' (MV)' : ''}</th>`;
 }
 
@@ -50,9 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${row.res_status}</td>
     `;
 
-    for (let i = 1; i <= result.maxSessions; i++) {
-      rowHtml += `<td>${row[`session_${i}`]}</td>`;
-    }
+    for (let i = 1; i <= 9; i++) {
+  rowHtml += `<td>${row[`session_${i}`] ?? '-'}</td>`;
+}
 
     rowHtml += '</tr>';
     tableBody.insertAdjacentHTML('beforeend', rowHtml);
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   enhanceTable('attendanceTable', 'tableSearch');
 
-  const mvSessions = [3, 6];
+  const mvSessions = [7, 8, 9];
 
 renderDownloadButton({
   selector: '#downloadBtnContainer',
@@ -68,7 +68,7 @@ renderDownloadButton({
     result.data.map(row => {
       const newRow = { ...row };
 
-      for (let i = 1; i <= result.maxSessions; i++) {
+      for (let i = 1; i <= 9; i++) {
         const oldKey = `session_${i}`;
         if (!(oldKey in row)) continue;
 
