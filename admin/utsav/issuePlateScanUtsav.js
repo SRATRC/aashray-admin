@@ -1,24 +1,21 @@
 document.addEventListener('DOMContentLoaded', function () {
   const qrStatus = document.getElementById('qr-status');
-  const scanAgainBtn = document.getElementById('scan-again-btn');
   const alertDiv = document.getElementById('alert');
 
   let html5QrCode = null;
-  let isScanning = false;
+  let isProcessing = false; // 🔒 scan lock
 
   startQRScanner();
-  scanAgainBtn.addEventListener('click', startQRScanner);
+
+  /* -------------------- SCANNER -------------------- */
 
   function startQRScanner() {
-    if (isScanning) return;
-
-    scanAgainBtn.style.display = 'none';
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
-
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('reader');
     }
+
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = 'Initializing scanner...';
 
     html5QrCode
       .start(
@@ -28,39 +25,44 @@ document.addEventListener('DOMContentLoaded', function () {
         onScanFailure
       )
       .then(() => {
-        isScanning = true;
         qrStatus.innerText = 'Ready to scan...';
       })
       .catch((err) => {
-        qrStatus.className = 'error-status';
+        qrStatus.className = 'danger-status';
         qrStatus.innerText = '❌ Scanner initialization failed';
-        console.error(err);
+        console.error('QR Scanner Error:', err);
       });
   }
 
-  function stopQRScanner() {
-    if (html5QrCode && isScanning) {
-      html5QrCode.stop().then(() => {
-        isScanning = false;
-      });
-    }
-  }
-
-  function onScanSuccess(decodedText) {
-    stopQRScanner();
+  async function onScanSuccess(decodedText) {
+    // 🔒 Prevent multiple scans
+    if (isProcessing) return;
+    isProcessing = true;
 
     const cardno = processScannedText(decodedText);
-    qrStatus.innerText = `✅ QR Scanned: ${cardno} (issuing plate...)`;
-    scanAgainBtn.style.display = 'inline-block';
 
-    sendIssuePlateRequest(cardno);
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = `Issuing plate for ${cardno}...`;
+
+    try {
+      await sendIssuePlateRequest(cardno);
+    } catch (_) {
+      // handled below
+    }
+
+    // ⏸ Pause then auto-resume
+    setTimeout(() => {
+      isProcessing = false;
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = 'Ready to scan...';
+    }, 1500); // ⏱ change to 1000–5000 if needed
   }
 
   function onScanFailure() {
-    if (Math.random() < 0.1) {
-      qrStatus.innerText = 'Scanning...';
-    }
+    // silent (prevents flicker)
   }
+
+  /* -------------------- HELPERS -------------------- */
 
   function processScannedText(text) {
     let cardno = text.trim();
@@ -70,32 +72,56 @@ document.addEventListener('DOMContentLoaded', function () {
     return cardno;
   }
 
-  function sendIssuePlateRequest(cardno) {
-    resetAlert();
-    showInfoMessage('Issuing plate...');
+  function getAlertTypeFromMessage(message = '') {
+    const msg = message.toLowerCase();
 
-    fetch(`${CONFIG.basePath}/utsav/issue/${cardno}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // body: JSON.stringify({ cardno })
-    })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw data;
-        return data;
-      })
-      .then((data) => {
-        qrStatus.className = 'success-status';
-        qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
-        showSuccessMessage(data.message);
-      })
-      .catch((err) => {
-        const message = err.message || 'Failed to issue plate';
-        qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ ' + message;
-        showErrorMessage(message);
-      });
+    if (msg.includes('already issued')) return 'warning';
+    if (msg.includes('invalid meal time')) return 'info';
+    if (msg.includes('booking not found')) return 'danger';
+
+    return 'danger';
   }
+
+  /* -------------------- API -------------------- */
+
+  async function sendIssuePlateRequest(cardno) {
+    resetAlert();
+    showMessage('Issuing plate...', 'info');
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/utsav/issue/${cardno}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const alertType = getAlertTypeFromMessage(data.message);
+
+        qrStatus.className = `${alertType}-status`;
+        qrStatus.innerText = '❌ ' + (data.message || 'Failed to issue plate');
+        showMessage(data.message || 'Failed to issue plate', alertType);
+
+        throw data;
+      }
+
+      // ✅ SUCCESS
+      qrStatus.className = 'success-status';
+      qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
+      showMessage(data.message || 'Plate issued successfully.', 'success');
+
+    } catch (err) {
+      if (!err?.message) {
+        qrStatus.className = 'danger-status';
+        qrStatus.innerText = '❌ Unexpected error occurred';
+        showMessage('Unexpected error occurred.', 'danger');
+      }
+      throw err;
+    }
+  }
+
+  /* -------------------- ALERTS -------------------- */
 
   function showMessage(message, type) {
     alertDiv.className = `alert alert-${type}`;
@@ -103,20 +129,8 @@ document.addEventListener('DOMContentLoaded', function () {
     alertDiv.style.display = 'block';
 
     if (type === 'success') {
-      setTimeout(resetAlert, 4000);
+      setTimeout(resetAlert, 500);
     }
-  }
-
-  function showSuccessMessage(message) {
-    showMessage(message, 'success');
-  }
-
-  function showErrorMessage(message) {
-    showMessage(message, 'danger');
-  }
-
-  function showInfoMessage(message) {
-    showMessage(message, 'info');
   }
 
   function resetAlert() {
@@ -125,5 +139,11 @@ document.addEventListener('DOMContentLoaded', function () {
     alertDiv.textContent = '';
   }
 
-  window.addEventListener('beforeunload', stopQRScanner);
+  /* -------------------- CLEANUP -------------------- */
+
+  window.addEventListener('beforeunload', () => {
+    if (html5QrCode) {
+      html5QrCode.stop().catch(() => {});
+    }
+  });
 });
