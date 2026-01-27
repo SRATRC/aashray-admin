@@ -80,7 +80,7 @@ if (data.message) {
       cardnoInput.value = '';
       resetAlert();
       cardnoInput.focus();
-    }, 400);
+    }, 1000);
 
   } catch (error) {
     const alertBox = document.getElementById('alert');
@@ -94,6 +94,6 @@ if (data.message) {
     setTimeout(() => {
       resetAlert();
       cardnoInput.focus();
-    }, 400);
+    }, 1000);
   }
 }

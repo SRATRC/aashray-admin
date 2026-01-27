@@ -15,48 +15,68 @@
 
   <!-- Shared Styles -->
   <link rel="stylesheet" href="../../style/css/styles.css" />
-  <style>
-    .table-responsive {
-width: 100%;
-overflow-x: auto;
--webkit-overflow-scrolling: touch;
-}
+<style>
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
-.table {
-min-width: 1000px; /* Or adjust based on expected column count */
-width: 100%;
-}
-.modal {
-  display: none; 
-  position: fixed; 
-  z-index: 1000; 
-  left: 0;
-  top: 0;
-  width: 100%; 
-  height: 100%; 
-  overflow: auto; 
-  background-color: rgba(0,0,0,0.5); 
-}
+  .table {
+    min-width: 1000px;
+    width: 100%;
+  }
 
-.modal-content {
-  background-color: #fff;
-  margin: 10% auto; 
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
-  position: relative;
-}
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    background-color: rgba(0,0,0,0.5);
+  }
 
-.close-modal {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  color: #333;
-  font-size: 24px;
-  cursor: pointer;
-}
+  .modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+  }
 
-  </style>
+  .close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  /* ===== Attendance Summary (simple) ===== */
+
+  #attendanceSummaryModal .modal-content {
+    width: 90%;
+    max-width: 900px;
+  }
+
+  #attendanceSummaryModal .table {
+    min-width: unset !important;
+    width: 100%;
+  }
+
+  #attendanceSummaryTable th,
+  #attendanceSummaryTable td {
+    padding: 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  #attendanceSummaryTable th:first-child,
+  #attendanceSummaryTable td:first-child {
+    text-align: left;
+  }
+
+  
+</style>
   <!-- Styles -->
   <link rel="stylesheet" href="../../style/css/styles.css" />
 
@@ -112,6 +132,9 @@ width: 100%;
                     <th>WaitList Count</th>
                     <th>Self Cancelled Count</th>
                     <th>Admin/Cron Cancelled Count</th>
+                    <th>Attendance Scanner Link</th>
+                    <th>Attendance Detailed Report</th>
+                    <th>Attendance Summary Report</th>
                     <th>Adhyayan Link</th>
                     <th>Feedback Form Link</th>
                     <th>Feedbacks Received</th>
@@ -138,6 +161,30 @@ width: 100%;
     <span class="close-modal">&times;</span>
     <h2 id="feedbackModalHeading">Feedback Summary</h2> <!-- dynamic heading -->
     <div id="feedbackStats"></div>
+  </div>
+</div>
+
+<div id="attendanceSummaryModal" class="modal">
+  <div class="modal-content attendance-modal">
+    <span class="close-modal">&times;</span>
+
+    <h2 id="attendanceSummaryHeading"></h2>
+
+    
+    <table id="attendanceSummaryTable"
+      class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>Session</th>
+          <th>Total Registrants</th>
+          <th>Total Attended</th>
+          <th>Total Absentees</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="attendanceSummaryDownload"></div>
   </div>
 </div>
 

@@ -45,6 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
   data.forEach((item, index) => {
     const tableRow = document.createElement('tr');
 
+    const startDate = new Date(item.start_date);
+const endDate = new Date(item.end_date);
+const days =
+  Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+let sessionOptions = '<option value="">Select</option>';
+const mvSessions = [7, 8, 9];
+
+// Always show Session 1 → 9
+for (let i = 1; i <= 9; i++) {
+  const isMV = mvSessions.includes(i);
+  sessionOptions += `
+    <option value="${i}">
+      Session ${i}${isMV ? ' (MV)' : ''}
+    </option>`;
+}
+
     tableRow.innerHTML = `
       <td style="text-align:center;">${index + 1}</td>
       <td style="text-align:center;">${item.name}</td>
@@ -60,6 +77,28 @@ document.addEventListener('DOMContentLoaded', () => {
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=waiting">${item.waitlist_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
       <td style="text-align:center;"><a href="adhyayanBookingslist.html?shibir_id=${item.id}&status=admin cancelled">${item.admin_cancelled_count}</a></td>
+      <td style="text-align:center;">
+      <select class="attendance-session-dropdown"
+        data-shibir-id="${item.id}">
+        ${sessionOptions}
+      </select>
+    </td>
+<td style="text-align:center;">
+  <a href="adhyayanAttendanceReport.html?shibir_id=${item.id}"
+     style="color:blue; text-decoration:underline;">
+    Click to Open
+  </a>
+</td>
+<td style="text-align:center;">
+ <span
+  class="attendance-summary-btn attendance-link"
+  data-shibir="${item.id}"
+  data-name="${item.name}">
+  Click to Open
+</span>
+
+</td>
+
       <td style="text-align:center;">
         <span class="adhyayan-link" data-shibir="${item.id}" 
           style="color:blue; text-decoration:underline; cursor:pointer;">
@@ -97,6 +136,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     adhyayanTableBody.appendChild(tableRow);
   });
+  document.querySelectorAll('.attendance-session-dropdown').forEach((dropdown) => {
+  dropdown.addEventListener('change', (e) => {
+    const sessionNo = e.target.value;
+    const shibirId = e.target.dataset.shibirId;
+
+    if (!sessionNo) return;
+
+    const url =
+      `adhyayanAttendanceScan.html?shibir_id=${shibirId}&session=${sessionNo}`;
+
+    window.open(url, '_blank');
+
+    // reset dropdown
+    e.target.value = '';
+  });
+});
+
 
   // Event listeners
   document.querySelectorAll('.toggle-status').forEach((button) => {
@@ -226,4 +282,79 @@ document.querySelectorAll('.feedback-received').forEach((el) => {
   };
 
   fetchAdhyayanReport();
+  document.addEventListener('click', async (e) => {
+  if (!e.target.classList.contains('attendance-summary-btn')) return;
+
+  const shibirId = e.target.dataset.shibir;
+  const shibirName = e.target.dataset.name;
+
+  const modal = document.getElementById('attendanceSummaryModal');
+  const tbody = document.querySelector('#attendanceSummaryTable tbody');
+  const heading = document.getElementById('attendanceSummaryHeading');
+
+  heading.innerText = `Attendance Summary – ${shibirName}`;
+  tbody.innerHTML = '';
+
+  const response = await fetch(
+    `${CONFIG.basePath}/adhyayan/attendance/summary/${shibirId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      }
+    }
+  );
+
+  const result = await response.json();
+
+  const mvSessions = [7,  8, 9];
+
+result.data.summary.forEach(row => {
+  // row.session might be "Session 1" or "1"
+  const match = String(row.session).match(/\d+/);
+  const sessionNo = match ? Number(match[0]) : null;
+
+  const isMV = mvSessions.includes(sessionNo);
+  const sessionLabel = `Session ${sessionNo}${isMV ? ' (MV)' : ''}`;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${sessionLabel}</td>
+    <td>${row.total_registrants}</td>
+    <td>${row.total_attended}</td>
+    <td>${row.total_absentees}</td>
+  `;
+  tbody.appendChild(tr);
 });
+
+
+renderDownloadButton({
+  selector: '#attendanceSummaryDownload',
+  getData: () =>
+    result.data.summary.map(row => {
+      const match = String(row.session).match(/\d+/);
+      const sessionNo = match ? Number(match[0]) : row.session;
+
+      return {
+        ...row,
+        session: `Session ${sessionNo}${mvSessions.includes(sessionNo) ? ' (MV)' : ''}`
+      };
+    }),
+  fileName: `${shibirName}_attendance_summary.xlsx`,
+  sheetName: 'Attendance Summary'
+});
+
+  // enhanceTable('attendanceSummaryTable');
+modal.style.display = 'block';
+});
+
+const attendanceModalClose =
+  document.querySelector('#attendanceSummaryModal .close-modal');
+
+if (attendanceModalClose) {
+  attendanceModalClose.addEventListener('click', () => {
+    document.getElementById('attendanceSummaryModal').style.display = 'none';
+  });
+}
+
+});
+
