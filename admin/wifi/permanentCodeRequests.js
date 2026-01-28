@@ -1,3 +1,5 @@
+
+
 let currentStatus = '';
 let currentRecords = []; // <-- store last fetched records for modal prefill
 
@@ -25,10 +27,10 @@ async function fetchRequests() {
   // Only send status if it's non-empty
   const params = new URLSearchParams();
   if (currentStatus === 'pending-new' || currentStatus === 'pending-reset') {
-  params.set('requestType', currentStatus);
-} else if (currentStatus) {
-  params.set('status', currentStatus);
-}
+    params.set('requestType', currentStatus);
+  } else if (currentStatus) {
+    params.set('status', currentStatus);
+  }
   const query = params.toString();
 
   try {
@@ -48,7 +50,7 @@ async function fetchRequests() {
     records.forEach((req, idx) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${idx + 1}</td>
+        <td>${req.id}</td>
         <td>${req.cardno}</td>
         <td>${req.CardDb?.issuedto || '-'}</td>
         <td>${req.CardDb?.mobno || '-'}</td>
@@ -59,12 +61,9 @@ async function fetchRequests() {
         <td>${req.ssid || '-'}</td>
         <td>${req.code || '-'}</td>
         <td>${req.status}</td>
-<td>
-  <button onclick="openModal('${req.id}')">Take Action</button>
-</td>
-
-
-
+        <td>
+          <button onclick="openModal('${req.id}')">Take Action</button>
+        </td>
       `;
       tableBody.appendChild(row);
     });
@@ -129,7 +128,8 @@ async function deleteRequest(requestId) {
 function openModal(id) {
   const rec = currentRecords.find(r => String(r.id) === String(id));
   document.getElementById('modalRequestId').value = id;
-  document.getElementById('modalAction').value = rec?.status || 'pending';
+  document.getElementById('modalCurrentStatus').innerText = rec?.status || 'pending';
+  document.getElementById('modalNewStatus').value = 'approved';
   document.getElementById('modalCode').value = rec?.code || '';
   document.getElementById('modalComments').value = rec?.admin_comments || '';
   document.getElementById('modalUsername').value = rec?.username || (rec?.CardDb?.issuedto || '');
@@ -145,30 +145,38 @@ function closeModal() {
 
 async function submitAction() {
   const requestId = document.getElementById('modalRequestId').value;
-  const action = document.getElementById('modalAction').value;
+  const action = document.getElementById('modalNewStatus').value;
   const code = document.getElementById('modalCode').value.trim();
   const comments = document.getElementById('modalComments').value;
   const username = document.getElementById('modalUsername').value.trim();
   const ssid = document.getElementById('modalSsid').value.trim();
 
   if (
-  action === 'approved' &&
-  !code &&
-  !currentRecords.find(r => r.id == requestId)?.code
-) {
-  showMessage('Permanent code is required for approval', 'error');
-  return;
-}
+    action === 'approved' &&
+    !code &&
+    !currentRecords.find(r => r.id == requestId)?.code
+  ) {
+    showMessage('Permanent code is required for approval', 'error');
+    return;
+  }
 
   try {
+    const existing = currentRecords.find(r => r.id == requestId);
+
     const body = {
       action,
-      permanent_code: code,
       admin_comments: comments,
-      // only send username/ssid if not empty (but server accepts empty/null too)
       username: username || null,
       ssid: ssid || null
     };
+
+    // ✅ Only send permanent_code when it is NEW
+    if (
+      action === 'approved' &&
+      (!existing?.code || existing.code !== code)
+    ) {
+      body.permanent_code = code;
+    }
 
     const res = await fetch(`${CONFIG.basePath}/wifi/permanent/${requestId}`, {
       method: 'PUT',
@@ -199,25 +207,19 @@ function showMessage(msg, type) {
   }
 }
 
-/* setupDownloadAndUploadButtons remains unchanged - it already includes username & ssid columns */
+/* ============================================================
+   DOWNLOAD & UPLOAD BUTTONS - UPDATED WITH SEPARATE BUTTONS
+============================================================ */
 
 function setupDownloadAndUploadButtons(data) {
   const container = document.getElementById('downloadBtnContainer');
-container.innerHTML = `
-  <button id="downloadExcelBtn" class="btn btn-primary">Download Excel</button>
-  <button id="uploadExcelBtn" class="btn btn-secondary">Upload Excel</button>
-  <input type="file" id="uploadExcelInput" accept=".xlsx,.xls" hidden />
-
-  <label>
-    <input type="checkbox" id="dryRunCheckbox" />
-    Dry Run
-  </label>
-
-  <label>
-    <input type="checkbox" id="allowInsertCheckbox" />
-    Allow creating new rows
-  </label>
-`;
+  container.innerHTML = `
+    <button id="downloadExcelBtn" class="btn btn-primary">Download Excel</button>
+    <button id="updateExcelBtn" class="btn btn-secondary">Update from Excel</button>
+    <button id="insertExcelBtn" class="btn btn-success">Insert from Excel</button>
+    <input type="file" id="updateExcelInput" accept=".xlsx,.xls" hidden />
+    <input type="file" id="insertExcelInput" accept=".xlsx,.xls" hidden />
+  `;
 
   const fileName = `permanent_wifi_requests_${currentStatus || 'all'}.xlsx`;
 
@@ -233,12 +235,12 @@ container.innerHTML = `
     ssid: req.ssid,
     code: req.code || '',
     status: req.status
-    
   }));
 
+  // Download Excel Button
   document.getElementById('downloadExcelBtn').addEventListener('click', () => {
     downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
-      'id', 'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'username', 'ssid', 'code', 'status' 
+      'id', 'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'username', 'ssid', 'code', 'status'
     ], {
       id: 'id',
       cardno: 'cardno',
@@ -251,80 +253,108 @@ container.innerHTML = `
       ssid: 'ssid',
       code: 'code',
       status: 'status'
-
     });
   });
 
-  document.getElementById('uploadExcelBtn').addEventListener('click', () => {
-    document.getElementById('uploadExcelInput').click();
+  // Update from Excel Button
+  document.getElementById('updateExcelBtn').addEventListener('click', () => {
+    document.getElementById('updateExcelInput').click();
   });
 
-  document.getElementById('uploadExcelInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  // Insert from Excel Button
+  document.getElementById('insertExcelBtn').addEventListener('click', () => {
+    document.getElementById('insertExcelInput').click();
+  });
 
-  const formData = new FormData();
-  formData.append('file', file);
+  // Update Excel File Handler
+  document.getElementById('updateExcelInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  try {
-const isDryRun = document.getElementById('dryRunCheckbox')?.checked;
-const allowInsert = document.getElementById('allowInsertCheckbox')?.checked;
-
-const endpoint = allowInsert
-  ? '/wifi/insertpercode'
-  : '/wifi/uploadpercode';
-
-const url =
-  `${CONFIG.basePath}${endpoint}` +
-  `?${isDryRun ? 'dryRun=true&' : ''}` +
-  `${allowInsert ? 'allowInsert=true' : ''}`;
-
-const res = await fetch(url, {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${sessionStorage.getItem('token')}`
-  },
-  body: formData
-});
-
-    const result = await res.json();
-    if (res.ok) {
-  let msg = '';
-
-  if (result.dryRun) {
-    msg += `DRY RUN PREVIEW\n\n`;
-  }
-
-  if (result.dryRun) {
-  msg += `Matched (will be updated): ${result.summary?.matched || 0}\n`;
-} else {
-  if (result.dryRun) {
-  msg += `Matched (will be updated): ${result.summary?.matched || 0}\n`;
-} else {
-  msg += `Updated: ${result.updatedCount || 0}\n`;
-}
-
-if (result.insertedCount !== undefined) {
-  msg += `Inserted: ${result.insertedCount}\n`;
-}
-}
-  msg += `Invalid rows: ${result.skipped?.invalidRows || 0}\n`;
-  msg += `Mismatched rows: ${result.skipped?.mismatched || 0}`;
-
-  alert(msg);
-
-  if (!result.dryRun) {
-    fetchRequests();
-  }
-}
- else {
-      alert('Upload failed: ' + (result.message || result.error));
+    if (!confirm('This will UPDATE existing records. Continue?')) {
+      e.target.value = '';
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alert('Upload failed due to an error');
-  }
-});
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const url = `${CONFIG.basePath}/wifi/uploadpercode`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      const result = await res.json();
+      
+      if (res.ok) {
+        let msg = `✅ UPDATE SUCCESSFUL\n\n`;
+        msg += `Updated: ${result.updatedCount || 0}\n`;
+        msg += `Invalid rows: ${result.skipped?.invalidRows || 0}\n`;
+        msg += `Mismatched rows: ${result.skipped?.mismatched || 0}`;
+
+        alert(msg);
+        fetchRequests();
+      } else {
+        alert('❌ Update failed: ' + (result.message || result.error));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('❌ Update failed due to an error');
+    } finally {
+      e.target.value = '';
+    }
+  });
+
+  // Insert Excel File Handler
+  document.getElementById('insertExcelInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!confirm('This will INSERT new records. Continue?')) {
+      e.target.value = '';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const url = `${CONFIG.basePath}/wifi/insertpercode?allowInsert=true`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      const result = await res.json();
+      
+      if (res.ok) {
+        let msg = `✅ INSERT SUCCESSFUL\n\n`;
+        msg += `Inserted: ${result.insertedCount || 0}\n`;
+        msg += `Skipped (already exists): ${result.skippedExisting || 0}\n`;
+        msg += `Invalid rows: ${result.invalidRows || 0}`;
+
+        alert(msg);
+        fetchRequests();
+      } else {
+        alert('❌ Insert failed: ' + (result.message || result.error));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('❌ Insert failed due to an error');
+    } finally {
+      e.target.value = '';
+    }
+  });
 }
 
 /* ============================================================
