@@ -23,43 +23,6 @@
   </script>
 
   <link rel="stylesheet" href="../../style/css/styles.css" />
-  <style>
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 9999;
-      padding-top: 100px;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.4);
-    }
-
-    .modal-content {
-      background-color: #fff;
-      margin: auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 50%;
-      border-radius: 5px;
-    }
-
-    .modal-header {
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .modal-actions {
-      text-align: right;
-      margin-top: 15px;
-    }
-
-    .modal-actions button {
-      margin-left: 10px;
-    }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -82,42 +45,44 @@
 
           <div class="form">
             <div id="alert" class="alert" style="display:none;"></div>
-            <form id="reportForm">
-              <div class="form-group">
-                <label for="payment_type">Payment Type:</label>
-                <select id="payment_type" name="payment_type" class="form-control" required>
-                  <option value="payment_pending" data-type="room">Late Checkout Fee Payment Pending</option>
-                  <option value="payment_done" data-type="flat">Late Checkout Fee Payment Done</option>
-                </select>
-              </div>
+            
+            <!-- Remove the form tag or move it to only wrap the select -->
+            <div class="form-group">
+              <label for="payment_type">Payment Type:</label>
+              <select id="payment_type" name="payment_type" class="form-control" required>
+                <option value="payment_pending">Payment Pending</option>
+                <option value="payment_done">Payment Done</option>
+                <option value="fees_revoked">Fees Revoked</option>
+              </select>
+            </div>
 
-              
-          <div class="table-responsive">
-            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-            <table id="reportTable" class="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Late Checkout Fees</th>
-                  <th>Booking Id</th>
-                  <th>Guest Name</th>
-                  <th>Mobile No.</th>
-                  <th>Room No</th>
-                  <th>Room Type</th>
-                  <th>Check-in</th>
-                  <th>Check-out</th>
-                  <th>Nights</th>
-                </tr>
-              </thead>
-              <tbody id="reportTableBody">
-                <!-- JS will populate -->
-              </tbody>
-            </table>
+            <div class="table-responsive">
+              <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+              <table id="reportTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Late Checkout Fees</th>
+                    <th>Action</th>
+                    <th>Booking Id</th>
+                    <th>Guest Name</th>
+                    <th>Mobile No.</th>
+                    <th>Room No</th>
+                    <th>Room Type</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Nights</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                  <!-- JS will populate -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  </body>
+</body>
 </html>
