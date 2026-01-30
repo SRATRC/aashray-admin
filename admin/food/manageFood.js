@@ -1,4 +1,40 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+  const mobileInput = document.getElementById('mobile');
+const nameInput = document.getElementById('name');
+const cardnoInput = document.getElementById('cardno');
+
+mobileInput.addEventListener('blur', async () => {
+  const mobno = mobileInput.value.trim();
+
+  if (mobno.length < 10) return;
+
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/card/by-mobile/${mobno}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok && data?.data) {
+      nameInput.value = data.data.issuedto || '';
+      cardnoInput.value = data.data.cardno || '';
+    } else {
+      nameInput.value = '';
+      // do NOT clear cardno if admin typed it manually
+    }
+  } catch (error) {
+    console.error('Mobile lookup failed:', error);
+    nameInput.value = '';
+  }
+});
+
   const form = document.getElementById('foodBookingForm');
   const today = formatDate(new Date());
 
