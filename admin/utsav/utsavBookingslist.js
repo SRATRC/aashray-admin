@@ -103,6 +103,7 @@ function renderFilteredTable(){
         <th>Car Number</th>
         <th>Volunteering</th>
         <th>Mumukshu Comments</th>
+        <th>Admin Comments</th>
         <th>Mobile</th>
         <th>Gender</th>
         <th>Center</th>
@@ -126,7 +127,7 @@ function renderFilteredTable(){
           ${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<span class="edit-room" data-bookingid="${item.bookingid}" data-cardno="${item.cardno}" data-name="${item.issuedto}" data-roomno="${item.roomno||''}" style="cursor:pointer;color:blue;margin-left:5px;">✎</span>`:''}</td>
           <td>${formatDateTime(item.createdAt)}</td>
           <td>${item.arrival}</td><td>${item.carno}</td><td>${item.volunteer}</td>
-          <td>${item.other}</td><td>${item.mobno}</td><td>${item.gender}</td>
+          <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
           <td>${item.center}</td><td>${item.res_status}</td>
           <td>${item.status}</td><td>${item.transaction_status}</td><td>${item.bookedby}</td>
           <td>${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>`:'-'}</td>

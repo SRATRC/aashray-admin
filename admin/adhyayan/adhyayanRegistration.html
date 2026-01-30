@@ -1,0 +1,72 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['adhyayanAdmin', 'superAdmin', 'adhyayanAdminRaj']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Adhyayan Registration (Admin)</title>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+<div class="header">
+  <div class="container">
+    <div class="logout">
+      <a href="javascript:void(0);" onclick="history.back()">Back</a>
+      &nbsp; | &nbsp;
+      <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+      &nbsp; | &nbsp;
+      <a href="javascript:void(0);" onclick="logout()">Logout</a>
+    </div>
+  </div>
+</div>
+
+<div class="middlecontent">
+<div class="container">
+<div class="whitesec">
+<div class="inner-padding">
+
+<h1>Adhyayan Registration (Admin)</h1>
+
+<form id="adhyayanRegistrationForm">
+
+  <div class="form-group">
+    <label>Select Adhyayan</label>
+    <select id="adhyayanSelect" class="form-control" required>
+      <option value="">-- Select Adhyayan --</option>
+    </select>
+  </div>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Mobile</th>
+      <th>Name</th>
+      <th>Card No</th>
+      <th>Center</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+  <div style="display:flex; gap:8px">
+    <button type="button" id="addRowBtn" class="btn btn-secondary">+ Add Row</button>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </div>
+
+</form>
+
+</div>
+</div>
+</div>
+</div>
+
+<script src="../../style/js/config.js"></script>
+<script src="./adhyayanRegistration.js"></script>
+</body>
+</html>
