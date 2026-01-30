@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <th>Checkin Date</th>
                   <th>Checkout Date</th>
                   <th>RA Id</th>
+                  <th>Utsav Id</th>
                   <th>Amount</th>
                   <th>Received in bank on</th>
                   <th>Settlement id</th>
@@ -246,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                           <td>${txn.checkin}</td>
                           <td>${txn.checkout}</td>
                           <td>${txn.shibir_comments}</td>
+                          <td>${txn.utsav_id}</td>
                           <td>${txn.amount}</td>
                           <td>${formatDateTime(txn.settlementDate)}</td>
                           <td>${txn.settlement_id}</td>
@@ -371,6 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
           checkin: tx.checkin,
           checkout: tx.checkout,
           shibir_comments: tx.shibir_comments,
+          utsav_id: tx.utsav_id,
           amount: tx.amount,
           settlementDate: tx.settlementDate,
           settlement_id: tx.settlement_id,
@@ -447,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Checkin Date',
         'Checkout Date',
         'RA Id',
+        'Utsav Id',
         'Amount',
         'Received in bank on',
         'Settlement id',
@@ -475,6 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tx.checkin,
         tx.checkout,
         tx.shibir_comments,
+        tx.utsav_id,
         tx.amount,
         tx.settlementDate,
         tx.settlement_id,
