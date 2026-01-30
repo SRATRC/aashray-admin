@@ -122,6 +122,17 @@ for (let i = 1; i <= 9; i++) {
           Click to Open
         </span>
       </td>
+      </td>
+            <td style="text-align:center;">
+  ${
+    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('adhyayanAdminReadOnly')
+      ? '-'
+      : `<a href="/admin/adhyayan/adhyayanRegistration.html?shibir_id=${item.id}">
+          <button class="btn btn-secondary btn-sm">Open Form</button>
+        </a>`
+  }
+</td>
+
       <td style="text-align:center;">${item.status}</td>
       <td style="text-align:center;">
         ${
