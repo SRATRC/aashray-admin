@@ -328,6 +328,7 @@ function openTransactionEditModal(bookingId) {
   document.getElementById('txnPickup').value = booking.pickup_point ?? '';
   document.getElementById('txnDrop').value = booking.drop_point ?? '';
   document.getElementById('txnType').value = booking.type ?? '';
+  document.getElementById('txnTravelDate').value = booking.date ? booking.date.split('T')[0] : '';
 
   document.getElementById('transactionModal').style.display = 'block';
 }
@@ -342,6 +343,7 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
     pickup_point: document.getElementById('txnPickup').value,
     drop_point: document.getElementById('txnDrop').value,
     type: document.getElementById('txnType').value,
+    date: document.getElementById('txnTravelDate').value
   };
 
   // Remove empty values

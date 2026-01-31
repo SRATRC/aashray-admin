@@ -1,9 +1,39 @@
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
-  const start_date = urlParams.get('start_date') || "";
-  const end_date = urlParams.get('end_date') || "";
 
-  const reportTitle = document.querySelector(`#reportTitle`);
+  let start_date = urlParams.get('start_date');
+  let end_date = urlParams.get('end_date');
+
+  // ✅ DEFAULT ONLY IF PARAMS ARE MISSING
+  if (!start_date || !end_date) {
+    const today = new Date().toISOString().split('T')[0];
+    start_date = today;
+    end_date = today;
+
+    const params = new URLSearchParams({ start_date, end_date });
+    window.history.replaceState({}, '', `foodReport.html?${params}`);
+  }
+
+  // ✅ SET DATE INPUTS
+  const startInput = document.getElementById('start_date');
+  const endInput = document.getElementById('end_date');
+  if (startInput) startInput.value = start_date;
+  if (endInput) endInput.value = end_date;
+
+  // ✅ FORM SUBMIT (MUST BE INSIDE DOMContentLoaded)
+  const filterForm = document.getElementById('foodReportFilterForm');
+  if (filterForm) {
+    filterForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const s = document.getElementById('start_date').value;
+      const eDate = document.getElementById('end_date').value;
+
+      window.location.href = `foodReport.html?start_date=${s}&end_date=${eDate}`;
+    });
+  }
+
+  const reportTitle = document.getElementById('reportTitle');
   reportTitle.innerHTML = `<b><u>Food Report ${formatDate(start_date)} - ${formatDate(end_date)}</u></b>`;
 
   resetAlert();
@@ -12,7 +42,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const response = await fetch(
       `${CONFIG.basePath}/food/report?start_date=${start_date}&end_date=${end_date}`,
       {
-        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
@@ -27,7 +56,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     ['breakfast', 'lunch', 'dinner'].forEach((meal) => {
-      const reportTable = document.querySelector(`#${meal}ReportTable`);
+      const reportTable = document.getElementById(`${meal}ReportTable`);
+      reportTable.innerHTML = '';
 
       let totalRegd = 0;
       let totalIssued = 0;
@@ -79,12 +109,12 @@ document.addEventListener('DOMContentLoaded', async function () {
           <td><center>${formatDate(report.date)}</center></td>
           <td><center>${count} (${nonSpicy}) M + ${guestCount} G = ${regdTotal}</center></td>
           <td><center>
-            <a href='issuedPlateReport.html?${issuedReportParams}'>${plateIssued}</a> M +
-            <a href='issuedGuestPlateReport.html?${issuedGuestParams}'>${guestIssued}</a> G = ${issuedTotal}
+            <a href="issuedPlateReport.html?${issuedReportParams}">${plateIssued}</a> M +
+            <a href="issuedGuestPlateReport.html?${issuedGuestParams}">${guestIssued}</a> G = ${issuedTotal}
           </center></td>
           <td><center>
-            <a href='issuedPlateReport.html?${noshowReportParams}'>${noShow}</a> M +
-            <a href='issuedGuestPlateReport.html?${noshowGuestParams}'>${guestNoShow}</a> G = ${noShowTotal}
+            <a href="issuedPlateReport.html?${noshowReportParams}">${noShow}</a> M +
+            <a href="issuedGuestPlateReport.html?${noshowGuestParams}">${guestNoShow}</a> G = ${noShowTotal}
           </center></td>
           <td><center>${physicalPlates}</center></td>
         `;
@@ -98,35 +128,55 @@ document.addEventListener('DOMContentLoaded', async function () {
         totalPhysicalPlates += physicalPlates;
       });
 
-      const totalIssuedCombined = totalIssued + totalGuestIssued;
-      const totalNoShowCombined = totalNoShow + totalGuestNoShow;
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
+      const totalRow = document.createElement('tr');
+      totalRow.innerHTML = `
         <td><center><b>TOTAL</b></center></td>
         <td><center><b>${totalRegd}</b></center></td>
-        <td><center><b>${totalIssuedCombined}</b></center></td>
-        <td><center><b>${totalNoShowCombined}</b></center></td>
+        <td><center><b>${totalIssued + totalGuestIssued}</b></center></td>
+        <td><center><b>${totalNoShow + totalGuestNoShow}</b></center></td>
         <td><center><b>${totalPhysicalPlates}</b></center></td>
       `;
-      reportTable.appendChild(row);
+      reportTable.appendChild(totalRow);
     });
 
-    const highteaReportTable = document.querySelector(`#highteaReportTable`);
+    const highteaReportTable = document.getElementById('highteaReportTable');
+    highteaReportTable.innerHTML = '';
     data.data.forEach((report) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><center>${formatDate(report.date)}</center></td>
-        <td><center>${report.tea}</center></td>
-        <td><center>${report.coffee}</center></td>
+      highteaReportTable.innerHTML += `
+        <tr>
+          <td><center>${formatDate(report.date)}</center></td>
+          <td><center>${report.tea}</center></td>
+          <td><center>${report.coffee}</center></td>
+        </tr>
       `;
-      highteaReportTable.appendChild(row);
     });
 
-  } catch (error) {
-    console.error('Error fetching food report:', error);
-    showErrorMessage(error);
+  } catch (err) {
+    console.error(err);
+    showErrorMessage(err);
   }
+
+    // ✅ QUICK FILTER BUTTONS
+  const btnToday = document.getElementById('btnToday');
+  const btnYesterday = document.getElementById('btnYesterday');
+
+  if (btnToday) {
+    btnToday.addEventListener('click', () => {
+      const today = new Date().toISOString().split('T')[0];
+      window.location.href = `foodReport.html?start_date=${today}&end_date=${today}`;
+    });
+  }
+
+  if (btnYesterday) {
+    btnYesterday.addEventListener('click', () => {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      const yesterday = d.toISOString().split('T')[0];
+
+      window.location.href = `foodReport.html?start_date=${yesterday}&end_date=${yesterday}`;
+    });
+  }
+
 });
 
 function formatDate(input) {
