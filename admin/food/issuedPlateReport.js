@@ -1,163 +1,6 @@
-// document.addEventListener('DOMContentLoaded', async function () {
-//   const tableBody = document.querySelector('#reportTableBody');
-//   const tableHeader = document.querySelector('thead tr');
-
-//   const urlParams = new URLSearchParams(window.location.search);
-//   const date = urlParams.get('date');
-//   const meal = urlParams.get('meal');
-//   const is_issued = urlParams.get('is_issued') || '0'; // Default to "0" if not provided
-
-//   function normalizeDate(dateStr) {
-//     const d = new Date(dateStr);
-//     return d.toISOString().split('T')[0]; // YYYY-MM-DD format
-//   }
-
-//   const today = normalizeDate(new Date());
-//   const normalizedUrlDate = date ? normalizeDate(date) : null;
-
-//   const showIssuePlateColumn = is_issued === '0' && normalizedUrlDate === today;
-
-//   if (showIssuePlateColumn && tableHeader) {
-//     tableHeader.innerHTML = `
-//       <th>Sr No</th>
-//       <th>Date</th>
-//       <th>Name</th>
-//       <th>Mobile No</th>
-//       <th>Action</th>
-//     `;
-//   }
-
-//   const reportTitle = document.querySelector(`#reportTitle`);
-
-//   if (is_issued == '1') {
-//     reportTitle.innerHTML = `
-//       <b><u>Issued Food Plate Report</u></b></br>
-//       <p>${formatDate(date)} - ${meal}</p>`;
-//   } else {
-//     reportTitle.innerHTML = `
-//       <b><u>No Show Report</u></b></br>
-//       <p>${formatDate(date)} - ${meal}</p>`;
-//   }
-
-//   resetAlert();
-
-//   if (!date) {
-//     showErrorMessage('No date selected');
-//   }
-
-//   if (!meal) {
-//     showErrorMessage('No meal selected');
-//   }
-
-//   try {
-//     const url = `${CONFIG.basePath}/food/report_details?${urlParams}`;
-
-//     const response = await fetch(url, {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//       }
-//     });
-
-//     const data = await response.json();
-//     if (!response.ok) {
-//       showErrorMessage(data.message);
-//       return;
-//     }
-
-//     tableBody.innerHTML = '';
-//     data.data.forEach((report, index) => {
-//       const row = document.createElement('tr');
-
-//       const baseContent = `
-//         <td>${index + 1}</td>
-//         <td>${formatDate(report.date)}</td>
-//         <td>${report.CardDb.issuedto}</td>
-//         <td>${report.CardDb.mobno}</td>
-//       `;
-
-//       if (showIssuePlateColumn) {
-//         row.innerHTML = `
-//           ${baseContent}
-//           <td><a href='#' onclick="foodCheckin('${report.CardDb.cardno}', '${meal}', '${report.CardDb.issuedto}'); return false;">Issue Plate</a></td>
-//         `;
-//       } else {
-//         row.innerHTML = baseContent;
-//       }
-
-//       tableBody.appendChild(row);
-//     });
-
-//     enhanceTable('bookingsTable', 'tableSearch');
-
-//   } catch (error) {
-//     console.error('Error fetching food bookings:', error);
-//     showErrorMessage(error.message);
-//   }
-// });
-
-// async function foodCheckin(cardno, meal, name) {
-//   try {
-//     const response = await fetch(`${CONFIG.basePath}/food/issue/${cardno}`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//       },
-//       body: JSON.stringify({ meal })
-//     });
-
-//     const data = await response.json();
-//     if (!response.ok) {
-//       throw new Error(data.message || 'Failed to check in');
-//     }
-
-//     showSuccessMessage(`Plate issued for ${name}`);
-//     setTimeout(() => {
-//       window.location.reload();
-//     }, 2000);
-//   } catch (error) {
-//     showErrorMessage(error.message);
-//   }
-// }
-
-// // ✅ Custom alert box system
-// function showSuccessMessage(message) {
-//   const alertBox = document.getElementById('alertBox');
-//   alertBox.style.display = 'block';
-//   alertBox.style.backgroundColor = '#d4edda';
-//   alertBox.style.color = '#155724';
-//   alertBox.textContent = message;
-
-//   setTimeout(() => {
-//     alertBox.style.display = 'none';
-//   }, 2000);
-// }
-
-// function showErrorMessage(message) {
-//   const alertBox = document.getElementById('alertBox');
-//   alertBox.style.display = 'block';
-//   alertBox.style.backgroundColor = '#f8d7da';
-//   alertBox.style.color = '#721c24';
-//   alertBox.textContent = message;
-
-//   setTimeout(() => {
-//     alertBox.style.display = 'none';
-//   }, 2000);
-// }
-
-// function resetAlert() {
-//   const alertBox = document.getElementById('alertBox');
-//   alertBox.style.display = 'none';
-//   alertBox.textContent = '';
-// }
-
-
 document.addEventListener('DOMContentLoaded', async function () {
   const tableBody = document.querySelector('#reportTableBody');
   const tableHeader = document.querySelector('thead tr');
-
   const urlParams = new URLSearchParams(window.location.search);
   const date = urlParams.get('date');
   const meal = urlParams.get('meal');
@@ -172,16 +15,16 @@ document.addEventListener('DOMContentLoaded', async function () {
   const reportDate = date ? normalizeDate(date) : null;
 
   // ✅ SINGLE SOURCE OF TRUTH
-  const canIssuePlates =
-    is_issued === '0' && reportDate && reportDate <= today;
+  const canIssuePlates = is_issued === '0' && reportDate && reportDate <= today;
 
   // expose globally (used in click handlers)
   window.canIssuePlates = canIssuePlates;
+  window.reportDate = reportDate; // ✅ ADDED: Expose report date globally
 
   /* ================= HEADER ================= */
   if (canIssuePlates && tableHeader) {
     tableHeader.innerHTML = `
-      <th><input type="checkbox" id="selectAll"></th>
+      <th><input type="checkbox" id="selectAll" /></th>
       <th>Sr No</th>
       <th>Date</th>
       <th>Name</th>
@@ -194,8 +37,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const reportTitle = document.getElementById('reportTitle');
   reportTitle.innerHTML =
     is_issued === '1'
-      ? `<b><u>Issued Food Plate Report</u></b><br><p>${formatDate(date)} - ${meal}</p>`
-      : `<b><u>No Show Report</u></b><br><p>${formatDate(date)} - ${meal}</p>`;
+      ? `__Issued Food Plate Report__<br/>${formatDate(date)} - ${meal}<br/>`
+      : `__No Show Report__<br/>${formatDate(date)} - ${meal}<br/>`;
 
   resetAlert();
 
@@ -216,13 +59,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     );
 
     const data = await response.json();
+
     if (!response.ok) {
       showErrorMessage(data.message);
       return;
     }
 
     tableBody.innerHTML = '';
-
     data.data.forEach((report, index) => {
       const row = document.createElement('tr');
       row.dataset.cardno = report.CardDb.cardno;
@@ -236,17 +79,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       if (canIssuePlates) {
         row.innerHTML = `
-          <td>
-            <input type="checkbox"
-                   class="rowCheckbox"
-                   value="${report.CardDb.cardno}">
-          </td>
+          <td><input type="checkbox" class="rowCheckbox" value="${report.CardDb.cardno}" /></td>
           ${baseCells}
           <td>
-            <a href="#"
-               class="issueLink"
-               onclick="foodCheckin('${report.CardDb.cardno}', '${meal}', '${report.CardDb.issuedto}'); return false;">
-               Issue Plate
+            <a href="#" class="issueLink" onclick="foodCheckin('${report.CardDb.cardno}', '${meal}', '${report.CardDb.issuedto}'); return false;">
+              Issue Plate
             </a>
           </td>
         `;
@@ -261,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const bulkBtn = document.getElementById('bulkIssueBtn');
     if (canIssuePlates && bulkBtn) {
       bulkBtn.style.display = 'inline-block';
-
       bulkBtn.onclick = () => bulkIssuePlates(meal);
 
       document.getElementById('selectAll').addEventListener('change', e => {
@@ -272,7 +108,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     enhanceTable('bookingsTable', 'tableSearch');
-
   } catch (err) {
     showErrorMessage(err.message);
   }
@@ -292,7 +127,10 @@ async function foodCheckin(cardno, meal, name) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       },
-      body: JSON.stringify({ meal })
+      body: JSON.stringify({ 
+        meal,
+        date: window.reportDate // ✅ ADDED: Send report date
+      })
     });
 
     const data = await response.json();
@@ -300,7 +138,6 @@ async function foodCheckin(cardno, meal, name) {
 
     showSuccessMessage(`Plate issued for ${name}`);
     markRowAsIssued(cardno);
-
   } catch (err) {
     showErrorMessage(err.message);
   }
@@ -331,7 +168,11 @@ async function bulkIssuePlates(meal) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`
       },
-      body: JSON.stringify({ cardnos: selected, meal })
+      body: JSON.stringify({
+        cardnos: selected,
+        meal,
+        date: window.reportDate // ✅ CRITICAL FIX: Send the report date to backend
+      })
     });
 
     const data = await response.json();
@@ -339,7 +180,6 @@ async function bulkIssuePlates(meal) {
 
     selected.forEach(markRowAsIssued);
     showSuccessMessage(`${selected.length} plates issued successfully`);
-
   } catch (err) {
     showErrorMessage(err.message);
   }
@@ -359,8 +199,7 @@ function markRowAsIssued(cardno) {
   }
 
   if (actionCell) {
-    actionCell.innerHTML =
-      `<span style="color:green;font-weight:bold;">Issued</span>`;
+    actionCell.innerHTML = `<span style="color: green;">✓ Issued</span>`;
   }
 
   row.style.opacity = '0.6';
