@@ -37,8 +37,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const reportTitle = document.getElementById('reportTitle');
   reportTitle.innerHTML =
     is_issued === '1'
-      ? `__Issued Food Plate Report__<br/>${formatDate(date)} - ${meal}<br/>`
-      : `__No Show Report__<br/>${formatDate(date)} - ${meal}<br/>`;
+      ? `Issued Food Plate Report<br/>${formatDate(date)} - ${meal}<br/>`
+      : `No Show Report<br/>${formatDate(date)} - ${meal}<br/>`;
 
   resetAlert();
 
@@ -212,6 +212,7 @@ function showSuccessMessage(msg) {
   box.style.backgroundColor = '#d4edda';
   box.style.color = '#155724';
   box.textContent = msg;
+  setTimeout(() => { box.style.display = 'none'; }, 2000);
 }
 
 function showErrorMessage(msg) {
@@ -220,6 +221,7 @@ function showErrorMessage(msg) {
   box.style.backgroundColor = '#f8d7da';
   box.style.color = '#721c24';
   box.textContent = msg;
+  setTimeout(() => { box.style.display = 'none'; }, 2000);
 }
 
 function resetAlert() {

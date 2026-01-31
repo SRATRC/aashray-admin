@@ -31,6 +31,7 @@ mobileInput.addEventListener('blur', async () => {
     }
   } catch (error) {
     console.error('Mobile lookup failed:', error);
+    showErrorMessage('Failed to look up mobile number. Please try again.');
     nameInput.value = '';
   }
 });
