@@ -31,29 +31,55 @@ async function onScanSuccess(decodedText) {
   qrStatus.innerText = 'Marking attendance...';
 
   try {
-    const response = await fetch(
-      `${CONFIG.basePath}/adhyayan/attendance/${shibirId}/${sessionNo}/${cardno}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
+  const response = await fetch(
+    `${CONFIG.basePath}/adhyayan/attendance/${shibirId}/${sessionNo}/${cardno}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
       }
-    );
+    }
+  );
 
-    const data = await response.json();
-    if (!response.ok) throw data;
+  const data = await response.json();
+  const msg = data.message?.toLowerCase() || '';
 
+  // 🟢 SUCCESS
+  if (response.ok) {
     qrStatus.className = 'success-status';
     qrStatus.innerText =
-      `✔ Attendance marked for ${data.participantName} ` +
-      `for Session ${data.session} of ${data.shibirName}`;
-
-  } catch (err) {
-    qrStatus.className = 'error-status';
-    qrStatus.innerText =
-      `✖ ${err.message || 'Failed to mark attendance'}`;
+      `✔ Attendance marked for ${data.participantName}`;
   }
+
+  // 🟡 Already marked
+  else if (msg.includes('already')) {
+    qrStatus.className = 'warning-status';
+    qrStatus.innerText = `⚠ ${data.message}`;
+  }
+
+  // 🔴 Session not applicable
+  else if (msg.includes('not applicable')) {
+    qrStatus.className = 'error-status';
+    qrStatus.innerText = `✖ ${data.message}`;
+  }
+
+  // 🔴 No record found
+  else if (msg.includes('not found')) {
+    qrStatus.className = 'error-status';
+    qrStatus.innerText = `✖ ${data.message}`;
+  }
+
+  // 🔴 Any other 400 error
+  else {
+    qrStatus.className = 'error-status';
+    qrStatus.innerText = `✖ ${data.message || 'Something went wrong'}`;
+  }
+
+} catch (err) {
+  qrStatus.className = 'error-status';
+  qrStatus.innerText = `✖ Server error. Please try again.`;
+}
+
 
   // ⏸ Pause scanning for 1.5 seconds, then resume
   setTimeout(() => {
