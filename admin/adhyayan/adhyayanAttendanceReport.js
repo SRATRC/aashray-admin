@@ -98,8 +98,8 @@ document.getElementById('downloadExcelBtn').addEventListener('click', () => {
     "Session 4",
     "Session 5",
     "Session 6",
-    "Session 7",
-    "Session 8",
+    "Session 7 (MV)",
+    "Session 8 (MV)",
     "Session 9 (MV)"
   ]);
 
