@@ -65,6 +65,13 @@ document.addEventListener('DOMContentLoaded', async function () {
              </a>`
       }
     </td>
+    <td>
+  <button class="btn btn-small"
+    onclick="createAttendance('${item.bookingid}')">
+    click here
+  </button>
+</td>
+
   `;
   tableBody.appendChild(row);
 });
@@ -85,7 +92,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         transaction_status: 'transaction status',
         comments: 'admin comments',
         bookedby: 'bookedby',
-        action: 'action'
+        action: 'action',
+        addattendance: 'add attendance records'
+
       });
     }
 
@@ -119,3 +128,33 @@ const setupDownloadButton = () => {
     tableSelector: '#waitlistTable'
   });
 };
+
+
+async function createAttendance(bookingid) {
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/adhyayan/attendance/create`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ bookingid })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.message || "Failed to create attendance record");
+      return;
+    }
+
+    alert("Attendance record created successfully");
+
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong");
+  }
+}
