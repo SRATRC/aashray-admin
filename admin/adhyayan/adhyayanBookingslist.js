@@ -146,6 +146,11 @@ async function createAttendance(bookingid) {
 
     const result = await response.json();
 
+    if (response.status === 409) {
+      alert("Attendance record already exists");
+      return;
+    }
+
     if (!response.ok) {
       alert(result.message || "Failed to create attendance record");
       return;
