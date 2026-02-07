@@ -1,3 +1,15 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const sessionNumber = params.get("session") || 1;
+
+  document.title = `Adhyayan Attendance Scanner for Session ${sessionNumber}`;
+
+  const heading = document.getElementById("scanner-heading");
+  if (heading) {
+    heading.innerText = `Adhyayan Attendance Scanner for Session ${sessionNumber}`;
+  }
+});
+
 const params = new URLSearchParams(window.location.search);
 const shibirId = params.get('shibir_id');
 const sessionNo = params.get('session');
