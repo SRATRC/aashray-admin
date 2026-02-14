@@ -5,7 +5,7 @@ let filteredBookings = [];
 let utsavid = null;
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
-  utsavid = urlParams.get('utsavId');
+  utsavid = urlParams.get('utsavid');
   console.log(utsavid)
   const status = urlParams.get('status');
 
