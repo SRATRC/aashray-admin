@@ -3,49 +3,91 @@ document.addEventListener('DOMContentLoaded', function () {
   const utsavid = urlParams.get('utsavId');
   const utsavName = urlParams.get('utsavName');
 
-  // Fill Utsav Name (read-only)
+  const tableBody = document.getElementById('packageTableBody');
+  const addRowBtn = document.getElementById('addRowBtn');
+  const form = document.getElementById('utsavPackageForm');
+
+  // Fill utsav name
   if (utsavName) {
-    const utsavNameInput = document.getElementById('utsav_name');
-    utsavNameInput.value = utsavName;
+    document.getElementById('utsav_name').value = utsavName;
   }
 
-  const utsavPackageForm = document.getElementById('utsavPackageForm');
+  // ✅ function to create row
+  function createRow() {
+    const tr = document.createElement('tr');
 
-  utsavPackageForm.addEventListener('submit', async function (event) {
+    tr.innerHTML = `
+      <td><input type="text" class="form-control pkg-name" required></td>
+      <td><input type="date" class="form-control pkg-start" required></td>
+      <td><input type="date" class="form-control pkg-end" required></td>
+      <td><input type="number" class="form-control pkg-amount" required></td>
+      <td>
+        <button type="button" class="btn btn-danger removeRow">
+          Remove
+        </button>
+      </td>
+    `;
+
+    tableBody.appendChild(tr);
+  }
+
+  // ✅ Add first row automatically
+  createRow();
+
+  // ✅ Add row button
+  addRowBtn.addEventListener('click', createRow);
+
+  // ✅ Remove row
+  tableBody.addEventListener('click', function (e) {
+    if (e.target.classList.contains('removeRow')) {
+      e.target.closest('tr').remove();
+    }
+  });
+
+  // ✅ Submit bulk packages
+  form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
-    const formData = new FormData(utsavPackageForm);
-    const requestData = {
-      utsavid: utsavid,
-      utsavName: formData.get('utsav_name'), // Optional: include for backend logging or validation
-      name: formData.get('packageName'),
-      start_date: formData.get('start_date'),
-      end_date: formData.get('end_date'),
-      amount: formData.get('amount')
-    };
+    const rows = document.querySelectorAll('#packageTableBody tr');
+
+    if (!rows.length) {
+      alert('Please add at least one package');
+      return;
+    }
+
+    const packages = [];
+
+    rows.forEach(row => {
+      packages.push({
+        utsavid,
+        name: row.querySelector('.pkg-name').value,
+        start_date: row.querySelector('.pkg-start').value,
+        end_date: row.querySelector('.pkg-end').value,
+        amount: row.querySelector('.pkg-amount').value
+      });
+    });
 
     try {
-      const response = await fetch(`${CONFIG.basePath}/utsav/package`, {
+      const response = await fetch(`${CONFIG.basePath}/utsav/package/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify({ packages })
       });
 
       const data = await response.json();
+
       if (response.ok) {
-        alert(`Success: ${data.message}`);
-        utsavPackageForm.reset();
-        document.getElementById('utsav_name').value = utsavName; // Refill utsav name
+        alert('Packages created successfully');
         window.location.href = '../utsav/fetchAllUtsav.html';
       } else {
-        alert(`Error: ${data.message}`);
+        alert(data.message);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to create Utsav Package. Please try again.');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create packages');
     }
   });
 });

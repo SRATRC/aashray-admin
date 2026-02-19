@@ -66,7 +66,7 @@ console.log('utsavId:', utsavId);
         const updateResponse = await response.json();
         console.log('Update Response: ', updateResponse);
         alert('Utsav Package details updated successfully!');
-        window.location.href = 'fetchAllPackage.html'; // Change to your package list page
+        window.location.href = 'fetchAllUtsav.html'; // Change to your package list page
       } else {
         const data = await response.json();
         console.error('Update failed:', data.message);

@@ -37,9 +37,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (response.ok) {
         alert(`Success: ${data.message}`);
         utsavForm.reset();
-        window.location.href = '../utsav/index.html';
+
+        const utsavId = data.data.id;
+        const utsavName = data.data.name;
+
+        window.location.href =
+          `../utsav/createPackage.html?utsavId=${utsavId}&utsavName=${encodeURIComponent(utsavName)}`;
       } else {
-        alert(`Error: ${data.message}`);
+              alert(`Error: ${data.message}`);
       }
     } catch (error) {
       console.error('Error:', error);
