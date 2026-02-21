@@ -75,6 +75,19 @@
     text-align: left;
   }
 
+.main-row:hover {
+  background: #fafafa;
+}
+
+.row-toggle {
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.expanded-actions button {
+  margin: 4px;
+}
   
 </style>
   <!-- Styles -->
@@ -117,34 +130,28 @@
               <div class="table-responsive">
               <table id="waitlistTable" class="table table-striped table-bordered">
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Adhyayan Name</th>
-                    <th>Adhyayan Id</th>
-                    <th>Location</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Swadhyay Karta</th>
-                    <th>Confirmed Count</th>
-                    <th>Pending Count</th>
-                    <th>Max Seats Count</th>
-                    <th>Available Seats Count</th>
-                    <th>WaitList Count</th>
-                    <th>Self Cancelled Count</th>
-                    <th>Admin/Cron Cancelled Count</th>
-                    <th>Attendance Scanner Link</th>
-                    <th>Attendance Detailed Report</th>
-                    <th>Attendance Summary Report</th>
-                    <th>Adhyayan Link</th>
-                    <th>Feedback Form Link</th>
-                    <th>Feedbacks Received</th>
-                    <th>Feedback Summary</th>
-                    <th>Register for Mumukshu</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="adhyayanTable">
+  <tr>
+    <th></th> <!-- ✅ NEW expand column -->
+    <th>#</th>
+    <th>Adhyayan Name</th>
+    <th>Adhyayan Id</th>
+    <th>Location</th>
+    <th>Start Date</th>
+    <th>End Date</th>
+    <th>Swadhyay Karta</th>
+    <th>Confirmed Count</th>
+    <th>Pending Count</th>
+    <th>WaitList Count</th>
+    <th>Attendance Scanner</th>
+    <th>Max Seats Count</th>
+    <th>Available Seats Count</th>
+    <th>Self Cancelled Count</th>
+    <th>Admin/Cron Cancelled Count</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+</thead>
+<tbody id="adhyayanTable">
                   <!-- Data will be populated dynamically by JavaScript -->
                 </tbody>
               </table>
