@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${item.center || '-'}</td>
     <td>${item.res_status || '-'}</td>
     <td>${item.status || '-'}</td>
+    <td>${formatDateTime(item.createdAt) || '-'}</td>
+    <td>${formatDateTime(item.updatedAt) || '-'}</td>
     <td>${item.transaction_status || '-'}</td>
     <td>${item.comments || '-'}</td>
     <td>${item.bookedby || '-'}</td>
@@ -89,12 +91,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         center: 'center',
         res_status: 'res_status',
         status: 'status',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
         transaction_status: 'transaction status',
         comments: 'admin comments',
         bookedby: 'bookedby',
-        action: 'action',
-        addattendance: 'add attendance records'
-
       });
     }
 
@@ -119,16 +120,22 @@ function injectDataKeysToHeaders(tableSelector, keyMap) {
 }
 
 const setupDownloadButton = () => {
-  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  document.getElementById('downloadBtnContainer').innerHTML = '';
+
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => adhyayanbookings,
+    getData: () => {
+      return adhyayanbookings.map(item => ({
+        ...item,
+        createdAt: formatDateTime(item.createdAt),
+        updatedAt: formatDateTime(item.updatedAt)
+      }));
+    },
     fileName: 'adhyayanbookings.xlsx',
     sheetName: 'Adhyayan Bookings',
     tableSelector: '#waitlistTable'
   });
 };
-
 
 async function createAttendance(bookingid) {
   try {
@@ -161,5 +168,27 @@ async function createAttendance(bookingid) {
   } catch (error) {
     console.error(error);
     alert("Something went wrong");
+  }
+}
+
+
+function formatDateTime(dateInput) {
+  if (!dateInput) return '-';
+
+  try {
+    const dateObj = new Date(dateInput);
+
+    return dateObj.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', ''); // Optional: remove comma between date & time
+  } catch (err) {
+    console.error('Invalid date format:', dateInput);
+    return '-';
   }
 }
