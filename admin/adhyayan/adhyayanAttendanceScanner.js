@@ -3,58 +3,71 @@ const shibirId = params.get("shibir_id");
 const sessionNo = params.get("session") || 1;
 
 let isProcessing = false;
+let focusInterval;
+let submitTimer;
 
 document.addEventListener("DOMContentLoaded", () => {
-
   const heading = document.getElementById("scanner-heading");
   const cardInput = document.getElementById("cardno");
 
   heading.innerText = `Tap card for Adhyayan Attendance (Session ${sessionNo})`;
 
-  // Force focus after page load
+  // Focus after load
   setTimeout(() => {
     cardInput.focus();
   }, 300);
 
-  // Prevent losing focus
-  setInterval(() => {
+  // Keep focus on scanner input
+  focusInterval = setInterval(() => {
     if (document.activeElement !== cardInput) {
       cardInput.focus();
     }
   }, 500);
 
-  // Scanner usually sends ENTER
+  // Main path: scanner sends Enter after scan
   cardInput.addEventListener("keydown", function (e) {
-
     if (e.key === "Enter") {
       e.preventDefault();
 
-      const cardno = cardInput.value.trim();
+      clearTimeout(submitTimer);
+
+      // Small delay lets the final scanned character land in the input
+      submitTimer = setTimeout(() => {
+        const cardno = normalizeCardno(cardInput.value);
+
+        if (cardno && !isProcessing) {
+          markAttendance(cardno);
+        }
+      }, 80);
+    }
+  });
+
+  // Fallback path: if scanner does not send Enter,
+  // auto-submit after typing stops briefly
+  cardInput.addEventListener("input", function () {
+    clearTimeout(submitTimer);
+
+    submitTimer = setTimeout(() => {
+      const cardno = normalizeCardno(cardInput.value);
 
       if (cardno && !isProcessing) {
         markAttendance(cardno);
       }
-    }
-
+    }, 120);
   });
-
-  // Backup: if scanner doesn't send ENTER
-  cardInput.addEventListener("input", function () {
-
-    const value = cardInput.value.trim();
-
-    if (value.length >= 4 && !isProcessing) {
-      setTimeout(() => {
-        if (!isProcessing && cardInput.value.trim().length >= 4) {
-          markAttendance(cardInput.value.trim());
-        }
-      }, 50);
-    }
-
-  });
-
 });
 
+function normalizeCardno(value) {
+  let cardno = (value || "").trim();
+
+  // Remove known prefix if scanner sends it
+  cardno = cardno.replace(/^cardnumber=/i, "");
+
+  // Remove line breaks / invisible trailing chars
+  cardno = cardno.replace(/[\r\n]+/g, "");
+
+  return cardno;
+}
 
 function showAlert(element, message, type) {
   element.className = `big-alert alert-${type}`;
@@ -62,9 +75,7 @@ function showAlert(element, message, type) {
   element.style.display = "block";
 }
 
-
 function resetAlert() {
-
   const alertBox = document.getElementById("alert");
   const formWrapper = document.getElementById("formWrapper");
 
@@ -72,18 +83,20 @@ function resetAlert() {
   alertBox.textContent = "";
   alertBox.className = "big-alert";
   formWrapper.style.display = "block";
-
 }
 
-
 async function markAttendance(cardno) {
-
   if (isProcessing) return;
   isProcessing = true;
 
   resetAlert();
 
+  const alertBox = document.getElementById("alert");
+  const formWrapper = document.getElementById("formWrapper");
+  const cardInput = document.getElementById("cardno");
+
   try {
+    formWrapper.style.display = "none";
 
     const response = await fetch(
       `${CONFIG.basePath}/adhyayan/attendance/${shibirId}/${sessionNo}/${cardno}`,
@@ -96,61 +109,23 @@ async function markAttendance(cardno) {
     );
 
     const data = await response.json();
-
-    const alertBox = document.getElementById("alert");
-    const formWrapper = document.getElementById("formWrapper");
-    const cardInput = document.getElementById("cardno");
-
-    formWrapper.style.display = "none";
+    const msg = data.message?.toLowerCase() || "";
 
     if (response.ok) {
-
-      showAlert(
-        alertBox,
-        `Attendance marked for ${data.participantName}`,
-        "success"
-      );
-
+      showAlert(alertBox, `Attendance marked for ${data.participantName}`, "success");
+    } else if (msg.includes("already")) {
+      showAlert(alertBox, data.message, "warning");
     } else {
-
-      let alertType = "danger";
-      const msg = data.message?.toLowerCase() || "";
-
-      if (msg.includes("already")) {
-        alertType = "warning";
-      }
-
-      showAlert(alertBox, data.message || "Error marking attendance", alertType);
-
+      showAlert(alertBox, data.message || "Error marking attendance", "danger");
     }
-
-    setTimeout(() => {
-
-      cardInput.value = "";
-      resetAlert();
-      cardInput.focus();
-      isProcessing = false;
-
-    }, 1000);
-
   } catch (error) {
-
-    const alertBox = document.getElementById("alert");
-    const formWrapper = document.getElementById("formWrapper");
-    const cardInput = document.getElementById("cardno");
-
-    formWrapper.style.display = "none";
-
     showAlert(alertBox, "Unexpected error occurred", "danger");
-
-    setTimeout(() => {
-
-      resetAlert();
-      cardInput.focus();
-      isProcessing = false;
-
-    }, 1000);
-
   }
 
+  setTimeout(() => {
+    cardInput.value = "";
+    resetAlert();
+    cardInput.focus();
+    isProcessing = false;
+  }, 1000);
 }
