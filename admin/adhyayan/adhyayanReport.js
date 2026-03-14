@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sessionNo) return;
 
     const url =
-      `adhyayanAttendanceScan.html?shibir_id=${shibirId}&session=${sessionNo}`;
+      `adhyayanAttendanceScanner.html?shibir_id=${shibirId}&session=${sessionNo}`;
 
     window.open(url, '_blank');
     e.target.value = '';

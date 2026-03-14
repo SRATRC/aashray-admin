@@ -1,0 +1,102 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+checkRoleAccess([
+'officeAdmin',
+'adhyayanAdmin',
+'superAdmin',
+'adhyayanAdminKol',
+'adhyayanAdminRaj',
+'adhyayanAdminDhu',
+'adhyayanAdminReadOnly'
+]);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title id="pageTitle">Adhyayan Attendance Scanner</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<script src="../../style/js/plugin.js"></script>
+<script src="../../style/js/custom.js"></script>
+<script src="../../style/js/config.js"></script>
+<script src="../../sessionstorage.js"></script>
+
+<link rel="stylesheet" href="../../style/css/styles.css">
+
+<style>
+
+.big-alert{
+font-size:28px;
+font-weight:bold;
+text-align:center;
+padding:20px;
+margin-top:20px;
+}
+
+.alert-success{ color:green }
+.alert-danger{ color:red }
+.alert-warning{ color:#856404 }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+<div class="container">
+<div class="logout">
+<a href="javascript:void(0);" onclick="history.back()">Back</a>
+&nbsp; | &nbsp;
+<a href="javascript:void(0);" onclick="goToHome()">Home</a>
+&nbsp; | &nbsp;
+<a href="javascript:void(0);" onclick="logout()">Logout</a>
+</div>
+</div>
+</div>
+
+<div class="middlecontent">
+<div class="container">
+<div class="whitesec">
+<div class="inner-padding">
+
+<div class="frm-head">
+<h1 id="scanner-heading">Tap card for Adhyayan Attendance</h1>
+</div>
+
+<div id="alert" class="big-alert" style="display:none"></div>
+
+<div id="formWrapper">
+<div class="form">
+
+<form id="attendanceForm">
+
+<div class="form-group">
+<label>Tap card:</label>
+<input
+type="text"
+class="form-control"
+id="cardno"
+autocomplete="off"
+/></div>
+
+</form>
+
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script src="./adhyayanAttendanceScanner.js"></script>
+
+</body>
+</html>
