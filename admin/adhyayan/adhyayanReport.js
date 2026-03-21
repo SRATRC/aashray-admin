@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!Array.isArray(data) || data.length === 0) {
       adhyayanTableBody.innerHTML =
-        '<tr><td colspan="17" style="text-align:center;">No data available</td></tr>';
+        '<tr><td colspan="19" style="text-align:center;">No data available</td></tr>';
       return;
     }
 
@@ -85,11 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </a>
         </td>
 
-                <td style="text-align:center;">
+<td style="text-align:center;">
   <select class="attendance-session-dropdown"
+    data-type="tap"
     data-shibir-id="${item.id}">
     ${(() => {
-      let opts = '<option value="">Scan</option>';
+      let opts = '<option value="">Tap Scan</option>';
       const mvSessions = [7, 8, 9];
       for (let i = 1; i <= 9; i++) {
         opts += `<option value="${i}">
@@ -100,6 +101,22 @@ document.addEventListener('DOMContentLoaded', () => {
     })()}
   </select>
 </td>
+
+<td style="text-align:center;">
+  <select class="attendance-session-dropdown"
+    data-type="mobile"
+    data-shibir-id="${item.id}">
+    ${(() => {
+      let opts = '<option value="">Mob Scan</option>';
+      const mvSessions = [7, 8, 9];
+      for (let i = 1; i <= 9; i++) {
+        opts += `<option value="${i}">
+          S${i}${mvSessions.includes(i) ? ' (MV)' : ''}
+        </option>`;
+      }
+      return opts;
+    })()}
+  </select>
 
         <td style="text-align:center;">${item.total_seats}</td>
         <td style="text-align:center;">${item.available_seats}</td>
@@ -362,9 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!sessionNo) return;
 
-    const url =
-      `adhyayanAttendanceScanner.html?shibir_id=${shibirId}&session=${sessionNo}`;
+const type = e.target.dataset.type;
 
+let url = '';
+
+if (type === 'tap') {
+  url = `adhyayanAttendanceScanTap.html?shibir_id=${shibirId}&session=${sessionNo}`;
+} else if (type === 'mobile') {
+  url = `adhyayanAttendanceScanMob.html?shibir_id=${shibirId}&session=${sessionNo}`;
+}
     window.open(url, '_blank');
     e.target.value = '';
   });
