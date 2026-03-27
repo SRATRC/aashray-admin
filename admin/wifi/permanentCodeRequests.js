@@ -254,6 +254,7 @@ function setupDownloadAndUploadButtons(data) {
       email: 'email',
       res_status: 'res_status',
       requested_at: 'requested_at',
+      updatedAt: 'updatedAt',
       username: 'username',
       ssid: 'ssid',
       code: 'code',
