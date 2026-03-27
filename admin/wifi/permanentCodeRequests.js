@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
       row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
   });
+  
+  document.getElementById('manualDeviceType')
+    .addEventListener('change', autoGenerateUsername);
 
   fetchRequests();
 });
@@ -57,6 +60,7 @@ async function fetchRequests() {
         <td>${req.CardDb?.email || '-'}</td>
         <td>${req.CardDb?.res_status || '-'}</td>
         <td>${req.requested_at ? new Date(req.requested_at).toLocaleString() : '-'}</td>
+        <td>${req.updatedAt ? new Date(req.updatedAt).toLocaleString() : '-'}</td>
         <td>${req.username || '-'}</td>
         <td>${req.ssid || '-'}</td>
         <td>${req.code || '-'}</td>
@@ -68,7 +72,7 @@ async function fetchRequests() {
       tableBody.appendChild(row);
     });
 
-    enhanceTable('wifiRequestTable', 'tableSearch');
+    enhanceTable('wifiRequestTable', 'tableSearch', false);
     setupDownloadAndUploadButtons(records);
 
   } catch (err) {
@@ -231,6 +235,7 @@ function setupDownloadAndUploadButtons(data) {
     email: req.CardDb?.email || '',
     res_status: req.CardDb?.res_status || '',
     requested_at: req.requested_at,
+    updated_at: req.updatedAt,
     username: req.username,
     ssid: req.ssid,
     code: req.code || '',
@@ -240,7 +245,7 @@ function setupDownloadAndUploadButtons(data) {
   // Download Excel Button
   document.getElementById('downloadExcelBtn').addEventListener('click', () => {
     downloadExcelFromJSON(flattenedData, fileName, 'WiFi Requests', [
-      'id', 'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'username', 'ssid', 'code', 'status'
+      'id', 'cardno', 'issuedto', 'mobno', 'email', 'res_status', 'requested_at', 'updated_at', 'username', 'ssid', 'code', 'status'
     ], {
       id: 'id',
       cardno: 'cardno',
@@ -407,7 +412,7 @@ async function fetchCardByMobno() {
     document.getElementById('manualCardno').value = card.cardno;
     document.getElementById('manualResStatus').value = card.res_status;
 
-    autoGenerateUsername();
+    await autoGenerateUsername();
 
   } catch (err) {
     alert(err.message || 'Failed to fetch card details');
@@ -415,64 +420,34 @@ async function fetchCardByMobno() {
   }
 }
 
-// auto-generate username
-function autoGenerateUsername() {
+async function autoGenerateUsername() {
   const issuedto = document.getElementById('manualIssuedto').value || '';
   const deviceType = document.getElementById('manualDeviceType').value || '';
   const cardno = document.getElementById('manualCardno').value || '';
 
   if (!issuedto || !deviceType || !cardno) return;
 
-  /* ================= SAME LOGIC AS APP ================= */
+  try {
+    const res = await fetch(
+      `${CONFIG.basePath}/wifi/generate-username?cardno=${encodeURIComponent(cardno)}&issuedto=${encodeURIComponent(issuedto)}&deviceType=${encodeURIComponent(deviceType)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      }
+    );
 
-  // Device suffix map (same as backend)
-  const DEVICE_SUFFIX_MAP = {
-    MOBILE: 'ph',
-    LAPTOP: 'pc',
-    TABLET: 'tb',
-    OTHER: 'ot'
-  };
+    const json = await res.json();
 
-  const deviceSuffix = DEVICE_SUFFIX_MAP[deviceType] || 'ot';
+    if (!res.ok) throw new Error(json.message || 'Failed to generate username');
 
-  // Prefixes to ignore
-  const IGNORE_FIRST_NAMES = [
-    'rcof',
-    'rchk',
-    'cons',
-    'chak',
-    'divi',
-    'paon',
-    'guest'
-  ];
+    document.getElementById('manualUsername').value =
+      json.data.username || '';
 
-  // Normalize name
-  let nameParts = issuedto
-    .trim()
-    .toLowerCase()
-    .replace(/^guest-/, '')
-    .split(/\s+/);
-
-  // Remove ignored prefixes
-  while (
-    nameParts.length > 1 &&
-    IGNORE_FIRST_NAMES.includes(nameParts[0])
-  ) {
-    nameParts.shift();
+  } catch (err) {
+    console.error(err);
+    alert('Failed to generate username');
   }
-
-  const firstName = nameParts[0] || '';
-  const lastName =
-    nameParts.length > 1
-      ? nameParts[nameParts.length - 1]
-      : '';
-
-  // Last 4 digits of card number (keep leading zeros)
-  const cardLast4 = cardno.slice(-4);
-
-  const username = `${firstName}${lastName}${cardLast4}${deviceSuffix}`;
-
-  document.getElementById('manualUsername').value = username.toLowerCase();
 }
 
 // submit manual add
