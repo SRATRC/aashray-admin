@@ -155,6 +155,8 @@ function createRoomBookingRow(booking, index) {
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
+    <td>${booking.transactions?.[0]?.status || '-'}</td>
+    <td>${booking.transactions?.[0]?.description || '-'}</td>
     <td>${booking.bookedBy || "Self"}</td>
     <td>${getAction(booking)}</td>
     <td>${getCancelAction(booking)}</td>
@@ -166,6 +168,7 @@ function createFlatBookingRow(booking, index) {
   const row = document.createElement('tr');
   row.innerHTML = `
     <td>${index + 1}</td>
+    <td>${booking.bookingid}</td>
     <td>${booking.CardDb.issuedto}</td>
     <td>${booking.CardDb.mobno}</td>
     <td>${booking.CardDb.center}</td>
@@ -175,6 +178,8 @@ function createFlatBookingRow(booking, index) {
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
+    <td>${booking.transactions?.[0]?.status || '-'}</td>
+    <td>${booking.transactions?.[0]?.description || '-'}</td> 
     <td>${booking.bookedBy || "Self"}</td>
     <td>${getFlatAction(booking)}</td>
     <td>${getFlatCancelAction(booking)}</td>
@@ -222,6 +227,7 @@ async function fetchReport() {
     }
 
     roomreports = data.data || [];
+    console.log(JSON.stringify(roomreports[0], null, 2));
     setupDownloadButton();
 
     const reportsTableBody = document.getElementById('reportTableBody');
