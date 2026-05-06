@@ -29,7 +29,13 @@ function getColumnOrderAndLabels(tableSelector) {
 
   ths.forEach(th => {
     const key = th.getAttribute('data-key');
-    const label = th.textContent.trim();
+    const clonedTh = th.cloneNode(true);
+
+    clonedTh.querySelectorAll(
+      'button, .filter-button, .filter-dropdown, .sort-arrow'
+    ).forEach(el => el.remove());
+
+    const label = clonedTh.textContent.trim();
     if (key) {
       columnOrder.push(key);
       labelMap[key] = label;

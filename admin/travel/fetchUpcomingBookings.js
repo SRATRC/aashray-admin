@@ -24,9 +24,16 @@ const PICKUP_DROP_POINTS = [
 
 document.addEventListener('DOMContentLoaded', async function () {
 
-statusDropdown = document.getElementById("status");
-issueCreditsField = document.getElementById("issueCreditsField");
-issueCreditsDropdown = document.getElementById("issueCredits");
+const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  document.getElementById('start_date').value = today.toISOString().split('T')[0];
+  document.getElementById('end_date').value = tomorrow.toISOString().split('T')[0];
+
+  statusDropdown = document.getElementById("status");
+  issueCreditsField = document.getElementById("issueCreditsField");
+  issueCreditsDropdown = document.getElementById("issueCredits");
 
     statusDropdown.addEventListener("change", () => {
     if (statusDropdown.value === "admin cancelled") {
@@ -173,7 +180,12 @@ if (dropRC) searchParams.append('dropRC', true);
         upcomingTableBody.innerHTML = "";
         document.getElementById("selectedDate").textContent = `For [${formatDate(startDate)} to ${formatDate(endDate)}]`;
 
-        const normalize = str => (str || "").toLowerCase().trim().replace(/\s+/g, ' ');
+        const normalize = str =>
+  (str || "")
+    .toLowerCase()
+    .replace(/[–—]/g, '-') // normalize dash variants
+    .trim()
+    .replace(/\s+/g, ' ');
 
 const mumbaiPoints = new Set([
   'dadar', 'dadar (swami narayan temple)', 'dadar (swaminarayan temple)', 'amar mahal',
@@ -182,7 +194,7 @@ const mumbaiPoints = new Set([
             'railway station (csmt)', 'railway station (mumbai central)', 'mullund', 'mulund',
             'airport t1', 'airport t2', 'other', 'other (enter location in comments)',
             'railway station (ltt - kurla)', 'vile parle (sahara star hotel)', 'full car booking',
-            'dadar (pritam hotel)','borivali (indraprasth shopping centre)','dadar (pritam da dhaba)','mulund (sarvoday nagar)'
+            'dadar (pritam hotel)','borivali (indraprasth shopping centre)','dadar (pritam da dhaba)','mulund (sarvoday nagar)', 'railway station (ltt - kurla terminus)'
 ]);
 
 travelReport.forEach((b, index) => {
