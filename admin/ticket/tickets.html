@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin | Support Tickets</title>
+
+    <!-- Role check -->
+    <script src="/style/js/roleCheck.js"></script>
+    <script>
+      checkRoleAccess(['superAdmin', 'maintenanceAdmin']);
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+
+    <style>
+      .drawer {
+        position: fixed;
+        top: 0;
+        right: -40%;
+        width: 40%;
+        height: 100%;
+        background: #fff;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease;
+        z-index: 999;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .drawer.open {
+        right: 0;
+      }
+
+      .messages {
+        border: 1px solid #ddd;
+        padding: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+      }
+
+      .message {
+        margin-bottom: 8px;
+      }
+
+      .message.admin {
+        text-align: right;
+        color: #0066cc;
+      }
+
+      .message.user {
+        text-align: left;
+        color: #333;
+      }
+
+      .message span {
+        font-size: 11px;
+        color: #777;
+      }
+
+      textarea {
+        width: 100%;
+        height: 70px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Support Tickets</h2>
+
+    <!-- Filters -->
+    <div style="margin-bottom: 10px">
+      <select id="statusFilter">
+        <option value="">All Status</option>
+        <option value="open">Open</option>
+        <option value="in progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+
+      <select id="serviceFilter">
+        <option value="">All Services</option>
+        <option value="wifi">WiFi</option>
+        <option value="room">Room</option>
+        <option value="maintenance">Maintenance</option>
+      </select>
+
+      <button onclick="fetchTickets()">Apply</button>
+    </div>
+
+    <!-- Tickets Table -->
+    <table border="1" width="100%" id="ticketTable">
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Issued By</th>
+          <th>Service</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Side Drawer -->
+    <div class="drawer" id="ticketDrawer">
+      <h3 id="ticketTitle"></h3>
+      <div id="ticketMeta"></div>
+
+      <hr />
+
+      <div class="messages" id="messageContainer"></div>
+
+      <textarea
+        id="adminMessage"
+        placeholder="Type your reply..."
+      ></textarea>
+
+      <div style="margin-top: 10px; text-align: right">
+        <button onclick="sendReply()">Send</button>
+        <button onclick="closeTicket()">Close Ticket</button>
+        <button onclick="closeDrawer()">Cancel</button>
+      </div>
+    </div>
+
+    <script src="tickets.js"></script>
+  </body>
+</html>
