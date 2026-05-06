@@ -60,14 +60,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${item.bookedby || '-'}</td>
     <td>
       ${
-        isReadOnly
-          ? '-'  // show a dash for read-only users
+        isReadOnly || item.status === 'waiting'
+          ? '-'
           : `<a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
-               Update Booking Status
-             </a>`
+              Update Booking Status
+            </a>`
       }
     </td>
-    <td>
+  <td>
   <button class="btn btn-small"
     onclick="createAttendance('${item.bookingid}')">
     click here
