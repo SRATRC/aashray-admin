@@ -58,16 +58,30 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${item.transaction_status || '-'}</td>
     <td>${item.comments || '-'}</td>
     <td>${item.bookedby || '-'}</td>
-    <td>
-      ${
-        isReadOnly
-          ? '-'  // show a dash for read-only users
-          : `<a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
-               Update Booking Status
-             </a>`
+   <td>
+  ${
+    (() => {
+      const isSuperAdmin = roles.includes('superAdmin');
+
+      // Hide only for non-super admins when status is waiting
+      if (item.status === 'waiting' && !isSuperAdmin) {
+        return '-';
       }
-    </td>
-    <td>
+
+      // Read only users still cannot update
+      if (isReadOnly) {
+        return '-';
+      }
+
+      return `
+        <a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
+          Update Booking Status
+        </a>
+      `;
+    })()
+  }
+</td>
+  <td>
   <button class="btn btn-small"
     onclick="createAttendance('${item.bookingid}')">
     click here
