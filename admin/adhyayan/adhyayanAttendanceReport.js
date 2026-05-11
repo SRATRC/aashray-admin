@@ -17,8 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const result = await response.json();
 
-  heading.innerText = `Attendance Report – ${result.shibirName}  (${result.speaker})`;
-
+  heading.innerText = `Attendance Report for "${result.shibirName}" \n by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
   // Build header
   let headerHtml = `
     <tr>
@@ -94,7 +93,7 @@ document.getElementById('downloadExcelBtn').addEventListener('click', () => {
   const totalColumns = 16;
 
   // Title Row (NO extra blank row after this)
-  const title = `Attendance Report – "${result.shibirName}" (${result.speaker})`;
+  const title = `Attendance Report for "${result.shibirName}" by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
   sheetData.push([title]);
 
   // Header Row (directly below title)
@@ -236,3 +235,19 @@ function showMessage(message, type) {
     msgDiv.remove();
   }, 2000);
 }
+
+
+function formatDateTime(input) {
+    if (!input) return '-';
+    try {
+      const d = new Date(input);
+      return d.toLocaleDateString('en-IN', {
+  timeZone: 'Asia/Kolkata',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric'
+});
+    } catch {
+      return '-';
+    }
+  }
