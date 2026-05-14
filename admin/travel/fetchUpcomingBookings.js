@@ -342,6 +342,11 @@ function openTransactionEditModal(bookingId) {
   document.getElementById('txnType').value = booking.type ?? '';
   document.getElementById('txnTravelDate').value = booking.date ? booking.date.split('T')[0] : '';
 
+  document.getElementById('txnLeavingPostAdhyayan').value =
+    booking.leaving_post_adhyayan != null
+      ? String(booking.leaving_post_adhyayan)
+      : '';
+
   document.getElementById('transactionModal').style.display = 'block';
 }
   
@@ -355,7 +360,8 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
     pickup_point: document.getElementById('txnPickup').value,
     drop_point: document.getElementById('txnDrop').value,
     type: document.getElementById('txnType').value,
-    date: document.getElementById('txnTravelDate').value
+    date: document.getElementById('txnTravelDate').value,
+    leaving_post_adhyayan: document.getElementById('txnLeavingPostAdhyayan').value
   };
 
   // Remove empty values
