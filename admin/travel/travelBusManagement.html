@@ -1,0 +1,420 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['travelAdmin', 'superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Travel Bus Management</title>
+
+  <!-- jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
+
+  <script src="travelBusManagement.js" defer></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+
+<div class="header">
+  <div class="container">
+    <div class="logout">
+      <a href="javascript:void(0);" onclick="history.back()">Back</a>
+      &nbsp; | &nbsp;
+      <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+      &nbsp; | &nbsp;
+      <a href="javascript:void(0);" onclick="logout()">Logout</a>
+    </div>
+  </div>
+</div>
+
+<div class="middlecontent">
+  <div class="container">
+    <div class="whitesec">
+      <div class="inner-padding">
+
+        <div class="frm-head">
+          <h1>Travel Bus Management</h1>
+        </div>
+
+        <!-- Create Bus Button -->
+        <div class="form-group form-submit">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="openCreateBusModal"
+          >
+            Create Bus
+          </button>
+        </div>
+
+        <!-- Search -->
+        <input
+          type="text"
+          id="tableSearch"
+          class="form-control search-box"
+          placeholder="Search..."
+        >
+
+        <!-- Bus Table -->
+        <div class="table-responsive">
+          <table
+            id="travelBusTable"
+            class="table table-striped table-bordered"
+          >
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-key="event_date">Event Date</th>
+                <th data-key="bus_name">Bus Name</th>
+                <th data-key="pickup_point">Pickup Point</th>
+                <th data-key="drop_point">Drop Point</th>
+                <th data-key="timing">Timing</th>
+                <th data-key="capacity">Capacity</th>
+                <th data-key="passenger_count">Passenger Count</th>
+                <th data-key="action">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Bus Modal -->
+<div id="createBusModal" class="modal" style="
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
+  overflow:auto;
+">
+
+  <div class="modal-content" style="
+    background:white;
+    padding:2rem;
+    margin:5% auto;
+    width:90%;
+    max-width:600px;
+    border-radius:10px;
+    position:relative;
+  ">
+
+    <span
+      id="closeCreateBusModal"
+      style="
+        position:absolute;
+        top:10px;
+        right:15px;
+        font-size:24px;
+        cursor:pointer;
+      "
+    >
+      &times;
+    </span>
+
+    <h2>Create Bus</h2>
+
+    <form id="createBusForm">
+
+      <div class="form-group">
+        <label>Event Date</label>
+        <input
+          type="date"
+          id="event_date"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Bus Name</label>
+        <input
+          type="text"
+          id="bus_name"
+          class="form-control"
+          required
+        />
+      </div>
+
+        <div class="form-group">
+        <label>Pickup Point</label>
+
+        <select
+            id="pickup_point"
+            class="form-control"
+        >
+            <option value="">Select Pickup Point</option>
+
+            <option value="Research Centre">Research Centre</option>
+            <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
+            <option value="Amar Mahal">Amar Mahal</option>
+            <option value="Airoli">Airoli</option>
+            <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
+            <option value="Airport Terminal 1">Airport Terminal 1</option>
+            <option value="Airport Terminal 2">Airport Terminal 2</option>
+            <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
+            <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
+            <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
+            <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
+            <option value="Other (enter location in comments)">Other (enter location in comments)</option>
+            <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
+            <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
+            <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
+            <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
+        </select>
+        </div>
+
+        <div class="form-group">
+        <label>Drop Point</label>
+
+        <select
+            id="drop_point"
+            class="form-control"
+        >
+            <option value="">Select Drop Point</option>
+
+            <option value="Research Centre">Research Centre</option>
+            <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
+            <option value="Amar Mahal">Amar Mahal</option>
+            <option value="Airoli">Airoli</option>
+            <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
+            <option value="Airport Terminal 1">Airport Terminal 1</option>
+            <option value="Airport Terminal 2">Airport Terminal 2</option>
+            <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
+            <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
+            <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
+            <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
+            <option value="Other (enter location in comments)">Other (enter location in comments)</option>
+            <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
+            <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
+            <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
+            <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
+        </select>
+        </div>
+
+      <div class="form-group">
+        <label>Timing</label>
+        <input
+            type="time"
+            id="timing"
+            class="form-control"
+            />
+      </div>
+
+      <div class="form-group">
+        <label>Capacity</label>
+        <input
+          type="number"
+          id="capacity"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea
+          id="notes"
+          class="form-control"
+        ></textarea>
+      </div>
+
+      <div class="form-group form-submit">
+        <button
+          type="submit"
+          class="btn btn-primary"
+        >
+          Create Bus
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="cancelCreateBus"
+        >
+          Cancel
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- Edit Bus Modal -->
+<div id="editBusModal" class="modal" style="
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
+  overflow:auto;
+">
+
+  <div class="modal-content" style="
+    background:white;
+    padding:2rem;
+    margin:5% auto;
+    width:90%;
+    max-width:600px;
+    border-radius:10px;
+    position:relative;
+  ">
+
+    <span
+      id="closeEditBusModal"
+      style="
+        position:absolute;
+        top:10px;
+        right:15px;
+        font-size:24px;
+        cursor:pointer;
+      "
+    >
+      &times;
+    </span>
+
+    <h2>Edit Bus</h2>
+
+    <form id="editBusForm">
+
+      <input type="hidden" id="edit_bus_id" />
+
+      <div class="form-group">
+        <label>Bus Name</label>
+        <input
+          type="text"
+          id="edit_bus_name"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Pickup Point</label>
+        <select
+          id="edit_pickup_point"
+          class="form-control"
+      >
+          <option value="">Select Pickup Point</option>
+
+          <option value="Research Centre">Research Centre</option>
+          <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
+          <option value="Amar Mahal">Amar Mahal</option>
+          <option value="Airoli">Airoli</option>
+          <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
+          <option value="Airport Terminal 1">Airport Terminal 1</option>
+          <option value="Airport Terminal 2">Airport Terminal 2</option>
+          <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
+          <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
+          <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
+          <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
+          <option value="Other (enter location in comments)">Other (enter location in comments)</option>
+          <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
+          <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
+          <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
+          <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
+      </select>
+      </div>
+
+      <div class="form-group">
+        <label>Drop Point</label>
+        <select
+          id="edit_drop_point"
+          class="form-control"
+      >
+          <option value="">Select Drop Point</option>
+
+          <option value="Research Centre">Research Centre</option>
+          <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
+          <option value="Amar Mahal">Amar Mahal</option>
+          <option value="Airoli">Airoli</option>
+          <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
+          <option value="Airport Terminal 1">Airport Terminal 1</option>
+          <option value="Airport Terminal 2">Airport Terminal 2</option>
+          <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
+          <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
+          <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
+          <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
+          <option value="Other (enter location in comments)">Other (enter location in comments)</option>
+          <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
+          <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
+          <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
+          <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
+      </select>
+      </div>
+
+      <div class="form-group">
+        <label>Timing</label>
+        <input
+          type="time"
+          id="edit_timing"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Capacity</label>
+        <input
+          type="number"
+          id="edit_capacity"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea
+          id="edit_notes"
+          class="form-control"
+        ></textarea>
+      </div>
+
+      <div class="form-group form-submit">
+        <button
+          type="submit"
+          class="btn btn-primary"
+        >
+          Update Bus
+        </button>
+
+        <button
+          type="button"
+          id="cancelEditBus"
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+</body>
+</html>

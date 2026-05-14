@@ -143,6 +143,9 @@
     <th data-key="type">Type (Regular/Full Car)</th>
     <th data-key="pickup_point">Pickup Point</th>
     <th data-key="drop_point">Drop off Point</th>
+    <th data-key="bus_name">Bus Name</th>
+    <th data-key="bus_timing">Bus Timing</th>
+    <th data-key="coordinator_bookingid">Coordinator?</th>
     <th data-key="arrival_time">Tranin/Flight Time</th>
     <th data-key="leaving_post_adhyayan">Attending Adhyayan</th>
     <th data-key="status">Booking Status</th>
@@ -327,6 +330,38 @@
     <option value="">Select</option>
     <option value="1">Yes</option>
     <option value="0">No</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Assigned Bus</label>
+
+  <select
+    id="txnBusGroup"
+    class="form-control"
+  >
+    <option value="">
+      No Bus Assigned
+    </option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>
+    Is Coordinator
+  </label>
+
+  <select
+    id="txnIsCoordinator"
+    class="form-control"
+  >
+    <option value="no">
+      No
+    </option>
+
+    <option value="yes">
+      Yes
+    </option>
   </select>
 </div>
   

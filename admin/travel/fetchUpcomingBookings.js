@@ -236,6 +236,18 @@ if (pickup === "research centre" && drop !== "research centre") {
     <td>${b.type}</td>
     <td>${b.pickup_point}</td>
     <td>${b.drop_point}</td>
+    <td>${b.bus_name || ''}</td>
+    <td>${b.bus_timing || ''}</td>
+    <td>
+      ${
+        b.coordinator_bookingid ===
+        b.bookingid
+
+          ? 'Yes'
+
+          : ''
+      }
+    </td>
     <td>${formatDateTime(arrival_time)}</td>
     <td>${b.leaving_post_adhyayan == 1 ? 'Yes' : 'No'}</td>
     <td>${
@@ -329,7 +341,7 @@ function openUpdateModal(bookingId) {
   document.getElementById('updateModal').style.display = 'block';
 }
 
-function openTransactionEditModal(bookingId) {
+async function openTransactionEditModal(bookingId) {
   const booking = travelReport.find(b => b.bookingid === bookingId);
   if (!booking) return;
 
@@ -346,8 +358,89 @@ function openTransactionEditModal(bookingId) {
     booking.leaving_post_adhyayan != null
       ? String(booking.leaving_post_adhyayan)
       : '';
-
+  await loadAvailableBusRoutes(
+  booking
+);
   document.getElementById('transactionModal').style.display = 'block';
+}
+
+async function loadAvailableBusRoutes(
+  booking
+) {
+
+  try {
+
+    const response = await fetch(
+      `${CONFIG.basePath}/travel/bus-groups`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${sessionStorage.getItem('token')}`,
+        },
+      }
+    );
+
+    const data =
+      await response.json();
+
+    const dropdown =
+      document.getElementById(
+        'txnBusGroup'
+      );
+
+    dropdown.innerHTML = `
+      <option value="">
+        No Bus Assigned
+      </option>
+    `;
+
+    (data.data || []).forEach(bus => {
+
+      // SAME DATE ONLY
+
+      if (
+        bus.event_date !== booking.date
+      ) {
+        return;
+      }
+
+      const option =
+        document.createElement(
+          'option'
+        );
+
+      option.value = bus.id;
+
+      option.textContent =
+        `${bus.bus_name} | ` +
+        `${bus.pickup_point} → ` +
+        `${bus.drop_point} | ` +
+        `${bus.timing}`;
+
+      if (
+        booking.bus_group_id ===
+        bus.id
+      ) {
+        option.selected = true;
+      }
+
+      dropdown.appendChild(option);
+    });
+
+    document.getElementById(
+      'txnIsCoordinator'
+    ).value =
+
+      booking.coordinator_bookingid ===
+      booking.bookingid
+
+        ? 'yes'
+        : 'no';
+
+  } catch (error) {
+
+    console.error(error);
+  }
 }
   
 
@@ -361,7 +454,9 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
     drop_point: document.getElementById('txnDrop').value,
     type: document.getElementById('txnType').value,
     date: document.getElementById('txnTravelDate').value,
-    leaving_post_adhyayan: document.getElementById('txnLeavingPostAdhyayan').value
+    leaving_post_adhyayan: document.getElementById('txnLeavingPostAdhyayan').value,
+    bus_group_id: document.getElementById('txnBusGroup').value,
+    is_coordinator: document.getElementById('txnIsCoordinator').value,
   };
 
   // Remove empty values
@@ -381,10 +476,258 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
 
     const data = await response.json();
 
+        if (data.capacityExceeded) {
+
+      const increaseCapacity =
+        confirm(
+          `Bus capacity is ${data.currentCapacity}.\n\n` +
+          `Current passengers are ${data.passengerCount}.\n\n` +
+          `Do you want to increase capacity?`
+        );
+
+      if (!increaseCapacity) {
+        return;
+      }
+
+      const newCapacity = prompt(
+        'Enter new capacity',
+        Number(data.passengerCount) + 1
+      );
+
+      if (!newCapacity) {
+        return;
+      }
+
+      // UPDATE BUS CAPACITY
+
+      const capacityResponse =
+        await fetch(
+          `${CONFIG.basePath}/travel/bus-group/capacity`,
+          {
+            method: 'PUT',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              Authorization:
+                `Bearer ${sessionStorage.getItem('token')}`,
+            },
+
+            body: JSON.stringify({
+              bus_group_id:
+                payload.bus_group_id,
+
+              capacity:
+                newCapacity,
+            }),
+          }
+        );
+
+      const capacityData =
+        await capacityResponse.json();
+
+      if (!capacityResponse.ok) {
+        throw new Error(
+          capacityData.message
+        );
+      }
+
+      // RESUBMIT ORIGINAL REQUEST
+
+     // RETRY ORIGINAL UPDATE
+
+      const retryResponse =
+        await fetch(
+          `${CONFIG.basePath}/travel/bookingupdate`,
+          {
+            method: 'PUT',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              Authorization:
+                `Bearer ${sessionStorage.getItem('token')}`,
+            },
+
+            body: JSON.stringify(payload),
+          }
+        );
+
+      const retryData =
+        await retryResponse.json();
+
+      if (!retryResponse.ok) {
+        throw new Error(
+          retryData.message
+        );
+      }
+
+      alert(
+        'Bus capacity updated and passenger assigned successfully!'
+      );
+
+      document.getElementById(
+        'transactionModal'
+      ).style.display = 'none';
+
+      document
+        .getElementById('reportForm')
+        .dispatchEvent(
+          new Event('submit')
+        );
+
+      return;
+    }
     if (response.ok) {
+
+      if (
+        data.removedFromOldBus &&
+        data.matchingBusAvailable &&
+        !payload.bus_group_id
+      ) {
+
+        const assignToNewBus = confirm(
+          'This booking was removed from its previous bus route.\n\n' +
+          `Matching bus available: ${data.matchingBus.bus_name}\n\n` +
+          'Do you want to assign passenger to this bus?'
+        );
+
+    if (assignToNewBus) {
+
+      // Fetch matching bus details
+      const busDetailsResponse = await fetch(
+        `${CONFIG.basePath}/travel/bus-group/${data.matchingBus.id}`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${sessionStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      const busDetails =
+        await busDetailsResponse.json();
+
+      if (!busDetailsResponse.ok) {
+        throw new Error(
+          busDetails.message
+        );
+      }
+
+      const currentPassengers =
+        busDetails.passengers.length;
+
+      const busCapacity =
+        Number(busDetails.bus.capacity);
+
+      const totalAfterAssign =
+        currentPassengers + 1;
+
+      // Capacity exceeded
+      if (
+        totalAfterAssign > busCapacity
+      ) {
+
+        const increaseCapacity =
+          confirm(
+            `Matching bus capacity is ${busCapacity}.\n\n` +
+            `Passenger count after reassignment will become ${totalAfterAssign}.\n\n` +
+            `Do you want to increase capacity?`
+          );
+
+        if (!increaseCapacity) {
+          return;
+        }
+
+        const newCapacity = prompt(
+          'Enter new capacity',
+          totalAfterAssign
+        );
+
+        if (!newCapacity) {
+          return;
+        }
+
+        // Update capacity
+        const capacityResponse =
+          await fetch(
+            `${CONFIG.basePath}/travel/bus-group/capacity`,
+            {
+              method: 'PUT',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${sessionStorage.getItem('token')}`,
+              },
+
+              body: JSON.stringify({
+                bus_group_id:
+                  data.matchingBus.id,
+
+                capacity: newCapacity,
+              }),
+            }
+          );
+
+        const capacityData =
+          await capacityResponse.json();
+
+        if (!capacityResponse.ok) {
+          throw new Error(
+            capacityData.message
+          );
+        }
+      }
+
+      // Assign passenger
+      const reassignResponse = await fetch(
+        `${CONFIG.basePath}/travel/bookingupdate`,
+        {
+          method: 'PUT',
+
+          headers: {
+            'Content-Type': 'application/json',
+
+            Authorization:
+              `Bearer ${sessionStorage.getItem('token')}`,
+          },
+
+          body: JSON.stringify({
+            bookingid: payload.bookingid,
+            bus_group_id: data.matchingBus.id,
+
+            is_coordinator:
+              payload.is_coordinator,
+          }),
+        }
+      );
+
+      const reassignData =
+        await reassignResponse.json();
+
+      if (!reassignResponse.ok) {
+        throw new Error(
+          reassignData.message
+        );
+      }
+
+      alert(
+        'Passenger assigned to new bus successfully'
+      );    }
+      }
+
       alert('Transaction updated successfully!');
+
       document.getElementById('transactionModal').style.display = 'none';
-      document.getElementById('reportForm').dispatchEvent(new Event('submit'));
+
+      document.getElementById('reportForm')
+        .dispatchEvent(new Event('submit'));
+
     } else {
       alert(`Error: ${data.message}`);
     }
@@ -438,6 +781,7 @@ if (statusInput === 'wrong form cancel') {
 
     const data = await response.json();
 
+ 
     if (response.ok) {
       alert(data.message);
     } else {
