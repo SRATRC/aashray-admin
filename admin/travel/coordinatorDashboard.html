@@ -1,5 +1,6 @@
 <script src="../../style/js/config.js"></script>
 <script src="../../style/js/coordinatorAuth.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
   checkCoordinatorAuth();
@@ -75,6 +76,117 @@
   color: #333;
 }
 
+.contact-actions {
+
+  display: flex;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+}
+
+.contact-btn {
+
+  text-decoration: none;
+
+  padding: 6px 12px;
+
+  border-radius: 6px;
+
+  background: #1d3557;
+
+  color: white;
+
+  font-size: 13px;
+}
+
+.whatsapp-btn {
+
+  background: #25d366;
+}
+
+.passenger-controls {
+
+  display: flex;
+
+  gap: 15px;
+
+  margin-bottom: 20px;
+
+  flex-wrap: wrap;
+}
+
+.passenger-controls input,
+.passenger-controls select {
+
+  padding: 10px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 6px;
+
+  min-width: 220px;
+}
+
+.summary-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(220px, 1fr)
+    );
+
+  gap: 15px;
+
+  margin-bottom: 25px;
+}
+
+.summary-card {
+
+  background: #f8fafc;
+
+  border: 1px solid #dbe2ea;
+
+  border-radius: 10px;
+
+  padding: 18px;
+
+  box-shadow:
+    0 2px 6px
+    rgba(0,0,0,0.04);
+}
+
+.summary-label {
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #475569;
+
+  margin-bottom: 10px;
+}
+
+.summary-value {
+
+  font-size: 28px;
+
+  font-weight: 700;
+
+  color: #1e293b;
+}
+
+.boarded-text {
+
+  color: #16a34a;
+}
+
+.pending-text {
+
+  color: #dc2626;
+}
 </style>
 
   <script
@@ -114,10 +226,7 @@
 
       <div class="inner-padding">
 
-        <h2>
-          Coordinator Dashboard
-        </h2>
-
+  
         <!-- COORDINATOR INFO -->
 
         <div class="dashboard-grid">
@@ -160,6 +269,10 @@
         <div id="busSummary">
 
 </div>
+
+<div id="boardingSummary">
+
+</div>
         <hr />
 
         <!-- PASSENGERS -->
@@ -168,7 +281,52 @@
           Passengers
         </h3>
 
+        <div class="passenger-controls">
+
+  <input
+    type="text"
+    id="passengerSearch"
+    placeholder="Search passenger..."
+  />
+
+  <select id="boardingFilter">
+
+    <option value="all">
+      All
+    </option>
+
+    <option value="boarded">
+      Boarded
+    </option>
+
+    <option value="pending">
+      Pending
+    </option>
+
+  </select>
+
+</div>
+<div class="qr-section">
+
+  <button
+    class="btn btn-primary"
+    onclick="startQrScanner()"
+  >
+    Scan Passenger QR
+  </button>
+
+  <div
+    id="qr-reader"
+    style="
+      width: 300px;
+      margin-top: 15px;
+      display: none;
+    "
+  ></div>
+
+</div>
         <div class="table-responsive">
+
 
           <table
             class="table table-striped table-bordered"
@@ -188,6 +346,13 @@
                 <th>Pickup</th>
 
                 <th>Drop</th>
+                <th>Luggage</th>
+                <th>Comments</th>
+
+                <th>Contact</th>  
+
+                <th>Status</th>
+                <th>Action</th>
 
 
               </tr>
