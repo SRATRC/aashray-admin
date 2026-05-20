@@ -210,12 +210,24 @@ function renderBusTable() {
       </td>
 
       <td>
-        <a
-          href="travelBusDetails.html?id=${bus.id}"
-        >
-          View Details
-        </a>
-      </td>
+
+  <a
+    href="travelBusDetails.html?id=${bus.id}"
+    title="View Details"
+    style="margin-right:10px;"
+  >
+    <i class="fa fa-eye"></i>
+  </a>
+
+  <a
+    href="#"
+    onclick="exportBusPassengers('${bus.id}','${bus.bus_name}')"
+    title="Export Passengers"
+  >
+    <i class="fa fa-download"></i>
+  </a>
+
+</td>
     `;
 
     tbody.appendChild(row);
@@ -467,6 +479,70 @@ async function updateBus(event) {
     closeEditBusModal();
 
     fetchBusGroups();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+async function exportBusPassengers(
+  busGroupId,
+  busName
+) {
+
+  try {
+
+    const response = await fetch(
+
+`${CONFIG.basePath}/travel/bus-group/${busGroupId}/export`,
+
+      {
+        headers: {
+          Authorization:
+            `Bearer ${sessionStorage.getItem('token')}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+
+      const error =
+        await response.json();
+
+      throw new Error(
+        error.message
+      );
+    }
+
+    const blob =
+      await response.blob();
+
+    const url =
+      window.URL.createObjectURL(
+        blob
+      );
+
+    const a =
+      document.createElement(
+        'a'
+      );
+
+    a.href = url;
+
+a.download =
+`${busName}_passengers.xlsx`;
+    document.body.appendChild(
+      a
+    );
+
+    a.click();
+
+    a.remove();
+
+    window.URL.revokeObjectURL(
+      url
+    );
 
   } catch (error) {
 
