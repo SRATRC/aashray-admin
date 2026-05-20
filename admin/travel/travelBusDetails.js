@@ -1,3 +1,5 @@
+let bulkPreviewData = null;
+
 const params = new URLSearchParams(window.location.search);
 
 const busId = params.get('id');
@@ -46,6 +48,170 @@ document
     () => {
 
       openAssignPassengerModal();
+    }
+  );
+
+  document
+  .getElementById(
+    'bulkUploadPassengers'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      document
+        .getElementById(
+          'bulkUploadInput'
+        )
+        .click();
+    }
+  );
+
+document
+  .getElementById(
+    'bulkUploadInput'
+  )
+  .addEventListener(
+    'change',
+
+    async event => {
+
+      const file =
+        event.target.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      const reader =
+        new FileReader();
+
+      reader.onload =
+        async e => {
+
+          const data =
+            new Uint8Array(
+              e.target.result
+            );
+
+          const workbook =
+            XLSX.read(
+              data,
+              {
+                type: 'array',
+              }
+            );
+
+          const sheetName =
+            workbook.SheetNames[0];
+
+          const worksheet =
+            workbook.Sheets[
+              sheetName
+            ];
+
+          const jsonData =
+            XLSX.utils.sheet_to_json(
+              worksheet
+            );
+
+          const bookingids =
+            jsonData
+              .map(
+                item =>
+                  item[
+                    'Booking Id'
+                  ]
+              )
+              .filter(Boolean);
+
+          const coordinatorRow =
+            jsonData.find(
+              item => {
+
+                const value =
+                  item[
+                    'Coordinator?'
+                  ];
+
+                return (
+                  String(
+                    value || ''
+                  )
+                    .trim()
+                    .toLowerCase() ===
+                  'yes'
+                );
+              }
+            );
+
+          const coordinator_bookingid =
+            coordinatorRow?.[
+              'Booking Id'
+            ] || null;
+
+          try {
+
+            const response =
+              await fetch(
+
+`${CONFIG.basePath}/travel/bus/preview-bulk-upload`,
+
+                {
+
+                  method: 'POST',
+
+                  headers: {
+
+                    'Content-Type':
+                      'application/json',
+
+                    Authorization:
+                      `Bearer ${sessionStorage.getItem('token')}`,
+                  },
+
+                  body: JSON.stringify({
+
+                    bus_group_id:
+                      busId,
+
+                    bookingids,
+
+                    coordinator_bookingid,
+                  }),
+                }
+              );
+
+            const result =
+              await response.json();
+
+            if (
+              !response.ok
+            ) {
+
+              throw new Error(
+                result.message
+              );
+            }
+
+            bulkPreviewData =
+              result;
+
+            renderBulkPreview(
+              result
+            );
+
+          } catch (error) {
+
+            alert(
+              error.message
+            );
+          }
+        };
+
+      reader.readAsArrayBuffer(
+        file
+      );
     }
   );
 
@@ -329,7 +495,6 @@ function renderAvailablePassengers(passengers) {
     document.querySelector(
       '#availablePassengerTable tbody'
     );
-    tbody.innerHTML = '';
 
   tbody.innerHTML = '';
   if (passengers.length === 0) {
@@ -423,6 +588,10 @@ const showOtherRoutes =
             ? 'Same Route'
             : 'Other Route'
         }
+      </td>
+
+      <td>
+        ${passenger.status || '-'}
       </td>
 
       <td>
@@ -602,3 +771,365 @@ function attachRemovePassengerEvents() {
       );
     });
 }
+
+async function handleBulkUpload(
+  event
+) {
+
+  try {
+
+    const file =
+      event.target.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader =
+      new FileReader();
+
+    reader.onload =
+      async e => {
+
+        const data =
+          new Uint8Array(
+            e.target.result
+          );
+
+        const workbook =
+          XLSX.read(data, {
+            type: 'array',
+          });
+
+        const sheetName =
+          workbook.SheetNames[0];
+
+        const worksheet =
+          workbook.Sheets[sheetName];
+
+        const jsonData =
+          XLSX.utils.sheet_to_json(
+            worksheet
+          );
+
+        if (
+          !jsonData.length
+        ) {
+
+          alert(
+            'Excel is empty'
+          );
+
+          return;
+        }
+
+        const bookingids =
+          jsonData
+            .map(item => {
+
+              const bookingid =
+
+                item.bookingid ||
+
+                item['Booking Id'] ||
+
+                item['BookingID'] ||
+
+                item['BOOKING ID'] ||
+
+                '';
+
+              return String(
+                bookingid
+              ).trim();
+            })
+            .filter(Boolean);
+        if (
+          !bookingids.length
+        ) {
+
+          alert(
+            'bookingid column missing'
+          );
+
+          return;
+        }
+
+     const coordinatorRow =
+  jsonData.find(item => {
+
+    const value =
+      item['Coordinator?'];
+
+    return (
+      String(value || '')
+        .trim()
+        .toLowerCase() === 'yes'
+    );
+  });
+
+
+
+    const coordinator_bookingid =
+      coordinatorRow?.['Booking Id'] || null;
+        const response =
+          await fetch(
+
+`${CONFIG.basePath}/travel/bus-group/bulk-assign`,
+
+            {
+
+              method: 'POST',
+
+              headers: {
+
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+`Bearer ${sessionStorage.getItem('token')}`,
+              },
+
+              body: JSON.stringify({
+
+                bus_group_id:
+                  busId,
+
+                bookingids,
+
+                coordinator_bookingid,
+              }),
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.message
+          );
+        }
+
+        alert(
+          result.message
+        );
+
+        location.reload();
+      };
+
+    reader.readAsArrayBuffer(
+      file
+    );
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+function renderBulkPreview(
+  data
+) {
+
+  const modal =
+    document.getElementById(
+      'bulkPreviewModal'
+    );
+
+  const tbody =
+    document.querySelector(
+      '#bulkPreviewTable tbody'
+    );
+
+  const summary =
+    document.getElementById(
+      'bulkPreviewSummary'
+    );
+
+  tbody.innerHTML = '';
+
+  summary.innerHTML = `
+
+    Valid:
+    ${data.validBookingIds.length}
+
+    &nbsp; | &nbsp;
+
+    Already Assigned:
+    ${data.alreadyAssigned.length}
+
+    &nbsp; | &nbsp;
+
+    Wrong Route:
+    ${data.wrongRoute.length}
+
+    &nbsp; | &nbsp;
+
+    Wrong Date:
+    ${data.wrongDate.length}
+
+    &nbsp; | &nbsp;
+
+    Invalid:
+    ${data.invalidBookingIds.length}
+  `;
+
+  data.rows.forEach(
+    item => {
+
+      const row =
+        document.createElement(
+          'tr'
+        );
+
+     row.innerHTML = `
+
+  <td>
+    ${item.bookingid}
+  </td>
+
+  <td>
+    ${item.name || '-'}
+  </td>
+
+  <td>
+    ${item.pickup_point || '-'}
+  </td>
+
+  <td>
+    ${item.drop_point || '-'}
+  </td>
+
+  <td>
+    ${item.status}
+  </td>
+
+  <td>
+    ${item.result}
+  </td>
+
+  <td>
+    ${
+      item.isCoordinator
+        ? 'YES'
+        : '-'
+    }
+  </td>
+`;
+      tbody.appendChild(
+        row
+      );
+    }
+  );
+
+  modal.style.display =
+    'block';
+}
+
+document
+  .getElementById(
+    'confirmBulkAssign'
+  )
+  .addEventListener(
+    'click',
+
+    async () => {
+
+      if (
+  !bulkPreviewData?.validBookingIds?.length
+) {
+
+  alert(
+    'No valid bookings available to assign'
+  );
+
+  return;
+}
+
+      try {
+
+        const response =
+          await fetch(
+
+`${CONFIG.basePath}/travel/bus-group/bulk-assign`,
+
+            {
+
+              method: 'POST',
+
+              headers: {
+
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${sessionStorage.getItem('token')}`,
+              },
+
+              body: JSON.stringify({
+
+                bus_group_id:
+                  busId,
+
+                bookingids:
+                  bulkPreviewData.validBookingIds,
+
+                coordinator_bookingid:
+                  bulkPreviewData.coordinator_bookingid,
+              }),
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            result.message
+          );
+        }
+
+        alert(
+          result.message
+        );
+
+        document
+          .getElementById(
+            'bulkPreviewModal'
+          )
+          .style.display =
+            'none';
+
+        fetchBusDetails();
+
+      } catch (error) {
+
+        alert(
+          error.message
+        );
+      }
+    }
+  );
+
+  document
+  .getElementById(
+    'closeBulkPreviewModal'
+  )
+  .addEventListener(
+    'click',
+
+    () => {
+
+      document
+        .getElementById(
+          'bulkPreviewModal'
+        )
+        .style.display =
+          'none';
+    }
+  );

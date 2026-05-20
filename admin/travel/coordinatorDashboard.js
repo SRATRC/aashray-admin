@@ -1,4 +1,6 @@
 let allPassengers = [];
+let allBuses = [];
+let selectedBusIndex = 0;
 let qrScanner = null;
 
 document.addEventListener(
@@ -74,24 +76,32 @@ async function fetchDashboard() {
     renderCoordinatorInfo(
       data.coordinator
     );
+allBuses =
+  data.buses || [];
 
- renderBusInfo(
-  data.bus
-);
+renderBusDropdown();
 
-renderBusSummary(
-  data.bus,
-  data.passengers
-);
+if (allBuses.length) {
 
+  if (
+    selectedBusIndex >=
+    allBuses.length
+  ) {
 
-allPassengers =
-  data.passengers;
+    selectedBusIndex = 0;
+  }
 
-renderPassengers(
-  allPassengers
-);
+  loadBusData(
+    selectedBusIndex
+  );
 
+  document
+    .getElementById(
+      'busSelector'
+    )
+    .value =
+      selectedBusIndex;
+}
   } catch (error) {
 
     alert(error.message);
@@ -156,6 +166,87 @@ function renderCoordinatorInfo(
 
       </div>
     `;
+}
+
+function renderBusDropdown() {
+
+  const selector =
+    document.getElementById(
+      'busSelector'
+    );
+
+  selector.innerHTML = '';
+
+  allBuses.forEach(
+    (
+      item,
+      index
+    ) => {
+
+      const option =
+        document.createElement(
+          'option'
+        );
+
+      option.value =
+        index;
+
+      option.textContent = `
+
+${item.bus.bus_name}
+- ${item.bus.event_date}
+
+      `;
+
+      selector.appendChild(
+        option
+      );
+    }
+  );
+
+  selector.onchange =
+  event => {
+
+    selectedBusIndex =
+      Number(
+        event.target.value
+      );
+
+    loadBusData(
+      selectedBusIndex
+    );
+  };
+}
+
+function loadBusData(
+  index
+) {
+
+  const selectedBus =
+    allBuses[index];
+
+  if (!selectedBus) {
+
+    return;
+  }
+
+  renderBusInfo(
+    selectedBus.bus
+  );
+
+  renderBusSummary(
+
+    selectedBus.bus,
+
+    selectedBus.passengers
+  );
+
+  allPassengers =
+    selectedBus.passengers;
+
+  renderPassengers(
+    allPassengers
+  );
 }
 
 function renderBusInfo(bus) {

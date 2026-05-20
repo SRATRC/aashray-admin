@@ -494,7 +494,7 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
         Number(data.passengerCount) + 1
       );
 
-      if (!newCapacity) {
+      if (!newCapacity || isNaN(newCapacity) || Number(newCapacity) <= 0) {
         return;
       }
 

@@ -23,7 +23,7 @@
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="../../style/js/tableSortFilter.js" defer></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="travelBusDetails.js" defer></script>
 </head>
 
@@ -62,6 +62,20 @@
           >
             Assign Passengers
           </button>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="bulkUploadPassengers"
+          >
+            Bulk Upload
+          </button>
+          <input
+            type="file"
+            id="bulkUploadInput"
+            accept=".xlsx,.xls"
+            style="display:none;"
+          />
 
         </div>
 
@@ -190,6 +204,7 @@
             <th>Pickup</th>
             <th>Drop</th>
             <th>Route Type</th>
+            <th>Booking Status</th>
             <th>Total People</th>
           </tr>
         </thead>
@@ -215,6 +230,117 @@
     </div>
 
   </div>
+</div>
+
+<div
+  id="bulkPreviewModal"
+  class="modal"
+  style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    z-index:9999;
+    overflow:auto;
+  "
+>
+
+  <div
+    class="modal-content"
+    style="
+      background:white;
+      padding:2rem;
+      margin:3% auto;
+      width:95%;
+      max-width:1200px;
+      border-radius:10px;
+      position:relative;
+    "
+  >
+
+    <span
+      id="closeBulkPreviewModal"
+      style="
+        position:absolute;
+        top:10px;
+        right:15px;
+        font-size:24px;
+        cursor:pointer;
+      "
+    >
+      &times;
+    </span>
+
+    <h2>
+      Bulk Upload Preview
+    </h2>
+
+    <div
+      id="bulkPreviewSummary"
+      style="
+        margin-bottom:20px;
+        font-weight:600;
+      "
+    >
+
+    </div>
+
+    <div class="table-responsive">
+
+      <table
+        class="
+          table
+          table-striped
+          table-bordered
+        "
+        id="bulkPreviewTable"
+      >
+
+        <thead>
+
+          <tr>
+
+            <th>Booking ID</th>
+            <th>Name</th>
+            <th>Pickup</th>
+            <th>Drop</th>  
+            <th>Status</th>
+
+            <th>Result</th>
+
+            <th>Coordinator</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <div
+      class="form-group form-submit"
+    >
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="confirmBulkAssign"
+      >
+        Confirm Import
+      </button>
+
+    </div>
+
+  </div>
+
 </div>
 
 </body>
