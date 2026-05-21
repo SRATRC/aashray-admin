@@ -23,7 +23,7 @@
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="../../style/js/tableSortFilter.js" defer></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="travelBusManagement.js" defer></script>
 
   <!-- CSS -->
@@ -54,15 +54,42 @@
         </div>
 
         <!-- Create Bus Button -->
-        <div class="form-group form-submit">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="openCreateBusModal"
-          >
-            Create Bus
-          </button>
-        </div>
+ <div class="form-group form-submit">
+
+  <button
+    type="button"
+    class="btn btn-primary"
+    id="openCreateBusModal"
+    style="margin-right:10px;"
+  >
+    Create Bus
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-success"
+    id="openBulkMasterUpload"
+    style="margin-right:10px;"
+  >
+    Bulk Master Upload
+  </button>
+
+<button
+  type="button"
+  class="btn btn-info"
+  onclick="window.location.href='../../style/sample_excels/bulk_bus_master_upload.xlsx'"
+>
+  Download Sample Excel
+</button>
+
+  <input
+    type="file"
+    id="bulkMasterUploadInput"
+    accept=".xlsx,.xls"
+    style="display:none;"
+  >
+
+</div>
 
         <!-- Search -->
         <input
@@ -83,8 +110,7 @@
                 <th>#</th>
                 <th data-key="event_date">Event Date</th>
                 <th data-key="bus_name">Bus Name</th>
-                <th data-key="pickup_point">Pickup Point</th>
-                <th data-key="drop_point">Drop Point</th>
+                <th colspan="2"> Route Stops </th>
                 <th data-key="timing">Timing</th>
                 <th data-key="capacity">Capacity</th>
                 <th data-key="passenger_count">Passenger Count</th>
@@ -519,6 +545,91 @@
     >
       Update Only
     </button>
+
+  </div>
+
+</div>
+
+<div
+  id="bulkMasterPreviewModal"
+  class="modal"
+  style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    z-index:10002;
+    overflow:auto;
+  "
+>
+
+  <div
+    class="modal-content"
+    style="
+      background:white;
+      padding:2rem;
+      margin:3% auto;
+      width:95%;
+      max-width:1100px;
+      border-radius:12px;
+      position:relative;
+    "
+  >
+
+    <span
+      id="closeBulkMasterPreviewModal"
+      style="
+        position:absolute;
+        top:10px;
+        right:20px;
+        font-size:28px;
+        cursor:pointer;
+      "
+    >
+      &times;
+    </span>
+
+    <h2>
+      Bulk Bus Import Preview
+    </h2>
+
+    <div
+      id="bulkMasterPreviewContainer"
+    ></div>
+
+    <br>
+
+<div style="
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:25px;
+">
+
+  <button
+    type="button"
+    class="btn btn-secondary"
+    onclick="
+      document.getElementById(
+        'bulkMasterPreviewModal'
+      ).style.display='none'
+    "
+  >
+    Cancel
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-success"
+    id="confirmBulkMasterImport"
+  >
+    Create All Buses
+  </button>
+
+</div>
 
   </div>
 

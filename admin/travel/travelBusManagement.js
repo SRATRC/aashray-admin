@@ -74,11 +74,38 @@ let previewCreateAssign =
   true;
 let previewUpdateAssign =
   true;
+let bulkMasterPreview =
+  null;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
   fetchBusGroups();
 
+  document
+  .getElementById(
+    'confirmBulkMasterImport'
+  )
+  .addEventListener(
+    'click',
+    confirmBulkMasterImport
+  );
+
+document
+  .getElementById(
+    'closeBulkMasterPreviewModal'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      document
+        .getElementById(
+          'bulkMasterPreviewModal'
+        )
+        .style.display =
+          'none';
+    }
+  );
   // Open create modal
   document.getElementById('openCreateBusModal')
     .addEventListener('click', () => {
@@ -87,6 +114,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         'createBusModal'
       ).style.display = 'block';
     });
+
+    document
+  .getElementById(
+    'openBulkMasterUpload'
+  )
+  .addEventListener(
+    'click',
+    () => {
+
+      document
+        .getElementById(
+          'bulkMasterUploadInput'
+        )
+        .click();
+    }
+  );
+
+document
+  .getElementById(
+    'bulkMasterUploadInput'
+  )
+  .addEventListener(
+    'change',
+    handleBulkMasterUpload
+  );
 
     document.getElementById(
       'stopsContainer'
@@ -826,6 +878,630 @@ async function updateBus(event) {
       'none';
 
     closeEditBusModal();
+
+    fetchBusGroups();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+async function
+handleBulkMasterUpload(
+  event
+) {
+
+  try {
+
+    const file =
+      event.target.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader =
+      new FileReader();
+
+    reader.onload =
+      async e => {
+
+        const data =
+          new Uint8Array(
+            e.target.result
+          );
+
+        const workbook =
+          XLSX.read(
+            data,
+            {
+              type: 'array',
+            }
+          );
+
+      const busesSheet =
+        workbook.Sheets['Buses'];
+
+      const assignmentsSheet =
+        workbook.Sheets['Assignments'];
+
+      if (
+        !busesSheet ||
+        !assignmentsSheet
+      ) {
+
+        throw new Error(
+          'Excel must contain Buses and Assignments sheets'
+        );
+      }
+
+      const busesData =
+        XLSX.utils.sheet_to_json(
+          busesSheet
+        );
+
+      const assignmentsData =
+        XLSX.utils.sheet_to_json(
+          assignmentsSheet
+        );
+
+        const response =
+          await fetch(
+
+`${CONFIG.basePath}/travel/bulk-master-preview`,
+
+            {
+
+              method: 'POST',
+
+              headers: {
+
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+`Bearer ${sessionStorage.getItem('token')}`,
+              },
+
+body: JSON.stringify({
+
+  buses:
+    busesData,
+
+  assignments:
+    assignmentsData,
+}),
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.message
+          );
+        }
+
+        bulkMasterPreview =
+          result;
+
+        renderBulkMasterPreview(
+          result
+        );
+
+        document
+          .getElementById(
+            'bulkMasterPreviewModal'
+          )
+          .style.display =
+            'block';
+      };
+
+    reader.readAsArrayBuffer(
+      file
+    );
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+function
+renderBulkMasterPreview(
+  data
+) {
+
+  const container =
+    document.getElementById(
+      'bulkMasterPreviewContainer'
+    );
+
+  const totalBuses =
+    data.buses.length;
+
+  const totalValid =
+    data.buses.reduce(
+      (sum, bus) =>
+        sum +
+        bus.validPassengers.length,
+      0
+    );
+
+  const totalOverflow =
+    data.buses.reduce(
+      (sum, bus) =>
+        sum +
+        bus.overflowPassengers.length,
+      0
+    );
+
+  const totalInvalid =
+    data.buses.reduce(
+      (sum, bus) =>
+        sum +
+        bus.invalidPassengers.length,
+      0
+    );
+
+  const totalAssigned =
+    data.buses.reduce(
+      (sum, bus) =>
+        sum +
+        bus.alreadyAssigned.length,
+      0
+    );
+
+  container.innerHTML = `
+
+    <div style="
+      margin-bottom:25px;
+    ">
+
+      <h3 style="
+        margin-bottom:5px;
+      ">
+        🚌 Bulk Bus Import Review
+      </h3>
+
+      <div style="
+        color:#666;
+      ">
+        ${totalBuses}
+        buses ready for creation
+      </div>
+
+    </div>
+
+    <div style="
+      display:grid;
+      grid-template-columns:
+        repeat(auto-fit,minmax(180px,1fr));
+      gap:15px;
+      margin-bottom:30px;
+    ">
+
+      <div style="
+        background:#e8f5e9;
+        padding:20px;
+        border-radius:12px;
+        text-align:center;
+      ">
+        <div style="
+          font-size:28px;
+          font-weight:bold;
+          color:#2e7d32;
+        ">
+          ${totalValid}
+        </div>
+
+        <div>
+          Valid Assignments
+        </div>
+      </div>
+
+      <div style="
+        background:#fff8e1;
+        padding:20px;
+        border-radius:12px;
+        text-align:center;
+      ">
+        <div style="
+          font-size:28px;
+          font-weight:bold;
+          color:#f57f17;
+        ">
+          ${totalOverflow}
+        </div>
+
+        <div>
+          Overflow
+        </div>
+      </div>
+
+      <div style="
+        background:#ffebee;
+        padding:20px;
+        border-radius:12px;
+        text-align:center;
+      ">
+        <div style="
+          font-size:28px;
+          font-weight:bold;
+          color:#c62828;
+        ">
+          ${totalInvalid}
+        </div>
+
+        <div>
+          Invalid
+        </div>
+      </div>
+
+      <div style="
+        background:#e3f2fd;
+        padding:20px;
+        border-radius:12px;
+        text-align:center;
+      ">
+        <div style="
+          font-size:28px;
+          font-weight:bold;
+          color:#1565c0;
+        ">
+          ${totalAssigned}
+        </div>
+
+        <div>
+          Already Assigned
+        </div>
+      </div>
+
+    </div>
+
+    ${data.buses.map(
+      (bus, index) => `
+
+      <div style="
+        border:1px solid #ddd;
+        border-radius:14px;
+        padding:20px;
+        margin-bottom:20px;
+        background:#fafafa;
+      ">
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:15px;
+        ">
+
+          <div>
+
+<h3 style="
+  margin:0;
+">
+  🚌 ${bus.bus_name}
+</h3>
+
+${
+  bus.duplicateBus
+    ? `
+      <div style="
+        color:#c62828;
+        margin-top:6px;
+        font-weight:bold;
+      ">
+        ⚠️ Bus already exists
+      </div>
+    `
+    : ''
+}
+          
+            <div style="
+              margin-top:5px;
+              color:#555;
+            ">
+              ${bus.stops.join(' → ')}
+            </div>
+
+            ${
+  bus.routeError
+    ? `
+      <div style="
+        color:#c62828;
+        margin-top:5px;
+        font-weight:bold;
+      ">
+        ❌ ${bus.routeError}
+      </div>
+    `
+    : ''
+}
+
+          </div>
+
+          <div style="
+            text-align:right;
+          ">
+
+            <div>
+              🕒 ${bus.timing}
+            </div>
+
+            <div>
+              👥 Capacity:
+              ${bus.capacity}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div style="
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+          margin-bottom:15px;
+        ">
+
+          <div style="
+            background:#e8f5e9;
+            padding:8px 14px;
+            border-radius:999px;
+          ">
+            ✅ ${bus.validPassengers.length} Valid
+          </div>
+
+          <div style="
+            background:#fff8e1;
+            padding:8px 14px;
+            border-radius:999px;
+          ">
+            ⚠️ ${bus.overflowPassengers.length} Overflow
+          </div>
+
+          <div style="
+            background:#ffebee;
+            padding:8px 14px;
+            border-radius:999px;
+          ">
+            ❌ ${bus.invalidPassengers.length} Invalid
+          </div>
+
+          <div style="
+            background:#e3f2fd;
+            padding:8px 14px;
+            border-radius:999px;
+          ">
+            🔁 ${bus.alreadyAssigned.length} Assigned
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          onclick="
+            toggleBulkPreviewTable(
+              'bulkTable${index}'
+            )
+          "
+        >
+          View Details
+        </button>
+
+        <div
+          id="bulkTable${index}"
+          style="
+            display:none;
+            margin-top:15px;
+          "
+        >
+
+          <table class="table">
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  Category
+                </th>
+
+                <th>
+                  Booking IDs
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              <tr>
+
+                <td>
+                  Valid
+                </td>
+
+                <td>
+                  ${
+                    bus.validPassengers
+  .map(
+    item =>
+
+`${item.bookingid}
+
+${item.name
+  ? ` - ${item.name}`
+  : ''}`
+  )
+  .join('<br>')
+                    || '-'
+                  }
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td>
+                  Overflow
+                </td>
+
+                <td>
+                  ${
+                    bus.overflowPassengers
+  .map(
+    item =>
+
+`${item.bookingid}
+
+${item.name
+  ? ` - ${item.name}`
+  : ''}`
+  )
+  .join('<br>')
+                    || '-'
+                  }
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td>
+                  Invalid
+                </td>
+
+                <td>
+                  ${
+                    bus.invalidPassengers
+  .map(
+    item =>
+
+`${item.bookingid} - ${item.reason}`
+  )
+  .join('<br>')
+                    || '-'
+                  }
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td>
+                  Already Assigned
+                </td>
+
+                <td>
+                  ${
+                    bus.alreadyAssigned
+  .map(
+    item =>
+
+`${item.bookingid}
+
+${item.name
+  ? ` - ${item.name}`
+  : ''}`
+  )
+  .join('<br>')
+                    || '-'
+                  }
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+    `
+    ).join('')}
+  `;
+}
+
+function
+toggleBulkPreviewTable(
+  id
+) {
+
+  const el =
+    document.getElementById(
+      id
+    );
+
+  el.style.display =
+
+    el.style.display ===
+    'none'
+
+      ? 'block'
+
+      : 'none';
+}
+
+async function
+confirmBulkMasterImport() {
+
+  try {
+
+    const response =
+      await fetch(
+
+`${CONFIG.basePath}/travel/bulk-master-create`,
+
+        {
+
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type':
+              'application/json',
+
+            Authorization:
+`Bearer ${sessionStorage.getItem('token')}`,
+          },
+
+          body: JSON.stringify({
+
+            buses:
+              bulkMasterPreview.buses,
+          }),
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        result.message
+      );
+    }
+
+    alert(
+      result.message
+    );
+
+    document
+      .getElementById(
+        'bulkMasterPreviewModal'
+      )
+      .style.display =
+        'none';
 
     fetchBusGroups();
 
