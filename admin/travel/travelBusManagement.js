@@ -1,10 +1,83 @@
+const locationOptions = `
+
+<option value="">
+Select Stop
+</option>
+
+<option value="Research Centre">
+Research Centre
+</option>
+
+<option value="Dadar (Swaminarayan Temple)">
+Dadar (Swaminarayan Temple)
+</option>
+
+<option value="Amar Mahal">
+Amar Mahal
+</option>
+
+<option value="Airoli">
+Airoli
+</option>
+
+<option value="Vile Parle (Sahara Star)">
+Vile Parle (Sahara Star)
+</option>
+
+<option value="Airport Terminal 1">
+Airport Terminal 1
+</option>
+
+<option value="Airport Terminal 2">
+Airport Terminal 2
+</option>
+
+<option value="Railway Station (Bandra Terminus)">
+Railway Station (Bandra Terminus)
+</option>
+
+<option value="Railway Station (LTT - Kurla Terminus)">
+Railway Station (LTT - Kurla Terminus)
+</option>
+
+<option value="Railway Station (CSMT)">
+Railway Station (CSMT)
+</option>
+
+<option value="Railway Station (Mumbai Central)">
+Railway Station (Mumbai Central)
+</option>
+
+<option value="Other (enter location in comments)">
+Other (enter location in comments)
+</option>
+
+<option value="Dadar (Pritam Da Dhaba)">
+Dadar (Pritam Da Dhaba)
+</option>
+
+<option value="Borivali (Indraprasth Shopping Centre)">
+Borivali (Indraprasth Shopping Centre)
+</option>
+
+<option value="Mulund (Sarvoday Nagar)">
+Mulund (Sarvoday Nagar)
+</option>
+
+<option value="Railway Station (Kurla Terminus)">
+Railway Station (Kurla Terminus)
+</option>
+`;
 let busGroups = [];
 let forceCreateBus = false;
+let previewCreateAssign =
+  true;
+let previewUpdateAssign =
+  true;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
   fetchBusGroups();
-  setupPickupDropLogic();
 
   // Open create modal
   document.getElementById('openCreateBusModal')
@@ -14,6 +87,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         'createBusModal'
       ).style.display = 'block';
     });
+
+    document.getElementById(
+      'stopsContainer'
+    ).innerHTML = '';
+
+    addStopField();
+    addStopField();
 
   // Close create modal
   document.getElementById('closeCreateBusModal')
@@ -35,6 +115,104 @@ document.addEventListener('DOMContentLoaded', async () => {
       createBus
     );
 
+document.getElementById(
+  'previewCreateBusBtn'
+).addEventListener(
+  'click',
+  previewCreateBus
+);
+
+document.getElementById(
+  'previewEditBusBtn'
+)?.addEventListener(
+  'click',
+  previewEditBus
+);
+document.getElementById(
+  'confirmUpdateAssignBtn'
+)?.addEventListener(
+  'click',
+  () => {
+
+    previewUpdateAssign =
+      true;
+
+    document.getElementById(
+      'editBusForm'
+    ).requestSubmit();
+  }
+);
+
+document.getElementById(
+  'confirmUpdateOnlyBtn'
+)?.addEventListener(
+  'click',
+  () => {
+
+    previewUpdateAssign =
+      false;
+
+    document.getElementById(
+      'editBusForm'
+    ).requestSubmit();
+  }
+);
+
+document.getElementById(
+  'closeEditPreviewModal'
+)?.addEventListener(
+  'click',
+  () => {
+
+    document.getElementById(
+      'editBusPreviewModal'
+    ).style.display =
+      'none';
+  }
+);
+
+    document.getElementById(
+      'closeCreatePreviewModal'
+    ).addEventListener(
+      'click',
+      () => {
+
+        document.getElementById(
+          'createBusPreviewModal'
+        ).style.display =
+          'none';
+      }
+    );
+
+    document.getElementById(
+  'confirmCreateAssignBtn'
+).addEventListener(
+  'click',
+  () => {
+
+    previewCreateAssign =
+      true;
+
+    document.getElementById(
+      'createBusForm'
+    ).requestSubmit();
+  }
+);
+
+document.getElementById(
+  'confirmCreateOnlyBtn'
+).addEventListener(
+  'click',
+  () => {
+
+    previewCreateAssign =
+      false;
+
+    document.getElementById(
+      'createBusForm'
+    ).requestSubmit();
+  }
+);
   // Close edit modal
   document.getElementById('closeEditBusModal')
     ?.addEventListener(
@@ -69,47 +247,162 @@ function closeEditBusModal() {
   document.getElementById(
     'editBusModal'
   ).style.display = 'none';
+} 
+
+function addStopField(
+  value = ''
+) {
+
+  const div =
+    document.createElement('div');
+
+  div.style.marginBottom =
+    '10px';
+
+  div.innerHTML = `
+
+    <div style="
+      display:flex;
+      gap:10px;
+    ">
+
+      <select
+        class="form-control bus-stop"
+      >
+        ${locationOptions}
+      </select>
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="moveStopUp(this)"
+      >
+        ↑
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="moveStopDown(this)"
+      >
+        ↓
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-danger"
+        onclick="this.parentElement.parentElement.remove()"
+      >
+        X
+      </button>
+
+    </div>
+  `;
+
+  div.querySelector(
+    'select'
+  ).value = value;
+
+  document
+    .getElementById(
+      'stopsContainer'
+    )
+    .appendChild(div);
 }
 
-function setupPickupDropLogic() {
+function addEditStopField(
+  value = ''
+) {
 
-  const pickup =
-    document.getElementById(
-      'pickup_point'
+  const div =
+    document.createElement('div');
+
+  div.style.marginBottom =
+    '10px';
+
+  div.innerHTML = `
+
+    <div style="
+      display:flex;
+      gap:10px;
+    ">
+
+      <select
+        class="form-control edit-bus-stop"
+      >
+        ${locationOptions}
+      </select>
+
+    <button
+      type="button"
+      class="btn btn-secondary"
+      onclick="moveStopUp(this)"
+    >
+      ↑
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-secondary"
+      onclick="moveStopDown(this)"
+    >
+      ↓
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-danger"
+      onclick="this.parentElement.parentElement.remove()"
+    >
+      X
+    </button>
+
+    </div>
+  `;
+
+  div.querySelector(
+    'select'
+  ).value = value;
+
+  document
+    .getElementById(
+      'editStopsContainer'
+    )
+    .appendChild(div);
+}
+
+function moveStopUp(button) {
+
+  const current =
+    button.parentElement.parentElement;
+
+  const previous =
+    current.previousElementSibling;
+
+  if (previous) {
+
+    current.parentElement.insertBefore(
+      current,
+      previous
     );
+  }
+}
 
-  const drop =
-    document.getElementById(
-      'drop_point'
+function moveStopDown(button) {
+
+  const current =
+    button.parentElement.parentElement;
+
+  const next =
+    current.nextElementSibling;
+
+  if (next) {
+
+    current.parentElement.insertBefore(
+      next,
+      current
     );
-
-  pickup.addEventListener(
-    'change',
-    () => {
-
-      if (
-        pickup.value &&
-        pickup.value !== 'Research Centre'
-      ) {
-
-        drop.value = 'Research Centre';
-      }
-    }
-  );
-
-  drop.addEventListener(
-    'change',
-    () => {
-
-      if (
-        drop.value &&
-        drop.value !== 'Research Centre'
-      ) {
-
-        pickup.value = 'Research Centre';
-      }
-    }
-  );
+  }
 }
 
 async function fetchBusGroups() {
@@ -185,12 +478,22 @@ function renderBusTable() {
         ${bus.bus_name || ''}
       </td>
 
-      <td>
-        ${bus.pickup_point || ''}
-      </td>
+      <td colspan="2">
 
-      <td>
-        ${bus.drop_point || ''}
+        ${
+          bus.stops
+            ?.sort(
+              (a, b) =>
+                a.stop_order -
+                b.stop_order
+            )
+            .map(
+              s => s.stop_name
+            )
+            .join(' → ')
+            || ''
+        }
+
       </td>
 
       <td>
@@ -226,6 +529,17 @@ function renderBusTable() {
   >
     <i class="fa fa-download"></i>
   </a>
+  <a
+  href="#"
+  onclick="deleteBus('${bus.id}')"
+  title="Delete Bus"
+  style="
+    margin-left:10px;
+    color:red;
+  "
+>
+  <i class="fa fa-trash"></i>
+</a>
 
 </td>
     `;
@@ -261,13 +575,22 @@ function openEditBusModal(bus) {
     'edit_bus_name'
   ).value = bus.bus_name || '';
 
-  document.getElementById(
-    'edit_pickup_point'
-  ).value = bus.pickup_point || '';
+ document.getElementById(
+    'editStopsContainer'
+  ).innerHTML = '';
 
-  document.getElementById(
-    'edit_drop_point'
-  ).value = bus.drop_point || '';
+  bus.stops
+    ?.sort(
+      (a, b) =>
+        a.stop_order -
+        b.stop_order
+    )
+    .forEach(stop => {
+
+      addEditStopField(
+        stop.stop_name
+      );
+    });
 
   document.getElementById(
     'edit_timing'
@@ -292,6 +615,17 @@ async function createBus(event) {
 
   try {
 
+    const stops =
+    Array.from(
+      document.querySelectorAll(
+        '.bus-stop'
+      )
+    )
+    .map(
+      item => item.value
+    )
+    .filter(Boolean);
+
     const payload = {
 
       event_date:
@@ -303,16 +637,8 @@ async function createBus(event) {
         document.getElementById(
           'bus_name'
         ).value,
-
-      pickup_point:
-        document.getElementById(
-          'pickup_point'
-        ).value,
-
-      drop_point:
-        document.getElementById(
-          'drop_point'
-        ).value,
+      
+      stops,
 
       timing:
         document.getElementById(
@@ -331,6 +657,9 @@ async function createBus(event) {
 
       force_create:
         forceCreateBus,
+
+        auto_assign:
+          previewCreateAssign,
     };
 
     const response = await fetch(
@@ -391,6 +720,11 @@ async function createBus(event) {
 
     alert('Bus created successfully');
 
+    document.getElementById(
+      'createBusPreviewModal'
+    ).style.display =
+      'none';
+
     forceCreateBus = false;
 
     closeCreateBusModal();
@@ -420,20 +754,30 @@ async function updateBus(event) {
 
     const payload = {
 
+
+      auto_assign:
+        previewUpdateAssign,
+
+      remove_invalid:
+        document.getElementById(
+          'removeInvalidPassengers'
+        )?.checked || false,
+
       bus_name:
         document.getElementById(
           'edit_bus_name'
         ).value,
 
-      pickup_point:
-        document.getElementById(
-          'edit_pickup_point'
-        ).value,
-
-      drop_point:
-        document.getElementById(
-          'edit_drop_point'
-        ).value,
+      stops:
+      Array.from(
+        document.querySelectorAll(
+          '.edit-bus-stop'
+        )
+      )
+      .map(
+        item => item.value
+      )
+      .filter(Boolean),
 
       timing:
         document.getElementById(
@@ -475,6 +819,11 @@ async function updateBus(event) {
     }
 
     alert('Bus updated successfully');
+
+    document.getElementById(
+      'editBusPreviewModal'
+    ).style.display =
+      'none';
 
     closeEditBusModal();
 
@@ -548,4 +897,565 @@ a.download =
 
     alert(error.message);
   }
+}
+
+async function deleteBus(
+  busId
+) {
+
+  const confirmDelete =
+    confirm(
+      'Delete this bus?'
+    );
+
+  if (!confirmDelete) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+
+`${CONFIG.basePath}/travel/bus-group/${busId}`,
+
+        {
+          method: 'DELETE',
+
+          headers: {
+            Authorization:
+              `Bearer ${sessionStorage.getItem('token')}`,
+          },
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message
+      );
+    }
+
+    alert(
+      'Bus deleted successfully'
+    );
+
+    fetchBusGroups();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+async function
+previewCreateBus() {
+
+  try {
+
+    const stops =
+      Array.from(
+        document.querySelectorAll(
+          '.bus-stop'
+        )
+      )
+      .map(
+        item => item.value
+      )
+      .filter(Boolean);
+
+    const payload = {
+
+      event_date:
+        document.getElementById(
+          'event_date'
+        ).value,
+
+      stops,
+
+      capacity:
+        document.getElementById(
+          'capacity'
+        ).value,
+    };
+
+    const response =
+      await fetch(
+
+`${CONFIG.basePath}/travel/bus-group/preview-create`,
+
+        {
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type':
+              'application/json',
+
+            Authorization:
+              `Bearer ${sessionStorage.getItem('token')}`,
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            ),
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message
+      );
+    }
+
+    renderCreateBusPreview(
+      data
+    );
+    document.getElementById(
+      'createBusPreviewModal'
+    ).style.display =
+      'block';
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+async function
+previewEditBus() {
+
+  try {
+
+    const stops =
+      Array.from(
+        document.querySelectorAll(
+          '.edit-bus-stop'
+        )
+      )
+      .map(
+        item => item.value
+      )
+      .filter(Boolean);
+
+    const payload = {
+
+      bus_group_id:
+        document.getElementById(
+          'edit_bus_id'
+        ).value,
+
+      stops,
+
+      capacity:
+        document.getElementById(
+          'edit_capacity'
+        ).value,
+    };
+
+    const response =
+      await fetch(
+
+`${CONFIG.basePath}/travel/bus-group/preview-update`,
+
+        {
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type':
+              'application/json',
+
+            Authorization:
+              `Bearer ${sessionStorage.getItem('token')}`,
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            ),
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message
+      );
+    }
+
+    renderEditPreview(
+      data
+    );
+
+    document.getElementById(
+      'editBusPreviewModal'
+    ).style.display =
+      'block';
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+function
+renderCreateBusPreview(
+  data
+) {
+
+  const container =
+    document.getElementById(
+      'createBusPreviewContainer'
+    );
+
+container.innerHTML = `
+
+<div style="
+  display:flex;
+  gap:15px;
+  margin-bottom:20px;
+">
+
+  <div style="
+    background:#f5f5f5;
+    padding:15px;
+    border-radius:8px;
+    flex:1;
+    text-align:center;
+  ">
+    <h2>
+      ${data.totalMatching}
+    </h2>
+    <p>
+      Total Matching
+    </p>
+  </div>
+
+  <div style="
+    background:#e8f7e8;
+    padding:15px;
+    border-radius:8px;
+    flex:1;
+    text-align:center;
+  ">
+    <h2>
+      ${data.assignableCount}
+    </h2>
+    <p>
+      Assignable
+    </p>
+  </div>
+
+  <div style="
+    background:#fff3e0;
+    padding:15px;
+    border-radius:8px;
+    flex:1;
+    text-align:center;
+  ">
+    <h2>
+      ${data.skippedCapacityCount}
+    </h2>
+    <p>
+      Capacity Overflow
+    </p>
+  </div>
+
+</div>
+
+<div style="
+  max-height:500px;
+  overflow:auto;
+">
+
+<table
+  class="table table-bordered"
+  width="100%"
+>
+
+<thead>
+
+<tr>
+
+  <th>Name</th>
+
+  <th>Card No</th>
+
+  <th>Pickup</th>
+
+  <th>Drop</th>
+
+  <th>Status</th>
+
+  <th>Already Assigned</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+${data.rows.map(
+  row => `
+
+<tr>
+
+  <td>
+    ${row.name}
+  </td>
+
+  <td>
+    ${row.cardno}
+  </td>
+
+  <td>
+    ${row.pickup}
+  </td>
+
+  <td>
+    ${row.drop}
+  </td>
+
+  <td>
+    ${row.status}
+  </td>
+
+  <td>
+    ${
+      row.alreadyAssigned
+        ? 'Yes'
+        : 'No'
+    }
+  </td>
+
+</tr>
+`
+).join('')}
+
+</tbody>
+
+</table>
+
+</div>
+`;
+}
+
+function
+renderEditPreview(
+  data
+) {
+
+  const container =
+    document.getElementById(
+      'editBusPreviewContainer'
+    );
+
+  container.innerHTML = `
+
+  <div style="
+    display:flex;
+    gap:15px;
+    margin-bottom:20px;
+  ">
+
+    <div style="
+      background:#e8f7e8;
+      padding:15px;
+      border-radius:8px;
+      flex:1;
+      text-align:center;
+    ">
+      <h2>
+        ${data.assignable.length}
+      </h2>
+      <p>
+        New Assignable
+      </p>
+    </div>
+
+    <div style="
+      background:#fff3e0;
+      padding:15px;
+      border-radius:8px;
+      flex:1;
+      text-align:center;
+    ">
+      <h2>
+        ${data.overflow.length}
+      </h2>
+      <p>
+        Capacity Overflow
+      </p>
+    </div>
+
+    <div style="
+      background:#fdecea;
+      padding:15px;
+      border-radius:8px;
+      flex:1;
+      text-align:center;
+    ">
+      <h2>
+        ${data.noLongerMatching.length}
+      </h2>
+      <p>
+        No Longer Matching
+      </p>
+    </div>
+
+  </div>
+
+  <h3>
+    Newly Matching Passengers
+  </h3>
+
+  <div style="
+    max-height:300px;
+    overflow:auto;
+    margin-bottom:20px;
+  ">
+
+    <table
+      class="table table-bordered"
+      width="100%"
+    >
+
+      <thead>
+
+        <tr>
+
+          <th>Name</th>
+
+          <th>Card No</th>
+
+          <th>Pickup</th>
+
+          <th>Drop</th>
+
+          <th>Already Assigned</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        ${
+          data.newlyMatching.map(
+            row => `
+
+            <tr>
+
+              <td>
+                ${row.name}
+              </td>
+
+              <td>
+                ${row.cardno}
+              </td>
+
+              <td>
+                ${row.pickup}
+              </td>
+
+              <td>
+                ${row.drop}
+              </td>
+
+              <td>
+                ${
+                  row.alreadyAssigned
+                    ? 'Yes'
+                    : 'No'
+                }
+              </td>
+
+            </tr>
+          `
+          ).join('')
+        }
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <h3>
+    Passengers No Longer Matching
+  </h3>
+
+  <div style="
+    max-height:300px;
+    overflow:auto;
+  ">
+
+    <table
+      class="table table-bordered"
+      width="100%"
+    >
+
+      <thead>
+
+        <tr>
+
+          <th>Name</th>
+
+          <th>Card No</th>
+
+          <th>Pickup</th>
+
+          <th>Drop</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        ${
+          data.noLongerMatching.map(
+            row => `
+
+            <tr>
+
+              <td>
+                ${row.name}
+              </td>
+
+              <td>
+                ${row.cardno}
+              </td>
+
+              <td>
+                ${row.pickup}
+              </td>
+
+              <td>
+                ${row.drop}
+              </td>
+
+            </tr>
+          `
+          ).join('')
+        }
+
+      </tbody>
+
+    </table>
+
+  </div>
+  `;
 }

@@ -163,61 +163,21 @@
         />
       </div>
 
-        <div class="form-group">
-        <label>Pickup Point</label>
+      <div class="form-group">
 
-        <select
-            id="pickup_point"
-            class="form-control"
+        <label>Stops</label>
+
+        <div id="stopsContainer"></div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="addStopField()"
         >
-            <option value="">Select Pickup Point</option>
+          + Add Stop
+        </button>
 
-            <option value="Research Centre">Research Centre</option>
-            <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
-            <option value="Amar Mahal">Amar Mahal</option>
-            <option value="Airoli">Airoli</option>
-            <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
-            <option value="Airport Terminal 1">Airport Terminal 1</option>
-            <option value="Airport Terminal 2">Airport Terminal 2</option>
-            <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
-            <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
-            <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
-            <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
-            <option value="Other (enter location in comments)">Other (enter location in comments)</option>
-            <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
-            <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
-            <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
-            <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
-        </select>
-        </div>
-
-        <div class="form-group">
-        <label>Drop Point</label>
-
-        <select
-            id="drop_point"
-            class="form-control"
-        >
-            <option value="">Select Drop Point</option>
-
-            <option value="Research Centre">Research Centre</option>
-            <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
-            <option value="Amar Mahal">Amar Mahal</option>
-            <option value="Airoli">Airoli</option>
-            <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
-            <option value="Airport Terminal 1">Airport Terminal 1</option>
-            <option value="Airport Terminal 2">Airport Terminal 2</option>
-            <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
-            <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
-            <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
-            <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
-            <option value="Other (enter location in comments)">Other (enter location in comments)</option>
-            <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
-            <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
-            <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
-            <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
-        </select>
-        </div>
+      </div>
 
       <div class="form-group">
         <label>Timing</label>
@@ -247,6 +207,13 @@
 
       <div class="form-group form-submit">
         <button
+          type="button"
+          id="previewCreateBusBtn"
+          class="btn btn-info"
+        >
+          Preview Matching Passengers
+      </button> 
+        <button
           type="submit"
           class="btn btn-primary"
         >
@@ -263,10 +230,93 @@
       </div>
 
     </form>
+    
 
   </div>
 </div>
 
+<div
+  id="createBusPreviewModal"
+  class="modal"
+  style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    z-index:10000;
+    overflow:auto;
+  "
+>
+
+<div
+  class="modal-content"
+  style="
+    background:white;
+    padding:2rem;
+    margin:3% auto;
+    width:95%;
+    max-width:1200px;
+    border-radius:12px;
+    position:relative;
+    max-height:90vh;
+    overflow:auto;
+  "
+>
+
+<span
+  id="closeCreatePreviewModal"
+  style="
+    position:absolute;
+    top:10px;
+    right:20px;
+    font-size:28px;
+    cursor:pointer;
+  "
+>
+  &times;
+</span>
+
+    <h2>
+      Matching Passengers Preview
+    </h2>
+
+    <div
+      id="createBusPreviewContainer"
+    ></div>
+
+    <br>
+
+    <div
+      style="
+        display:flex;
+        gap:10px;
+      "
+    >
+
+      <button
+        type="button"
+        class="btn btn-success"
+        id="confirmCreateAssignBtn"
+      >
+        Create + Assign
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="confirmCreateOnlyBtn"
+      >
+        Create Bus Only
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 <!-- Edit Bus Modal -->
 <div id="editBusModal" class="modal" style="
   display:none;
@@ -319,59 +369,21 @@
         />
       </div>
 
-      <div class="form-group">
-        <label>Pickup Point</label>
-        <select
-          id="edit_pickup_point"
-          class="form-control"
+     <div class="form-group">
+
+      <label>Stops</label>
+
+      <div id="editStopsContainer"></div>
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="addEditStopField()"
       >
-          <option value="">Select Pickup Point</option>
+        + Add Stop
+      </button>
 
-          <option value="Research Centre">Research Centre</option>
-          <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
-          <option value="Amar Mahal">Amar Mahal</option>
-          <option value="Airoli">Airoli</option>
-          <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
-          <option value="Airport Terminal 1">Airport Terminal 1</option>
-          <option value="Airport Terminal 2">Airport Terminal 2</option>
-          <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
-          <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
-          <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
-          <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
-          <option value="Other (enter location in comments)">Other (enter location in comments)</option>
-          <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
-          <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
-          <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
-          <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
-      </select>
-      </div>
-
-      <div class="form-group">
-        <label>Drop Point</label>
-        <select
-          id="edit_drop_point"
-          class="form-control"
-      >
-          <option value="">Select Drop Point</option>
-
-          <option value="Research Centre">Research Centre</option>
-          <option value="Dadar (Swaminarayan Temple)">Dadar (Swaminarayan Temple)</option>
-          <option value="Amar Mahal">Amar Mahal</option>
-          <option value="Airoli">Airoli</option>
-          <option value="Vile Parle (Sahara Star)">Vile Parle (Sahara Star)</option>
-          <option value="Airport Terminal 1">Airport Terminal 1</option>
-          <option value="Airport Terminal 2">Airport Terminal 2</option>
-          <option value="Railway Station (Bandra Terminus)">Railway Station (Bandra Terminus)</option>
-          <option value="Railway Station (LTT - Kurla Terminus)">Railway Station (LTT - Kurla Terminus)</option>
-          <option value="Railway Station (CSMT)">Railway Station (CSMT)</option>
-          <option value="Railway Station (Mumbai Central)">Railway Station (Mumbai Central)</option>
-          <option value="Other (enter location in comments)">Other (enter location in comments)</option>
-          <option value="Dadar (Pritam Da Dhaba)">Dadar (Pritam Da Dhaba)</option>
-          <option value="Borivali (Indraprasth Shopping Centre)">Borivali (Indraprasth Shopping Centre)</option>
-          <option value="Mulund (Sarvoday Nagar)">Mulund (Sarvoday Nagar)</option>
-          <option value="Railway Station (Kurla Terminus)">Railway Station (Kurla Terminus)</option>
-      </select>
-      </div>
+    </div>
 
       <div class="form-group">
         <label>Timing</label>
@@ -400,6 +412,14 @@
       </div>
 
       <div class="form-group form-submit">
+
+        <button
+          type="button"
+          id="previewEditBusBtn"
+          class="btn btn-info"
+        >
+          Preview Route Changes
+        </button>
         <button
           type="submit"
           class="btn btn-primary"
@@ -419,6 +439,89 @@
     </form>
 
   </div>
+</div>
+
+<div
+  id="editBusPreviewModal"
+  class="modal"
+  style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    z-index:10001;
+    overflow:auto;
+  "
+>
+
+  <div
+    class="modal-content"
+    style="
+      background:white;
+      padding:2rem;
+      margin:3% auto;
+      width:95%;
+      max-width:1200px;
+      border-radius:12px;
+      position:relative;
+    "
+  >
+
+    <span
+      id="closeEditPreviewModal"
+      style="
+        position:absolute;
+        top:10px;
+        right:20px;
+        font-size:28px;
+        cursor:pointer;
+      "
+    >
+      &times;
+    </span>
+
+    <h2>
+      Route Change Preview
+    </h2>
+
+    <div
+      id="editBusPreviewContainer"
+    ></div>
+
+    <br>
+
+    <label>
+      <input
+        type="checkbox"
+        id="removeInvalidPassengers"
+      >
+      Remove passengers
+      that no longer match
+    </label>
+
+    <br><br>
+
+    <button
+      type="button"
+      class="btn btn-success"
+      id="confirmUpdateAssignBtn"
+    >
+      Update + Assign
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      id="confirmUpdateOnlyBtn"
+    >
+      Update Only
+    </button>
+
+  </div>
+
 </div>
 </body>
 </html>

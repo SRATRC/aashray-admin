@@ -272,12 +272,30 @@ function renderBusInfo() {
         </tr>
 
         <tr>
-          <th>Pickup</th>
-          <td>${bus.pickup_point || ''}</td>
 
-          <th>Drop</th>
-          <td>${bus.drop_point || ''}</td>
-        </tr>
+  <th>
+    Route Stops
+  </th>
+
+  <td colspan="3">
+
+    ${
+      bus.stops
+        ?.sort(
+          (a, b) =>
+            a.stop_order -
+            b.stop_order
+        )
+        .map(
+          item => item.stop_name
+        )
+        .join(' → ')
+        || '-'
+    }
+
+  </td>
+
+</tr>
 
         <tr>
           <th>Capacity</th>
@@ -522,14 +540,35 @@ const showOtherRoutes =
 
   passengers.forEach(passenger => {
 
-    const isSameRoute =
+  const stops =
+    busData.bus.stops
+      ?.sort(
+        (a, b) =>
+          a.stop_order -
+          b.stop_order
+      )
+      .map(
+        item => item.stop_name
+      ) || [];
 
-      passenger.pickup_point ===
-        busData.bus.pickup_point &&
+  const pickupIndex =
+    stops.indexOf(
+      passenger.pickup_point
+    );
 
-      passenger.drop_point ===
-        busData.bus.drop_point;
+  const dropIndex =
+    stops.indexOf(
+      passenger.drop_point
+    );
 
+  const isSameRoute =
+
+    pickupIndex !== -1 &&
+
+    dropIndex !== -1 &&
+
+    pickupIndex < dropIndex;
+    
     // FILTERING
 
     if (
