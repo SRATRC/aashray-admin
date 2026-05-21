@@ -30,6 +30,24 @@ const today = new Date();
 
   document.getElementById('start_date').value = today.toISOString().split('T')[0];
   document.getElementById('end_date').value = tomorrow.toISOString().split('T')[0];
+  document.getElementById(
+  'openBusSummaryModal'
+).addEventListener(
+  'click',
+  openBusSummaryModal
+);
+
+document.getElementById(
+  'closeBusSummaryModal'
+).addEventListener(
+  'click',
+  () => {
+
+    document.getElementById(
+      'busSummaryModal'
+    ).style.display = 'none';
+  }
+);
 
   statusDropdown = document.getElementById("status");
   issueCreditsField = document.getElementById("issueCreditsField");
@@ -836,4 +854,124 @@ function formatDateTime(dateInput) {
   const minutes = String(dateObj.getMinutes()).padStart(2, '0');
 
   return `${day}-${month}-${year} ${hours}:${minutes}`;
+}
+
+
+function openBusSummaryModal() {
+
+  const container =
+    document.getElementById(
+      'busSummaryContainer'
+    );
+
+  const grouped = {};
+
+  travelReport.forEach(booking => {
+
+    const key = [
+      booking.date,
+      booking.travellingFrom ||
+      (
+        booking.pickup_point === 'Research Centre'
+          ? 'Research Centre to Mumbai'
+          : 'Mumbai to Research Centre'
+      ),
+      booking.bus_name || 'Unassigned',
+      booking.status,
+      booking.capacity || ''
+    ].join('|');
+
+    if (!grouped[key]) {
+
+      grouped[key] = {
+        date: booking.date,
+        route:
+          booking.travellingFrom ||
+          (
+            booking.pickup_point === 'Research Centre'
+              ? 'Research Centre to Mumbai'
+              : 'Mumbai to Research Centre'
+          ),
+        bus: booking.bus_name || '',
+        status: booking.status,
+        capacity: booking.capacity || '',
+        count: 0
+      };
+    }
+
+    grouped[key].count++;
+  });
+
+  const rows =
+    Object.values(grouped);
+
+  let html = `
+  
+    <div class="table-responsive">
+
+      <table
+        class="table table-bordered table-striped"
+      >
+
+        <thead>
+
+          <tr>
+            <th>Date</th>
+            <th>Route</th>
+            <th>Bus</th>
+            <th>Status</th>
+            <th>Capacity</th>
+            <th>Count</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+  `;
+
+  rows.forEach(row => {
+
+    html += `
+    
+      <tr>
+
+        <td>
+          ${formatDate(row.date)}
+        </td>
+
+        <td>
+          ${row.route}
+        </td>
+
+        <td>
+          ${row.bus}
+        </td>
+
+        <td>
+          ${row.status}
+        </td>
+
+        <td>
+          ${row.capacity}
+        </td>
+
+        <td>
+          ${row.count}
+        </td>
+
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  document.getElementById(
+    'busSummaryModal'
+  ).style.display = 'block';
 }

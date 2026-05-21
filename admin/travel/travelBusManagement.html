@@ -603,36 +603,185 @@
     <br>
 
 <div style="
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:25px;
+  margin-top:30px;
+  border-top:1px solid #e5e5e5;
+  padding-top:20px;
 ">
 
-  <button
-    type="button"
-    class="btn btn-secondary"
-    onclick="
-      document.getElementById(
-        'bulkMasterPreviewModal'
-      ).style.display='none'
+  <!-- Warning -->
+
+  <div
+    id="bulkDuplicateWarning"
+    style="
+      display:none;
+      background:#fff3e0;
+      color:#e65100;
+      padding:12px 16px;
+      border-radius:8px;
+      margin-bottom:18px;
+      font-weight:600;
+      text-align:center;
+      border:1px solid #ffcc80;
     "
   >
-    Cancel
-  </button>
+    ⚠️ Duplicate buses detected.
+    Resolve before importing.
+  </div>
 
-  <button
-    type="button"
-    class="btn btn-success"
-    id="confirmBulkMasterImport"
-  >
-    Create All Buses
-  </button>
+  <!-- Options -->
 
-</div>
+  <div style="
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-bottom:25px;
+    padding-left:10px;
+  ">
+
+    <label style="
+      display:flex;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      font-size:15px;
+    ">
+
+      <input
+        type="checkbox"
+        id="ignoreDuplicateBuses"
+        style="
+          width:18px;
+          height:18px;
+          cursor:pointer;
+        "
+      >
+
+      <span>
+        Ignore duplicate buses
+        and continue import
+      </span>
+
+    </label>
+
+    <div
+      id="bulkUpdateContainer"
+      style="display:none;"
+    >
+
+      <label style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        cursor:pointer;
+        font-size:15px;
+      ">
+
+        <input
+          type="checkbox"
+          id="updateExistingBuses"
+          style="
+            width:18px;
+            height:18px;
+            cursor:pointer;
+          "
+        >
+
+        <span>
+          Update existing buses
+          instead of skipping
+        </span>
+
+      </label>
+
+    </div>
+
+  </div>
+
+  <!-- Buttons -->
+
+  <div style="
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+  ">
+
+    <button
+      type="button"
+      class="btn btn-secondary"
+      onclick="
+        document.getElementById(
+          'bulkMasterPreviewModal'
+        ).style.display='none'
+      "
+    >
+      Cancel
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-success"
+      id="confirmBulkMasterImport"
+    >
+      Create All Buses
+    </button>
 
   </div>
 
 </div>
+  </div>
+
+</div>
+
+<div
+  id="bulkDetailsModal"
+  class="modal"
+  style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    z-index:10003;
+    overflow:auto;
+  "
+>
+
+<div
+  class="modal-content"
+  style="
+    background:white;
+    padding:2rem;
+    margin:3% auto;
+    width:95%;
+    max-width:1200px;
+    border-radius:12px;
+    position:relative;
+    max-height:90vh;
+    overflow:auto;
+  "
+>
+
+<span
+  id="closeBulkDetailsModal"
+  style="
+    position:absolute;
+    top:10px;
+    right:20px;
+    font-size:28px;
+    cursor:pointer;
+  "
+>
+  &times;
+</span>
+
+    <div id="bulkDetailsContent"></div>
+
+  </div>
+
+</div>
+
+
 </body>
 </html>

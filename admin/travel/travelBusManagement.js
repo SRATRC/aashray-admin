@@ -1055,6 +1055,17 @@ renderBulkMasterPreview(
       0
     );
 
+
+const hasDuplicateBuses =
+  data.buses.some(
+    bus => bus.duplicateBus
+  );
+
+    const totalDuplicateBuses =
+  data.buses.filter(
+    bus => bus.duplicateBus
+  ).length;
+
   container.innerHTML = `
 
     <div style="
@@ -1159,6 +1170,27 @@ renderBulkMasterPreview(
           Already Assigned
         </div>
       </div>
+
+      <div style="
+  background:#fbe9e7;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+">
+
+  <div style="
+    font-size:28px;
+    font-weight:bold;
+    color:#d84315;
+  ">
+    ${totalDuplicateBuses}
+  </div>
+
+  <div>
+    Duplicate Buses
+  </div>
+
+</div>
 
     </div>
 
@@ -1284,152 +1316,62 @@ ${
         </div>
 
         <button
-          type="button"
-          class="btn btn-sm btn-primary"
-          onclick="
-            toggleBulkPreviewTable(
-              'bulkTable${index}'
-            )
-          "
-        >
-          View Details
-        </button>
-
-        <div
-          id="bulkTable${index}"
-          style="
-            display:none;
-            margin-top:15px;
-          "
-        >
-
-          <table class="table">
-
-            <thead>
-
-              <tr>
-
-                <th>
-                  Category
-                </th>
-
-                <th>
-                  Booking IDs
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              <tr>
-
-                <td>
-                  Valid
-                </td>
-
-                <td>
-                  ${
-                    bus.validPassengers
-  .map(
-    item =>
-
-`${item.bookingid}
-
-${item.name
-  ? ` - ${item.name}`
-  : ''}`
-  )
-  .join('<br>')
-                    || '-'
-                  }
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>
-                  Overflow
-                </td>
-
-                <td>
-                  ${
-                    bus.overflowPassengers
-  .map(
-    item =>
-
-`${item.bookingid}
-
-${item.name
-  ? ` - ${item.name}`
-  : ''}`
-  )
-  .join('<br>')
-                    || '-'
-                  }
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>
-                  Invalid
-                </td>
-
-                <td>
-                  ${
-                    bus.invalidPassengers
-  .map(
-    item =>
-
-`${item.bookingid} - ${item.reason}`
-  )
-  .join('<br>')
-                    || '-'
-                  }
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>
-                  Already Assigned
-                </td>
-
-                <td>
-                  ${
-                    bus.alreadyAssigned
-  .map(
-    item =>
-
-`${item.bookingid}
-
-${item.name
-  ? ` - ${item.name}`
-  : ''}`
-  )
-  .join('<br>')
-                    || '-'
-                  }
-                </td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
+  type="button"
+  class="btn btn-sm btn-primary"
+  onclick="
+    openBulkDetailsModal(
+      ${index}
+    )
+  "
+>
+  View Details
+</button>
 
       </div>
     `
     ).join('')}
   `;
+  document.getElementById(
+  'bulkDuplicateWarning'
+).style.display =
+
+  hasDuplicateBuses
+    ? 'block'
+    : 'none';
+
+document.getElementById(
+  'bulkUpdateContainer'
+).style.display =
+
+  hasDuplicateBuses
+    ? 'block'
+    : 'none';
+
+    const duplicateCheckbox =
+  document.getElementById(
+    'ignoreDuplicateBuses'
+  );
+
+duplicateCheckbox.onchange =
+  () => {
+
+    document.getElementById(
+      'confirmBulkMasterImport'
+    ).disabled =
+
+      hasDuplicateBuses &&
+
+      !duplicateCheckbox.checked;
+  };
+
+document.getElementById(
+  'confirmBulkMasterImport'
+).disabled =
+
+  hasDuplicateBuses;
 }
+
+
 
 function
 toggleBulkPreviewTable(
@@ -1476,9 +1418,14 @@ confirmBulkMasterImport() {
 
           body: JSON.stringify({
 
-            buses:
-              bulkMasterPreview.buses,
-          }),
+  buses:
+    bulkMasterPreview.buses,
+
+  update_existing:
+    document.getElementById(
+      'updateExistingBuses'
+    )?.checked || false,
+}),
         }
       );
 
@@ -2135,3 +2082,179 @@ renderEditPreview(
   </div>
   `;
 }
+
+function openBulkDetailsModal(
+  index
+) {
+
+  const bus =
+    bulkMasterPreview
+      .buses[index];
+
+  document.getElementById(
+    'bulkDetailsModal'
+  ).style.display =
+    'block';
+
+  document.getElementById(
+    'bulkDetailsContent'
+  ).innerHTML = `
+
+    <h2>
+      ${bus.bus_name}
+    </h2>
+
+    <div style="
+      margin-bottom:20px;
+      color:#666;
+    ">
+      ${bus.stops.join(' → ')}
+    </div>
+
+    ${renderBulkDetailsTable(
+      'Valid',
+      bus.validPassengers,
+      false
+    )}
+
+    ${renderBulkDetailsTable(
+      'Overflow',
+      bus.overflowPassengers,
+      false
+    )}
+
+    ${renderBulkDetailsTable(
+      'Already Assigned',
+      bus.alreadyAssigned,
+      false
+    )}
+
+    ${renderBulkDetailsTable(
+      'Invalid',
+      bus.invalidPassengers,
+      true
+    )}
+  `;
+}
+
+function renderBulkDetailsTable(
+  title,
+  rows,
+  isInvalid = false
+) {
+
+  return `
+
+    <h3 style="
+      margin-top:25px;
+    ">
+      ${title}
+    </h3>
+
+    <table class="table">
+
+      <thead>
+
+        <tr>
+
+          <th>
+            Booking ID
+          </th>
+
+          <th>
+            Name
+          </th>
+
+          ${
+            isInvalid
+              ? `
+                <th>
+                  Reason
+                </th>
+              `
+              : `
+                <th>
+                  Pickup
+                </th>
+
+                <th>
+                  Drop
+                </th>
+              `
+          }
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        ${
+          rows.length
+
+            ? rows.map(
+                item => `
+
+                <tr>
+
+                  <td>
+                    ${item.bookingid}
+                  </td>
+
+                  <td>
+                    ${item.name || '-'}
+                  </td>
+
+                  ${
+                    isInvalid
+                      ? `
+                        <td>
+                          ${item.reason || '-'}
+                        </td>
+                      `
+                      : `
+                        <td>
+                          ${item.pickup || '-'}
+                        </td>
+
+                        <td>
+                          ${item.drop || '-'}
+                        </td>
+                      `
+                  }
+
+                </tr>
+              `
+              ).join('')
+
+            : `
+              <tr>
+                <td colspan="4">
+                  No Data
+                </td>
+              </tr>
+            `
+        }
+
+      </tbody>
+
+    </table>
+  `;
+}
+
+document.addEventListener(
+  'click',
+  event => {
+
+    if (
+      event.target.id ===
+      'closeBulkDetailsModal'
+    ) {
+
+      document.getElementById(
+        'bulkDetailsModal'
+      ).style.display =
+        'none';
+    }
+  }
+);
