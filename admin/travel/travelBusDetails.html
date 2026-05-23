@@ -5,9 +5,10 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Travel Bus Details</title>
 
@@ -29,102 +30,79 @@
 
 <body>
 
-<div class="header">
-  <div class="container">
-    <div class="logout">
-      <a href="travelBusManagement.html">Back</a>
-      &nbsp; | &nbsp;
-      <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-      &nbsp; | &nbsp;
-      <a href="javascript:void(0);" onclick="logout()">Logout</a>
-    </div>
-  </div>
-</div>
-
-<div class="middlecontent">
-  <div class="container">
-
-    <div class="whitesec">
-      <div class="inner-padding">
-
-        <!-- Bus Info -->
-        <div id="busInfoSection">
-
-        </div>
-
-        <!-- Actions -->
-        <div class="form-group form-submit">
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="openAssignPassengerModal"
-          >
-            Assign Passengers
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="bulkUploadPassengers"
-          >
-            Bulk Upload
-          </button>
-          <input
-            type="file"
-            id="bulkUploadInput"
-            accept=".xlsx,.xls"
-            style="display:none;"
-          />
-
-        </div>
-
-        <!-- Search -->
-        <input
-          type="text"
-          id="tableSearch"
-          class="form-control search-box"
-          placeholder="Search..."
-        >
-
-        <!-- Passenger Table -->
-        <div class="table-responsive">
-
-          <table
-            id="busPassengerTable"
-            class="table table-striped table-bordered"
-          >
-
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Mobile</th>
-                <th>Card No</th>
-                <th>Booking ID</th>
-                <th>Pickup</th>
-                <th>Drop</th>
-                <th>Coordinator</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="travelBusManagement.html">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
-
   </div>
-</div>
 
-<!-- Assign Passenger Modal -->
-<div id="assignPassengerModal" class="modal" style="
+  <div class="middlecontent">
+    <div class="container">
+
+      <div class="whitesec">
+        <div class="inner-padding">
+
+          <!-- Bus Info -->
+          <div id="busInfoSection">
+
+          </div>
+
+          <!-- Actions -->
+          <div class="form-group form-submit">
+
+            <button type="button" class="btn btn-primary" id="openAssignPassengerModal">
+              Assign Passengers
+            </button>
+
+            <button type="button" class="btn btn-primary" id="bulkUploadPassengers">
+              Bulk Upload
+            </button>
+            <input type="file" id="bulkUploadInput" accept=".xlsx,.xls" style="display:none;" />
+
+          </div>
+
+          <!-- Search -->
+          <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+
+          <!-- Passenger Table -->
+          <div class="table-responsive">
+
+            <table id="busPassengerTable" class="table table-striped table-bordered">
+
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Pickup</th>
+                  <th>Drop</th>
+                  <th>Coordinator</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Assign Passenger Modal -->
+  <div id="assignPassengerModal" class="modal" style="
   display:none;
   position:fixed;
   top:0;
@@ -136,7 +114,7 @@
   overflow:auto;
 ">
 
-  <div class="modal-content" style="
+    <div class="modal-content" style="
     background:white;
     padding:2rem;
     margin:3% auto;
@@ -146,96 +124,74 @@
     position:relative;
   ">
 
-    <span
-      id="closeAssignPassengerModal"
-      style="
+      <span id="closeAssignPassengerModal" style="
         position:absolute;
         top:10px;
         right:15px;
         font-size:24px;
         cursor:pointer;
-      "
-    >
-      &times;
-    </span>
+      ">
+        &times;
+      </span>
 
-    <h2>Assign Passengers</h2>
-    <div
-      style="
+      <h2>Assign Passengers</h2>
+      <div style="
         display:flex;
         gap:20px;
         margin-bottom:15px;
-      "
-    >
+      ">
 
-      <label>
-        <input
-          type="checkbox"
-          id="showSameRoute"
-          checked
-        />
-        Show This Route Bookings
-      </label>
+        <label>
+          <input type="checkbox" id="showSameRoute" checked />
+          Show This Route Bookings
+        </label>
 
-      <label>
-        <input
-          type="checkbox"
-          id="showOtherRoutes"
-        />
-        Show Other Route Bookings
-      </label>
+        <label>
+          <input type="checkbox" id="showOtherRoutes" />
+          Show Other Route Bookings
+        </label>
 
-    </div>
+      </div>
 
-    <div class="table-responsive">
+      <div class="table-responsive">
 
-      <table
-        id="availablePassengerTable"
-        class="table table-striped table-bordered"
-      >
+        <table id="availablePassengerTable" class="table table-striped table-bordered">
 
-        <thead>
-          <tr>
-            <th>Select</th>
-            <th>Name</th>
-            <th>Mobile</th>
-            <th>Card No</th>
-            <th>Booking ID</th>
-            <th>Pickup</th>
-            <th>Drop</th>
-            <th>Route Type</th>
-            <th>Booking Status</th>
-            <th>Total People</th>
-          </tr>
-        </thead>
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Name</th>
+              <th>Mobile</th>
+              <th>Card No</th>
+              <th>Booking ID</th>
+              <th>Pickup</th>
+              <th>Drop</th>
+              <th>Route Type</th>
+              <th>Booking Status</th>
+              <th>Total People</th>
+            </tr>
+          </thead>
 
-        <tbody>
+          <tbody>
 
-        </tbody>
+          </tbody>
 
-      </table>
+        </table>
 
-    </div>
+      </div>
 
-    <div class="form-group form-submit">
+      <div class="form-group form-submit">
 
-      <button
-        type="button"
-        class="btn btn-primary"
-        id="assignSelectedPassengers"
-      >
-        Assign Selected
-      </button>
+        <button type="button" class="btn btn-primary" id="assignSelectedPassengers">
+          Assign Selected
+        </button>
+
+      </div>
 
     </div>
-
   </div>
-</div>
 
-<div
-  id="bulkPreviewModal"
-  class="modal"
-  style="
+  <div id="bulkPreviewModal" class="modal" style="
     display:none;
     position:fixed;
     top:0;
@@ -245,12 +201,9 @@
     background:rgba(0,0,0,0.6);
     z-index:9999;
     overflow:auto;
-  "
->
+  ">
 
-  <div
-    class="modal-content"
-    style="
+    <div class="modal-content" style="
       background:white;
       padding:2rem;
       margin:3% auto;
@@ -258,90 +211,75 @@
       max-width:1200px;
       border-radius:10px;
       position:relative;
-    "
-  >
+    ">
 
-    <span
-      id="closeBulkPreviewModal"
-      style="
+      <span id="closeBulkPreviewModal" style="
         position:absolute;
         top:10px;
         right:15px;
         font-size:24px;
         cursor:pointer;
-      "
-    >
-      &times;
-    </span>
+      ">
+        &times;
+      </span>
 
-    <h2>
-      Bulk Upload Preview
-    </h2>
+      <h2>
+        Bulk Upload Preview
+      </h2>
 
-    <div
-      id="bulkPreviewSummary"
-      style="
+      <div id="bulkPreviewSummary" style="
         margin-bottom:20px;
         font-weight:600;
-      "
-    >
+      ">
 
-    </div>
+      </div>
 
-    <div class="table-responsive">
+      <div class="table-responsive">
 
-      <table
-        class="
+        <table class="
           table
           table-striped
           table-bordered
-        "
-        id="bulkPreviewTable"
-      >
+        " id="bulkPreviewTable">
 
-        <thead>
+          <thead>
 
-          <tr>
+            <tr>
 
-            <th>Booking ID</th>
-            <th>Name</th>
-            <th>Pickup</th>
-            <th>Drop</th>  
-            <th>Status</th>
+              <th>Booking ID</th>
+              <th>Name</th>
+              <th>Pickup</th>
+              <th>Drop</th>
+              <th>Status</th>
 
-            <th>Result</th>
+              <th>Result</th>
 
-            <th>Coordinator</th>
+              <th>Coordinator</th>
 
-          </tr>
+            </tr>
 
-        </thead>
+          </thead>
 
-        <tbody>
+          <tbody>
 
-        </tbody>
+          </tbody>
 
-      </table>
+        </table>
 
-    </div>
+      </div>
 
-    <div
-      class="form-group form-submit"
-    >
+      <div class="form-group form-submit">
 
-      <button
-        type="button"
-        class="btn btn-primary"
-        id="confirmBulkAssign"
-      >
-        Confirm Import
-      </button>
+        <button type="button" class="btn btn-primary" id="confirmBulkAssign">
+          Confirm Import
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
-</div>
-
 </body>
+
 </html>

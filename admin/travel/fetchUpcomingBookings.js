@@ -24,36 +24,36 @@ const PICKUP_DROP_POINTS = [
 
 document.addEventListener('DOMContentLoaded', async function () {
 
-const today = new Date();
+  const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
 
   document.getElementById('start_date').value = today.toISOString().split('T')[0];
   document.getElementById('end_date').value = tomorrow.toISOString().split('T')[0];
   document.getElementById(
-  'openBusSummaryModal'
-).addEventListener(
-  'click',
-  openBusSummaryModal
-);
+    'openBusSummaryModal'
+  ).addEventListener(
+    'click',
+    openBusSummaryModal
+  );
 
-document.getElementById(
-  'closeBusSummaryModal'
-).addEventListener(
-  'click',
-  () => {
+  document.getElementById(
+    'closeBusSummaryModal'
+  ).addEventListener(
+    'click',
+    () => {
 
-    document.getElementById(
-      'busSummaryModal'
-    ).style.display = 'none';
-  }
-);
+      document.getElementById(
+        'busSummaryModal'
+      ).style.display = 'none';
+    }
+  );
 
   statusDropdown = document.getElementById("status");
   issueCreditsField = document.getElementById("issueCreditsField");
   issueCreditsDropdown = document.getElementById("issueCredits");
 
-    statusDropdown.addEventListener("change", () => {
+  statusDropdown.addEventListener("change", () => {
     if (statusDropdown.value === "admin cancelled") {
       issueCreditsField.style.display = "block";
     } else {
@@ -63,22 +63,22 @@ document.getElementById(
   });
 
   function populatePickupDropDropdowns() {
-  const pickupSelect = document.getElementById('txnPickup');
-  const dropSelect = document.getElementById('txnDrop');
+    const pickupSelect = document.getElementById('txnPickup');
+    const dropSelect = document.getElementById('txnDrop');
 
-  if (!pickupSelect || !dropSelect) return;
+    if (!pickupSelect || !dropSelect) return;
 
-  PICKUP_DROP_POINTS.forEach(point => {
-    const opt1 = new Option(point, point);
-    const opt2 = new Option(point, point);
-    pickupSelect.add(opt1);
-    dropSelect.add(opt2);
-  });
-}
+    PICKUP_DROP_POINTS.forEach(point => {
+      const opt1 = new Option(point, point);
+      const opt2 = new Option(point, point);
+      pickupSelect.add(opt1);
+      dropSelect.add(opt2);
+    });
+  }
 
-populatePickupDropDropdowns();
+  populatePickupDropDropdowns();
   // ✅ Populate Pickup / Drop dropdowns (Transaction Edit Modal)
-  
+
 
   const form = document.getElementById('reportForm');
   const upcomingTableBody = document.getElementById('upcomingBookings').querySelector('tbody');
@@ -96,7 +96,7 @@ populatePickupDropDropdowns();
 
   // Restore filters and auto-submit
   sessionStorage.removeItem('filterStatusArray');
-restoreFilters();
+  restoreFilters();
   if (sessionStorage.getItem('filterStartDate') || sessionStorage.getItem('filterStatus')) {
     form.dispatchEvent(new Event('submit')); // Auto-fetch data
   }
@@ -111,34 +111,34 @@ restoreFilters();
     const dropRC = document.getElementById('dropRC')?.checked;
     const rawCheckedValues = [...document.querySelectorAll('input[name="status"]:checked')].map(c => c.value);
 
-const normalizedStatuses = [];
-const adminCommentFilters = [];
+    const normalizedStatuses = [];
+    const adminCommentFilters = [];
 
-rawCheckedValues.forEach(val => {
-  if (val === 'wrong form cancel') {
-    adminCommentFilters.push('admin_cancel_wrong_form');
-  } else if (val === 'seats full cancel') {
-    adminCommentFilters.push('admin_cancel_seats_full');
-  } else {
-    normalizedStatuses.push(val);
-  }
-});
+    rawCheckedValues.forEach(val => {
+      if (val === 'wrong form cancel') {
+        adminCommentFilters.push('admin_cancel_wrong_form');
+      } else if (val === 'seats full cancel') {
+        adminCommentFilters.push('admin_cancel_seats_full');
+      } else {
+        normalizedStatuses.push(val);
+      }
+    });
 
-const searchParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
+    const searchParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
 
-if (normalizedStatuses.length > 0) {
-  normalizedStatuses.forEach(s => searchParams.append('statuses', s));
-}
+    if (normalizedStatuses.length > 0) {
+      normalizedStatuses.forEach(s => searchParams.append('statuses', s));
+    }
 
-// 🚨 This was the missing condition:
-if (adminCommentFilters.length > 0) {
-  searchParams.append('statuses', 'admin cancelled');
-  adminCommentFilters.forEach(c => searchParams.append('adminComments', c));
-}
+    // 🚨 This was the missing condition:
+    if (adminCommentFilters.length > 0) {
+      searchParams.append('statuses', 'admin cancelled');
+      adminCommentFilters.forEach(c => searchParams.append('adminComments', c));
+    }
 
 
-if (pickupRC) searchParams.append('pickupRC', true);
-if (dropRC) searchParams.append('dropRC', true);
+    if (pickupRC) searchParams.append('pickupRC', true);
+    if (dropRC) searchParams.append('dropRC', true);
 
     // Save filters
     sessionStorage.setItem('filterStartDate', startDate);
@@ -161,20 +161,20 @@ if (dropRC) searchParams.append('dropRC', true);
         const summaryBody = document.getElementById('summaryBooking').querySelector('tbody');
         summaryBody.innerHTML = "";
         summary.data.forEach((s) => {
-  let displayStatus = statusLabelMap[s.status] || s.status;
+          let displayStatus = statusLabelMap[s.status] || s.status;
 
-  if (s.status === 'admin cancelled') {
-    if (s.admin_comments === 'admin_cancel_wrong_form') {
-      displayStatus = 'Cancelled as wrong form filled';
-    } else if (s.admin_comments === 'admin_cancel_seats_full') {
-      displayStatus = 'Cancelled as all seats are booked';
-    }
-  }
+          if (s.status === 'admin cancelled') {
+            if (s.admin_comments === 'admin_cancel_wrong_form') {
+              displayStatus = 'Cancelled as wrong form filled';
+            } else if (s.admin_comments === 'admin_cancel_seats_full') {
+              displayStatus = 'Cancelled as all seats are booked';
+            }
+          }
 
-  const row = document.createElement('tr');
-  row.innerHTML = `<td>${s.destination}</td><td>${displayStatus}</td><td>${s.count}</td>`;
-  summaryBody.appendChild(row);
-});
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${s.destination}</td><td>${displayStatus}</td><td>${s.count}</td>`;
+          summaryBody.appendChild(row);
+        });
 
       }
 
@@ -199,46 +199,46 @@ if (dropRC) searchParams.append('dropRC', true);
         document.getElementById("selectedDate").textContent = `For [${formatDate(startDate)} to ${formatDate(endDate)}]`;
 
         const normalize = str =>
-  (str || "")
-    .toLowerCase()
-    .replace(/[–—]/g, '-') // normalize dash variants
-    .trim()
-    .replace(/\s+/g, ' ');
+          (str || "")
+            .toLowerCase()
+            .replace(/[–—]/g, '-') // normalize dash variants
+            .trim()
+            .replace(/\s+/g, ' ');
 
-const mumbaiPoints = new Set([
-  'dadar', 'dadar (swami narayan temple)', 'dadar (swaminarayan temple)', 'amar mahal',
-            'airoli', 'borivali', 'vile parle (sahara star)', 'airport terminal 1', 'airport terminal 2',
-            'railway station (bandra terminus)', 'railway station (kurla terminus)', 'railway station (ltt - kurla)',
-            'railway station (csmt)', 'railway station (mumbai central)', 'mullund', 'mulund',
-            'airport t1', 'airport t2', 'other', 'other (enter location in comments)',
-            'railway station (ltt - kurla)', 'vile parle (sahara star hotel)', 'full car booking',
-            'dadar (pritam hotel)','borivali (indraprasth shopping centre)','dadar (pritam da dhaba)','mulund (sarvoday nagar)', 'railway station (ltt - kurla terminus)'
-]);
+        const mumbaiPoints = new Set([
+          'dadar', 'dadar (swami narayan temple)', 'dadar (swaminarayan temple)', 'amar mahal',
+          'airoli', 'borivali', 'vile parle (sahara star)', 'airport terminal 1', 'airport terminal 2',
+          'railway station (bandra terminus)', 'railway station (kurla terminus)', 'railway station (ltt - kurla)',
+          'railway station (csmt)', 'railway station (mumbai central)', 'mullund', 'mulund',
+          'airport t1', 'airport t2', 'other', 'other (enter location in comments)',
+          'railway station (ltt - kurla)', 'vile parle (sahara star hotel)', 'full car booking',
+          'dadar (pritam hotel)', 'borivali (indraprasth shopping centre)', 'dadar (pritam da dhaba)', 'mulund (sarvoday nagar)', 'railway station (ltt - kurla terminus)'
+        ]);
 
-travelReport.forEach((b, index) => {
-const pickup = normalize(b.pickup_point);
-const drop = normalize(b.drop_point);
+        travelReport.forEach((b, index) => {
+          const pickup = normalize(b.pickup_point);
+          const drop = normalize(b.drop_point);
 
-let travellingFrom = "";
+          let travellingFrom = "";
 
-if (pickup === "research centre" && drop !== "research centre") {
-  travellingFrom = "Research Centre to Mumbai";
-} else if (drop === "research centre" && pickup !== "research centre") {
-  travellingFrom = "Mumbai to Research Centre";
-}
+          if (pickup === "research centre" && drop !== "research centre") {
+            travellingFrom = "Research Centre to Mumbai";
+          } else if (drop === "research centre" && pickup !== "research centre") {
+            travellingFrom = "Mumbai to Research Centre";
+          }
 
 
-  const rowStyle = travellingFrom === "Research Centre to Mumbai" ? 'background-color: #ffff99;' : "";
+          const rowStyle = travellingFrom === "Research Centre to Mumbai" ? 'background-color: #ffff99;' : "";
 
-  const row = document.createElement('tr');
-  const adminComments = b.admin_comments || "";
-  const comments = b.comments || "";
-  const bookedBy = b.bookedBy || "";
-  const arrival_time = b.arrival_time || "";
+          const row = document.createElement('tr');
+          const adminComments = b.admin_comments || "";
+          const comments = b.comments || "";
+          const bookedBy = b.bookedBy || "";
+          const arrival_time = b.arrival_time || "";
 
-  row.setAttribute("style", rowStyle);
+          row.setAttribute("style", rowStyle);
 
-  row.innerHTML = `
+          row.innerHTML = `
     <td>
   ${index + 1}
   <span
@@ -257,24 +257,22 @@ if (pickup === "research centre" && drop !== "research centre") {
     <td>${b.bus_name || ''}</td>
     <td>${b.bus_timing || ''}</td>
     <td>
-      ${
-        b.coordinator_bookingid ===
-        b.bookingid
+      ${b.coordinator_bookingid ===
+              b.bookingid
 
-          ? 'Yes'
+              ? 'Yes'
 
-          : ''
-      }
+              : ''
+            }
     </td>
     <td>${formatDateTime(arrival_time)}</td>
     <td>${b.leaving_post_adhyayan == 1 ? 'Yes' : 'No'}</td>
-    <td>${
-  b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_wrong_form'
-    ? 'Cancelled as wrong form filled'
-    : b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_seats_full'
-    ? 'Cancelled as all seats are booked'
-    : statusLabelMap[b.status] || b.status
-}</td>
+    <td>${b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_wrong_form'
+              ? 'Cancelled as wrong form filled'
+              : b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_seats_full'
+                ? 'Cancelled as all seats are booked'
+                : statusLabelMap[b.status] || b.status
+            }</td>
 <td>
       <a href="#" onclick="openUpdateModal('${b.bookingid}')">Update Booking Status</a>
     </td>
@@ -292,13 +290,13 @@ if (pickup === "research centre" && drop !== "research centre") {
     <td>${travellingFrom}</td>
   `;
 
-  upcomingTableBody.appendChild(row);
-  // Enhance table after rendering
+          upcomingTableBody.appendChild(row);
+          // Enhance table after rendering
 
-});
-setTimeout(() => {
-  enhanceTable('upcomingBookings', 'tableSearch');
-}, 100);
+        });
+        setTimeout(() => {
+          enhanceTable('upcomingBookings', 'tableSearch');
+        }, 100);
 
 
         // Restore scroll
@@ -311,7 +309,7 @@ setTimeout(() => {
       console.error('Error fetching bookings:', error);
     }
   });
-    // ✅ Update Booking Status modal buttons
+  // ✅ Update Booking Status modal buttons
   document.getElementById('closeModal')?.addEventListener('click', () => {
     document.getElementById('updateModal').style.display = 'none';
   });
@@ -377,8 +375,8 @@ async function openTransactionEditModal(bookingId) {
       ? String(booking.leaving_post_adhyayan)
       : '';
   await loadAvailableBusRoutes(
-  booking
-);
+    booking
+  );
   document.getElementById('transactionModal').style.display = 'block';
 }
 
@@ -450,7 +448,7 @@ async function loadAvailableBusRoutes(
     ).value =
 
       booking.coordinator_bookingid ===
-      booking.bookingid
+        booking.bookingid
 
         ? 'yes'
         : 'no';
@@ -460,7 +458,7 @@ async function loadAvailableBusRoutes(
     console.error(error);
   }
 }
-  
+
 
 document.getElementById('transactionForm').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -494,7 +492,7 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
 
     const data = await response.json();
 
-        if (data.capacityExceeded) {
+    if (data.capacityExceeded) {
 
       const increaseCapacity =
         confirm(
@@ -553,7 +551,7 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
 
       // RESUBMIT ORIGINAL REQUEST
 
-     // RETRY ORIGINAL UPDATE
+      // RETRY ORIGINAL UPDATE
 
       const retryResponse =
         await fetch(
@@ -612,131 +610,132 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
           'Do you want to assign passenger to this bus?'
         );
 
-    if (assignToNewBus) {
+        if (assignToNewBus) {
 
-      // Fetch matching bus details
-      const busDetailsResponse = await fetch(
-        `${CONFIG.basePath}/travel/bus-group/${data.matchingBus.id}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${sessionStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      const busDetails =
-        await busDetailsResponse.json();
-
-      if (!busDetailsResponse.ok) {
-        throw new Error(
-          busDetails.message
-        );
-      }
-
-      const currentPassengers =
-        busDetails.passengers.length;
-
-      const busCapacity =
-        Number(busDetails.bus.capacity);
-
-      const totalAfterAssign =
-        currentPassengers + 1;
-
-      // Capacity exceeded
-      if (
-        totalAfterAssign > busCapacity
-      ) {
-
-        const increaseCapacity =
-          confirm(
-            `Matching bus capacity is ${busCapacity}.\n\n` +
-            `Passenger count after reassignment will become ${totalAfterAssign}.\n\n` +
-            `Do you want to increase capacity?`
+          // Fetch matching bus details
+          const busDetailsResponse = await fetch(
+            `${CONFIG.basePath}/travel/bus-group/${data.matchingBus.id}`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${sessionStorage.getItem('token')}`,
+              },
+            }
           );
 
-        if (!increaseCapacity) {
-          return;
-        }
+          const busDetails =
+            await busDetailsResponse.json();
 
-        const newCapacity = prompt(
-          'Enter new capacity',
-          totalAfterAssign
-        );
+          if (!busDetailsResponse.ok) {
+            throw new Error(
+              busDetails.message
+            );
+          }
 
-        if (!newCapacity) {
-          return;
-        }
+          const currentPassengers =
+            busDetails.passengers.length;
 
-        // Update capacity
-        const capacityResponse =
-          await fetch(
-            `${CONFIG.basePath}/travel/bus-group/capacity`,
+          const busCapacity =
+            Number(busDetails.bus.capacity);
+
+          const totalAfterAssign =
+            currentPassengers + 1;
+
+          // Capacity exceeded
+          if (
+            totalAfterAssign > busCapacity
+          ) {
+
+            const increaseCapacity =
+              confirm(
+                `Matching bus capacity is ${busCapacity}.\n\n` +
+                `Passenger count after reassignment will become ${totalAfterAssign}.\n\n` +
+                `Do you want to increase capacity?`
+              );
+
+            if (!increaseCapacity) {
+              return;
+            }
+
+            const newCapacity = prompt(
+              'Enter new capacity',
+              totalAfterAssign
+            );
+
+            if (!newCapacity) {
+              return;
+            }
+
+            // Update capacity
+            const capacityResponse =
+              await fetch(
+                `${CONFIG.basePath}/travel/bus-group/capacity`,
+                {
+                  method: 'PUT',
+
+                  headers: {
+                    'Content-Type':
+                      'application/json',
+
+                    Authorization:
+                      `Bearer ${sessionStorage.getItem('token')}`,
+                  },
+
+                  body: JSON.stringify({
+                    bus_group_id:
+                      data.matchingBus.id,
+
+                    capacity: newCapacity,
+                  }),
+                }
+              );
+
+            const capacityData =
+              await capacityResponse.json();
+
+            if (!capacityResponse.ok) {
+              throw new Error(
+                capacityData.message
+              );
+            }
+          }
+
+          // Assign passenger
+          const reassignResponse = await fetch(
+            `${CONFIG.basePath}/travel/bookingupdate`,
             {
               method: 'PUT',
 
               headers: {
-                'Content-Type':
-                  'application/json',
+                'Content-Type': 'application/json',
 
                 Authorization:
                   `Bearer ${sessionStorage.getItem('token')}`,
               },
 
               body: JSON.stringify({
-                bus_group_id:
-                  data.matchingBus.id,
+                bookingid: payload.bookingid,
+                bus_group_id: data.matchingBus.id,
 
-                capacity: newCapacity,
+                is_coordinator:
+                  payload.is_coordinator,
               }),
             }
           );
 
-        const capacityData =
-          await capacityResponse.json();
+          const reassignData =
+            await reassignResponse.json();
 
-        if (!capacityResponse.ok) {
-          throw new Error(
-            capacityData.message
+          if (!reassignResponse.ok) {
+            throw new Error(
+              reassignData.message
+            );
+          }
+
+          alert(
+            'Passenger assigned to new bus successfully'
           );
         }
-      }
-
-      // Assign passenger
-      const reassignResponse = await fetch(
-        `${CONFIG.basePath}/travel/bookingupdate`,
-        {
-          method: 'PUT',
-
-          headers: {
-            'Content-Type': 'application/json',
-
-            Authorization:
-              `Bearer ${sessionStorage.getItem('token')}`,
-          },
-
-          body: JSON.stringify({
-            bookingid: payload.bookingid,
-            bus_group_id: data.matchingBus.id,
-
-            is_coordinator:
-              payload.is_coordinator,
-          }),
-        }
-      );
-
-      const reassignData =
-        await reassignResponse.json();
-
-      if (!reassignResponse.ok) {
-        throw new Error(
-          reassignData.message
-        );
-      }
-
-      alert(
-        'Passenger assigned to new bus successfully'
-      );    }
       }
 
       alert('Transaction updated successfully!');
@@ -774,18 +773,18 @@ document.getElementById('updateBookingForm').addEventListener('submit', async fu
   const statusInput = document.getElementById('status').value;
   const issueCredits = document.getElementById("issueCredits").value;
 
-  
+
   let status = statusInput;
   let adminComments = document.getElementById('adminComments').value;
 
-// If frontend selected a mapped value, adjust for DB
-if (statusInput === 'wrong form cancel') {
-  status = 'admin cancelled';
-  if (!adminComments) adminComments = 'admin_cancel_wrong_form';
-} else if (statusInput === 'seats full cancel') {
-  status = 'admin cancelled';
-  if (!adminComments) adminComments = 'admin_cancel_seats_full';
-}
+  // If frontend selected a mapped value, adjust for DB
+  if (statusInput === 'wrong form cancel') {
+    status = 'admin cancelled';
+    if (!adminComments) adminComments = 'admin_cancel_wrong_form';
+  } else if (statusInput === 'seats full cancel') {
+    status = 'admin cancelled';
+    if (!adminComments) adminComments = 'admin_cancel_seats_full';
+  }
 
   try {
     const response = await fetch(`${CONFIG.basePath}/travel/booking/status`, {
@@ -799,7 +798,7 @@ if (statusInput === 'wrong form cancel') {
 
     const data = await response.json();
 
- 
+
     if (response.ok) {
       alert(data.message);
     } else {
@@ -859,47 +858,71 @@ function formatDateTime(dateInput) {
 
 function openBusSummaryModal() {
 
-  const container =
-    document.getElementById(
-      'busSummaryContainer'
-    );
-
   const grouped = {};
 
   travelReport.forEach(booking => {
 
-    const key = [
-      booking.date,
+    const route =
       booking.travellingFrom ||
       (
         booking.pickup_point === 'Research Centre'
           ? 'Research Centre to Mumbai'
           : 'Mumbai to Research Centre'
-      ),
-      booking.bus_name || 'Unassigned',
-      booking.status,
-      booking.capacity || ''
+      );
+
+    const key = [
+      booking.date,
+      route,
+      booking.bus_name || 'Unassigned'
     ].join('|');
 
     if (!grouped[key]) {
 
       grouped[key] = {
-        date: booking.date,
-        route:
-          booking.travellingFrom ||
-          (
-            booking.pickup_point === 'Research Centre'
-              ? 'Research Centre to Mumbai'
-              : 'Mumbai to Research Centre'
-          ),
-        bus: booking.bus_name || '',
-        status: booking.status,
-        capacity: booking.capacity || '',
-        count: 0
+
+        date:
+          booking.date,
+
+        route,
+
+        bus:
+          booking.bus_name || '',
+
+        capacity:
+          booking.bus_capacity || '',
+
+        confirmed: 0,
+
+        proceedForPayment: 0,
+
+        total: 0,
+
+        remainingSeats: 0,
       };
     }
 
-    grouped[key].count++;
+    if (booking.status === 'confirmed') {
+      grouped[key].confirmed++;
+    }
+
+    else if (
+      booking.status ===
+      'proceed for payment'
+    ) {
+      grouped[key].proceedForPayment++;
+    }
+
+    else if (
+      booking.status === 'waiting'
+    ) {
+      grouped[key].waiting++;
+    }
+
+    grouped[key].total++;
+
+    grouped[key].remainingSeats =
+      Number(grouped[key].capacity || 0) -
+      grouped[key].total;
   });
 
   const rows =
@@ -913,18 +936,18 @@ function openBusSummaryModal() {
         class="table table-bordered table-striped"
       >
 
-        <thead>
-
-          <tr>
-            <th>Date</th>
-            <th>Route</th>
-            <th>Bus</th>
-            <th>Status</th>
-            <th>Capacity</th>
-            <th>Count</th>
-          </tr>
-
-        </thead>
+<thead>
+  <tr>
+    <th>Date</th>
+    <th>Route</th>
+    <th>Bus</th>
+    <th>Capacity</th>
+    <th>Confirmed</th>
+    <th>Proceed for Payment</th>
+    <th>Total</th>
+    <th>Remaining Seats</th>
+  </tr>
+</thead>
 
         <tbody>
   `;
@@ -932,35 +955,42 @@ function openBusSummaryModal() {
   rows.forEach(row => {
 
     html += `
-    
-      <tr>
+    <tr>
 
-        <td>
-          ${formatDate(row.date)}
-        </td>
+      <td>
+        ${formatDate(row.date)}
+      </td>
 
-        <td>
-          ${row.route}
-        </td>
+      <td>
+        ${row.route}
+      </td>
 
-        <td>
-          ${row.bus}
-        </td>
+      <td>
+        ${row.bus}
+      </td>
 
-        <td>
-          ${row.status}
-        </td>
+      <td>
+        ${row.capacity}
+      </td>
 
-        <td>
-          ${row.capacity}
-        </td>
+      <td>
+        ${row.confirmed}
+      </td>
 
-        <td>
-          ${row.count}
-        </td>
+      <td>
+        ${row.proceedForPayment}
+      </td>
 
-      </tr>
-    `;
+      <td>
+        ${row.total}
+      </td>
+
+      <td>
+        ${row.remainingSeats}
+      </td>
+
+    </tr>
+  `;
   });
 
   html += `
@@ -968,6 +998,11 @@ function openBusSummaryModal() {
       </table>
     </div>
   `;
+
+  const container =
+    document.getElementById(
+      'busSummaryContainer'
+    );
 
   container.innerHTML = html;
 

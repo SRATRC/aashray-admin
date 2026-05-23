@@ -82,30 +82,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchBusGroups();
 
   document
-  .getElementById(
-    'confirmBulkMasterImport'
-  )
-  .addEventListener(
-    'click',
-    confirmBulkMasterImport
-  );
+    .getElementById(
+      'confirmBulkMasterImport'
+    )
+    .addEventListener(
+      'click',
+      confirmBulkMasterImport
+    );
 
-document
-  .getElementById(
-    'closeBulkMasterPreviewModal'
-  )
-  .addEventListener(
-    'click',
-    () => {
+  document
+    .getElementById(
+      'closeBulkMasterPreviewModal'
+    )
+    .addEventListener(
+      'click',
+      () => {
 
-      document
-        .getElementById(
-          'bulkMasterPreviewModal'
-        )
-        .style.display =
+        document
+          .getElementById(
+            'bulkMasterPreviewModal'
+          )
+          .style.display =
           'none';
-    }
-  );
+      }
+    );
   // Open create modal
   document.getElementById('openCreateBusModal')
     .addEventListener('click', () => {
@@ -115,37 +115,37 @@ document
       ).style.display = 'block';
     });
 
-    document
-  .getElementById(
-    'openBulkMasterUpload'
-  )
-  .addEventListener(
-    'click',
-    () => {
+  document
+    .getElementById(
+      'openBulkMasterUpload'
+    )
+    .addEventListener(
+      'click',
+      () => {
 
-      document
-        .getElementById(
-          'bulkMasterUploadInput'
-        )
-        .click();
-    }
-  );
+        document
+          .getElementById(
+            'bulkMasterUploadInput'
+          )
+          .click();
+      }
+    );
 
-document
-  .getElementById(
-    'bulkMasterUploadInput'
-  )
-  .addEventListener(
-    'change',
-    handleBulkMasterUpload
-  );
+  document
+    .getElementById(
+      'bulkMasterUploadInput'
+    )
+    .addEventListener(
+      'change',
+      handleBulkMasterUpload
+    );
 
-    document.getElementById(
-      'stopsContainer'
-    ).innerHTML = '';
+  document.getElementById(
+    'stopsContainer'
+  ).innerHTML = '';
 
-    addStopField();
-    addStopField();
+  addStopField();
+  addStopField();
 
   // Close create modal
   document.getElementById('closeCreateBusModal')
@@ -167,104 +167,104 @@ document
       createBus
     );
 
-document.getElementById(
-  'previewCreateBusBtn'
-).addEventListener(
-  'click',
-  previewCreateBus
-);
+  document.getElementById(
+    'previewCreateBusBtn'
+  ).addEventListener(
+    'click',
+    previewCreateBus
+  );
 
-document.getElementById(
-  'previewEditBusBtn'
-)?.addEventListener(
-  'click',
-  previewEditBus
-);
-document.getElementById(
-  'confirmUpdateAssignBtn'
-)?.addEventListener(
-  'click',
-  () => {
+  document.getElementById(
+    'previewEditBusBtn'
+  )?.addEventListener(
+    'click',
+    previewEditBus
+  );
+  document.getElementById(
+    'confirmUpdateAssignBtn'
+  )?.addEventListener(
+    'click',
+    () => {
 
-    previewUpdateAssign =
-      true;
+      previewUpdateAssign =
+        true;
 
-    document.getElementById(
-      'editBusForm'
-    ).requestSubmit();
-  }
-);
+      document.getElementById(
+        'editBusForm'
+      ).requestSubmit();
+    }
+  );
 
-document.getElementById(
-  'confirmUpdateOnlyBtn'
-)?.addEventListener(
-  'click',
-  () => {
+  document.getElementById(
+    'confirmUpdateOnlyBtn'
+  )?.addEventListener(
+    'click',
+    () => {
 
-    previewUpdateAssign =
-      false;
+      previewUpdateAssign =
+        false;
 
-    document.getElementById(
-      'editBusForm'
-    ).requestSubmit();
-  }
-);
+      document.getElementById(
+        'editBusForm'
+      ).requestSubmit();
+    }
+  );
 
-document.getElementById(
-  'closeEditPreviewModal'
-)?.addEventListener(
-  'click',
-  () => {
+  document.getElementById(
+    'closeEditPreviewModal'
+  )?.addEventListener(
+    'click',
+    () => {
 
-    document.getElementById(
-      'editBusPreviewModal'
-    ).style.display =
-      'none';
-  }
-);
+      document.getElementById(
+        'editBusPreviewModal'
+      ).style.display =
+        'none';
+    }
+  );
 
-    document.getElementById(
-      'closeCreatePreviewModal'
-    ).addEventListener(
-      'click',
-      () => {
+  document.getElementById(
+    'closeCreatePreviewModal'
+  ).addEventListener(
+    'click',
+    () => {
 
-        document.getElementById(
-          'createBusPreviewModal'
-        ).style.display =
-          'none';
-      }
-    );
+      document.getElementById(
+        'createBusPreviewModal'
+      ).style.display =
+        'none';
+    }
+  );
 
-    document.getElementById(
-  'confirmCreateAssignBtn'
-).addEventListener(
-  'click',
-  () => {
+  document.getElementById(
+    'confirmCreateAssignBtn'
+  ).addEventListener(
+    'click',
+    () => {
 
-    previewCreateAssign =
-      true;
+      previewCreateAssign =
+        true;
 
-    document.getElementById(
-      'createBusForm'
-    ).requestSubmit();
-  }
-);
+      document.getElementById(
+        'createBusForm'
+      ).requestSubmit();
+    }
+  );
 
-document.getElementById(
-  'confirmCreateOnlyBtn'
-).addEventListener(
-  'click',
-  () => {
+  document.getElementById(
+    'confirmCreateOnlyBtn'
+  ).addEventListener(
+    'click',
+    () => {
 
-    previewCreateAssign =
-      false;
+      previewCreateAssign =
+        false;
 
-    document.getElementById(
-      'createBusForm'
-    ).requestSubmit();
-  }
-);
+      document.getElementById(
+        'createBusForm'
+      ).requestSubmit();
+    }
+  );
   // Close edit modal
   document.getElementById('closeEditBusModal')
     ?.addEventListener(
@@ -299,7 +299,7 @@ function closeEditBusModal() {
   document.getElementById(
     'editBusModal'
   ).style.display = 'none';
-} 
+}
 
 function addStopField(
   value = ''
@@ -351,9 +351,27 @@ function addStopField(
     </div>
   `;
 
-  div.querySelector(
-    'select'
-  ).value = value;
+  const select =
+    div.querySelector('select');
+
+  if (
+    value &&
+    !Array.from(select.options).some(
+      option => option.value === value
+    )
+  ) {
+
+    const customOption =
+      document.createElement('option');
+
+    customOption.value = value;
+
+    customOption.textContent = value;
+
+    select.appendChild(customOption);
+  }
+
+  select.value = value;
 
   document
     .getElementById(
@@ -412,9 +430,28 @@ function addEditStopField(
     </div>
   `;
 
-  div.querySelector(
-    'select'
-  ).value = value;
+  const select =
+    div.querySelector('select');
+
+  if (
+    value &&
+    !Array.from(select.options).some(
+      option => option.value === value
+    )
+  ) {
+
+    const customOption =
+      document.createElement('option');
+
+    customOption.value = value;
+
+    customOption.textContent = value;
+
+    select.appendChild(customOption);
+  }
+
+  select.value = value;
+
 
   document
     .getElementById(
@@ -532,19 +569,18 @@ function renderBusTable() {
 
       <td colspan="2">
 
-        ${
-          bus.stops
-            ?.sort(
-              (a, b) =>
-                a.stop_order -
-                b.stop_order
-            )
-            .map(
-              s => s.stop_name
-            )
-            .join(' → ')
-            || ''
-        }
+        ${bus.stops
+        ?.sort(
+          (a, b) =>
+            a.stop_order -
+            b.stop_order
+        )
+        .map(
+          s => s.stop_name
+        )
+        .join(' → ')
+      || ''
+      }
 
       </td>
 
@@ -557,11 +593,10 @@ function renderBusTable() {
       </td>
 
       <td>
-        ${
-          bus.passengers
-            ? bus.passengers.length
-            : 0
-        }
+        ${bus.passengers
+        ? bus.passengers.length
+        : 0
+      }
       </td>
 
       <td>
@@ -627,7 +662,7 @@ function openEditBusModal(bus) {
     'edit_bus_name'
   ).value = bus.bus_name || '';
 
- document.getElementById(
+  document.getElementById(
     'editStopsContainer'
   ).innerHTML = '';
 
@@ -668,15 +703,27 @@ async function createBus(event) {
   try {
 
     const stops =
-    Array.from(
-      document.querySelectorAll(
-        '.bus-stop'
+      Array.from(
+        document.querySelectorAll(
+          '.bus-stop'
+        )
       )
-    )
-    .map(
-      item => item.value
-    )
-    .filter(Boolean);
+        .map(
+          item => item.value
+        )
+        .filter(Boolean);
+
+    const selectedBookingIds =
+      Array.from(
+
+        document.querySelectorAll(
+          '.preview-assign-checkbox:checked'
+        )
+
+      ).map(
+        item =>
+          item.dataset.bookingid
+      );
 
     const payload = {
 
@@ -689,7 +736,7 @@ async function createBus(event) {
         document.getElementById(
           'bus_name'
         ).value,
-      
+
       stops,
 
       timing:
@@ -710,8 +757,11 @@ async function createBus(event) {
       force_create:
         forceCreateBus,
 
-        auto_assign:
-          previewCreateAssign,
+      auto_assign:
+        previewCreateAssign,
+
+      selected_bookingids:
+        selectedBookingIds,
     };
 
     const response = await fetch(
@@ -821,15 +871,15 @@ async function updateBus(event) {
         ).value,
 
       stops:
-      Array.from(
-        document.querySelectorAll(
-          '.edit-bus-stop'
+        Array.from(
+          document.querySelectorAll(
+            '.edit-bus-stop'
+          )
         )
-      )
-      .map(
-        item => item.value
-      )
-      .filter(Boolean),
+          .map(
+            item => item.value
+          )
+          .filter(Boolean),
 
       timing:
         document.getElementById(
@@ -888,9 +938,9 @@ async function updateBus(event) {
 }
 
 async function
-handleBulkMasterUpload(
-  event
-) {
+  handleBulkMasterUpload(
+    event
+  ) {
 
   try {
 
@@ -920,36 +970,36 @@ handleBulkMasterUpload(
             }
           );
 
-      const busesSheet =
-        workbook.Sheets['Buses'];
+        const busesSheet =
+          workbook.Sheets['Buses'];
 
-      const assignmentsSheet =
-        workbook.Sheets['Assignments'];
+        const assignmentsSheet =
+          workbook.Sheets['Assignments'];
 
-      if (
-        !busesSheet ||
-        !assignmentsSheet
-      ) {
+        if (
+          !busesSheet ||
+          !assignmentsSheet
+        ) {
 
-        throw new Error(
-          'Excel must contain Buses and Assignments sheets'
-        );
-      }
+          throw new Error(
+            'Excel must contain Buses and Assignments sheets'
+          );
+        }
 
-      const busesData =
-        XLSX.utils.sheet_to_json(
-          busesSheet
-        );
+        const busesData =
+          XLSX.utils.sheet_to_json(
+            busesSheet
+          );
 
-      const assignmentsData =
-        XLSX.utils.sheet_to_json(
-          assignmentsSheet
-        );
+        const assignmentsData =
+          XLSX.utils.sheet_to_json(
+            assignmentsSheet
+          );
 
         const response =
           await fetch(
 
-`${CONFIG.basePath}/travel/bulk-master-preview`,
+            `${CONFIG.basePath}/travel/bulk-master-preview`,
 
             {
 
@@ -961,17 +1011,17 @@ handleBulkMasterUpload(
                   'application/json',
 
                 Authorization:
-`Bearer ${sessionStorage.getItem('token')}`,
+                  `Bearer ${sessionStorage.getItem('token')}`,
               },
 
-body: JSON.stringify({
+              body: JSON.stringify({
 
-  buses:
-    busesData,
+                buses:
+                  busesData,
 
-  assignments:
-    assignmentsData,
-}),
+                assignments:
+                  assignmentsData,
+              }),
             }
           );
 
@@ -997,7 +1047,7 @@ body: JSON.stringify({
             'bulkMasterPreviewModal'
           )
           .style.display =
-            'block';
+          'block';
       };
 
     reader.readAsArrayBuffer(
@@ -1011,9 +1061,9 @@ body: JSON.stringify({
 }
 
 function
-renderBulkMasterPreview(
-  data
-) {
+  renderBulkMasterPreview(
+    data
+  ) {
 
   const container =
     document.getElementById(
@@ -1056,15 +1106,15 @@ renderBulkMasterPreview(
     );
 
 
-const hasDuplicateBuses =
-  data.buses.some(
-    bus => bus.duplicateBus
-  );
+  const hasDuplicateBuses =
+    data.buses.some(
+      bus => bus.duplicateBus
+    );
 
-    const totalDuplicateBuses =
-  data.buses.filter(
-    bus => bus.duplicateBus
-  ).length;
+  const totalDuplicateBuses =
+    data.buses.filter(
+      bus => bus.duplicateBus
+    ).length;
 
   container.innerHTML = `
 
@@ -1195,7 +1245,7 @@ const hasDuplicateBuses =
     </div>
 
     ${data.buses.map(
-      (bus, index) => `
+    (bus, index) => `
 
       <div style="
         border:1px solid #ddd;
@@ -1220,9 +1270,8 @@ const hasDuplicateBuses =
   🚌 ${bus.bus_name}
 </h3>
 
-${
-  bus.duplicateBus
-    ? `
+${bus.duplicateBus
+        ? `
       <div style="
         color:#c62828;
         margin-top:6px;
@@ -1231,8 +1280,8 @@ ${
         ⚠️ Bus already exists
       </div>
     `
-    : ''
-}
+        : ''
+      }
           
             <div style="
               margin-top:5px;
@@ -1241,9 +1290,8 @@ ${
               ${bus.stops.join(' → ')}
             </div>
 
-            ${
-  bus.routeError
-    ? `
+            ${bus.routeError
+        ? `
       <div style="
         color:#c62828;
         margin-top:5px;
@@ -1252,8 +1300,8 @@ ${
         ❌ ${bus.routeError}
       </div>
     `
-    : ''
-}
+        : ''
+      }
 
           </div>
 
@@ -1329,54 +1377,54 @@ ${
 
       </div>
     `
-    ).join('')}
+  ).join('')}
   `;
   document.getElementById(
-  'bulkDuplicateWarning'
-).style.display =
+    'bulkDuplicateWarning'
+  ).style.display =
 
-  hasDuplicateBuses
-    ? 'block'
-    : 'none';
+    hasDuplicateBuses
+      ? 'block'
+      : 'none';
 
-document.getElementById(
-  'bulkUpdateContainer'
-).style.display =
-
-  hasDuplicateBuses
-    ? 'block'
-    : 'none';
-
-    const duplicateCheckbox =
   document.getElementById(
-    'ignoreDuplicateBuses'
-  );
+    'bulkUpdateContainer'
+  ).style.display =
 
-duplicateCheckbox.onchange =
-  () => {
+    hasDuplicateBuses
+      ? 'block'
+      : 'none';
 
+  const duplicateCheckbox =
     document.getElementById(
-      'confirmBulkMasterImport'
-    ).disabled =
+      'ignoreDuplicateBuses'
+    );
 
-      hasDuplicateBuses &&
+  duplicateCheckbox.onchange =
+    () => {
 
-      !duplicateCheckbox.checked;
-  };
+      document.getElementById(
+        'confirmBulkMasterImport'
+      ).disabled =
 
-document.getElementById(
-  'confirmBulkMasterImport'
-).disabled =
+        hasDuplicateBuses &&
 
-  hasDuplicateBuses;
+        !duplicateCheckbox.checked;
+    };
+
+  document.getElementById(
+    'confirmBulkMasterImport'
+  ).disabled =
+
+    hasDuplicateBuses;
 }
 
 
 
 function
-toggleBulkPreviewTable(
-  id
-) {
+  toggleBulkPreviewTable(
+    id
+  ) {
 
   const el =
     document.getElementById(
@@ -1386,7 +1434,7 @@ toggleBulkPreviewTable(
   el.style.display =
 
     el.style.display ===
-    'none'
+      'none'
 
       ? 'block'
 
@@ -1394,14 +1442,14 @@ toggleBulkPreviewTable(
 }
 
 async function
-confirmBulkMasterImport() {
+  confirmBulkMasterImport() {
 
   try {
 
     const response =
       await fetch(
 
-`${CONFIG.basePath}/travel/bulk-master-create`,
+        `${CONFIG.basePath}/travel/bulk-master-create`,
 
         {
 
@@ -1413,19 +1461,19 @@ confirmBulkMasterImport() {
               'application/json',
 
             Authorization:
-`Bearer ${sessionStorage.getItem('token')}`,
+              `Bearer ${sessionStorage.getItem('token')}`,
           },
 
           body: JSON.stringify({
 
-  buses:
-    bulkMasterPreview.buses,
+            buses:
+              bulkMasterPreview.buses,
 
-  update_existing:
-    document.getElementById(
-      'updateExistingBuses'
-    )?.checked || false,
-}),
+            update_existing:
+              document.getElementById(
+                'updateExistingBuses'
+              )?.checked || false,
+          }),
         }
       );
 
@@ -1448,7 +1496,7 @@ confirmBulkMasterImport() {
         'bulkMasterPreviewModal'
       )
       .style.display =
-        'none';
+      'none';
 
     fetchBusGroups();
 
@@ -1467,7 +1515,7 @@ async function exportBusPassengers(
 
     const response = await fetch(
 
-`${CONFIG.basePath}/travel/bus-group/${busGroupId}/export`,
+      `${CONFIG.basePath}/travel/bus-group/${busGroupId}/export`,
 
       {
         headers: {
@@ -1502,8 +1550,8 @@ async function exportBusPassengers(
 
     a.href = url;
 
-a.download =
-`${busName}_passengers.xlsx`;
+    a.download =
+      `${busName}_passengers.xlsx`;
     document.body.appendChild(
       a
     );
@@ -1540,7 +1588,7 @@ async function deleteBus(
     const response =
       await fetch(
 
-`${CONFIG.basePath}/travel/bus-group/${busId}`,
+        `${CONFIG.basePath}/travel/bus-group/${busId}`,
 
         {
           method: 'DELETE',
@@ -1575,7 +1623,7 @@ async function deleteBus(
 }
 
 async function
-previewCreateBus() {
+  previewCreateBus() {
 
   try {
 
@@ -1585,10 +1633,10 @@ previewCreateBus() {
           '.bus-stop'
         )
       )
-      .map(
-        item => item.value
-      )
-      .filter(Boolean);
+        .map(
+          item => item.value
+        )
+        .filter(Boolean);
 
     const payload = {
 
@@ -1608,7 +1656,7 @@ previewCreateBus() {
     const response =
       await fetch(
 
-`${CONFIG.basePath}/travel/bus-group/preview-create`,
+        `${CONFIG.basePath}/travel/bus-group/preview-create`,
 
         {
           method: 'POST',
@@ -1654,7 +1702,7 @@ previewCreateBus() {
 }
 
 async function
-previewEditBus() {
+  previewEditBus() {
 
   try {
 
@@ -1664,10 +1712,10 @@ previewEditBus() {
           '.edit-bus-stop'
         )
       )
-      .map(
-        item => item.value
-      )
-      .filter(Boolean);
+        .map(
+          item => item.value
+        )
+        .filter(Boolean);
 
     const payload = {
 
@@ -1687,7 +1735,7 @@ previewEditBus() {
     const response =
       await fetch(
 
-`${CONFIG.basePath}/travel/bus-group/preview-update`,
+        `${CONFIG.basePath}/travel/bus-group/preview-update`,
 
         {
           method: 'POST',
@@ -1734,16 +1782,16 @@ previewEditBus() {
 }
 
 function
-renderCreateBusPreview(
-  data
-) {
+  renderCreateBusPreview(
+    data
+  ) {
 
   const container =
     document.getElementById(
       'createBusPreviewContainer'
     );
 
-container.innerHTML = `
+  container.innerHTML = `
 
 <div style="
   display:flex;
@@ -1824,14 +1872,36 @@ container.innerHTML = `
 
   <th>Already Assigned</th>
 
+  <th>Assign</th>
 </tr>
 
 </thead>
 
 <tbody>
 
-${data.rows.map(
-  row => `
+${[...data.rows]
+
+      .sort((a, b) => {
+
+        if (
+          a.alreadyAssigned &&
+          !b.alreadyAssigned
+        ) {
+          return 1;
+        }
+
+        if (
+          !a.alreadyAssigned &&
+          b.alreadyAssigned
+        ) {
+          return -1;
+        }
+
+        return 0;
+      })
+
+      .map(
+        row => `
 
 <tr>
 
@@ -1856,16 +1926,28 @@ ${data.rows.map(
   </td>
 
   <td>
-    ${
-      row.alreadyAssigned
-        ? 'Yes'
-        : 'No'
-    }
+    ${row.alreadyAssigned
+            ? 'Yes'
+            : 'No'
+          }
   </td>
+
+<td>
+  <input
+    type="checkbox"
+    class="preview-assign-checkbox"
+    data-bookingid="${row.bookingid}"
+
+    ${row.alreadyAssigned
+            ? ''
+            : 'checked'
+          }
+  >
+</td>
 
 </tr>
 `
-).join('')}
+      ).join('')}
 
 </tbody>
 
@@ -1876,9 +1958,9 @@ ${data.rows.map(
 }
 
 function
-renderEditPreview(
-  data
-) {
+  renderEditPreview(
+    data
+  ) {
 
   const container =
     document.getElementById(
@@ -1975,9 +2057,8 @@ renderEditPreview(
 
       <tbody>
 
-        ${
-          data.newlyMatching.map(
-            row => `
+        ${data.newlyMatching.map(
+    row => `
 
             <tr>
 
@@ -1998,17 +2079,16 @@ renderEditPreview(
               </td>
 
               <td>
-                ${
-                  row.alreadyAssigned
-                    ? 'Yes'
-                    : 'No'
-                }
+                ${row.alreadyAssigned
+        ? 'Yes'
+        : 'No'
+      }
               </td>
 
             </tr>
           `
-          ).join('')
-        }
+  ).join('')
+    }
 
       </tbody>
 
@@ -2048,9 +2128,8 @@ renderEditPreview(
 
       <tbody>
 
-        ${
-          data.noLongerMatching.map(
-            row => `
+        ${data.noLongerMatching.map(
+      row => `
 
             <tr>
 
@@ -2072,8 +2151,8 @@ renderEditPreview(
 
             </tr>
           `
-          ).join('')
-        }
+    ).join('')
+    }
 
       </tbody>
 
@@ -2112,28 +2191,28 @@ function openBulkDetailsModal(
     </div>
 
     ${renderBulkDetailsTable(
-      'Valid',
-      bus.validPassengers,
-      false
-    )}
+    'Valid',
+    bus.validPassengers,
+    false
+  )}
 
     ${renderBulkDetailsTable(
-      'Overflow',
-      bus.overflowPassengers,
-      false
-    )}
+    'Overflow',
+    bus.overflowPassengers,
+    false
+  )}
 
     ${renderBulkDetailsTable(
-      'Already Assigned',
-      bus.alreadyAssigned,
-      false
-    )}
+    'Already Assigned',
+    bus.alreadyAssigned,
+    false
+  )}
 
     ${renderBulkDetailsTable(
-      'Invalid',
-      bus.invalidPassengers,
-      true
-    )}
+    'Invalid',
+    bus.invalidPassengers,
+    true
+  )}
   `;
 }
 
@@ -2165,14 +2244,13 @@ function renderBulkDetailsTable(
             Name
           </th>
 
-          ${
-            isInvalid
-              ? `
+          ${isInvalid
+      ? `
                 <th>
                   Reason
                 </th>
               `
-              : `
+      : `
                 <th>
                   Pickup
                 </th>
@@ -2181,7 +2259,7 @@ function renderBulkDetailsTable(
                   Drop
                 </th>
               `
-          }
+    }
 
         </tr>
 
@@ -2189,11 +2267,10 @@ function renderBulkDetailsTable(
 
       <tbody>
 
-        ${
-          rows.length
+        ${rows.length
 
-            ? rows.map(
-                item => `
+      ? rows.map(
+        item => `
 
                 <tr>
 
@@ -2205,14 +2282,13 @@ function renderBulkDetailsTable(
                     ${item.name || '-'}
                   </td>
 
-                  ${
-                    isInvalid
-                      ? `
+                  ${isInvalid
+            ? `
                         <td>
                           ${item.reason || '-'}
                         </td>
                       `
-                      : `
+            : `
                         <td>
                           ${item.pickup || '-'}
                         </td>
@@ -2221,20 +2297,20 @@ function renderBulkDetailsTable(
                           ${item.drop || '-'}
                         </td>
                       `
-                  }
+          }
 
                 </tr>
               `
-              ).join('')
+      ).join('')
 
-            : `
+      : `
               <tr>
                 <td colspan="4">
                   No Data
                 </td>
               </tr>
             `
-        }
+    }
 
       </tbody>
 

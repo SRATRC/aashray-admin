@@ -31,189 +31,189 @@ document.addEventListener('DOMContentLoaded', async () => {
       assignSelectedPassengers
     );
 
-    document
-  .getElementById('showSameRoute')
-  ?.addEventListener(
-    'change',
-    () => {
+  document
+    .getElementById('showSameRoute')
+    ?.addEventListener(
+      'change',
+      () => {
 
-      openAssignPassengerModal();
-    }
-  );
-
-document
-  .getElementById('showOtherRoutes')
-  ?.addEventListener(
-    'change',
-    () => {
-
-      openAssignPassengerModal();
-    }
-  );
+        openAssignPassengerModal();
+      }
+    );
 
   document
-  .getElementById(
-    'bulkUploadPassengers'
-  )
-  .addEventListener(
-    'click',
-    () => {
+    .getElementById('showOtherRoutes')
+    ?.addEventListener(
+      'change',
+      () => {
 
-      document
-        .getElementById(
-          'bulkUploadInput'
-        )
-        .click();
-    }
-  );
-
-document
-  .getElementById(
-    'bulkUploadInput'
-  )
-  .addEventListener(
-    'change',
-
-    async event => {
-
-      const file =
-        event.target.files[0];
-
-      if (!file) {
-        return;
+        openAssignPassengerModal();
       }
+    );
 
-      const reader =
-        new FileReader();
+  document
+    .getElementById(
+      'bulkUploadPassengers'
+    )
+    .addEventListener(
+      'click',
+      () => {
 
-      reader.onload =
-        async e => {
+        document
+          .getElementById(
+            'bulkUploadInput'
+          )
+          .click();
+      }
+    );
 
-          const data =
-            new Uint8Array(
-              e.target.result
-            );
+  document
+    .getElementById(
+      'bulkUploadInput'
+    )
+    .addEventListener(
+      'change',
 
-          const workbook =
-            XLSX.read(
-              data,
-              {
-                type: 'array',
-              }
-            );
+      async event => {
 
-          const sheetName =
-            workbook.SheetNames[0];
+        const file =
+          event.target.files[0];
 
-          const worksheet =
-            workbook.Sheets[
-              sheetName
-            ];
+        if (!file) {
+          return;
+        }
 
-          const jsonData =
-            XLSX.utils.sheet_to_json(
-              worksheet
-            );
+        const reader =
+          new FileReader();
 
-          const bookingids =
-            jsonData
-              .map(
-                item =>
-                  item[
-                    'Booking Id'
-                  ]
-              )
-              .filter(Boolean);
+        reader.onload =
+          async e => {
 
-          const coordinatorRow =
-            jsonData.find(
-              item => {
+            const data =
+              new Uint8Array(
+                e.target.result
+              );
 
-                const value =
-                  item[
-                    'Coordinator?'
-                  ];
-
-                return (
-                  String(
-                    value || ''
-                  )
-                    .trim()
-                    .toLowerCase() ===
-                  'yes'
-                );
-              }
-            );
-
-          const coordinator_bookingid =
-            coordinatorRow?.[
-              'Booking Id'
-            ] || null;
-
-          try {
-
-            const response =
-              await fetch(
-
-`${CONFIG.basePath}/travel/bus/preview-bulk-upload`,
-
+            const workbook =
+              XLSX.read(
+                data,
                 {
-
-                  method: 'POST',
-
-                  headers: {
-
-                    'Content-Type':
-                      'application/json',
-
-                    Authorization:
-                      `Bearer ${sessionStorage.getItem('token')}`,
-                  },
-
-                  body: JSON.stringify({
-
-                    bus_group_id:
-                      busId,
-
-                    bookingids,
-
-                    coordinator_bookingid,
-                  }),
+                  type: 'array',
                 }
               );
 
-            const result =
-              await response.json();
+            const sheetName =
+              workbook.SheetNames[0];
 
-            if (
-              !response.ok
-            ) {
+            const worksheet =
+              workbook.Sheets[
+              sheetName
+              ];
 
-              throw new Error(
-                result.message
+            const jsonData =
+              XLSX.utils.sheet_to_json(
+                worksheet
+              );
+
+            const bookingids =
+              jsonData
+                .map(
+                  item =>
+                    item[
+                    'Booking Id'
+                    ]
+                )
+                .filter(Boolean);
+
+            const coordinatorRow =
+              jsonData.find(
+                item => {
+
+                  const value =
+                    item[
+                    'Coordinator?'
+                    ];
+
+                  return (
+                    String(
+                      value || ''
+                    )
+                      .trim()
+                      .toLowerCase() ===
+                    'yes'
+                  );
+                }
+              );
+
+            const coordinator_bookingid =
+              coordinatorRow?.[
+              'Booking Id'
+              ] || null;
+
+            try {
+
+              const response =
+                await fetch(
+
+                  `${CONFIG.basePath}/travel/bus/preview-bulk-upload`,
+
+                  {
+
+                    method: 'POST',
+
+                    headers: {
+
+                      'Content-Type':
+                        'application/json',
+
+                      Authorization:
+                        `Bearer ${sessionStorage.getItem('token')}`,
+                    },
+
+                    body: JSON.stringify({
+
+                      bus_group_id:
+                        busId,
+
+                      bookingids,
+
+                      coordinator_bookingid,
+                    }),
+                  }
+                );
+
+              const result =
+                await response.json();
+
+              if (
+                !response.ok
+              ) {
+
+                throw new Error(
+                  result.message
+                );
+              }
+
+              bulkPreviewData =
+                result;
+
+              renderBulkPreview(
+                result
+              );
+
+            } catch (error) {
+
+              alert(
+                error.message
               );
             }
+          };
 
-            bulkPreviewData =
-              result;
-
-            renderBulkPreview(
-              result
-            );
-
-          } catch (error) {
-
-            alert(
-              error.message
-            );
-          }
-        };
-
-      reader.readAsArrayBuffer(
-        file
-      );
-    }
-  );
+        reader.readAsArrayBuffer(
+          file
+        );
+      }
+    );
 
 });
 
@@ -279,18 +279,17 @@ function renderBusInfo() {
 
   <td colspan="3">
 
-    ${
-      bus.stops
-        ?.sort(
-          (a, b) =>
-            a.stop_order -
-            b.stop_order
-        )
-        .map(
-          item => item.stop_name
-        )
-        .join(' → ')
-        || '-'
+    ${bus.stops
+      ?.sort(
+        (a, b) =>
+          a.stop_order -
+          b.stop_order
+      )
+      .map(
+        item => item.stop_name
+      )
+      .join(' → ')
+    || '-'
     }
 
   </td>
@@ -317,7 +316,7 @@ function renderPassengerTable() {
     document.querySelector(
       '#busPassengerTable tbody'
     );
-    tbody.innerHTML = '';
+  tbody.innerHTML = '';
   const passengers =
     busData.passengers || [];
 
@@ -356,14 +355,6 @@ function renderPassengerTable() {
       </td>
 
       <td>
-        ${passenger.CardDb?.cardno || ''}
-      </td>
-
-      <td>
-        ${passenger.bookingid || ''}
-      </td>
-
-      <td>
         ${passenger.pickup_point || ''}
       </td>
 
@@ -373,10 +364,9 @@ function renderPassengerTable() {
 
       <td>
 
-        ${
-          isCoordinator
-            ? `<span style="color:green;font-weight:bold;">Coordinator</span>`
-            : `
+        ${isCoordinator
+        ? `<span style="color:green;font-weight:bold;">Coordinator</span>`
+        : `
               <button
                 class="btn btn-primary setCoordinatorBtn"
                 data-bookingid="${passenger.bookingid}"
@@ -384,7 +374,7 @@ function renderPassengerTable() {
                 Set Coordinator
               </button>
             `
-        }
+      }
 
       </td>
       <td>
@@ -517,7 +507,7 @@ function renderAvailablePassengers(passengers) {
   tbody.innerHTML = '';
   if (passengers.length === 0) {
 
-  tbody.innerHTML = `
+    tbody.innerHTML = `
     <tr>
       <td colspan="9">
         No passengers available
@@ -525,50 +515,50 @@ function renderAvailablePassengers(passengers) {
     </tr>
   `;
 
-  return;
-}
+    return;
+  }
 
-const showSameRoute =
-  document.getElementById(
-    'showSameRoute'
-  ).checked;
+  const showSameRoute =
+    document.getElementById(
+      'showSameRoute'
+    ).checked;
 
-const showOtherRoutes =
-  document.getElementById(
-    'showOtherRoutes'
-  ).checked;
+  const showOtherRoutes =
+    document.getElementById(
+      'showOtherRoutes'
+    ).checked;
 
   passengers.forEach(passenger => {
 
-  const stops =
-    busData.bus.stops
-      ?.sort(
-        (a, b) =>
-          a.stop_order -
-          b.stop_order
-      )
-      .map(
-        item => item.stop_name
-      ) || [];
+    const stops =
+      busData.bus.stops
+        ?.sort(
+          (a, b) =>
+            a.stop_order -
+            b.stop_order
+        )
+        .map(
+          item => item.stop_name
+        ) || [];
 
-  const pickupIndex =
-    stops.indexOf(
-      passenger.pickup_point
-    );
+    const pickupIndex =
+      stops.indexOf(
+        passenger.pickup_point
+      );
 
-  const dropIndex =
-    stops.indexOf(
-      passenger.drop_point
-    );
+    const dropIndex =
+      stops.indexOf(
+        passenger.drop_point
+      );
 
-  const isSameRoute =
+    const isSameRoute =
 
-    pickupIndex !== -1 &&
+      pickupIndex !== -1 &&
 
-    dropIndex !== -1 &&
+      dropIndex !== -1 &&
 
-    pickupIndex < dropIndex;
-    
+      pickupIndex < dropIndex;
+
     // FILTERING
 
     if (
@@ -606,14 +596,6 @@ const showOtherRoutes =
       </td>
 
       <td>
-        ${passenger.CardDb?.cardno || ''}
-      </td>
-
-      <td>
-        ${passenger.bookingid || ''}
-      </td>
-
-      <td>
         ${passenger.pickup_point || ''}
       </td>
 
@@ -622,11 +604,10 @@ const showOtherRoutes =
       </td>
 
       <td>
-        ${
-          isSameRoute
-            ? 'Same Route'
-            : 'Other Route'
-        }
+        ${isSameRoute
+        ? 'Same Route'
+        : 'Other Route'
+      }
       </td>
 
       <td>
@@ -665,58 +646,58 @@ async function assignSelectedPassengers() {
     }
 
     const currentPassengers =
-        busData.passengers.length;
+      busData.passengers.length;
 
-        const selectedPassengers =
-        bookingids.length;
+    const selectedPassengers =
+      bookingids.length;
 
-        const totalAfterAssign =
-        currentPassengers + selectedPassengers;
+    const totalAfterAssign =
+      currentPassengers + selectedPassengers;
 
-        const busCapacity =
-        Number(busData.bus.capacity);
+    const busCapacity =
+      Number(busData.bus.capacity);
 
-        if (totalAfterAssign > busCapacity) {
+    if (totalAfterAssign > busCapacity) {
 
-        const confirmed = confirm(
-            `Bus capacity is ${busCapacity}.\n\n` +
-            `After assignment total passengers will become ${totalAfterAssign}.\n\n` +
-            `Do you want to increase capacity?`
-        );
+      const confirmed = confirm(
+        `Bus capacity is ${busCapacity}.\n\n` +
+        `After assignment total passengers will become ${totalAfterAssign}.\n\n` +
+        `Do you want to increase capacity?`
+      );
 
-        if (!confirmed) {
-            return;
+      if (!confirmed) {
+        return;
+      }
+
+      const newCapacity = prompt(
+        'Enter new bus capacity',
+        totalAfterAssign
+      );
+
+      if (!newCapacity) {
+        return;
+      }
+
+      await fetch(
+        `${CONFIG.basePath}/travel/bus-group/capacity`,
+        {
+          method: 'PUT',
+
+          headers: {
+            'Content-Type': 'application/json',
+
+            Authorization:
+              `Bearer ${sessionStorage.getItem('token')}`,
+          },
+
+          body: JSON.stringify({
+            bus_group_id: busId,
+            capacity: newCapacity,
+          }),
         }
+      );
 
-        const newCapacity = prompt(
-            'Enter new bus capacity',
-            totalAfterAssign
-        );
-
-        if (!newCapacity) {
-            return;
-        }
-
-        await fetch(
-            `${CONFIG.basePath}/travel/bus-group/capacity`,
-            {
-            method: 'PUT',
-
-            headers: {
-                'Content-Type': 'application/json',
-
-                Authorization:
-                `Bearer ${sessionStorage.getItem('token')}`,
-            },
-
-            body: JSON.stringify({
-                bus_group_id: busId,
-                capacity: newCapacity,
-            }),
-            }
-        );
-
-        busData.bus.capacity = Number(newCapacity);
+      busData.bus.capacity = Number(newCapacity);
     }
 
     const response = await fetch(
@@ -894,27 +875,27 @@ async function handleBulkUpload(
           return;
         }
 
-     const coordinatorRow =
-  jsonData.find(item => {
+        const coordinatorRow =
+          jsonData.find(item => {
 
-    const value =
-      item['Coordinator?'];
+            const value =
+              item['Coordinator?'];
 
-    return (
-      String(value || '')
-        .trim()
-        .toLowerCase() === 'yes'
-    );
-  });
+            return (
+              String(value || '')
+                .trim()
+                .toLowerCase() === 'yes'
+            );
+          });
 
 
 
-    const coordinator_bookingid =
-      coordinatorRow?.['Booking Id'] || null;
+        const coordinator_bookingid =
+          coordinatorRow?.['Booking Id'] || null;
         const response =
           await fetch(
 
-`${CONFIG.basePath}/travel/bus-group/bulk-assign`,
+            `${CONFIG.basePath}/travel/bus-group/bulk-assign`,
 
             {
 
@@ -926,7 +907,7 @@ async function handleBulkUpload(
                   'application/json',
 
                 Authorization:
-`Bearer ${sessionStorage.getItem('token')}`,
+                  `Bearer ${sessionStorage.getItem('token')}`,
               },
 
               body: JSON.stringify({
@@ -1023,11 +1004,8 @@ function renderBulkPreview(
           'tr'
         );
 
-     row.innerHTML = `
+      row.innerHTML = `
 
-  <td>
-    ${item.bookingid}
-  </td>
 
   <td>
     ${item.name || '-'}
@@ -1050,11 +1028,10 @@ function renderBulkPreview(
   </td>
 
   <td>
-    ${
-      item.isCoordinator
-        ? 'YES'
-        : '-'
-    }
+    ${item.isCoordinator
+          ? 'YES'
+          : '-'
+        }
   </td>
 `;
       tbody.appendChild(
@@ -1077,22 +1054,22 @@ document
     async () => {
 
       if (
-  !bulkPreviewData?.validBookingIds?.length
-) {
+        !bulkPreviewData?.validBookingIds?.length
+      ) {
 
-  alert(
-    'No valid bookings available to assign'
-  );
+        alert(
+          'No valid bookings available to assign'
+        );
 
-  return;
-}
+        return;
+      }
 
       try {
 
         const response =
           await fetch(
 
-`${CONFIG.basePath}/travel/bus-group/bulk-assign`,
+            `${CONFIG.basePath}/travel/bus-group/bulk-assign`,
 
             {
 
@@ -1142,7 +1119,7 @@ document
             'bulkPreviewModal'
           )
           .style.display =
-            'none';
+          'none';
 
         fetchBusDetails();
 
@@ -1155,7 +1132,7 @@ document
     }
   );
 
-  document
+document
   .getElementById(
     'closeBulkPreviewModal'
   )
@@ -1169,6 +1146,6 @@ document
           'bulkPreviewModal'
         )
         .style.display =
-          'none';
+        'none';
     }
   );
