@@ -870,6 +870,21 @@ function openBusSummaryModal() {
           : 'Mumbai to Research Centre'
       );
 
+    const activeStatuses = [
+      'confirmed',
+      'proceed for payment',
+      'awaiting confirmation',
+      'waiting',
+    ];
+
+    if (
+      !activeStatuses.includes(
+        booking.status
+      )
+    ) {
+      return;
+    }
+
     const key = [
       booking.date,
       route,
@@ -879,7 +894,6 @@ function openBusSummaryModal() {
     if (!grouped[key]) {
 
       grouped[key] = {
-
         date:
           booking.date,
 
@@ -902,6 +916,7 @@ function openBusSummaryModal() {
     }
 
     if (booking.status === 'confirmed') {
+
       grouped[key].confirmed++;
     }
 
@@ -909,19 +924,16 @@ function openBusSummaryModal() {
       booking.status ===
       'proceed for payment'
     ) {
-      grouped[key].proceedForPayment++;
-    }
 
-    else if (
-      booking.status === 'waiting'
-    ) {
-      grouped[key].waiting++;
+      grouped[key].proceedForPayment++;
     }
 
     grouped[key].total++;
 
     grouped[key].remainingSeats =
-      Number(grouped[key].capacity || 0) -
+      Number(
+        grouped[key].capacity || 0
+      ) -
       grouped[key].total;
   });
 
