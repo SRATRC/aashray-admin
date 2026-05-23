@@ -1,11 +1,25 @@
-
 <script src="/style/js/roleCheck.js"></script>
 <script>
   checkRoleAccess(['utsavAdmin', 'superAdmin', 'utsavAdminReadOnly', 'utsavAdminRaj']); // customize allowed roles per page
 </script>
+<style>
+  .main-row:hover {
+    background: #fafafa;
+  }
 
+  .row-toggle {
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .expanded-actions button {
+    margin: 4px;
+  }
+</style>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,16 +32,16 @@
   <link rel="stylesheet" href="../../style/css/styles.css" />
   <style>
     .table-responsive {
-width: 100%;
-overflow-x: auto;
--webkit-overflow-scrolling: touch;
-}
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-.table {
-min-width: 1000px; /* Or adjust based on expected column count */
-width: 100%;
-}
-
+    .table {
+      min-width: 1000px;
+      /* Or adjust based on expected column count */
+      width: 100%;
+    }
   </style>
   <!-- Styles -->
   <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -40,9 +54,11 @@ width: 100%;
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="utsavReport.js"></script>
+  <script src="../../style/js/tableSortFilter.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
 </head>
+
 <body>
   <div class="header">
     <div class="container">
@@ -63,10 +79,14 @@ width: 100%;
           </div>
 
           <div class="form">
+
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+
             <div class="table-responsive">
               <table id="waitlistTable" class="table table-striped table-bordered">
                 <thead>
                   <tr>
+                    <th></th>
                     <th>Serial No</th>
                     <th>Utsav Name</th>
                     <th>Confirmed Count</th>
@@ -80,10 +100,6 @@ width: 100%;
                     <th>Volunteer List</th>
                     <th>Status</th>
                     <th>Action</th>
-                    <th>Checkin Scanner</th> 
-                    <th>Food Scanner</th> 
-                    <th>Register for Mumukshu</th>
-                    <th>Room Occupancy</th>
                   </tr>
                 </thead>
                 <tbody id="utsavTable">
@@ -99,4 +115,5 @@ width: 100%;
     </div>
   </div>
 </body>
+
 </html>
