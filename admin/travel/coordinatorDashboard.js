@@ -55,8 +55,6 @@ async function fetchDashboard() {
       }
     );
 
-    const data =
-      await response.json();
     if (
       response.status === 401 ||
       response.status === 403
@@ -66,13 +64,15 @@ async function fetchDashboard() {
       return;
     }
 
+    const data =
+      await response.json();
+
     if (!response.ok) {
 
       throw new Error(
         data.message
       );
     }
-
     renderCoordinatorInfo(
       data.coordinator
     );

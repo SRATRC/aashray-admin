@@ -728,26 +728,39 @@ async function assignSelectedPassengers() {
         return;
       }
 
-      await fetch(
-        `${CONFIG.basePath}/travel/bus-group/capacity`,
-        {
-          method: 'PUT',
+      const capacityResponse =
+        await fetch(
+          `${CONFIG.basePath}/travel/bus-group/capacity`,
+          {
+            method: 'PUT',
 
-          headers: {
-            'Content-Type': 'application/json',
+            headers: {
+              'Content-Type': 'application/json',
 
-            Authorization:
-              `Bearer ${sessionStorage.getItem('token')}`,
-          },
+              Authorization:
+                `Bearer ${sessionStorage.getItem('token')}`,
+            },
 
-          body: JSON.stringify({
-            bus_group_id: busId,
-            capacity: newCapacity,
-          }),
-        }
-      );
+            body: JSON.stringify({
+              bus_group_id: busId,
+              capacity: newCapacity,
+            }),
+          }
+        );
 
-      busData.bus.capacity = Number(newCapacity);
+      const capacityData =
+        await capacityResponse.json();
+
+      if (!capacityResponse.ok) {
+
+        throw new Error(
+          capacityData.message ||
+          'Failed to update capacity'
+        );
+      }
+
+      busData.bus.capacity =
+        Number(newCapacity);
     }
 
     const response = await fetch(

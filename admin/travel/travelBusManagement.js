@@ -110,6 +110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('openCreateBusModal')
     .addEventListener('click', () => {
 
+      forceCreateBus = false;
+
       document.getElementById(
         'createBusModal'
       ).style.display = 'block';
@@ -289,12 +291,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function closeCreateBusModal() {
 
+  forceCreateBus = false;
+
   document.getElementById(
     'createBusModal'
   ).style.display = 'none';
 }
 
 function closeEditBusModal() {
+
+  forceCreateBus = false;
 
   document.getElementById(
     'editBusModal'
@@ -539,6 +545,8 @@ async function fetchBusGroups() {
     renderBusTable();
 
   } catch (error) {
+
+    forceCreateBus = false;
 
     alert(error.message);
   }

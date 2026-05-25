@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           } else if (drop === "research centre" && pickup !== "research centre") {
             travellingFrom = "Mumbai to Research Centre";
           }
-
+          b.travellingFrom = travellingFrom;
 
           const rowStyle = travellingFrom === "Research Centre to Mumbai" ? 'background-color: #ffff99;' : "";
 
