@@ -253,42 +253,119 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${b.issuedto}</td>
     <td>${b.type}</td>
     <td>${b.pickup_point}</td>
-    <td>${b.drop_point}</td>
-    <td>${b.bus_name || ''}</td>
-    <td>${b.bus_timing || ''}</td>
-    <td>
-      ${b.coordinator_bookingid ===
-              b.bookingid
 
-              ? 'Yes'
+<td>${b.drop_point}</td>
 
-              : ''
-            }
-    </td>
-    <td>${formatDateTime(arrival_time)}</td>
-    <td>${b.leaving_post_adhyayan == 1 ? 'Yes' : 'No'}</td>
-    <td>${b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_wrong_form'
-              ? 'Cancelled as wrong form filled'
-              : b.status === 'admin cancelled' && b.admin_comments === 'admin_cancel_seats_full'
-                ? 'Cancelled as all seats are booked'
-                : statusLabelMap[b.status] || b.status
-            }</td>
 <td>
-      <a href="#" onclick="openUpdateModal('${b.bookingid}')">Update Booking Status</a>
-    </td>
-    <td>${comments}</td>
-    <td>${b.total_people}</td>
-    <td>${b.mobno}</td>
-    <td>${b.amount}</td>
+  ${(() => {
+
+              const stops =
+                (b.stops || [])
+                  .sort(
+                    (a, b) =>
+                      a.stop_order -
+                      b.stop_order
+                  );
+
+              const isRCTOMumbai =
+                b.pickup_point ===
+                'Research Centre';
+
+              if (isRCTOMumbai) {
+
+                return stops.find(
+                  stop =>
+                    stop.stop_name ===
+                    b.drop_point
+                )?.timing || '-';
+              }
+
+              return stops.find(
+                stop =>
+                  stop.stop_name ===
+                  b.pickup_point
+              )?.timing || '-';
+
+            })()}
+</td>
+
+<td>
+  ${b.bus_name || ''}
+</td>
+
+<td>
+  ${b.coordinator_bookingid ===
+              b.bookingid
+              ? 'Yes'
+              : 'No'}
+</td>
+
+<td>
+  ${formatDateTime(arrival_time)}
+</td>
+
+<td>
+  ${b.leaving_post_adhyayan == 1
+              ? 'Yes'
+              : 'No'}
+</td>
+<td>
+
+  ${b.status === 'admin cancelled' &&
+              b.admin_comments ===
+              'admin_cancel_wrong_form'
+
+              ? 'Cancelled as wrong form filled'
+
+              : b.status === 'admin cancelled' &&
+                b.admin_comments ===
+                'admin_cancel_seats_full'
+
+                ? 'Cancelled as all seats are booked'
+
+                : statusLabelMap[b.status] ||
+                b.status
+            }
+
+</td>
+
+<td>
+
+  <a
+    href="#"
+    onclick="
+      openUpdateModal(
+        '${b.bookingid}',
+        '${b.status}'
+      )
+    "
+  >
+    Update Booking Status
+  </a>
+
+</td>
+
+<td>${comments}</td>
+
+<td>${b.total_people}</td>
+
+<td>${b.mobno}</td>
+
+<td>${b.amount}</td>
 
 <td>${b.paymentStatus}</td>
-    <td>${formatDate(b.paymentDate)}</td>
-    <td>${b.bookingid}</td>
-    <td>${bookedBy}</td>
-    <td>${adminComments}</td>
-    <td>${b.luggage}</td>
-    <td>${travellingFrom}</td>
-  `;
+
+<td>${formatDate(b.paymentDate)}</td>
+
+<td>${b.bookingid}</td>
+
+<td>${bookedBy}</td>
+
+<td>${adminComments}</td>
+
+<td>${b.luggage}</td>
+
+<td>${travellingFrom}</td>  `;
 
           upcomingTableBody.appendChild(row);
           // Enhance table after rendering
@@ -426,12 +503,23 @@ async function loadAvailableBusRoutes(
         );
 
       option.value = bus.id;
-
       option.textContent =
+
         `${bus.bus_name} | ` +
-        `${bus.pickup_point} → ` +
-        `${bus.drop_point} | ` +
-        `${bus.timing}`;
+
+        `${(bus.stops || [])
+          .sort(
+            (a, b) =>
+              a.stop_order -
+              b.stop_order
+          )
+          .map(
+            stop =>
+
+              `${stop.stop_name} (${stop.timing || '-'})`
+          )
+          .join(' → ')
+        }`;
 
       if (
         booking.bus_group_id ===
