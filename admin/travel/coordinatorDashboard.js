@@ -57,14 +57,14 @@ async function fetchDashboard() {
 
     const data =
       await response.json();
-      if (
-  response.status === 401 ||
-  response.status === 403
-) {
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
 
-  coordinatorLogout();
-  return;
-}
+      coordinatorLogout();
+      return;
+    }
 
     if (!response.ok) {
 
@@ -76,32 +76,32 @@ async function fetchDashboard() {
     renderCoordinatorInfo(
       data.coordinator
     );
-allBuses =
-  data.buses || [];
+    allBuses =
+      data.buses || [];
 
-renderBusDropdown();
+    renderBusDropdown();
 
-if (allBuses.length) {
+    if (allBuses.length) {
 
-  if (
-    selectedBusIndex >=
-    allBuses.length
-  ) {
+      if (
+        selectedBusIndex >=
+        allBuses.length
+      ) {
 
-    selectedBusIndex = 0;
-  }
+        selectedBusIndex = 0;
+      }
 
-  loadBusData(
-    selectedBusIndex
-  );
+      loadBusData(
+        selectedBusIndex
+      );
 
-  document
-    .getElementById(
-      'busSelector'
-    )
-    .value =
-      selectedBusIndex;
-}
+      document
+        .getElementById(
+          'busSelector'
+        )
+        .value =
+        selectedBusIndex;
+    }
   } catch (error) {
 
     alert(error.message);
@@ -205,17 +205,17 @@ ${item.bus.bus_name}
   );
 
   selector.onchange =
-  event => {
+    event => {
 
-    selectedBusIndex =
-      Number(
-        event.target.value
+      selectedBusIndex =
+        Number(
+          event.target.value
+        );
+
+      loadBusData(
+        selectedBusIndex
       );
-
-    loadBusData(
-      selectedBusIndex
-    );
-  };
+    };
 }
 
 function loadBusData(
@@ -251,6 +251,15 @@ function loadBusData(
 
 function renderBusInfo(bus) {
 
+  const sortedStops =
+
+    (bus.stops || [])
+      .sort(
+        (a, b) =>
+          a.stop_order -
+          b.stop_order
+      );
+
   document
     .getElementById(
       'busInfo'
@@ -281,38 +290,47 @@ function renderBusInfo(bus) {
 
       </div>
 
-      <div class="info-row">
+      <div class="info-row" style="
+        align-items:flex-start;
+      ">
 
         <span class="info-label">
-          Pickup
+          Route
         </span>
 
-        <span class="info-value">
-          ${bus.pickup_point || ''}
-        </span>
+        <span class="info-value" style="
+          text-align:right;
+          line-height:1.8;
+        ">
 
-      </div>
+          ${sortedStops
+      .map(
+        (
+          stop,
+          index
+        ) => `
 
-      <div class="info-row">
+                <div style="
+                  border-bottom:
+                    ${index !== sortedStops.length - 1
+            ? '1px solid #eee'
+            : 'none'
+          };
 
-        <span class="info-label">
-          Drop
-        </span>
+                  padding:
+                    4px 0;
+                ">
 
-        <span class="info-value">
-          ${bus.drop_point || ''}
-        </span>
+                  ${stop.stop_name}
 
-      </div>
+                  (${stop.timing || '-'})
 
-      <div class="info-row">
+                </div>
+              `
+      )
+      .join('')
+    }
 
-        <span class="info-label">
-          Timing
-        </span>
-
-        <span class="info-value">
-          ${bus.timing || ''}
         </span>
 
       </div>
@@ -429,13 +447,44 @@ function renderPassengers(
       passenger,
       index
     ) => {
+      const selectedBus =
+        allBuses[selectedBusIndex];
+
+      const stops =
+        selectedBus?.bus?.stops || [];
+
+      let stopTime = '';
+
+      if (
+        passenger.pickup_point ===
+        'Research Centre'
+      ) {
+
+        // RC → Mumbai
+        stopTime =
+          stops.find(
+            stop =>
+              stop.stop_name ===
+              passenger.drop_point
+          )?.timing || '';
+
+      } else {
+
+        // Mumbai → RC
+        stopTime =
+          stops.find(
+            stop =>
+              stop.stop_name ===
+              passenger.pickup_point
+          )?.timing || '';
+      }
 
       const row =
         document.createElement(
           'tr'
         );
 
-row.innerHTML = `
+      row.innerHTML = `
 
   <td>
     ${index + 1}
@@ -449,24 +498,26 @@ row.innerHTML = `
     ${passenger.mobno || ''}
   </td>
 
-  <td>
-    ${passenger.pickup_point || ''}
-  </td>
-
-  <td>
-    ${passenger.drop_point || ''}
-  </td>
-
- <td>
-  ${
-    passenger.luggage || '-'
-  }
+<td>
+  ${passenger.pickup_point || ''}
 </td>
 
 <td>
-  ${
-    passenger.comments || '-'
-  }
+  ${stopTime || '-'}
+</td>
+
+<td>
+  ${passenger.drop_point || ''}
+</td>
+
+ <td>
+  ${passenger.luggage || '-'
+        }
+</td>
+
+<td>
+  ${passenger.comments || '-'
+        }
 </td>
 
   <td>
@@ -498,11 +549,10 @@ https://wa.me/91${passenger.mobno}
 
   <td>
 
-    ${
-      passenger.boarded
-        ? '🟢 Boarded'
-        : '🔴 Pending'
-    }
+    ${passenger.boarded
+          ? '🟢 Boarded'
+          : '🔴 Pending'
+        }
 
   </td>
 
@@ -518,11 +568,10 @@ https://wa.me/91${passenger.mobno}
       "
     >
 
-      ${
-        passenger.boarded
+      ${passenger.boarded
           ? 'Undo'
           : 'Mark Boarded'
-      }
+        }
 
     </button>
 
@@ -567,9 +616,9 @@ function applyPassengerFilters() {
 
           ||
 
-        String(
-  passenger.mobno || ''
-).includes(search)
+          String(
+            passenger.mobno || ''
+          ).includes(search)
 
           ||
 
@@ -606,10 +655,10 @@ function applyPassengerFilters() {
 }
 
 async function
-toggleBoardingStatus(
-  passengerId,
-  boarded
-) {
+  toggleBoardingStatus(
+    passengerId,
+    boarded
+  ) {
 
   try {
 
@@ -665,7 +714,7 @@ toggleBoardingStatus(
 }
 
 async function
-startQrScanner() {
+  startQrScanner() {
 
   const qrDiv =
     document.getElementById(
@@ -701,9 +750,9 @@ startQrScanner() {
 }
 
 async function
-handleQrScan(
-  qrValue
-) {
+  handleQrScan(
+    qrValue
+  ) {
 
   const passenger =
     allPassengers.find(p =>

@@ -5,17 +5,15 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Travel Bus Management</title>
 
   <!-- jQuery -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
 
   <!-- Scripts -->
   <script src="../../style/js/plugin.js"></script>
@@ -32,105 +30,84 @@
 
 <body>
 
-<div class="header">
-  <div class="container">
-    <div class="logout">
-      <a href="javascript:void(0);" onclick="history.back()">Back</a>
-      &nbsp; | &nbsp;
-      <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-      &nbsp; | &nbsp;
-      <a href="javascript:void(0);" onclick="logout()">Logout</a>
-    </div>
-  </div>
-</div>
-
-<div class="middlecontent">
-  <div class="container">
-    <div class="whitesec">
-      <div class="inner-padding">
-
-        <div class="frm-head">
-          <h1>Travel Bus Management</h1>
-        </div>
-
-        <!-- Create Bus Button -->
- <div class="form-group form-submit">
-
-  <button
-    type="button"
-    class="btn btn-primary"
-    id="openCreateBusModal"
-    style="margin-right:10px;"
-  >
-    Create Bus
-  </button>
-
-  <button
-    type="button"
-    class="btn btn-success"
-    id="openBulkMasterUpload"
-    style="margin-right:10px;"
-  >
-    Bulk Master Upload
-  </button>
-
-<button
-  type="button"
-  class="btn btn-info"
-  onclick="window.location.href='../../style/sample_excels/bulk_bus_master_upload.xlsx'"
->
-  Download Sample Excel
-</button>
-
-  <input
-    type="file"
-    id="bulkMasterUploadInput"
-    accept=".xlsx,.xls"
-    style="display:none;"
-  >
-
-</div>
-
-        <!-- Search -->
-        <input
-          type="text"
-          id="tableSearch"
-          class="form-control search-box"
-          placeholder="Search..."
-        >
-
-        <!-- Bus Table -->
-        <div class="table-responsive">
-          <table
-            id="travelBusTable"
-            class="table table-striped table-bordered"
-          >
-            <thead>
-              <tr>
-                <th>#</th>
-                <th data-key="event_date">Event Date</th>
-                <th data-key="bus_name">Bus Name</th>
-                <th colspan="2"> Route Stops </th>
-                <th data-key="timing">Timing</th>
-                <th data-key="capacity">Capacity</th>
-                <th data-key="passenger_count">Passenger Count</th>
-                <th data-key="action">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <!-- Filled dynamically -->
-            </tbody>
-          </table>
-        </div>
-
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Create Bus Modal -->
-<div id="createBusModal" class="modal" style="
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+
+          <div class="frm-head">
+            <h1>Travel Bus Management</h1>
+          </div>
+
+          <!-- Create Bus Button -->
+          <div class="form-group form-submit">
+
+            <button type="button" class="btn btn-primary" id="openCreateBusModal" style="margin-right:10px;">
+              Create Bus
+            </button>
+
+            <button type="button" class="btn btn-success" id="openBulkMasterUpload" style="margin-right:10px;">
+              Bulk Master Upload
+            </button>
+
+            <button type="button" class="btn btn-info"
+              onclick="window.location.href='../../style/sample_excels/bulk_bus_master_upload.xlsx'">
+              Download Sample Excel
+            </button>
+
+            <input type="file" id="bulkMasterUploadInput" accept=".xlsx,.xls" style="display:none;">
+
+          </div>
+
+          <!-- Search -->
+          <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+
+          <!-- Bus Table -->
+          <div class="table-responsive">
+            <table id="travelBusTable" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th data-key="event_date">Event Date</th>
+                  <th data-key="bus_name">Bus Name</th>
+                  <th data-key="route_stops">
+                    Route Stops
+                  </th>
+
+                  <th data-key="timing">
+                    Timing
+                  </th>
+                  <th data-key="capacity">Capacity</th>
+                  <th data-key="passenger_count">Passenger Count</th>
+                  <th data-key="action">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <!-- Filled dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Bus Modal -->
+  <div id="createBusModal" class="modal" style="
   display:none;
   position:fixed;
   top:0;
@@ -142,7 +119,7 @@
   overflow:auto;
 ">
 
-  <div class="modal-content" style="
+    <div class="modal-content" style="
     background:white;
     padding:2rem;
     margin:5% auto;
@@ -152,119 +129,72 @@
     position:relative;
   ">
 
-    <span
-      id="closeCreateBusModal"
-      style="
+      <span id="closeCreateBusModal" style="
         position:absolute;
         top:10px;
         right:15px;
         font-size:24px;
         cursor:pointer;
-      "
-    >
-      &times;
-    </span>
+      ">
+        &times;
+      </span>
 
-    <h2>Create Bus</h2>
+      <h2>Create Bus</h2>
 
-    <form id="createBusForm">
+      <form id="createBusForm">
 
-      <div class="form-group">
-        <label>Event Date</label>
-        <input
-          type="date"
-          id="event_date"
-          class="form-control"
-          required
-        />
-      </div>
+        <div class="form-group">
+          <label>Event Date</label>
+          <input type="date" id="event_date" class="form-control" required />
+        </div>
 
-      <div class="form-group">
-        <label>Bus Name</label>
-        <input
-          type="text"
-          id="bus_name"
-          class="form-control"
-          required
-        />
-      </div>
+        <div class="form-group">
+          <label>Bus Name</label>
+          <input type="text" id="bus_name" class="form-control" required />
+        </div>
 
-      <div class="form-group">
+        <div class="form-group">
 
-        <label>Stops</label>
+          <label>Stops</label>
 
-        <div id="stopsContainer"></div>
+          <div id="stopsContainer"></div>
 
-        <button
-          type="button"
-          class="btn btn-secondary"
-          onclick="addStopField()"
-        >
-          + Add Stop
-        </button>
+          <button type="button" class="btn btn-secondary" onclick="addStopField()">
+            + Add Stop
+          </button>
 
-      </div>
+        </div>
 
-      <div class="form-group">
-        <label>Timing</label>
-        <input
-            type="time"
-            id="timing"
-            class="form-control"
-            />
-      </div>
+        <div class="form-group">
+          <label>Capacity</label>
+          <input type="number" id="capacity" class="form-control" />
+        </div>
 
-      <div class="form-group">
-        <label>Capacity</label>
-        <input
-          type="number"
-          id="capacity"
-          class="form-control"
-        />
-      </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="notes" class="form-control"></textarea>
+        </div>
 
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea
-          id="notes"
-          class="form-control"
-        ></textarea>
-      </div>
+        <div class="form-group form-submit">
+          <button type="button" id="previewCreateBusBtn" class="btn btn-info">
+            Preview Matching Passengers
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Create Bus
+          </button>
 
-      <div class="form-group form-submit">
-        <button
-          type="button"
-          id="previewCreateBusBtn"
-          class="btn btn-info"
-        >
-          Preview Matching Passengers
-      </button> 
-        <button
-          type="submit"
-          class="btn btn-primary"
-        >
-          Create Bus
-        </button>
+          <button type="button" class="btn btn-secondary" id="cancelCreateBus">
+            Cancel
+          </button>
+        </div>
 
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="cancelCreateBus"
-        >
-          Cancel
-        </button>
-      </div>
+      </form>
 
-    </form>
-    
 
+    </div>
   </div>
-</div>
 
-<div
-  id="createBusPreviewModal"
-  class="modal"
-  style="
+  <div id="createBusPreviewModal" class="modal" style="
     display:none;
     position:fixed;
     top:0;
@@ -274,12 +204,9 @@
     background:rgba(0,0,0,0.7);
     z-index:10000;
     overflow:auto;
-  "
->
+  ">
 
-<div
-  class="modal-content"
-  style="
+    <div class="modal-content" style="
     background:white;
     padding:2rem;
     margin:3% auto;
@@ -289,62 +216,46 @@
     position:relative;
     max-height:90vh;
     overflow:auto;
-  "
->
+  ">
 
-<span
-  id="closeCreatePreviewModal"
-  style="
+      <span id="closeCreatePreviewModal" style="
     position:absolute;
     top:10px;
     right:20px;
     font-size:28px;
     cursor:pointer;
-  "
->
-  &times;
-</span>
+  ">
+        &times;
+      </span>
 
-    <h2>
-      Matching Passengers Preview
-    </h2>
+      <h2>
+        Matching Passengers Preview
+      </h2>
 
-    <div
-      id="createBusPreviewContainer"
-    ></div>
+      <div id="createBusPreviewContainer"></div>
 
-    <br>
+      <br>
 
-    <div
-      style="
+      <div style="
         display:flex;
         gap:10px;
-      "
-    >
+      ">
 
-      <button
-        type="button"
-        class="btn btn-success"
-        id="confirmCreateAssignBtn"
-      >
-        Create + Assign
-      </button>
+        <button type="button" class="btn btn-success" id="confirmCreateAssignBtn">
+          Create + Assign
+        </button>
 
-      <button
-        type="button"
-        class="btn btn-primary"
-        id="confirmCreateOnlyBtn"
-      >
-        Create Bus Only
-      </button>
+        <button type="button" class="btn btn-primary" id="confirmCreateOnlyBtn">
+          Create Bus Only
+        </button>
+
+      </div>
 
     </div>
 
   </div>
-
-</div>
-<!-- Edit Bus Modal -->
-<div id="editBusModal" class="modal" style="
+  <!-- Edit Bus Modal -->
+  <div id="editBusModal" class="modal" style="
   display:none;
   position:fixed;
   top:0;
@@ -356,7 +267,7 @@
   overflow:auto;
 ">
 
-  <div class="modal-content" style="
+    <div class="modal-content" style="
     background:white;
     padding:2rem;
     margin:5% auto;
@@ -366,111 +277,69 @@
     position:relative;
   ">
 
-    <span
-      id="closeEditBusModal"
-      style="
+      <span id="closeEditBusModal" style="
         position:absolute;
         top:10px;
         right:15px;
         font-size:24px;
         cursor:pointer;
-      "
-    >
-      &times;
-    </span>
+      ">
+        &times;
+      </span>
 
-    <h2>Edit Bus</h2>
+      <h2>Edit Bus</h2>
 
-    <form id="editBusForm">
+      <form id="editBusForm">
 
-      <input type="hidden" id="edit_bus_id" />
+        <input type="hidden" id="edit_bus_id" />
 
-      <div class="form-group">
-        <label>Bus Name</label>
-        <input
-          type="text"
-          id="edit_bus_name"
-          class="form-control"
-          required
-        />
-      </div>
+        <div class="form-group">
+          <label>Bus Name</label>
+          <input type="text" id="edit_bus_name" class="form-control" required />
+        </div>
 
-     <div class="form-group">
+        <div class="form-group">
 
-      <label>Stops</label>
+          <label>Stops</label>
 
-      <div id="editStopsContainer"></div>
+          <div id="editStopsContainer"></div>
 
-      <button
-        type="button"
-        class="btn btn-secondary"
-        onclick="addEditStopField()"
-      >
-        + Add Stop
-      </button>
+          <button type="button" class="btn btn-secondary" onclick="addEditStopField()">
+            + Add Stop
+          </button>
+
+        </div>
+
+        <div class="form-group">
+          <label>Capacity</label>
+          <input type="number" id="edit_capacity" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="edit_notes" class="form-control"></textarea>
+        </div>
+
+        <div class="form-group form-submit">
+
+          <button type="button" id="previewEditBusBtn" class="btn btn-info">
+            Preview Route Changes
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Update Bus
+          </button>
+
+          <button type="button" id="cancelEditBus" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+
+      </form>
 
     </div>
-
-      <div class="form-group">
-        <label>Timing</label>
-        <input
-          type="time"
-          id="edit_timing"
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label>Capacity</label>
-        <input
-          type="number"
-          id="edit_capacity"
-          class="form-control"
-        />
-      </div>
-
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea
-          id="edit_notes"
-          class="form-control"
-        ></textarea>
-      </div>
-
-      <div class="form-group form-submit">
-
-        <button
-          type="button"
-          id="previewEditBusBtn"
-          class="btn btn-info"
-        >
-          Preview Route Changes
-        </button>
-        <button
-          type="submit"
-          class="btn btn-primary"
-        >
-          Update Bus
-        </button>
-
-        <button
-          type="button"
-          id="cancelEditBus"
-          class="btn btn-secondary"
-        >
-          Cancel
-        </button>
-      </div>
-
-    </form>
-
   </div>
-</div>
 
-<div
-  id="editBusPreviewModal"
-  class="modal"
-  style="
+  <div id="editBusPreviewModal" class="modal" style="
     display:none;
     position:fixed;
     top:0;
@@ -480,12 +349,9 @@
     background:rgba(0,0,0,0.7);
     z-index:10001;
     overflow:auto;
-  "
->
+  ">
 
-  <div
-    class="modal-content"
-    style="
+    <div class="modal-content" style="
       background:white;
       padding:2rem;
       margin:3% auto;
@@ -493,67 +359,47 @@
       max-width:1200px;
       border-radius:12px;
       position:relative;
-    "
-  >
+    ">
 
-    <span
-      id="closeEditPreviewModal"
-      style="
+      <span id="closeEditPreviewModal" style="
         position:absolute;
         top:10px;
         right:20px;
         font-size:28px;
         cursor:pointer;
-      "
-    >
-      &times;
-    </span>
+      ">
+        &times;
+      </span>
 
-    <h2>
-      Route Change Preview
-    </h2>
+      <h2>
+        Route Change Preview
+      </h2>
 
-    <div
-      id="editBusPreviewContainer"
-    ></div>
+      <div id="editBusPreviewContainer"></div>
 
-    <br>
+      <br>
 
-    <label>
-      <input
-        type="checkbox"
-        id="removeInvalidPassengers"
-      >
-      Remove passengers
-      that no longer match
-    </label>
+      <label>
+        <input type="checkbox" id="removeInvalidPassengers">
+        Remove passengers
+        that no longer match
+      </label>
 
-    <br><br>
+      <br><br>
 
-    <button
-      type="button"
-      class="btn btn-success"
-      id="confirmUpdateAssignBtn"
-    >
-      Update + Assign
-    </button>
+      <button type="button" class="btn btn-success" id="confirmUpdateAssignBtn">
+        Update + Assign
+      </button>
 
-    <button
-      type="button"
-      class="btn btn-primary"
-      id="confirmUpdateOnlyBtn"
-    >
-      Update Only
-    </button>
+      <button type="button" class="btn btn-primary" id="confirmUpdateOnlyBtn">
+        Update Only
+      </button>
+
+    </div>
 
   </div>
 
-</div>
-
-<div
-  id="bulkMasterPreviewModal"
-  class="modal"
-  style="
+  <div id="bulkMasterPreviewModal" class="modal" style="
     display:none;
     position:fixed;
     top:0;
@@ -563,12 +409,9 @@
     background:rgba(0,0,0,0.7);
     z-index:10002;
     overflow:auto;
-  "
->
+  ">
 
-  <div
-    class="modal-content"
-    style="
+    <div class="modal-content" style="
       background:white;
       padding:2rem;
       margin:3% auto;
@@ -576,43 +419,35 @@
       max-width:1100px;
       border-radius:12px;
       position:relative;
-    "
-  >
+    ">
 
-    <span
-      id="closeBulkMasterPreviewModal"
-      style="
+      <span id="closeBulkMasterPreviewModal" style="
         position:absolute;
         top:10px;
         right:20px;
         font-size:28px;
         cursor:pointer;
-      "
-    >
-      &times;
-    </span>
+      ">
+        &times;
+      </span>
 
-    <h2>
-      Bulk Bus Import Preview
-    </h2>
+      <h2>
+        Bulk Bus Import Preview
+      </h2>
 
-    <div
-      id="bulkMasterPreviewContainer"
-    ></div>
+      <div id="bulkMasterPreviewContainer"></div>
 
-    <br>
+      <br>
 
-<div style="
+      <div style="
   margin-top:30px;
   border-top:1px solid #e5e5e5;
   padding-top:20px;
 ">
 
-  <!-- Warning -->
+        <!-- Warning -->
 
-  <div
-    id="bulkDuplicateWarning"
-    style="
+        <div id="bulkDuplicateWarning" style="
       display:none;
       background:#fff3e0;
       color:#e65100;
@@ -622,15 +457,14 @@
       font-weight:600;
       text-align:center;
       border:1px solid #ffcc80;
-    "
-  >
-    ⚠️ Duplicate buses detected.
-    Resolve before importing.
-  </div>
+    ">
+          ⚠️ Duplicate buses detected.
+          Resolve before importing.
+        </div>
 
-  <!-- Options -->
+        <!-- Options -->
 
-  <div style="
+        <div style="
     display:flex;
     flex-direction:column;
     gap:12px;
@@ -638,7 +472,7 @@
     padding-left:10px;
   ">
 
-    <label style="
+          <label style="
       display:flex;
       align-items:center;
       gap:12px;
@@ -646,29 +480,22 @@
       font-size:15px;
     ">
 
-      <input
-        type="checkbox"
-        id="ignoreDuplicateBuses"
-        style="
+            <input type="checkbox" id="ignoreDuplicateBuses" style="
           width:18px;
           height:18px;
           cursor:pointer;
-        "
-      >
+        ">
 
-      <span>
-        Ignore duplicate buses
-        and continue import
-      </span>
+            <span>
+              Ignore duplicate buses
+              and continue import
+            </span>
 
-    </label>
+          </label>
 
-    <div
-      id="bulkUpdateContainer"
-      style="display:none;"
-    >
+          <div id="bulkUpdateContainer" style="display:none;">
 
-      <label style="
+            <label style="
         display:flex;
         align-items:center;
         gap:12px;
@@ -676,66 +503,51 @@
         font-size:15px;
       ">
 
-        <input
-          type="checkbox"
-          id="updateExistingBuses"
-          style="
+              <input type="checkbox" id="updateExistingBuses" style="
             width:18px;
             height:18px;
             cursor:pointer;
-          "
-        >
+          ">
 
-        <span>
-          Update existing buses
-          instead of skipping
-        </span>
+              <span>
+                Update existing buses
+                instead of skipping
+              </span>
 
-      </label>
+            </label>
 
-    </div>
+          </div>
 
-  </div>
+        </div>
 
-  <!-- Buttons -->
+        <!-- Buttons -->
 
-  <div style="
+        <div style="
     display:flex;
     justify-content:flex-end;
     gap:12px;
   ">
 
-    <button
-      type="button"
-      class="btn btn-secondary"
-      onclick="
+          <button type="button" class="btn btn-secondary" onclick="
         document.getElementById(
           'bulkMasterPreviewModal'
         ).style.display='none'
-      "
-    >
-      Cancel
-    </button>
+      ">
+            Cancel
+          </button>
 
-    <button
-      type="button"
-      class="btn btn-success"
-      id="confirmBulkMasterImport"
-    >
-      Create All Buses
-    </button>
+          <button type="button" class="btn btn-success" id="confirmBulkMasterImport">
+            Create All Buses
+          </button>
+
+        </div>
+
+      </div>
+    </div>
 
   </div>
 
-</div>
-  </div>
-
-</div>
-
-<div
-  id="bulkDetailsModal"
-  class="modal"
-  style="
+  <div id="bulkDetailsModal" class="modal" style="
     display:none;
     position:fixed;
     top:0;
@@ -745,12 +557,9 @@
     background:rgba(0,0,0,0.7);
     z-index:10003;
     overflow:auto;
-  "
->
+  ">
 
-<div
-  class="modal-content"
-  style="
+    <div class="modal-content" style="
     background:white;
     padding:2rem;
     margin:3% auto;
@@ -760,28 +569,25 @@
     position:relative;
     max-height:90vh;
     overflow:auto;
-  "
->
+  ">
 
-<span
-  id="closeBulkDetailsModal"
-  style="
+      <span id="closeBulkDetailsModal" style="
     position:absolute;
     top:10px;
     right:20px;
     font-size:28px;
     cursor:pointer;
-  "
->
-  &times;
-</span>
+  ">
+        &times;
+      </span>
 
-    <div id="bulkDetailsContent"></div>
+      <div id="bulkDetailsContent"></div>
+
+    </div>
 
   </div>
 
-</div>
-
 
 </body>
+
 </html>

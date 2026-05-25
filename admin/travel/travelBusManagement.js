@@ -302,7 +302,8 @@ function closeEditBusModal() {
 }
 
 function addStopField(
-  value = ''
+  value = '',
+  timing = ''
 ) {
 
   const div =
@@ -318,11 +319,17 @@ function addStopField(
       gap:10px;
     ">
 
-      <select
-        class="form-control bus-stop"
-      >
-        ${locationOptions}
-      </select>
+<select
+  class="form-control bus-stop"
+>
+  ${locationOptions}
+</select>
+
+<input
+  type="time"
+  class="form-control bus-stop-time"
+  style="max-width:140px;"
+>
 
       <button
         type="button"
@@ -372,6 +379,9 @@ function addStopField(
   }
 
   select.value = value;
+  div.querySelector(
+    '.bus-stop-time'
+  ).value = timing;
 
   document
     .getElementById(
@@ -381,7 +391,8 @@ function addStopField(
 }
 
 function addEditStopField(
-  value = ''
+  value = '',
+  timing = ''
 ) {
 
   const div =
@@ -397,11 +408,17 @@ function addEditStopField(
       gap:10px;
     ">
 
-      <select
-        class="form-control edit-bus-stop"
-      >
-        ${locationOptions}
-      </select>
+<select
+  class="form-control edit-bus-stop"
+>
+  ${locationOptions}
+</select>
+
+<input
+  type="time"
+  class="form-control edit-bus-stop-time"
+  style="max-width:140px;"
+>
 
     <button
       type="button"
@@ -451,6 +468,9 @@ function addEditStopField(
   }
 
   select.value = value;
+  div.querySelector(
+    '.edit-bus-stop-time'
+  ).value = timing;
 
 
   document
@@ -567,26 +587,65 @@ function renderBusTable() {
         ${bus.bus_name || ''}
       </td>
 
-      <td colspan="2">
+      <td>
 
-        ${bus.stops
+  ${bus.stops
         ?.sort(
           (a, b) =>
             a.stop_order -
             b.stop_order
         )
         .map(
-          s => s.stop_name
+          (s, index, arr) => `
+        <div
+          style="
+            padding:4px 0;
+            border-bottom:
+              ${index !== arr.length - 1
+              ? '1px solid #ddd'
+              : 'none'
+            };
+          "
+        >
+          ${s.stop_name}
+        </div>
+      `
         )
-        .join(' → ')
+        .join('')
       || ''
       }
 
-      </td>
+</td>
 
-      <td>
-        ${bus.timing || ''}
-      </td>
+<td>
+
+  ${bus.stops
+        ?.sort(
+          (a, b) =>
+            a.stop_order -
+            b.stop_order
+        )
+        .map(
+          (s, index, arr) => `
+        <div
+          style="
+            padding:4px 0;
+            border-bottom:
+              ${index !== arr.length - 1
+              ? '1px solid #ddd'
+              : 'none'
+            };
+          "
+        >
+          ${s.timing || '-'}
+        </div>
+      `
+        )
+        .join('')
+      || ''
+      }
+
+</td>
 
       <td>
         ${bus.capacity || ''}
@@ -675,13 +734,10 @@ function openEditBusModal(bus) {
     .forEach(stop => {
 
       addEditStopField(
-        stop.stop_name
+        stop.stop_name,
+        stop.timing
       );
     });
-
-  document.getElementById(
-    'edit_timing'
-  ).value = bus.timing || '';
 
   document.getElementById(
     'edit_capacity'
@@ -705,13 +761,23 @@ async function createBus(event) {
     const stops =
       Array.from(
         document.querySelectorAll(
-          '.bus-stop'
+          '#stopsContainer > div'
         )
-      )
-        .map(
-          item => item.value
-        )
-        .filter(Boolean);
+      ).map(div => ({
+
+        stop_name:
+          div.querySelector(
+            '.bus-stop'
+          ).value,
+
+        timing:
+          div.querySelector(
+            '.bus-stop-time'
+          ).value,
+      }))
+        .filter(
+          item => item.stop_name
+        );
 
     const selectedBookingIds =
       Array.from(
@@ -738,11 +804,6 @@ async function createBus(event) {
         ).value,
 
       stops,
-
-      timing:
-        document.getElementById(
-          'timing'
-        ).value,
 
       capacity:
         document.getElementById(
@@ -873,18 +934,23 @@ async function updateBus(event) {
       stops:
         Array.from(
           document.querySelectorAll(
-            '.edit-bus-stop'
+            '#editStopsContainer > div'
           )
-        )
-          .map(
-            item => item.value
-          )
-          .filter(Boolean),
+        ).map(div => ({
 
-      timing:
-        document.getElementById(
-          'edit_timing'
-        ).value,
+          stop_name:
+            div.querySelector(
+              '.edit-bus-stop'
+            ).value,
+
+          timing:
+            div.querySelector(
+              '.edit-bus-stop-time'
+            ).value,
+        }))
+          .filter(
+            item => item.stop_name
+          ),
 
       capacity:
         document.getElementById(
@@ -971,7 +1037,7 @@ async function
           );
 
         const busesSheet =
-          workbook.Sheets['Buses'];
+          workbook.Sheets['Busses'];
 
         const assignmentsSheet =
           workbook.Sheets['Assignments'];
@@ -1287,7 +1353,14 @@ ${bus.duplicateBus
               margin-top:5px;
               color:#555;
             ">
-              ${bus.stops.join(' → ')}
+              ${bus.stops
+        ?.map(
+          s =>
+
+            `${s.stop_name}
+      (${s.timing || '-'})`
+        )
+        .join(' → ')}
             </div>
 
             ${bus.routeError
@@ -1305,20 +1378,16 @@ ${bus.duplicateBus
 
           </div>
 
-          <div style="
-            text-align:right;
-          ">
+         <div style="
+  text-align:right;
+">
 
-            <div>
-              🕒 ${bus.timing}
-            </div>
+  <div>
+    👥 Capacity:
+    ${bus.capacity}
+  </div>
 
-            <div>
-              👥 Capacity:
-              ${bus.capacity}
-            </div>
-
-          </div>
+</div>
 
         </div>
 
@@ -1626,17 +1695,26 @@ async function
   previewCreateBus() {
 
   try {
-
     const stops =
       Array.from(
         document.querySelectorAll(
-          '.bus-stop'
+          '#stopsContainer > div'
         )
-      )
-        .map(
-          item => item.value
-        )
-        .filter(Boolean);
+      ).map(div => ({
+
+        stop_name:
+          div.querySelector(
+            '.bus-stop'
+          ).value,
+
+        timing:
+          div.querySelector(
+            '.bus-stop-time'
+          ).value,
+      }))
+        .filter(
+          item => item.stop_name
+        );
 
     const payload = {
 
@@ -1705,17 +1783,26 @@ async function
   previewEditBus() {
 
   try {
-
     const stops =
       Array.from(
         document.querySelectorAll(
-          '.edit-bus-stop'
+          '#editStopsContainer > div'
         )
-      )
-        .map(
-          item => item.value
-        )
-        .filter(Boolean);
+      ).map(div => ({
+
+        stop_name:
+          div.querySelector(
+            '.edit-bus-stop'
+          ).value,
+
+        timing:
+          div.querySelector(
+            '.edit-bus-stop-time'
+          ).value,
+      }))
+        .filter(
+          item => item.stop_name
+        );
 
     const payload = {
 
@@ -2187,32 +2274,39 @@ function openBulkDetailsModal(
       margin-bottom:20px;
       color:#666;
     ">
-      ${bus.stops.join(' → ')}
+      ${bus.stops
+      ?.map(
+        s =>
+
+          `${s.stop_name}
+      (${s.timing || '-'})`
+      )
+      .join(' → ')}
     </div>
 
     ${renderBulkDetailsTable(
-    'Valid',
-    bus.validPassengers,
-    false
-  )}
+        'Valid',
+        bus.validPassengers,
+        false
+      )}
 
     ${renderBulkDetailsTable(
-    'Overflow',
-    bus.overflowPassengers,
-    false
-  )}
+        'Overflow',
+        bus.overflowPassengers,
+        false
+      )}
 
     ${renderBulkDetailsTable(
-    'Already Assigned',
-    bus.alreadyAssigned,
-    false
-  )}
+        'Already Assigned',
+        bus.alreadyAssigned,
+        false
+      )}
 
     ${renderBulkDetailsTable(
-    'Invalid',
-    bus.invalidPassengers,
-    true
-  )}
+        'Invalid',
+        bus.invalidPassengers,
+        true
+      )}
   `;
 }
 

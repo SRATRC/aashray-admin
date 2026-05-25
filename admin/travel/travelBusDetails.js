@@ -262,47 +262,97 @@ function renderBusInfo() {
     <div class="table-responsive">
 
       <table class="table table-bordered">
+<tr>
+
+  <th>Date</th>
+  <td>
+    ${bus.event_date || ''}
+  </td>
+
+  <th>Capacity</th>
+  <td>
+    ${bus.capacity || ''}
+  </td>
+
+  <th>Passengers</th>
+  <td>
+    ${passengerCount}
+  </td>
+
+</tr>
 
         <tr>
-          <th>Date</th>
-          <td>${bus.event_date || ''}</td>
 
-          <th>Timing</th>
-          <td>${bus.timing || ''}</td>
-        </tr>
-
-        <tr>
+  <tr>
 
   <th>
     Route Stops
   </th>
 
-  <td colspan="3">
+  <td colspan="5" style="padding:0;">
 
-    ${bus.stops
+    <table style="
+      width:100%;
+      border-collapse:collapse;
+    ">
+
+      ${bus.stops
       ?.sort(
         (a, b) =>
           a.stop_order -
           b.stop_order
       )
       .map(
-        item => item.stop_name
+        (
+          item,
+          index
+        ) => `
+
+            <tr>
+
+              <td style="
+                padding:8px 12px;
+                border-bottom:
+                  ${index !== bus.stops.length - 1
+            ? '1px solid #ddd'
+            : 'none'
+          };
+              ">
+
+                ${item.stop_name}
+
+              </td>
+
+              <td style="
+                width:120px;
+                text-align:center;
+                padding:8px 12px;
+                border-left:
+                  1px solid #ddd;
+
+                border-bottom:
+                  ${index !== bus.stops.length - 1
+            ? '1px solid #ddd'
+            : 'none'
+          };
+              ">
+
+                ${item.timing || '-'}
+
+              </td>
+
+            </tr>
+          `
       )
-      .join(' → ')
-    || '-'
+      .join('')
     }
+
+    </table>
 
   </td>
 
-</tr>
 
-        <tr>
-          <th>Capacity</th>
-          <td>${bus.capacity || ''}</td>
 
-          <th>Passengers</th>
-          <td>${passengerCount}</td>
-        </tr>
 
       </table>
 
