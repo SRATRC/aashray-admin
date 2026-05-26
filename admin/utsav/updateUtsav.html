@@ -83,6 +83,24 @@
                   <input type="date" id="registration_deadline" name="registration_deadline" class="form-control" required />
                 </div>
 
+                <div class="form-group">
+                  <label for="starting_meal">Starting Meal (First Day):</label>
+                  <select id="starting_meal" name="starting_meal" class="form-control" multiple>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="ending_meal">Ending Meal (Last Day):</label>
+                  <select id="ending_meal" name="ending_meal" class="form-control" multiple>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                  </select>
+                </div>
+
                 <div class="form-group form-submit">
                   <button type="button" id="saveButton" name="saveButton" class="btn btn-primary">Save</button>
                 </div>
