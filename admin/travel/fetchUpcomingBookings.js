@@ -1033,11 +1033,13 @@ function openBusSummaryModal() {
 
     grouped[key].total++;
 
-    grouped[key].remainingSeats =
-      Number(
-        grouped[key].capacity || 0
-      ) -
-      grouped[key].total;
+    if (grouped[key].capacity) {
+      grouped[key].remainingSeats =
+        Number(grouped[key].capacity) -
+        grouped[key].total;
+    } else {
+      grouped[key].remainingSeats = '';
+    }
   });
 
   const rows =
