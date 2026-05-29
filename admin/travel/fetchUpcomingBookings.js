@@ -742,6 +742,21 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
               );
 
             if (!increaseCapacity) {
+
+              alert(
+                'Passenger removed from previous bus, but not assigned to the new bus because capacity was not increased.'
+              );
+
+              document.getElementById(
+                'transactionModal'
+              ).style.display = 'none';
+
+              document
+                .getElementById('reportForm')
+                .dispatchEvent(
+                  new Event('submit')
+                );
+
               return;
             }
 
