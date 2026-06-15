@@ -1,990 +1,1067 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="./assets/images/logo.png" />
-    <title>Vitraag Vigyaan Aashray - Download Now</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont,
-          'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      }
 
-      :root {
-        --primary-color: #6366f1;
-        --primary-light: #818cf8;
-        --text-dark: #1f2937;
-        --text-light: #6b7280;
-        --background-light: #f9fafb;
-        --background-white: #ffffff;
-        --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-          0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="./assets/images/logo.png" />
+  <title>Vitraag Vigyaan Aashray - Download Now</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+        'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
 
-      body {
-        color: var(--text-dark);
-        line-height: 1.6;
-        background-color: var(--background-light);
-      }
+    :root {
+      --primary-color: #6366f1;
+      --primary-light: #818cf8;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --background-light: #f9fafb;
+      --background-white: #ffffff;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
 
-      .container {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
+    body {
+      color: var(--text-dark);
+      line-height: 1.6;
+      background-color: var(--background-light);
+    }
 
-      header {
-        padding: 2rem 0;
-        background-color: var(--background-white);
-        box-shadow: var(--shadow);
-        position: fixed;
-        width: 100%;
-        top: 0;
-        z-index: 1000;
-      }
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
 
-      .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
+    header {
+      padding: 2rem 0;
+      background-color: var(--background-white);
+      box-shadow: var(--shadow);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+    }
 
-      .hero {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        padding: 7rem 0 4rem;
-        position: relative;
-        overflow: hidden;
-        background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
-      }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 7rem 0 4rem;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+    }
+
+    .hero-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .hero-text {
+      flex: 1;
+    }
+
+    .hero-text h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+      background: linear-gradient(to right,
+          var(--primary-color),
+          var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-text p {
+      font-size: 1.25rem;
+      color: var(--text-light);
+      margin-bottom: 2rem;
+      max-width: 600px;
+    }
+
+    .hero-image {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .phone-mockup {
+      max-width: 300px;
+      filter: drop-shadow(0 20px 25px -5px rgba(0, 0, 0, 0.1)) drop-shadow(0 10px 10px -5px rgba(0, 0, 0, 0.04));
+      transform: rotate(-5deg);
+    }
+
+    .download-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--text-dark);
+      color: white;
+      padding: 0.875rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: 2px solid var(--text-dark);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+
+    .download-btn.primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .download-btn.primary:hover {
+      background-color: var(--primary-light);
+      border-color: var(--primary-light);
+    }
+
+    .download-btn.secondary {
+      background-color: transparent;
+      color: var(--text-dark);
+    }
+
+    .download-btn.secondary:hover {
+      background-color: var(--text-dark);
+      color: white;
+    }
+
+    .download-btn img {
+      height: 24px;
+      margin-right: 10px;
+    }
+
+    .legal {
+      padding: 5rem 0;
+      background-color: var(--background-white);
+    }
+
+    .legal h2 {
+      text-align: center;
+      margin-bottom: 3rem;
+      font-size: 2rem;
+      color: var(--text-dark);
+    }
+
+    /* Desktop tabs style */
+    .legal-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 90px;
+      background-color: var(--background-white);
+      padding: 1rem 0;
+      z-index: 100;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .legal-tab {
+      color: var(--text-light);
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .legal-tab:hover,
+    .legal-tab.active {
+      color: var(--primary-color);
+      background-color: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.2);
+    }
+
+    /* Mobile dropdown style */
+    .legal-dropdown {
+      display: none;
+      position: sticky;
+      top: 90px;
+      z-index: 100;
+      margin-bottom: 2rem;
+    }
+
+    .dropdown-btn {
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background-color: var(--background-white);
+      color: var(--text-dark);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dropdown-btn:after {
+      content: '▼';
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+
+    .dropdown-btn.active:after {
+      content: '▲';
+    }
+
+    .dropdown-content {
+      display: none;
+      background-color: var(--background-white);
+      border-radius: 0 0 8px 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .dropdown-content a {
+      display: block;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-light);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .dropdown-content a:hover,
+    .dropdown-content a.active {
+      background-color: rgba(99, 102, 241, 0.1);
+      color: var(--primary-color);
+    }
+
+    .legal-content {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--background-white);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .legal-section {
+      display: none;
+      padding: 1rem 0;
+    }
+
+    .legal-section.active {
+      display: block;
+    }
+
+    .legal-section h3 {
+      font-size: 1.75rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary-color);
+      font-weight: 700;
+      border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+      padding-bottom: 0.5rem;
+    }
+
+    .legal-section h4 {
+      font-size: 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+
+    .legal-section h5 {
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+
+    .legal-section p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-light);
+      margin-bottom: 1.25rem;
+      text-align: justify;
+    }
+
+    .legal-section ul {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 1.5rem;
+    }
+
+    .legal-section li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .legal-section li::before {
+      content: "•";
+      color: var(--primary-color);
+      font-weight: bold;
+      display: inline-block;
+      width: 1em;
+      margin-left: -1em;
+      position: absolute;
+      font-size: 1.25rem;
+      top: -0.1rem;
+    }
+
+    .legal-consent-box {
+      background: linear-gradient(to right, rgba(99, 102, 241, 0.03), rgba(129, 140, 248, 0.03));
+      border-left: 4px solid var(--primary-color);
+      padding: 1.5rem;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 2rem;
+    }
+
+    .legal-consent-box p {
+      margin-bottom: 0.75rem;
+      color: var(--text-light);
+    }
+
+    .legal-consent-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .legal-note-callout {
+      background-color: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      color: #b45309;
+      margin: 1.5rem 0;
+    }
+
+    footer {
+      background-color: var(--text-dark);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    .social-links {
+      margin: 1rem 0;
+    }
+
+    .social-links a {
+      color: white;
+      margin: 0 10px;
+      font-size: 1.2rem;
+      text-decoration: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .social-links a:hover {
+      opacity: 1;
+    }
+
+    .contact-list {
+      list-style: none;
+      /* Remove bullets */
+      padding: 0;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    /* Style for list items */
+    .contact-list li {
+      margin-bottom: 10px;
+    }
+
+    /* Style for address */
+    .contact-list .address {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .contact-list .address strong {
+      white-space: nowrap;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    .contact-list .address div {
+      max-width: 400px;
+      /* Prevents text from stretching too wide */
+    }
+
+    @media (max-width: 992px) {
+      .hero-text h1 {
+        font-size: 3rem;
+      }
+    }
+
+    @media (max-width: 768px) {
       .hero-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 2rem;
-      }
-
-      .hero-text {
-        flex: 1;
+        flex-direction: column-reverse;
+        text-align: center;
       }
 
       .hero-text h1 {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1.5rem;
-        line-height: 1.2;
-        background: linear-gradient(
-          to right,
-          var(--primary-color),
-          var(--primary-light)
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 2.5rem;
       }
 
       .hero-text p {
-        font-size: 1.25rem;
-        color: var(--text-light);
-        margin-bottom: 2rem;
-        max-width: 600px;
-      }
-
-      .hero-image {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        position: relative;
-      }
-
-      .phone-mockup {
-        max-width: 300px;
-        filter: drop-shadow(0 20px 25px -5px rgba(0, 0, 0, 0.1))
-          drop-shadow(0 10px 10px -5px rgba(0, 0, 0, 0.04));
-        transform: rotate(-5deg);
+        font-size: 1.1rem;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       .download-buttons {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
+        justify-content: center;
+      }
+
+      .phone-mockup {
+        transform: rotate(0);
+        max-width: 250px;
+      }
+
+      /* Hide tabs and show dropdown on mobile */
+      .legal-tabs {
+        display: none;
+      }
+
+      .legal-dropdown {
+        display: block;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .hero-text h1 {
+        font-size: 2rem;
+      }
+
+      .hero {
+        padding-top: 6rem;
+      }
+
+      .download-buttons {
+        flex-direction: column;
+        width: 100%;
       }
 
       .download-btn {
-        display: inline-flex;
-        align-items: center;
-        background-color: var(--text-dark);
-        color: white;
-        padding: 0.875rem 1.5rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: 2px solid var(--text-dark);
-      }
-
-      .download-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow);
-      }
-
-      .download-btn.primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-      }
-
-      .download-btn.primary:hover {
-        background-color: var(--primary-light);
-        border-color: var(--primary-light);
-      }
-
-      .download-btn.secondary {
-        background-color: transparent;
-        color: var(--text-dark);
-      }
-
-      .download-btn.secondary:hover {
-        background-color: var(--text-dark);
-        color: white;
-      }
-
-      .download-btn img {
-        height: 24px;
-        margin-right: 10px;
-      }
-
-      .legal {
-        padding: 5rem 0;
-        background-color: var(--background-white);
-      }
-
-      .legal h2 {
-        text-align: center;
-        margin-bottom: 3rem;
-        font-size: 2rem;
-        color: var(--text-dark);
-      }
-
-      /* Desktop tabs style */
-      .legal-tabs {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-        position: sticky;
-        top: 90px;
-        background-color: var(--background-white);
-        padding: 1rem 0;
-        z-index: 100;
-        border-radius: 8px;
-        box-shadow: var(--shadow);
-      }
-
-      .legal-tab {
-        color: var(--text-light);
-        text-decoration: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s;
-        border: 1px solid transparent;
-      }
-
-      .legal-tab:hover,
-      .legal-tab.active {
-        color: var(--primary-color);
-        background-color: rgba(99, 102, 241, 0.1);
-        border-color: rgba(99, 102, 241, 0.2);
-      }
-
-      /* Mobile dropdown style */
-      .legal-dropdown {
-        display: none;
-        position: sticky;
-        top: 90px;
-        z-index: 100;
-        margin-bottom: 2rem;
-      }
-
-      .dropdown-btn {
         width: 100%;
-        padding: 0.875rem 1.5rem;
-        background-color: var(--background-white);
-        color: var(--text-dark);
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        text-align: left;
-        cursor: pointer;
-        box-shadow: var(--shadow);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .dropdown-btn:after {
-        content: '▼';
-        font-size: 0.8rem;
-        margin-left: 0.5rem;
-      }
-
-      .dropdown-btn.active:after {
-        content: '▲';
-      }
-
-      .dropdown-content {
-        display: none;
-        background-color: var(--background-white);
-        border-radius: 0 0 8px 8px;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
-
-      .dropdown-content a {
-        display: block;
-        padding: 0.75rem 1.5rem;
-        color: var(--text-light);
-        text-decoration: none;
-        transition: all 0.2s;
-      }
-
-      .dropdown-content a:hover,
-      .dropdown-content a.active {
-        background-color: rgba(99, 102, 241, 0.1);
-        color: var(--primary-color);
+        justify-content: center;
       }
 
       .legal-content {
-        max-width: 800px;
-        margin: 0 auto;
-        background: var(--background-white);
-        border-radius: 12px;
-        padding: 2rem;
-        box-shadow: var(--shadow);
+        padding: 1.5rem;
       }
 
-      .legal-section {
-        display: none;
-        padding: 1rem 0;
+      .legal h2 {
+        font-size: 1.75rem;
       }
+    }
+  </style>
+</head>
 
-      .legal-section.active {
-        display: block;
-      }
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <img src="./assets/images/logo.png" alt="App Logo" style="height: 45px; width: 82px" />
+      </div>
+    </div>
+  </header>
 
-      .legal-section h3 {
-        font-size: 1.5rem;
-        margin-bottom: 1.5rem;
-        color: var(--primary-color);
-      }
-
-      .legal-section h4 {
-        font-size: 1.25rem;
-        margin: 1.5rem 0 0.75rem;
-        color: var(--text-dark);
-      }
-
-      .legal-section p,
-      .legal-section ul {
-        margin-bottom: 1rem;
-        color: var(--text-light);
-      }
-
-      .legal-section ul {
-        padding-left: 1.5rem;
-      }
-
-      .legal-section ul li {
-        margin-bottom: 0.5rem;
-      }
-
-      footer {
-        background-color: var(--text-dark);
-        color: white;
-        text-align: center;
-        padding: 2rem 0;
-      }
-
-      .social-links {
-        margin: 1rem 0;
-      }
-
-      .social-links a {
-        color: white;
-        margin: 0 10px;
-        font-size: 1.2rem;
-        text-decoration: none;
-        opacity: 0.8;
-        transition: opacity 0.2s;
-      }
-
-      .social-links a:hover {
-        opacity: 1;
-      }
-
-      .contact-list {
-        list-style: none; /* Remove bullets */
-        padding: 0;
-        margin: 0;
-        font-family: Arial, sans-serif;
-        font-size: 16px;
-        line-height: 1.5;
-      }
-
-      /* Style for list items */
-      .contact-list li {
-        margin-bottom: 10px;
-      }
-
-      /* Style for address */
-      .contact-list .address {
-        display: flex;
-        align-items: flex-start;
-      }
-
-      .contact-list .address strong {
-        white-space: nowrap;
-        margin-right: 10px;
-        font-weight: bold;
-      }
-
-      .contact-list .address div {
-        max-width: 400px; /* Prevents text from stretching too wide */
-      }
-
-      @media (max-width: 992px) {
-        .hero-text h1 {
-          font-size: 3rem;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .hero-content {
-          flex-direction: column-reverse;
-          text-align: center;
-        }
-
-        .hero-text h1 {
-          font-size: 2.5rem;
-        }
-
-        .hero-text p {
-          font-size: 1.1rem;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .download-buttons {
-          justify-content: center;
-        }
-
-        .phone-mockup {
-          transform: rotate(0);
-          max-width: 250px;
-        }
-
-        /* Hide tabs and show dropdown on mobile */
-        .legal-tabs {
-          display: none;
-        }
-
-        .legal-dropdown {
-          display: block;
-        }
-      }
-
-      @media (max-width: 576px) {
-        .hero-text h1 {
-          font-size: 2rem;
-        }
-
-        .hero {
-          padding-top: 6rem;
-        }
-
-        .download-buttons {
-          flex-direction: column;
-          width: 100%;
-        }
-
-        .download-btn {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .legal-content {
-          padding: 1.5rem;
-        }
-
-        .legal h2 {
-          font-size: 1.75rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="container">
-        <div class="header-content">
-          <img
-            src="./assets/images/logo.png"
-            alt="App Logo"
-            style="height: 45px; width: 82px"
-          />
+  <section class="hero" id="download">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>Vitraag Vigyaan Aashray</h1>
+          <p>Download our app today. Available on iOS and Android.</p>
+          <div class="download-buttons">
+            <a href="https://play.google.com/store/apps/details?id=org.vitraagvigyaan.aashray" target="_blank"
+              class="download-btn">
+              <img src="./assets/images/googleplay.png" alt="Google Play icon" />
+              Google Play
+            </a>
+            <a href="https://apps.apple.com/in/app/vitraag-vigyaan-aashray/id6743924565" target="_blank"
+              class="download-btn">
+              <img src="./assets/images/appstore.webp" alt="App Store icon" />
+              App Store
+            </a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="./assets/images/image.png" alt="App Preview" class="phone-mockup" />
         </div>
       </div>
-    </header>
+    </div>
+  </section>
 
-    <section class="hero" id="download">
-      <div class="container">
-        <div class="hero-content">
-          <div class="hero-text">
-            <h1>Vitraag Vigyaan Aashray</h1>
-            <p>Download our app today. Available on iOS and Android.</p>
-            <div class="download-buttons">
-              <a
-                href="https://play.google.com/store/apps/details?id=org.vitraagvigyaan.aashray"
-                target="_blank"
-                class="download-btn"
-              >
-                <img
-                  src="./assets/images/googleplay.png"
-                  alt="Google Play icon"
-                />
-                Google Play
-              </a>
-              <a
-                href="https://apps.apple.com/in/app/vitraag-vigyaan-aashray/id6743924565"
-                target="_blank"
-                class="download-btn"
-              >
-                <img src="./assets/images/appstore.webp" alt="App Store icon" />
-                App Store
-              </a>
-            </div>
-          </div>
-          <div class="hero-image">
-            <img
-              src="./assets/images/image.png"
-              alt="App Preview"
-              class="phone-mockup"
-            />
-          </div>
+  <section class="legal" id="legal">
+    <div class="container">
+      <h2>Legal Information</h2>
+
+      <!-- Desktop tabs -->
+      <div class="legal-tabs">
+        <a href="#privacy" class="legal-tab active" data-target="privacy-section">Privacy Policy</a>
+        <a href="#terms" class="legal-tab" data-target="terms-section">Terms of Use</a>
+        <a href="#contact" class="legal-tab" data-target="contact-section">Contact Us</a>
+      </div>
+
+      <!-- Mobile dropdown -->
+      <div class="legal-dropdown">
+        <button class="dropdown-btn">Privacy Policy</button>
+        <div class="dropdown-content">
+          <a href="#privacy" class="active" data-target="privacy-section">Privacy Policy</a>
+          <a href="#terms" data-target="terms-section">Terms of Use</a>
+          <a href="#contact" data-target="contact-section">Contact Us</a>
         </div>
       </div>
-    </section>
 
-    <section class="legal" id="legal">
-      <div class="container">
-        <h2>Legal Information</h2>
+      <div class="legal-content">
+        <div id="privacy-section" class="legal-section active">
+          <h3>Privacy Policy</h3>
+          <p><strong>Last Updated:</strong> 15th June, 2026</p>
 
-        <!-- Desktop tabs -->
-        <div class="legal-tabs">
-          <a
-            href="#privacy"
-            class="legal-tab active"
-            data-target="privacy-section"
-            >Privacy Policy</a
-          >
-          <!-- <a href="#terms" class="legal-tab" data-target="terms-section">Terms of Service</a> -->
-          <a href="#contact" class="legal-tab" data-target="contact-section"
-            >Contact Us</a
-          >
-        </div>
-
-        <!-- Mobile dropdown -->
-        <div class="legal-dropdown">
-          <button class="dropdown-btn">Privacy Policy</button>
-          <div class="dropdown-content">
-            <a href="#privacy" class="active" data-target="privacy-section"
-              >Privacy Policy</a
-            >
-            <!-- <a href="#terms" data-target="terms-section">Terms of Service</a> -->
-            <a href="#contact" data-target="contact-section">Contact Us</a>
-          </div>
-        </div>
-
-        <div class="legal-content">
-          <div id="privacy-section" class="legal-section active">
-            <div class="container">
-              <h1>Privacy Policy</h1>
-
-              <p><strong>Last Updated:</strong> 28th March, 2025</p>
-
-              <p>
-                At <b>Shrimad Rajchandra Aatma Tatva Research Centre</b>, we are
-                committed to ensure that the data collected from everyone who
-                are associated with us—including volunteers, members, Guest and
-                event attendees is protected. The Organisation understands the
-                importance of and prioritizes the protection of sensitive
-                personal data or information. This Privacy Policy specifies the
-                manner in which sensitive personal data or information is
-                collected, received, stored, processed, disclosed, transferred,
-                dealt with, and handled by the organisation in relation to your
-                use of the datachef website (the “Website”), aashray website
-                (the "website") and software application platform for mobile
-                devices (the “App”) and related services.
-              </p>
-
-              <h2>1. Information We Collect</h2>
-              <p>We collect the following types of personal information:</p>
-              <ul>
-                <li>
-                  <strong>Personal Identification Information:</strong> Name,
-                  email address, phone number, postal address, PAN card details
-                  and other similar details.
-                </li>
-                <li>
-                  <strong>Donation Information:</strong> Details related to your
-                  donations, including transaction history, amounts, and payment
-                  information.
-                </li>
-                <li>
-                  <strong>Interaction Information:</strong> Data related to your
-                  interactions with our website, Mobile Application, emails,
-                  events, or any other communications.
-                </li>
-                <li>
-                  <strong>Non-Personal Information:</strong> We may
-                  automatically collect non-personal information when you visit
-                  our website, such as IP addresses, browser type, operating
-                  system, and usage data (e.g., pages visited, time spent on the
-                  site).
-                </li>
-              </ul>
-
-              <h2>2. How We Use Your Information</h2>
-              <p>
-                We use your personal information for the following purposes:
-              </p>
-              <ul>
-                <li>
-                  <strong>To Provide Services:</strong> To enable us to
-                  facilitate seamless services to Mumukshu’s, Guest and Visitors
-                  with respect to Ashram Visit/ Stay and Meal services, Event
-                  registrations, arrangement of transportation, donations or
-                  community services or fund-raising campaign or any other
-                  information sharing activity as may be required while using
-                  the application/ website.
-                </li>
-                <li>
-                  <strong>To Communicate with You:</strong> To send updates
-                  about our activities, events, newsletters, and other
-                  communications relevant to our mission.
-                </li>
-                <li>
-                  <strong>To Process Donations:</strong> To process financial
-                  contributions and provide receipts for donations.
-                </li>
-                <li>
-                  <strong>To Improve Our Website and Services:</strong> To
-                  analyse how users interact with our website and enhance your
-                  user experience.
-                </li>
-                <li>
-                  <strong>Legal and Regulatory Compliance:</strong> To comply
-                  with legal obligations, resolve disputes, and enforce
-                  agreements.
-                </li>
-              </ul>
-
-              <p>
-                Shrimad Rajchandra Aatma Tatva Research Centre will require the
-                export of your personal information to other Shrimad Rajchandra
-                Aatma Tatva Research Centre syndicate members or sister
-                Trust/entities in India and Worldwide in accordance with this
-                Statement to satisfy your request. Such export is a requirement
-                of providing the information to Shrimad Rajchandra Aatma Tatva
-                Research Centre.
-              </p>
-
-              <p>
-                Except as described in this Statement, Shrimad Rajchandra Aatma
-                Tatva Research Centre will not share the personal information
-                you provide to Shrimad Rajchandra Aatma Tatva Research Centre
-                with third parties not associated with-the Shrimad Rajchandra
-                Aatma Tatva Research Centre third parties without your
-                permission, unless to
-              </p>
-
-              <ul style="list-style-type: lower-roman">
-                <li>
-                  respond to duly authorized information requests of police and
-                  governmental authorities;
-                </li>
-                <li>
-                  comply with any law, regulation, subpoena, or court order;
-                </li>
-                <li>
-                  help prevent fraud or to enforce or protect the rights and
-                  properties of Shrimad Rajchandra Aatma Tatva Research Centre
-                  or its associated trust; or
-                </li>
-                <li>
-                  protect the personal safety of Shrimad Rajchandra Aatma Tatva
-                  Research Centre Devotees, followers, employees and third
-                  parties on Shrimad Rajchandra Aatma Tatva Research Centre
-                  property.
-                </li>
-              </ul>
-
-              <h2>3. Sharing Your Information</h2>
-              <p>
-                We respect your privacy and do not share, sell, or rent your
-                personal information to third parties for marketing purposes.
-                However, we may share your information in the following cases:
-              </p>
-              <ul>
-                <li>
-                  <strong>With Service Providers:</strong> We may share your
-                  information with trusted third-party service providers who
-                  assist in conducting our operations, such as payment
-                  processors, event organizers, for Community Service or fund
-                  raising campaign by - Smilestones or email marketing
-                  services.<br /><br />
-                  When collecting or transferring sensitive information such as
-                  credit card/ debit card/ UPI payments information we use a
-                  variety of security technologies and procedures to help
-                  protect your personal information from unauthorized access,
-                  use, or disclosure. The personal information you provide us is
-                  stored on computer systems located in controlled facilities
-                  which have limited access. When we transmit highly
-                  confidential information (such as credit card number or
-                  password) over the internet, we protect it through the use of
-                  encryption, such as the Secure Socket Layer (SSL) protocol.<br /><br />
-
-                  Credit card/ debit card/ UPI payments numbers/ IDs are used
-                  only for processing payments through Payment collecting
-                  Gateways and are not used for other purposes. As part of
-                  real-time payment processing, Shrimad Rajchandra Aatma Tatva
-                  Research Centre subscribes to a fraud management service. This
-                  service gives you and Shrimad Rajchandra Aatma Tatva Research
-                  Centre an extra level of security to guard against credit card
-                  fraud and to protect your financial data.
-                </li>
-              </ul>
-
-              <h2>4. Your Choices and Rights</h2>
-              <p>You have right to:</p>
-
-              <ul>
-                <li>
-                  <strong>Access Your Information:</strong> You can request a
-                  copy of the personal information we hold about you.
-                </li>
-                <li>
-                  <strong>Correct or Update Your Information:</strong> If any of
-                  your personal information is inaccurate or incomplete, you may
-                  request to correct it.
-                </li>
-                <li>
-                  <strong>Delete Your Information:</strong> You can request the
-                  deletion of your personal data, subject to applicable laws and
-                  regulations.
-                </li>
-                <li>
-                  <strong>Opt-out of Communications:</strong> You may
-                  unsubscribe from our newsletters or other marketing
-                  communications at any time by following the opt-out
-                  instructions in the email or contacting us directly.
-                </li>
-              </ul>
-
-              <h2>5. Consent</h2>
-              <p>
-                <strong>5.1</strong> By installing or accessing the Website/App
-                and registering for and using the Website/App, you agree to be
-                bound by and expressly consent to the terms and conditions of
-                this Privacy Policy. In the event that you do not agree with
-                and/or consent to the terms and conditions set out herein,
-                please do not install, use, or access the Website/App. You
-                hereby acknowledge and agree that by mere installation and use
-                of the Website/App, you expressly consent to the organisation’s
-                collection, receipt, storage, processing, disclosure, transfer,
-                dealing with and handling of the Customer Data in accordance
-                with this Privacy Policy.
-              </p>
-
-              <p>
-                <strong>5.2</strong> In the event that you wish to withdraw your
-                consent to the organisations collection, receipt, storage,
-                processing, disclosure, transfer, dealing with and handling of
-                the Customer Data, you may contact the the organisation at
-                <a href="mailto:tech@vitraagvigyaan.org"
-                  >tech@vitraagvigyaan.org</a
-                >, informing the organisation of your withdrawal of consent to
-                its use as aforesaid of your Customer Data. You hereby
-                acknowledge and agree that in case you withdraw your consent to
-                the Organisation’s use and disclosure of your Data as provided
-                for in this Privacy Policy, the Organisation hereby expressly
-                reserves the right to discontinue provision of access to the
-                Website/App at its own sole discretion.
-              </p>
-
-              <h2>6. How We Protect Your Information</h2>
-              <p>
-                We implement a variety of security measures to maintain the
-                safety of your personal information when you donate or enter
-                personal data. These security measures include encryption,
-                access controls, and secure servers. However, no method of
-                transmission over the internet or electronic storage is 100%
-                secure, so while we strive to use commercially acceptable means
-                to protect your information, we cannot guarantee its absolute
-                security.
-              </p>
-
-              <h2>7. External Links</h2>
-              <p>
-                You hereby acknowledge and agree that when you use the
-                Website/App, there may be certain links which may direct you to
-                other websites or applications not maintained by the
-                Organisation (the “Third Party Website”). The manner in which
-                your Customer Data is collected, received, stored, processed,
-                disclosed, transferred, dealt with, and handled by such
-                Third-Party Websites is governed by the terms and conditions and
-                privacy policy of the respective Third-Party Website. You hereby
-                further acknowledge and agree that the Organisation has no
-                control over the Customer Data in such an event.
-              </p>
-
-              <p>
-                The Organisataion urges you to acquaint yourself with the terms
-                and conditions and privacy policy of every such Third Party
-                Website and in this regard, the Organisation hereby expressly
-                disclaims all liabilities with respect to the manner in which
-                the Third Party Website collects and/or uses the Customer Data.
-              </p>
-
-              <h2>8. Children's Privacy</h2>
-              <p>
-                Our services are not directed to children under the age of 13,
-                and we do not knowingly collect personal information from
-                children. If we learn that we have inadvertently collected
-                personal information from a child under 13, we will take steps
-                to delete such information. We encourage parents and guardians
-                to take an active role in their children’s online activities and
-                interests. Shrimad Rajchandra Aatma Tatva Research Centre
-                however takes no liability or responsibility for any mishap or
-                untoward incident of any nature whatsoever that may arise inter
-                alia from the use / activities and interests of children below
-                the age of 13 years.
-              </p>
-
-              <h2>9. Changes to This Privacy Policy</h2>
-              <p>
-                We may update this Privacy Policy from time to time. We will
-                notify you of any significant changes by posting the new policy
-                on our website with the effective date. We encourage you to
-                review this policy periodically for any updates.
-              </p>
-
-              <h2>10. Redressal of Grievances</h2>
-              <p>
-                If at any time you have questions or concerns with respect to
-                the Privacy Policy, please feel free to e-mail us at
-                <a href="mailto:tech@vitraagvigyaan.org"
-                  >tech@vitraagvigyaan.org</a
-                >. If at any time you have grievances or complaints with regard
-                to the collection, receipt, storage, processing, disclosure,
-                transfer, dealing with and handling of Customer Data in a time
-                bound manner or otherwise, you may contact us at the above
-                mentioned email ID and designated person shall redress your
-                grievance/complaint within one (1) month from the date of
-                receipt of the grievance/complaint. While registering a
-                grievance/complaint, you are kindly requested to quote your
-                personal details for our reference to enable us to effectively
-                resolve your grievance/complaint.
-              </p>
-
-              <h2>11. Contact Us</h2>
-              <p>
-                If you have any questions or concerns about this Privacy Policy
-                or wish to exercise any of your rights, please contact us at:
-              </p>
-              <div class="contact-info">
-                <p>
-                  <strong
-                    >Shrimad Rajchandra Aatma Tatva Research Centre</strong
-                  >
-                </p>
-                <p>
-                  <strong>Address:</strong>
-                  <a href="https://maps.app.goo.gl/uvCqXqVG4t9m1YQs7"
-                    >Shrimad Rajchandra Aatma Tatva Research Center Rajnagar,
-                    Parli , Post gothavade, Taluka Sudhagadh PALI - 410205,
-                    MAHARASHTRA, India</a
-                  >
-                </p>
-                <p>
-                  <strong>Email:</strong>
-                  <a href="mailto:tech@vitraagvigyaan.org"
-                    >tech@vitraagvigyaan.org</a
-                  >
-                </p>
-                <p>
-                  <strong>Phone:</strong>
-                  <a href="tel:+919820656510">+91 98206 56510</a>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div id="contact-section" class="legal-section">
-            <h3>Contact Us</h3>
-
+          <div class="legal-consent-box">
             <p>
-              If you have any questions or concerns about our app or these legal
-              documents, please contact us:
+              By entering/accessing the Aashray website (“Website”)/software application platform for mobile devices
+              (“App”) and related services, the visitor consents to the terms of this Policy. By submitting his/her
+              Information to the SRATRC and/or its affiliates, the visitor will be treated as having given his/her consent
+              for processing the same in a manner provided in this Policy.
             </p>
-            <ul class="contact-list">
-              <li>
-                <strong>Email:</strong>
-                <a href="mailto:tech@vitraagvigyaan.org" target="_blank"
-                  >tech@vitraagvigyaan.org</a
-                >
-              </li>
-              <li>
-                <strong>Phone:</strong>
-                <a href="tel:+919820656510" target="_blank">+91 9820656510</a>
-              </li>
-              <li class="address">
-                <strong>Address:</strong>
-                <div>
-                  Shrimad Rajchandra Aatma Tatva Research Center<br />
-                  Rajnagar, Parli, Post Gothavade,<br />
-                  Taluka Sudhagadh<br />
-                  PALI, MAHARASHTRA 410205<br />
-                  India
-                </div>
-              </li>
-            </ul>
+            <p>
+              In the event that you wish to withdraw your consent to the SRATRC’s collection, receipt, storage,
+              processing, disclosure, transfer, dealing with and handling of the Customer Data, you may contact the SRATRC
+              at <a href="mailto:tech@vitraagvigyaan.org">tech@vitraagvigyaan.org</a>, informing the SRATRC of your
+              withdrawal of consent to its use as aforesaid of your Customer Data. You hereby acknowledge and agree that
+              in case you withdraw your consent to the SRATRC’s use and disclosure of your Data as provided for in this
+              Privacy Policy, SRATRC hereby expressly reserves the right to discontinue provision of access to the
+              Website/App at its own sole discretion.
+            </p>
           </div>
+
+          <h4>Introduction</h4>
+          <p>
+            We, at SRATRC respect the privacy of the individual/visitor, volunteers, members, guests, donors, event
+            attendees and all those associated with us and are committed to take reasonable precautions to protect
+            information consisting of Personal information and “Sensitive Personal Data or Information” (SPDI)
+            (“Information”) of visitors of this SRATRC website/App and comply with all legal, regulatory and/or
+            contractual obligations related to privacy. SRATRC has adopted the “Privacy by Default” principles in its
+            approach to data privacy i.e. privacy of data and information is upheld first by default.
+          </p>
+          <p>
+            This Policy covers the processing, storage and access to Information as required under lawful and/or
+            contractual activities with SRATRC or otherwise required in the normal course of business. It describes
+            SRATRC’s policies and procedures on the collection, usage and disclosure of Information provided/received by
+            natural persons and meets the requirements established under:
+          </p>
+          <ul>
+            <li>The Digital Personal Data Protection Act, 2023 (DPDP Act);</li>
+            <li>The Information Technology Act, 2000 – Section 43A;</li>
+            <li>The Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal
+              Information) Rules, 2011.</li>
+            <li>Any amendments, rules, regulations, or guidelines issued thereunder.</li>
+          </ul>
+
+          <h4>1. Scope</h4>
+          <p>This Policy applies to all visitors of this SRATRC’s website and App.</p>
+
+          <h4>2. Information covered by this Policy</h4>
+          <p>This Policy applies to Information collected and processed by SRATRC consisting of following:</p>
+
+          <h5>2.1 Personal information</h5>
+          <p>
+            Personal information is information related to a visitor, or a combination of pieces of information that
+            could reasonably allow him/her to be identified.
+          </p>
+          <p>We collect the following types of personal information:</p>
+          <ul>
+            <li><strong>Personal Identification Information:</strong> Name, email address, phone number, postal address,
+              PAN card details and other similar details.</li>
+            <li><strong>Donation Information:</strong> Details related to your donations, including transaction history,
+              amounts, and payment information.</li>
+            <li><strong>Booking and Service Information:</strong> Details relating to accommodation bookings, food
+              bookings, transportation bookings, event registrations, attendance records, volunteer activities, and
+              other services availed through the Website/App.</li>
+            <li><strong>Interaction Information:</strong> Data related to your interactions with our website, Mobile
+              Application, emails, events, or any other communications.</li>
+            <li><strong>Non-Personal Information:</strong> We may automatically collect non-personal information when
+              you visit our website/App, such as IP addresses, browser type, operating system, and usage data (e.g.,
+              pages visited, time spent on the site).</li>
+          </ul>
+
+          <h5>2.2 Sensitive Personal Data or Information (“SPDI”)</h5>
+          <p>
+            Sensitive Personal Data or Information (“SPDI”) is such personal information that is collected, received,
+            stored, transmitted or processed by SRATRC, consisting of:
+          </p>
+          <ul>
+            <li>Password;</li>
+            <li>Financial information such as bank account or credit card or debit card or other payment instrument
+              details;</li>
+            <li>Biometric information;</li>
+            <li>Any detail relating to the above personal information categories as provided to SRATRC for providing
+              services; and</li>
+            <li>Any of the information received under above personal information categories by SRATRC for processing,
+              stored or processed under lawful contract or otherwise.</li>
+          </ul>
+          
+          <div class="legal-note-callout">
+            Please note that any information that is freely available or accessible in public domain or furnished under
+            the Right to Information Act, 2005 or any other law for the time being in force shall not be regarded as
+            SPDI.
+          </div>
+
+          <h4>3. Purpose</h4>
+          <p>SRATRC shall collect and use Information for legitimate purposes in order:</p>
+          <ul>
+            <li><strong>To Provide Services:</strong> To enable us to facilitate seamless services to Mumukshu’s, Guest
+              and Visitors with respect to Ashram Visit/ Stay and Meal services, Event registrations, arrangement of
+              transportation, donations or community services or fund-raising campaign or any other information sharing
+              activity as may be required while using the application/ website.</li>
+            <li><strong>To Communicate with You:</strong> To send updates regarding bookings, accommodation, food
+              services, transportation services, donations, events, newsletters, security notifications, OTPs,
+              reminders, and other communications relevant to our mission through email, SMS, WhatsApp, push
+              notifications, or other communication channels.</li>
+            <li><strong>To Process Donations:</strong> To process financial contributions and provide receipts for
+              donations.</li>
+            <li><strong>To Improve Our Website and Services:</strong> To analyse how users interact with our website and
+              enhance your user experience.</li>
+            <li><strong>Legal and Regulatory Compliance:</strong> To comply with legal obligations, resolve disputes,
+              and enforce agreements.</li>
+          </ul>
+
+          <h4>4. Collection of Information</h4>
+          <p>
+            Only minimum Information required to meet the purposes mentioned in this policy shall be collected from the
+            visitor/s. Neither SRATRC nor its representatives shall be responsible for the authenticity of such
+            Information provided by the visitor/s. As normal business practice, SRATRC may collect Information in order
+            to enable the secure online authentication, interaction and transaction with natural persons. This may
+            include the installation of cookies and the collection of other session data.
+          </p>
+
+          <h4>5. Access, Correction of Information and withdrawal of consent</h4>
+          <p>
+            Any modifications / corrections required to the Information can be carried out on the website. In the event
+            the visitor is unable to do so due to lack of functionality in SRATRC’s website and / or the visitor wants
+            to withdraw his / her consent to provide SPDI, he / she may contact the Grievance officer, the details
+            whereof are provided in clause 8 of this policy.
+          </p>
+
+          <h4>6. Retention, Processing and storage of Information</h4>
+          <p>
+            <strong>6.1</strong> SRATRC shall retain Information only for as long as reasonably necessary to fulfill the
+            purposes described in this Policy, comply with legal and regulatory obligations, resolve disputes, enforce
+            agreements, maintain accounting and audit records, or protect the legitimate interests of SRATRC.
+          </p>
+          <p>
+            <strong>6.2</strong> SRATRC has implemented required security practices and standards in line with the
+            global standards and have a comprehensive documented information security program and policy in place, which
+            contains managerial, technical, operational and physical security control measures that commensurate with
+            the information assets being protected with SRATRC’s nature of business. It is being reviewed periodically
+            to keep pace with business, technology and regulatory changes.
+          </p>
+
+          <h4>7. Disclosure of Information</h4>
+          <p>
+            SRATRC shall not use or disclose Information for purposes other than as mentioned in this policy, except
+            with the consent of visitor providing such Information or as required by law. However, we may share your
+            information in the following cases:
+          </p>
+          <ul>
+            <li><strong>With Service Providers:</strong> We may share your information with trusted third-party service
+              providers who assist in conducting our operations, such as payment processors, event organizers, for
+              Community Service or fund-raising campaign by - Smilestones or email marketing services.</li>
+          </ul>
+          <p>
+            Certain service providers engaged by SRATRC may process or store information on servers located outside
+            India. In such cases, SRATRC shall take reasonable steps to ensure that appropriate security safeguards and
+            contractual protections are implemented in accordance with applicable laws.
+          </p>
+          <p>
+            When collecting or transferring sensitive information such as credit card/ debit card/UPI payments
+            information we use a variety of security technologies and procedures to help protect your personal
+            information from unauthorized access, use, or disclosure. The personal information you provide us is stored
+            on computer systems located in controlled facilities which have limited access. When we transmit highly
+            confidential information (such as credit card number or password) over the internet, we protect it through
+            the use of encryption, such as the Secure Socket Layer (SSL) protocol.
+          </p>
+          <p>
+            Credit card/ debit card/ UPI payments numbers/ IDs are used only for processing payments through Payment
+            collecting Gateways and are not used for other purposes. Payment transactions are processed through
+            authorized third-party payment gateways. SRATRC does not store complete credit card numbers, CVV details,
+            net banking passwords, UPI PINs, or similar authentication credentials on its systems.
+          </p>
+
+          <h4>8. Your Choices and Rights</h4>
+          <p>You have the right to:</p>
+          <ul>
+            <li><strong>Access Your Information:</strong> You can request a copy of the personal information we hold
+              about you.</li>
+            <li><strong>Correct or Update Your Information:</strong> If any of your personal information is inaccurate
+              or incomplete, you may request to correct it.</li>
+            <li><strong>Delete Your Information:</strong> You can request the deletion of your personal data, subject to
+              applicable laws and regulations.</li>
+            <li>
+              <strong>Withdraw Consent:</strong> Where processing is based on consent, you may withdraw such consent at
+              any time, subject to legal or contractual requirements.
+            </li>
+            <li>
+              <strong>Grievance Redressal:</strong> You may raise concerns regarding the processing of your personal
+              data by contacting SRATRC using the details provided in this Policy.
+            </li>
+            <li>
+              <strong>Request Information:</strong> Subject to applicable laws, you may request information regarding
+              the categories of personal data processed by SRATRC and the purposes for which such data is used.
+            </li>
+            <li><strong>Opt-out of Communications:</strong> You may unsubscribe from our newsletters or other marketing
+              communications at any time by following the opt-out instructions in the email or contacting us directly.
+            </li>
+          </ul>
+
+          <h4>9. How We Protect Your Information</h4>
+          <p>
+            We implement a variety of security measures to maintain the safety of your personal information when you
+            donate or enter personal data. These security measures include encryption, access controls, and secure
+            servers. However, no method of transmission over the internet or electronic storage is 100% secure, so while
+            we strive to use commercially acceptable means to protect your information, we cannot guarantee its absolute
+            security.
+          </p>
+
+          <h4>10. External Links</h4>
+          <p>
+            You hereby acknowledge and agree that when you use the Website/App, there may be certain links which may
+            direct you to other websites or applications not maintained by SRATRC (the “Third Party Website”). The
+            manner in which your Customer Data is collected, received, stored, processed, disclosed, transferred, dealt
+            with, and handled by such Third-Party Websites is governed by the terms and conditions and privacy policy of
+            the respective Third-Party Website. You hereby further acknowledge and agree that the SRATRC has no control
+            over the Customer Data in such an event.
+          </p>
+          <p>
+            SRATRC urges you to acquaint yourself with the terms and conditions and privacy policy of every such
+            Third-Party Website and in this regard, SRATRC hereby expressly disclaims all liabilities with respect to
+            the manner in which the Third-Party Website collects and/or uses the Customer Data.
+          </p>
+
+          <h4>11. Children’s Privacy</h4>
+          <p>
+            Our services are not directed to children under the age of 13, and we do not knowingly collect personal
+            information from children. If we learn that we have inadvertently collected personal information from a
+            child under 13, we will take steps to delete such information. We encourage parents and guardians to take an
+            active role in their children’s online activities and interests. SRATRC, however, takes no liability or
+            responsibility for any mishap or untoward incident of any nature whatsoever that may arise inter alia from
+            the use / activities and interests of children below the age of 13 years.
+          </p>
+
+          <h4>12. Changes to This Privacy Policy</h4>
+          <p>
+            We may update this Privacy Policy from time to time. We will notify you of any significant changes by
+            posting the new policy on our website with the effective date. We encourage you to review this policy
+            periodically for any updates.
+          </p>
+
+          <h4>13. Redressal of Grievances</h4>
+          <p>
+            If at any time you have questions or concerns with respect to this Privacy Policy, please feel free to
+            e-mail us at <a href="mailto:tech@vitraagvigyaan.org">tech@vitraagvigyaan.org</a>. If at any time you have
+            grievances or complaints with regard to the collection, receipt, storage, processing, disclosure, transfer,
+            dealing with and handling of Customer Data in any manner, you may contact us at the below-mentioned email ID
+            and designated person shall redress your grievance/complaint within one (1) month from the date of receipt
+            of the grievance/complaint. While registering a grievance/complaint, you are kindly requested to quote your
+            personal details for our reference to enable us to effectively resolve your grievance/complaint.
+          </p>
+
+          <h4>14. Contact Us</h4>
+          <p>
+            If you have any questions or concerns about this Privacy Policy or wish to exercise any of your rights,
+            please contact us at:
+          </p>
+          <p>
+            <strong>Shrimad Raj Chandra Aatma Tatva Research Centre</strong><br>
+            Raj Nagar, Parli, Post Gothavade,<br>
+            Taluka Sudhagadh, Off Khopoli-Pali Road (same road as Adlabs Imagica),<br>
+            Dist. Raigad - 410205, Maharashtra, India.<br>
+            Email: <a href="mailto:info@vitraagvigyaan.org">info@vitraagvigyaan.org</a><br>
+            Phone: <a href="tel:9820656510">98206 56510</a>
+          </p>
+        </div>
+
+        <div id="terms-section" class="legal-section">
+          <h3>Terms of Use</h3>
+          <p><strong>Last Updated:</strong> 15th June, 2026</p>
+
+          <div class="legal-consent-box">
+            <p>
+              This page states the Terms and Conditions under which you may use this Website/App. Please read this page carefully. If you do not accept the Terms and Conditions stated here, please do not use the Website/App. SRATRC may revise these Terms and Conditions at any time by updating this posting. You should visit this page periodically to review the Terms and Conditions, because they are binding on you.
+            </p>
+          </div>
+
+          <h4>Electronic Communications</h4>
+          <p>
+            By using the Website/App, you consent to receive communications from SRATRC through email, SMS, WhatsApp, push notifications, telephone calls, or other electronic means regarding registrations, bookings, donations, events, services, account activity, and other operational matters.
+          </p>
+
+          <h4>Use Restrictions</h4>
+          <p>
+            The copyright in all material provided on this Site is held by SRATRC or by the original creator of the material. Except as stated herein, none of the material may be copied, reproduced, distributed, republished, downloaded, displayed, posted or transmitted in any form or by any means, including, but not limited to, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of SRATRC or the copyright owner.
+          </p>
+          <p>
+            Permission is granted to display, copy, distribute and download the materials on this Site for personal, non-commercial use only provided you do not modify the materials and that you retain all copyright and other proprietary notices contained in the material. This permission terminates automatically if you breach any of these Terms or Conditions. Upon termination, you must immediately destroy any downloaded and printed materials.
+          </p>
+          <p>
+            You also may not, without SRATRC permission, “mirror” any material contained on this Site on any other server. Any unauthorized use of any material contained on this Site may violate copyright laws, trademark laws, and/or other laws, rules and regulations.
+          </p>
+
+          <h4>3. User Accounts and Acceptable Use</h4>
+          <p>
+            Users are responsible for maintaining the confidentiality of their account credentials and for all activities conducted through their accounts.
+          </p>
+          <p>Users shall not:</p>
+          <ul>
+            <li>Provide false or misleading information;</li>
+            <li>Attempt to gain unauthorized access to the Website/App or its systems;</li>
+            <li>Interfere with the operation or security of the Website/App;</li>
+            <li>Upload, transmit, or distribute malicious code, viruses, or harmful content;</li>
+            <li>Use the Website/App for any unlawful purpose.</li>
+          </ul>
+          <p>
+            SRATRC reserves the right to suspend or terminate access to the Website/App for violation of these Terms.
+          </p>
+
+          <h4>4. Disclaimer Warranty</h4>
+          <p>
+            The Material posted on the Site may contain inaccuracies or typographical errors. SRATRC OR ITS AFFILIATES, SUPPLIERS MAKE NO REPRESENTATIONS OR WARRANTIES ABOUT THE ACCURACY, RELIABILITY, COMPLETENESS, OR TIMELINESS OF THE MATERIAL, SERVICES, SOFTWARE, TEXT GRAPHICS AND LINKS OR ABOUT THE RESULTS TO BE OBTAINED FROM USING THE WEB SITE AND THE MATERIAL THEREON. The use of the Web Site and the Material is at your own risk. Changes are periodically made to the Web Site and may be made at any time.
+          </p>
+          <p>
+            THE WEB SITE AND THE MATERIAL ARE PROVIDED ON AN “AS IS” BASIS WITHOUT ANY WARRANTIES OF ANY KIND. SRATRC AND ITS AFFILIATES, SUPPLIERS, OR ANY PERSON ACTING, BY UNDER THROUGH OR IN TRUST FOR IT TO THE FULLEST EXTENT PERMITTED BY LAW, DISCLAIM ALL WARRANTIES, INCLUDING THE WARRANTY OF MERCHANTABILITY, NON-INFRINGEMENT OF THIRD PARTIES RIGHTS, AND THE WARRANTY OF FITNESS FOR PARTICULAR PURPOSE.
+          </p>
+
+          <h4>5. Limitation of Liability</h4>
+          <p>
+            IN NO EVENT SHALL SRATRC, ITS AFFILIATES, SUPPLIERS, OR ANY OTHER PERSON ACTING BY UNDER THROUGH OR IN TRUST FOR IT OR ANY THIRD PARTIES MENTIONED AT THIS SITE BE LIABLE FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, INCIDENTAL AND CONSEQUENTIAL DAMAGES, LOST PROFITS, OR DAMAGES RESULTING FROM THE USE OR INABILITY TO USE THE WEB SITE AND THE MATERIAL, WHETHER BASED ON WARRANTY, CONTRACT, TORT, OR ANY OTHER LEGAL THEORY, AND WHETHER OR NOT SRATRC IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+          </p>
+
+          <h4>6. Payments and Donations</h4>
+          <p>
+            Payments and donations made through the Website/App are processed through authorized third-party payment service providers. SRATRC does not guarantee uninterrupted availability of payment services and shall not be liable for delays or failures caused by payment gateways, banks, telecommunications providers, internet service providers, or other third parties.
+          </p>
+
+          <h4>7. Users Communications / User Information</h4>
+          <p>
+            Any feedback, suggestions, comments, or other non-personal information submitted by users may be used by SRATRC for improving its services, programs, and operations.
+          </p>
+          <p>
+            Personal information submitted through the Website/App shall be collected, processed, stored, and protected in accordance with SRATRC’s Privacy Policy.
+          </p>
+          <p>
+            Users are prohibited from posting or transmitting any unlawful, threatening, defamatory, obscene, fraudulent, misleading, harmful, or otherwise objectionable content through the Website/App.
+          </p>
+
+          <h4>8. Links to Other Sites</h4>
+          <p>
+            The Web Site contains Links to third party Web sites. These links are provided solely as a convenience to you and not as an endorsement by SRATRC of the contents on such third-party Web sites. SRATRC is not responsible for the content of linked third-party sites and does not make any representations regarding the content or accuracy of materials on such third-party Web sites. If you decide to access linked third-party Web sites, you do so at your own risk.
+          </p>
+          <p>
+            YOU SHALL HEREBY INDEMNIFY AND SHALL KEEP HARMLESS AND INDEMNIFIED, SRATRC, ITS SUCCESSORS AND ASSIGNS, AFFILIATES AGAINST ANY CLAIMS, SUITS, ACTIONS OR OTHER PROCEEDINGS BROUGHT AGAINST SRATRC OR ANY CHARGES, EXPENSES, PENALTIES, DUTIES LEVIES, TAXES, DAMAGES OR LOSSES SUFFERED OR INCURRED BY SRATRC AS A RESULT OF YOUR ACCESSING ANY LINKED THIRTY-PARTY WEB SITES OR ANY CONSEQUENCES WHATSOEVER ARISING THEREFROM OR USE THEREOF.
+          </p>
+
+          <h4>9. Modification of Services</h4>
+          <p>
+            SRATRC reserves the right to modify, suspend, discontinue, or restrict access to any part of the Website/App, its content, or services at any time without prior notice.
+          </p>
+
+          <h4>10. Privacy</h4>
+          <p>
+            Use of the Website/App is also governed by the SRATRC Privacy Policy, which forms an integral part of these Terms and Conditions and is incorporated herein by reference.
+          </p>
+
+          <h4>11. Trade Marks</h4>
+          <p>
+            The trademarks, service marks, and logos (the “Trademarks”) used and displayed on this Site are registered and unregistered Trademarks of SRATRC AND ITS AFFILIATES, and/or others. Nothing on this Site should be construed as granting, by implication, estoppel, or otherwise, any license or right to use any Trademarks displayed on the Site, without the written permission of the Trademark owner.
+          </p>
+
+          <h4>12. Applicable Law / Jurisdiction</h4>
+          <p>
+            These Terms and Conditions shall be governed by and construed in accordance with the laws of India.
+          </p>
+          <p>
+            Subject to applicable law, the courts at Mumbai, Maharashtra shall have exclusive jurisdiction in relation to any disputes arising out of or in connection with the Website/App and these Terms and Conditions.
+          </p>
+        </div>
+
+        <div id="contact-section" class="legal-section">
+          <h3>Contact Us</h3>
+
+          <p>
+            If you have any questions or concerns about our app or these legal
+            documents, please contact us:
+          </p>
+          <ul class="contact-list">
+            <li>
+              <strong>Email:</strong>
+              <a href="mailto:tech@vitraagvigyaan.org" target="_blank">tech@vitraagvigyaan.org</a>
+            </li>
+            <li>
+              <strong>Phone:</strong>
+              <a href="tel:+919820656510" target="_blank">+91 9820656510</a>
+            </li>
+            <li class="address">
+              <strong>Address:</strong>
+              <div>
+                Shrimad Rajchandra Aatma Tatva Research Center<br />
+                Rajnagar, Parli, Post Gothavade,<br />
+                Taluka Sudhagadh<br />
+                PALI, MAHARASHTRA 410205<br />
+                India
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <footer>
-      <div class="container">
-        <p>&copy; 2025 Vitraag Vigyaan. All rights reserved.</p>
-        <div class="social-links">
-          <a href="https://www.instagram.com/vitraag.vigyaan" target="_blank"
-            >Instagram</a
-          >
-          <a
-            href="https://www.linkedin.com/company/researchcentre-global"
-            target="_blank"
-            >LinkedIn</a
-          >
-        </div>
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Vitraag Vigyaan. All rights reserved.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/vitraag.vigyaan" target="_blank">Instagram</a>
+        <a href="https://www.linkedin.com/company/researchcentre-global" target="_blank">LinkedIn</a>
       </div>
-    </footer>
+    </div>
+  </footer>
 
-    <script>
-      // Handle tab and dropdown navigation
-      const tabs = document.querySelectorAll('.legal-tab, .dropdown-content a');
-      const sections = document.querySelectorAll('.legal-section');
-      const dropdownBtn = document.querySelector('.dropdown-btn');
-      const dropdownContent = document.querySelector('.dropdown-content');
+  <script>
+    // Handle tab and dropdown navigation
+    const tabs = document.querySelectorAll('.legal-tab, .dropdown-content a');
+    const sections = document.querySelectorAll('.legal-section');
+    const dropdownBtn = document.querySelector('.dropdown-btn');
+    const dropdownContent = document.querySelector('.dropdown-content');
 
-      // Function to set active tab and section
-      function setActiveTab(targetId) {
-        // Remove active class from all tabs and sections
-        tabs.forEach((t) => t.classList.remove('active'));
-        sections.forEach((s) => s.classList.remove('active'));
+    // Function to set active tab and section
+    function setActiveTab(targetId) {
+      // Remove active class from all tabs and sections
+      tabs.forEach((t) => t.classList.remove('active'));
+      sections.forEach((s) => s.classList.remove('active'));
 
-        // Add active class to clicked tab
-        document
-          .querySelectorAll(`[data-target="${targetId}"]`)
-          .forEach((tab) => {
-            tab.classList.add('active');
-          });
+      // Add active class to clicked tab
+      document
+        .querySelectorAll(`[data-target="${targetId}"]`)
+        .forEach((tab) => {
+          tab.classList.add('active');
+        });
 
-        // Update dropdown button text for mobile
-        const activeText = document.querySelector(
-          `.dropdown-content a[data-target="${targetId}"]`
-        ).textContent;
-        dropdownBtn.textContent = activeText;
+      // Update dropdown button text for mobile
+      const activeText = document.querySelector(
+        `.dropdown-content a[data-target="${targetId}"]`
+      ).textContent;
+      dropdownBtn.textContent = activeText;
 
-        // Show corresponding section
-        document.getElementById(targetId).classList.add('active');
+      // Show corresponding section
+      document.getElementById(targetId).classList.add('active');
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const targetId = tab.getAttribute('data-target');
+        setActiveTab(targetId);
+
+        // Update URL hash without scrolling
+        history.pushState(null, null, tab.getAttribute('href'));
+
+        // Hide dropdown menu after selection on mobile
+        dropdownContent.style.display = 'none';
+        dropdownBtn.classList.remove('active');
+      });
+    });
+
+    // Toggle dropdown menu on mobile
+    dropdownBtn.addEventListener('click', () => {
+      if (dropdownContent.style.display === 'block') {
+        dropdownContent.style.display = 'none';
+        dropdownBtn.classList.remove('active');
+      } else {
+        dropdownContent.style.display = 'block';
+        dropdownBtn.classList.add('active');
       }
+    });
 
-      tabs.forEach((tab) => {
-        tab.addEventListener('click', (e) => {
-          e.preventDefault();
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.legal-dropdown')) {
+        dropdownContent.style.display = 'none';
+        dropdownBtn.classList.remove('active');
+      }
+    });
 
-          const targetId = tab.getAttribute('data-target');
+    // Check for hash on page load
+    function checkHash() {
+      const hash = window.location.hash;
+      if (hash) {
+        const targetTab = document.querySelector(`[href="${hash}"]`);
+        if (targetTab) {
+          const targetId = targetTab.getAttribute('data-target');
           setActiveTab(targetId);
-
-          // Update URL hash without scrolling
-          history.pushState(null, null, tab.getAttribute('href'));
-
-          // Hide dropdown menu after selection on mobile
-          dropdownContent.style.display = 'none';
-          dropdownBtn.classList.remove('active');
-        });
-      });
-
-      // Toggle dropdown menu on mobile
-      dropdownBtn.addEventListener('click', () => {
-        if (dropdownContent.style.display === 'block') {
-          dropdownContent.style.display = 'none';
-          dropdownBtn.classList.remove('active');
-        } else {
-          dropdownContent.style.display = 'block';
-          dropdownBtn.classList.add('active');
-        }
-      });
-
-      // Close dropdown when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.legal-dropdown')) {
-          dropdownContent.style.display = 'none';
-          dropdownBtn.classList.remove('active');
-        }
-      });
-
-      // Check for hash on page load
-      function checkHash() {
-        const hash = window.location.hash;
-        if (hash) {
-          const targetTab = document.querySelector(`[href="${hash}"]`);
-          if (targetTab) {
-            const targetId = targetTab.getAttribute('data-target');
-            setActiveTab(targetId);
-          }
         }
       }
+    }
 
-      window.addEventListener('load', checkHash);
-      window.addEventListener('hashchange', checkHash);
+    window.addEventListener('load', checkHash);
+    window.addEventListener('hashchange', checkHash);
 
-      // Smooth scroll for anchor links
-      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-        anchor.addEventListener('click', function (e) {
-          if (
-            this.getAttribute('href').length > 1 &&
-            !this.closest('.legal-tabs, .dropdown-content')
-          ) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-              window.scrollTo({
-                top: targetElement.offsetTop - 100,
-                behavior: 'smooth'
-              });
-            }
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener('click', function (e) {
+        if (
+          this.getAttribute('href').length > 1 &&
+          !this.closest('.legal-tabs, .dropdown-content')
+        ) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href');
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 100,
+              behavior: 'smooth'
+            });
           }
-        });
+        }
       });
-    </script>
-  </body>
+    });
+  </script>
+</body>
+
 </html>
