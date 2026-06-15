@@ -5,176 +5,190 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Upcoming Travel Bookings</title>
 
-    <!-- jQuery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upcoming Travel Bookings</title>
 
-    <!-- Additional Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../style/js/formatDate.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="fetchUpcomingBookings.js" defer></script>
-    <script src="../../style/js/tableSortFilter.js" defer></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="../../style/js/exportToExcel.js"></script>
+  <!-- jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/formatDate.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="fetchUpcomingBookings.js" defer></script>
+  <script src="../../style/js/tableSortFilter.js" defer></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../../style/js/exportToExcel.js"></script>
 
 
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-    <style>
-  #summaryBooking {
-    width: fit-content !important;
-    max-width: 100%; 
-    margin-left: 0;   /* pushes table to the right */
-    margin-right: auto;
-  }
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    #summaryBooking {
+      width: fit-content !important;
+      max-width: 100%;
+      margin-left: 0;
+      /* pushes table to the right */
+      margin-right: auto;
+    }
 
-  /* Ensure the outer container doesn't stretch it */
-  #summaryBooking + .table-responsive,
-  #summaryBooking.table {
-    width: fit-content !important;
-    max-width: 100%;
-    margin-left: 0;   /* right align */
-    margin-right: auto;
-  }
-</style>
+    /* Ensure the outer container doesn't stretch it */
+    #summaryBooking+.table-responsive,
+    #summaryBooking.table {
+      width: fit-content !important;
+      max-width: 100%;
+      margin-left: 0;
+      /* right align */
+      margin-right: auto;
+    }
+  </style>
 
-  </head>
+</head>
 
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
-    
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-
-            <div class="frm-head">
-              <h1>Upcoming Travel Bookings</h1>
-            </div>
-
-            <div class="form">
-              <div id="alert" class="alert" role="alert" style="display:none;"></div>
-              <form id="reportForm">
-                
-                <div class="form-group">
-                  <label>Status:</label>
-                  <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-                    <label><input type="checkbox" name="status" value="confirmed" /> Confirmed </label>
-                    <label><input type="checkbox" name="status" value="proceed for payment" /> Proceed for Payment</label>
-                    <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation for Payment</label>
-                    <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
-                    <label><input type="checkbox" name="status" value="cancelled" /> Self-Cancel </label>
-                    <label><input type="checkbox" name="status" value="wrong form cancel" /> Cancelled as wrong form filled</label>
-                    <label><input type="checkbox" name="status" value="admin cancelled" /> Admin Cancelled</label>
-                    <label><input type="checkbox" name="status" value="seats full cancel" /> Cancelled as all seats are booked</label>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label for="start_date">*Start Date:</label>
-                  <input type="date" id="start_date" name="start_date" class="form-control" required />
-                </div>
-
-                <div class="form-group">
-                  <label for="end_date">*End Date:</label>
-                  <input type="date" id="end_date" name="end_date" class="form-control" required />
-                </div>
-
-                <div class="form-group form-submit">
-  <div style="display: inline-block;">
-    <button type="submit" class="btn btn-primary">Submit</button>
   </div>
-  <div id="downloadBtnContainer" style="display: inline-block; margin-left: 10px;"></div>
-</div>
 
-              </form>
-            </div>
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
 
-            <div class="form">
-  <h3>Summary <span id="selectedDate"></span> </h3>
+          <div class="frm-head">
+            <h1>Upcoming Travel Bookings</h1>
+          </div>
 
-  <div class="table-responsive">
-    <table
-      id="summaryBooking"
-      >
-      <thead>
-        <tr>
-          <th>Destination</th>
-          <th>Status</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Filled via JS -->
-      </tbody>
-    </table>
-  </div>
-</div>
+          <div class="form">
+            <div id="alert" class="alert" role="alert" style="display:none;"></div>
+            <form id="reportForm">
 
-<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-                            <div class="table-responsive">
-                <table
-                  id="upcomingBookings"
-                  class="table table-striped table-bordered"
-                >
-                  <thead>
-  <tr>
-    <th>#</th> 
-    <th data-key="date">Travel Date</th>
-    <th data-key="issuedto">Mumukshu Name</th>
-    <th data-key="type">Type (Regular/Full Car)</th>
-    <th data-key="pickup_point">Pickup Point</th>
-    <th data-key="drop_point">Drop off Point</th>
-    <th data-key="arrival_time">Tranin/Flight Time</th>
-    <th data-key="leaving_post_adhyayan">Attending Adhyayan</th>
-    <th data-key="status">Booking Status</th>
-    <th data-key="action">Action</th>
-    <th data-key="comments">Mumukshu Comments</th>
-    <th data-key="total_people">Total People</th>
-    <th data-key="mobno">Mobile No</th>
-    <th data-key="amount">Amount</th>
-    <th data-key="paymentStatus">Payment Status</th>
-    <th data-key="paymentDate">Payment Date</th>
-    <th data-key="bookingid">Booking Id</th>
-    <th data-key="bookedBy">Booked By</th>
-    <th data-key="adminComments">Admin Comments</th>
-    <th data-key="luggage">Luggage</th>
-    <th data-key="travellingFrom">Travelling From</th>
-  </tr>
-</thead>
-<tbody>
-                    <!-- Filled via JS -->
-                  </tbody>
-                </table>
-                
+              <div class="form-group">
+                <label>Status:</label>
+                <div class="checkbox-group" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                  <label><input type="checkbox" name="status" value="confirmed" /> Confirmed </label>
+                  <label><input type="checkbox" name="status" value="proceed for payment" /> Proceed for Payment</label>
+                  <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation for
+                    Payment</label>
+                  <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
+                  <label><input type="checkbox" name="status" value="cancelled" /> Self-Cancel </label>
+                  <label><input type="checkbox" name="status" value="wrong form cancel" /> Cancelled as wrong form
+                    filled</label>
+                  <label><input type="checkbox" name="status" value="admin cancelled" /> Admin Cancelled</label>
+                  <label><input type="checkbox" name="status" value="seats full cancel" /> Cancelled as all seats are
+                    booked</label>
+                </div>
               </div>
-            
+
+              <div class="form-group">
+                <label for="start_date">*Start Date:</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label for="end_date">*End Date:</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" required />
+              </div>
+
+              <div class="form-group form-submit">
+                <div style="display: inline-block;">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+                <div id="downloadBtnContainer" style="display: inline-block; margin-left: 10px;"></div>
+                <div id="busSummaryBtnContainer" style="
+    display:inline-block;
+    margin-left:10px;
+  ">
+
+                  <button type="button" class="btn btn-info" id="openBusSummaryModal">
+                    Bus Assignment Summary
+                  </button>
+
+                </div>
+              </div>
+
+            </form>
+          </div>
+
+          <div class="form">
+            <h3>Summary <span id="selectedDate"></span> </h3>
+
+            <div class="table-responsive">
+              <table id="summaryBooking">
+                <thead>
+                  <tr>
+                    <th>Destination</th>
+                    <th>Status</th>
+                    <th>Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Filled via JS -->
+                </tbody>
+              </table>
             </div>
           </div>
+
+          <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+          <div class="table-responsive">
+            <table id="upcomingBookings" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th data-key="date">Travel Date</th>
+                  <th data-key="issuedto">Mumukshu Name</th>
+                  <th data-key="type">Type (Regular/Full Car)</th>
+                  <th data-key="pickup_point">Pickup Point</th>
+                  <th data-key="drop_point">Drop off Point</th>
+                  <th data-key="stop_time">Stop Time</th>
+                  <th data-key="bus_name">Bus Name</th>
+                  <th data-key="coordinator_bookingid">Coordinator?</th>
+                  <th data-key="arrival_time">Train/Flight Time</th>
+                  <th data-key="leaving_post_adhyayan">Attending Adhyayan</th>
+                  <th data-key="status">Booking Status</th>
+                  <th data-key="action">Action</th>
+                  <th data-key="comments">Mumukshu Comments</th>
+                  <th data-key="total_people">Total People</th>
+                  <th data-key="mobno">Mobile No</th>
+                  <th data-key="amount">Amount</th>
+                  <th data-key="paymentStatus">Payment Status</th>
+                  <th data-key="paymentDate">Payment Date</th>
+                  <th data-key="bookingid">Booking Id</th>
+                  <th data-key="bookedBy">Booked By</th>
+                  <th data-key="adminComments">Admin Comments</th>
+                  <th data-key="luggage">Luggage</th>
+                  <th data-key="travellingFrom">Travelling From</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Filled via JS -->
+              </tbody>
+            </table>
+
+          </div>
+
         </div>
       </div>
     </div>
+  </div>
+  </div>
 
-    <!-- Scrollable Modal for Updating Booking Status -->
-<div id="updateModal" class="modal" style="
+  <!-- Scrollable Modal for Updating Booking Status -->
+  <div id="updateModal" class="modal" style="
   display: none;
   position: fixed;
   top: 0;
@@ -185,7 +199,7 @@
   z-index: 9999;
   overflow: auto;
 ">
-  <div class="modal-content" style="
+    <div class="modal-content" style="
     background: white;
     padding: 2rem;
     margin: 5% auto;
@@ -194,7 +208,7 @@
     position: relative;
     border-radius: 10px;
   ">
-    <span id="closeModal" style="
+      <span id="closeModal" style="
       position: absolute;
       top: 10px;
       right: 15px;
@@ -202,59 +216,59 @@
       cursor: pointer;
     ">&times;</span>
 
-    <h2>Update Booking Status</h2>
-    <form id="updateBookingForm">
-      <div class="form-group">
-        <label for="bookingid">Booking ID:</label>
-        <input type="text" id="bookingid" name="bookingid" class="form-control" readonly />
-      </div>
+      <h2>Update Booking Status</h2>
+      <form id="updateBookingForm">
+        <div class="form-group">
+          <label for="bookingid">Booking ID:</label>
+          <input type="text" id="bookingid" name="bookingid" class="form-control" readonly />
+        </div>
 
-      <div class="form-group">
-        <label for="status">New Status:</label>
-        <select id="status" name="status" class="form-control" required>
-          <option value="">Select Status</option>
-          <option value="proceed for payment">Proceed for Payment</option>
-          <option value="admin cancelled">Admin Cancelled</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
-          <option value="wrong form cancel">Cancelled as wrong form filled</option>
-          <option value="seats full cancel">Cancelled as all seats are booked</option>
-        </select>
-      </div>
-      <div id="issueCreditsField" class="form-group" style="display: none;">
-  <label for="issueCredits">Credits to be issued?</label>
-  <select id="issueCredits" name="issueCredits" class="form-control">
-    <option value="yes">Yes</option>
-    <option value="no">No</option>
-  </select>
-</div>
+        <div class="form-group">
+          <label for="status">New Status:</label>
+          <select id="status" name="status" class="form-control" required>
+            <option value="">Select Status</option>
+            <option value="proceed for payment">Proceed for Payment</option>
+            <option value="admin cancelled">Admin Cancelled</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
+            <option value="wrong form cancel">Cancelled as wrong form filled</option>
+            <option value="seats full cancel">Cancelled as all seats are booked</option>
+          </select>
+        </div>
+        <div id="issueCreditsField" class="form-group" style="display: none;">
+          <label for="issueCredits">Credits to be issued?</label>
+          <select id="issueCredits" name="issueCredits" class="form-control">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="charges">Charges:</label>
-        <input type="number" id="charges" name="charges" class="form-control" />
-      </div>
+        <div class="form-group">
+          <label for="charges">Charges:</label>
+          <input type="number" id="charges" name="charges" class="form-control" />
+        </div>
 
-      <div class="form-group">
-        <label for="description">Transaction Description:</label>
-        <input type="text" id="description" name="description" class="form-control" />
-      </div>
+        <div class="form-group">
+          <label for="description">Transaction Description:</label>
+          <input type="text" id="description" name="description" class="form-control" />
+        </div>
 
-      <div class="form-group">
-        <label for="adminComments">Admin Comments:</label>
-        <input type="text" id="adminComments" name="adminComments" class="form-control" />
-      </div>
+        <div class="form-group">
+          <label for="adminComments">Admin Comments:</label>
+          <input type="text" id="adminComments" name="adminComments" class="form-control" />
+        </div>
 
-      <div class="form-group form-submit">
-        <button type="submit" class="btn btn-primary">Update Status</button>
-        <button type="button" id="cancelUpdate" class="btn btn-secondary">Cancel</button>
-      </div>
+        <div class="form-group form-submit">
+          <button type="submit" class="btn btn-primary">Update Status</button>
+          <button type="button" id="cancelUpdate" class="btn btn-secondary">Cancel</button>
+        </div>
 
-      <p id="statusMessage" style="margin-top:10px;"></p>
-    </form>
+        <p id="statusMessage" style="margin-top:10px;"></p>
+      </form>
+    </div>
   </div>
-</div>
 
-<div id="transactionModal" class="modal" style="
+  <div id="transactionModal" class="modal" style="
   display:none;
   position:fixed;
   top:0; left:0;
@@ -263,7 +277,7 @@
   z-index:9999;
   overflow: auto;
 ">
-  <div class="modal-content" style="
+    <div class="modal-content" style="
     background:white;
     padding:2rem;
     margin:10% auto;
@@ -272,74 +286,145 @@
     border-radius:10px;
     position:relative;
   ">
-    <span onclick="document.getElementById('transactionModal').style.display='none'"
-      style="position:absolute;top:10px;right:15px;font-size:24px;cursor:pointer;">&times;</span>
+      <span onclick="document.getElementById('transactionModal').style.display='none'"
+        style="position:absolute;top:10px;right:15px;font-size:24px;cursor:pointer;">&times;</span>
 
-    <h3>Edit Transaction</h3>
-    
-    <form id="transactionForm">
-      <div class="form-group">
-        <label>Booking ID</label>
-        <input id="txnBookingId" class="form-control" readonly>
-      </div>
+      <h3>Edit Transaction</h3>
 
-      <div class="form-group">
-        <label>Mumukshu Name</label>
-        <input id="txnIssuedTo" class="form-control" readonly>
-      </div>
+      <form id="transactionForm">
+        <div class="form-group">
+          <label>Booking ID</label>
+          <input id="txnBookingId" class="form-control" readonly>
+        </div>
 
-      <div class="form-group">
-        <label>Travel Date</label>
-        <input type="date" id="txnTravelDate" class="form-control"/>
-      </div>
+        <div class="form-group">
+          <label>Mumukshu Name</label>
+          <input id="txnIssuedTo" class="form-control" readonly>
+        </div>
 
-      <div class="form-group">
-        <label>Amount</label>
-        <input id="txnAmount" type="number" class="form-control">
-      </div>
+        <div class="form-group">
+          <label>Travel Date</label>
+          <input type="date" id="txnTravelDate" class="form-control" />
+        </div>
 
-      <div class="form-group">
-  <label>Pickup Point</label>
-  <select id="txnPickup" class="form-control">
-    <option value="">Select Pickup Point</option>
-  </select>
-</div>
+        <div class="form-group">
+          <label>Amount</label>
+          <input id="txnAmount" type="number" class="form-control">
+        </div>
 
-<div class="form-group">
-  <label>Drop Point</label>
-  <select id="txnDrop" class="form-control">
-    <option value="">Select Drop Point</option>
-  </select>
-</div>
-  
-      <div class="form-group">
-  <label>Type</label>
-  <select id="txnType" class="form-control">
-    <option value="">Select Type</option>
-    <option value="Regular">Regular</option>
-    <option value="Full Car">Full Car</option>
-  </select>
-</div>
+        <div class="form-group">
+          <label>Pickup Point</label>
+          <select id="txnPickup" class="form-control">
+            <option value="">Select Pickup Point</option>
+          </select>
+        </div>
 
-<div class="form-group">
-  <label>Attending Adhyayan</label>
-  <select id="txnLeavingPostAdhyayan" class="form-control">
-    <option value="">Select</option>
-    <option value="1">Yes</option>
-    <option value="0">No</option>
-  </select>
-</div>
-  
-      <div class="form-group form-submit">
-        <button class="btn btn-primary" type="submit">Update</button>
-        <button type="button" class="btn btn-secondary"
-          onclick="document.getElementById('transactionModal').style.display='none'">
-          Cancel
-        </button>
-      </div>
-    </form>
+        <div class="form-group">
+          <label>Drop Point</label>
+          <select id="txnDrop" class="form-control">
+            <option value="">Select Drop Point</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Type</label>
+          <select id="txnType" class="form-control">
+            <option value="">Select Type</option>
+            <option value="Regular">Regular</option>
+            <option value="Full Car">Full Car</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Attending Adhyayan</label>
+          <select id="txnLeavingPostAdhyayan" class="form-control">
+            <option value="">Select</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Assigned Bus</label>
+
+          <select id="txnBusGroup" class="form-control">
+            <option value="">
+              No Bus Assigned
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>
+            Is Coordinator
+          </label>
+
+          <select id="txnIsCoordinator" class="form-control">
+            <option value="no">
+              No
+            </option>
+
+            <option value="yes">
+              Yes
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group form-submit">
+          <button class="btn btn-primary" type="submit">Update</button>
+          <button type="button" class="btn btn-secondary"
+            onclick="document.getElementById('transactionModal').style.display='none'">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-  </body>
+  <!-- Bus Assignment Summary Modal -->
+
+  <div id="busSummaryModal" class="modal" style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    z-index:10005;
+    overflow:auto;
+  ">
+
+    <div class="modal-content" style="
+      background:white;
+      padding:2rem;
+      margin:3% auto;
+      width:95%;
+      max-width:1200px;
+      border-radius:12px;
+      position:relative;
+    ">
+
+      <span id="closeBusSummaryModal" style="
+        position:absolute;
+        top:10px;
+        right:20px;
+        font-size:28px;
+        cursor:pointer;
+      ">
+        &times;
+      </span>
+
+      <h2>
+        Bus Assignment Summary
+      </h2>
+
+      <div id="busSummaryContainer"></div>
+
+    </div>
+
+  </div>
+
+</body>
+
 </html>
