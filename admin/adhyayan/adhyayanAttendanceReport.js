@@ -18,9 +18,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const result = await response.json();
 
   heading.innerText = `Attendance Report for "${result.shibirName}" \n by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
+  
   // Build header
   let headerHtml = `
     <tr>
+      <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllCheckbox" /></th>
       <th>Sr No</th>
       <th>Card No</th>
       <th>Name</th>
@@ -30,18 +32,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       <th>Res Status</th>
   `;
 
-for (let i = 1; i <= 9; i++) {
-  const isMV = [7, 8, 9].includes(i);
-  headerHtml += `<th>Session ${i}${isMV ? ' (MV)' : ''}</th>`;
-}
+  result.sessions.forEach(s => {
+    const suffix = s.type === 'MV' ? ' (MV)' : '';
+    headerHtml += `<th>Session ${s.session_number}${suffix}</th>`;
+  });
 
   headerHtml += '</tr>';
   tableHead.innerHTML = headerHtml;
 
+  // Populate bulk session select dropdown
+  const bulkSelect = document.getElementById('bulkSessionSelect');
+  bulkSelect.innerHTML = '<option value="">Select Session...</option>';
+  result.sessions.forEach(s => {
+    const suffix = s.type === 'MV' ? ' (MV)' : '';
+    const option = document.createElement('option');
+    option.value = s.session_number;
+    option.textContent = `Session ${s.session_number}${suffix}`;
+    bulkSelect.appendChild(option);
+  });
+
   // Build rows
   result.data.forEach((row, index) => {
-  let rowHtml = `
+    let rowHtml = `
       <tr>
+        <td style="text-align: center;"><input type="checkbox" class="participant-select" data-cardno="${row.cardno}" /></td>
         <td>${index + 1}</td>
         <td>${row.cardno}</td>
         <td>${row.name}</td>
@@ -51,112 +65,193 @@ for (let i = 1; i <= 9; i++) {
         <td>${row.res_status}</td>
     `;
 
-    for (let i = 1; i <= 9; i++) {
-  const value = row[`session_${i}`] ?? 'No';
+    result.sessions.forEach(s => {
+      const value = row[`session_${s.session_number}`] ?? 'No';
 
-  rowHtml += `
-    <td>
-      <span id="text-${shibirId}-${row.cardno}-${i}">
-        ${value}
-      </span>
-      <span style="cursor:pointer; margin-left:6px;"
-        onclick="toggleAttendance('${shibirId}', '${row.cardno}', ${i})">
-        ✏️
-      </span>
-    </td>
-  `;
-}
-
-
+      rowHtml += `
+        <td>
+          <span id="text-${shibirId}-${row.cardno}-${s.session_number}">
+            ${value}
+          </span>
+          <span style="cursor:pointer; margin-left:6px;"
+            onclick="toggleAttendance('${shibirId}', '${row.cardno}', ${s.session_number})">
+            ✏️
+          </span>
+        </td>
+      `;
+    });
 
     rowHtml += '</tr>';
     tableBody.insertAdjacentHTML('beforeend', rowHtml);
   });
 
-  enhanceTable('attendanceTable', 'tableSearch');
+  // Selection Checkbox Event Handlers
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  const checkboxes = document.querySelectorAll('.participant-select');
+  const btnBulkPresent = document.getElementById('btnBulkPresent');
+  const btnBulkAbsent = document.getElementById('btnBulkAbsent');
+  const selectedCountText = document.getElementById('selectedCountText');
 
-  const mvSessions = [7, 8, 9];
+  function updateSelectionState() {
+    const checkedCount = document.querySelectorAll('.participant-select:checked').length;
+    selectedCountText.textContent = `${checkedCount} selected`;
+    
+    const isSessionSelected = bulkSelect.value !== "";
+    const hasCheckedParticipants = checkedCount > 0;
 
-const downloadBtnContainer = document.getElementById('downloadBtnContainer');
+    btnBulkPresent.disabled = !(isSessionSelected && hasCheckedParticipants);
+    btnBulkAbsent.disabled = !(isSessionSelected && hasCheckedParticipants);
+  }
 
-downloadBtnContainer.innerHTML = `
-  <button id="downloadExcelBtn" class="btn btn-primary">
-    Download Excel
-  </button>
-`;
-
-document.getElementById('downloadExcelBtn').addEventListener('click', () => {
-
-  const wb = XLSX.utils.book_new();
-  const sheetData = [];
-
-  const totalColumns = 16;
-
-  // Title Row (NO extra blank row after this)
-  const title = `Attendance Report for "${result.shibirName}" by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
-  sheetData.push([title]);
-
-  // Header Row (directly below title)
-  sheetData.push([
-    "Sr No",
-    "cardno",
-    "name",
-    "mobno",
-    "gender",
-    "centre",
-    "res_status",
-    "Session 1",
-    "Session 2",
-    "Session 3",
-    "Session 4",
-    "Session 5",
-    "Session 6",
-    "Session 7 (MV)",
-    "Session 8 (MV)",
-    "Session 9 (MV)"
-  ]);
-
-  // Data Rows
-  result.data.forEach((row, index) => {
-    sheetData.push([
-      index + 1,
-      row.cardno,
-      row.name,
-      row.mobno,
-      row.gender,
-      row.centre,
-      row.res_status,
-      row.session_1 ?? 'No',
-      row.session_2 ?? 'No',
-      row.session_3 ?? 'No',
-      row.session_4 ?? 'No',
-      row.session_5 ?? 'No',
-      row.session_6 ?? 'No',
-      row.session_7 ?? 'No',
-      row.session_8 ?? 'No',
-      row.session_9 ?? 'No'
-    ]);
+  selectAllCheckbox.addEventListener('change', () => {
+    checkboxes.forEach(cb => {
+      cb.checked = selectAllCheckbox.checked;
+    });
+    updateSelectionState();
   });
 
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      // Uncheck "select all" if any item is unchecked
+      if (!cb.checked) {
+        selectAllCheckbox.checked = false;
+      } else {
+        const allChecked = Array.from(checkboxes).every(item => item.checked);
+        selectAllCheckbox.checked = allChecked;
+      }
+      updateSelectionState();
+    });
+  });
 
-  // Merge title across all columns
-  ws['!merges'] = [
-    {
-      s: { r: 0, c: 0 },
-      e: { r: 0, c: totalColumns - 1 }
+  bulkSelect.addEventListener('change', updateSelectionState);
+
+  // Bulk Actions
+  btnBulkPresent.addEventListener('click', () => performBulkToggle(1));
+  btnBulkAbsent.addEventListener('click', () => performBulkToggle(0));
+
+  async function performBulkToggle(value) {
+    const selectedSession = bulkSelect.value;
+    if (!selectedSession) return;
+
+    const checkedBoxes = document.querySelectorAll('.participant-select:checked');
+    const cardnos = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-cardno'));
+
+    if (cardnos.length === 0) return;
+
+    const confirmMsg = value === 1
+      ? `Are you sure you want to mark ${cardnos.length} selected participants present for Session ${selectedSession}?`
+      : `Are you sure you want to mark ${cardnos.length} selected participants absent for Session ${selectedSession}?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const response = await fetch(
+        `${CONFIG.basePath}/adhyayan/attendance/bulk-toggle`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            shibir_id: Number(shibirId),
+            sessionNumber: Number(selectedSession),
+            cardnos,
+            value
+          })
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message || "Bulk update failed");
+        return;
+      }
+
+      // Update UI for the modified cells
+      cardnos.forEach(cardno => {
+        const textEl = document.getElementById(`text-${shibirId}-${cardno}-${selectedSession}`);
+        if (textEl) {
+          textEl.innerText = value === 1 ? 'Yes' : 'No';
+        }
+      });
+
+      // Clear checkboxes
+      selectAllCheckbox.checked = false;
+      checkboxes.forEach(cb => {
+        cb.checked = false;
+      });
+      updateSelectionState();
+
+      showMessage(res.message || "Bulk update successful", "success");
+
+    } catch (err) {
+      console.error(err);
+      showMessage("Failed to execute bulk action", "error");
     }
-  ];
+  }
 
-  XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-  XLSX.writeFile(wb, `attendance_shibir_${shibirId}.xlsx`);
+  // Setup excel download button
+  const downloadBtnContainer = document.getElementById('downloadBtnContainer');
+  downloadBtnContainer.innerHTML = `
+    <button id="downloadExcelBtn" class="btn btn-primary">
+      Download Excel
+    </button>
+  `;
+
+  document.getElementById('downloadExcelBtn').addEventListener('click', () => {
+    const wb = XLSX.utils.book_new();
+    const sheetData = [];
+
+    // Title Row
+    const title = `Attendance Report for "${result.shibirName}" by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
+    sheetData.push([title]);
+
+    // Header Row
+    const headers = ["Sr No", "cardno", "name", "mobno", "gender", "centre", "res_status"];
+    result.sessions.forEach(s => {
+      const suffix = s.type === 'MV' ? ' (MV)' : '';
+      headers.push(`Session ${s.session_number}${suffix}`);
+    });
+    sheetData.push(headers);
+
+    // Data Rows
+    result.data.forEach((row, index) => {
+      const dataRow = [
+        index + 1,
+        row.cardno,
+        row.name,
+        row.mobno,
+        row.gender,
+        row.centre,
+        row.res_status
+      ];
+
+      result.sessions.forEach(s => {
+        dataRow.push(row[`session_${s.session_number}`] ?? 'No');
+      });
+
+      sheetData.push(dataRow);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Merge title across all columns
+    ws['!merges'] = [
+      {
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: headers.length - 1 }
+      }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    XLSX.writeFile(wb, `attendance_shibir_${shibirId}.xlsx`);
+  });
+
+  enhanceTable('attendanceTable', 'tableSearch');
 });
-
-});
-
 
 async function toggleAttendance(shibirId, cardno, sessionNumber) {
-
   const textElement = document.getElementById(
     `text-${shibirId}-${cardno}-${sessionNumber}`
   );
@@ -191,10 +286,8 @@ async function toggleAttendance(shibirId, cardno, sessionNumber) {
       return;
     }
 
-    // Update UI
     textElement.innerText = newValue === 1 ? 'Yes' : 'No';
 
-    // ✅ Show proper success message
     if (newValue === 1) {
       showMessage("Attendance marked successfully", "success");
     } else {
@@ -236,18 +329,17 @@ function showMessage(message, type) {
   }, 2000);
 }
 
-
 function formatDateTime(input) {
-    if (!input) return '-';
-    try {
-      const d = new Date(input);
-      return d.toLocaleDateString('en-IN', {
-  timeZone: 'Asia/Kolkata',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric'
-});
-    } catch {
-      return '-';
-    }
+  if (!input) return '-';
+  try {
+    const d = new Date(input);
+    return d.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return '-';
   }
+}
