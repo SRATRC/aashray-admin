@@ -91,10 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
     data-shibir-id="${item.id}">
     ${(() => {
       let opts = '<option value="">Tap Scan</option>';
+      const days = Math.floor((new Date(item.end_date) - new Date(item.start_date)) / (1000 * 60 * 60 * 24)) + 1;
+      const isHistorical = Number(item.id) <= 162;
+      const totalSessions = isHistorical ? 9 : (days * 3);
       const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= 9; i++) {
+      for (let i = 1; i <= totalSessions; i++) {
+        const isMV = isHistorical ? mvSessions.includes(i) : (i > 2 * days);
         opts += `<option value="${i}">
-          S${i}${mvSessions.includes(i) ? ' (MV)' : ''}
+          S${i}${isMV ? ' (MV)' : ''}
         </option>`;
       }
       return opts;
@@ -108,10 +112,14 @@ document.addEventListener('DOMContentLoaded', () => {
     data-shibir-id="${item.id}">
     ${(() => {
       let opts = '<option value="">Mob Scan</option>';
+      const days = Math.floor((new Date(item.end_date) - new Date(item.start_date)) / (1000 * 60 * 60 * 24)) + 1;
+      const isHistorical = Number(item.id) <= 162;
+      const totalSessions = isHistorical ? 9 : (days * 3);
       const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= 9; i++) {
+      for (let i = 1; i <= totalSessions; i++) {
+        const isMV = isHistorical ? mvSessions.includes(i) : (i > 2 * days);
         opts += `<option value="${i}">
-          S${i}${mvSessions.includes(i) ? ' (MV)' : ''}
+          S${i}${isMV ? ' (MV)' : ''}
         </option>`;
       }
       return opts;
@@ -153,13 +161,17 @@ document.addEventListener('DOMContentLoaded', () => {
       detailRow.classList.add('detail-row');
       detailRow.style.display = 'none';
 
-      let sessionOptions = '<option value="">Select Attendance Session</option>';
+      const days = Math.floor((new Date(item.end_date) - new Date(item.start_date)) / (1000 * 60 * 60 * 24)) + 1;
+      const isHistorical = Number(item.id) <= 162;
+      const totalSessions = isHistorical ? 9 : (days * 3);
       const mvSessions = [7, 8, 9];
 
-      for (let i = 1; i <= 9; i++) {
+      let sessionOptions = '<option value="">Select Attendance Session</option>';
+      for (let i = 1; i <= totalSessions; i++) {
+        const isMV = isHistorical ? mvSessions.includes(i) : (i > 2 * days);
         sessionOptions += `
           <option value="${i}">
-            Session ${i}${mvSessions.includes(i) ? ' (MV)' : ''}
+            Session ${i}${isMV ? ' (MV)' : ''}
           </option>`;
       }
 
@@ -300,12 +312,14 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       const result = await response.json();
+      const isHistorical = Number(shibirId) <= 162;
       const mvSessions = [7, 8, 9];
+      const days = result.data.summary.length / 3;
 
       result.data.summary.forEach(row => {
         const match = String(row.session).match(/\d+/);
         const sessionNo = match ? Number(match[0]) : null;
-        const isMV = mvSessions.includes(sessionNo);
+        const isMV = isHistorical ? mvSessions.includes(sessionNo) : (sessionNo > 2 * days);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -323,10 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
           result.data.summary.map(row => {
             const match = String(row.session).match(/\d+/);
             const sessionNo = match ? Number(match[0]) : row.session;
+            const isMV = isHistorical ? mvSessions.includes(sessionNo) : (sessionNo > 2 * days);
 
             return {
               ...row,
-              session: `Session ${sessionNo}${mvSessions.includes(sessionNo) ? ' (MV)' : ''}`
+              session: `Session ${sessionNo}${isMV ? ' (MV)' : ''}`
             };
           }),
         fileName: `${shibirName}_attendance_summary.xlsx`,

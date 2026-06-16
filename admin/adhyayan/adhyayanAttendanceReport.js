@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const result = await response.json();
 
   heading.innerText = `Attendance Report for "${result.shibirName}" \n by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
-  
+
   // Build header
   let headerHtml = `
     <tr>
@@ -95,12 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateSelectionState() {
     const checkedCount = document.querySelectorAll('.participant-select:checked').length;
     selectedCountText.textContent = `${checkedCount} selected`;
-    
-    const isSessionSelected = bulkSelect.value !== "";
+
     const hasCheckedParticipants = checkedCount > 0;
 
-    btnBulkPresent.disabled = !(isSessionSelected && hasCheckedParticipants);
-    btnBulkAbsent.disabled = !(isSessionSelected && hasCheckedParticipants);
+    btnBulkPresent.disabled = !hasCheckedParticipants;
+    btnBulkAbsent.disabled = !hasCheckedParticipants;
   }
 
   selectAllCheckbox.addEventListener('change', () => {
@@ -131,7 +130,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function performBulkToggle(value) {
     const selectedSession = bulkSelect.value;
-    if (!selectedSession) return;
+    if (!selectedSession) {
+      alert("Pls select one session from dropdown");
+      return;
+    }
 
     const checkedBoxes = document.querySelectorAll('.participant-select:checked');
     const cardnos = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-cardno'));
@@ -228,7 +230,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       ];
 
       result.sessions.forEach(s => {
-        dataRow.push(row[`session_${s.session_number}`] ?? 'No');
+        const cellTextEl = document.getElementById(`text-${shibirId}-${row.cardno}-${s.session_number}`);
+        const cellValue = cellTextEl ? cellTextEl.innerText.trim() : 'No';
+        dataRow.push(cellValue);
       });
 
       sheetData.push(dataRow);
