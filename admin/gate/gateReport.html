@@ -22,23 +22,133 @@
     <script src="../../sessionstorage.js"></script>
     <script src="gateReport.js"></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   
     <!-- Shared Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
 
     <style>
-        .table-responsive {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .table {
-    min-width: 1000px; /* Or adjust based on expected column count */
-    width: 100%;
-  }
-  
-      </style>
+      .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .table {
+        min-width: 1000px;
+        width: 100%;
+      }
+      .pagination {
+        display: flex !important;
+        list-style: none !important;
+        padding-left: 0 !important;
+        margin: 0 !important;
+        gap: 5px;
+      }
+      .pagination li {
+        display: inline-block !important;
+        list-style-type: none !important;
+      }
+      .pagination li a, .pagination li span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        color: #475569;
+        text-decoration: none;
+        background-color: #fff;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .pagination li a:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+        transform: translateY(-1px);
+      }
+      .pagination li.active span {
+        background-color: #4f46e5;
+        color: #fff;
+        border-color: #4f46e5;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+      }
+      .pagination li.disabled span {
+        color: #94a3b8;
+        cursor: not-allowed;
+        background-color: #f1f5f9;
+        border-color: #e2e8f0;
+        box-shadow: none;
+      }
+      .top-bar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .pagination-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      th.sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 20px !important;
+      }
+      th.sortable:after {
+        content: ' ↕';
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.3);
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      th.sortable.asc:after {
+        content: ' ▲';
+        color: #4f46e5;
+        opacity: 1;
+      }
+      th.sortable.desc:after {
+        content: ' ▼';
+        color: #4f46e5;
+        opacity: 1;
+      }
+      .btn-export-csv {
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        height: 38px !important;
+        padding: 6px 16px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        border: none !important;
+        white-space: nowrap;
+        margin: 0;
+      }
+      .btn-export-csv:hover {
+        background-color: #059669 !important;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+      }
+    </style>
   </head>
 
   <body>
@@ -63,22 +173,98 @@
             </div>
 
             <div class="form">
-              <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-            <div class="table-responsive">
+              <div class="top-bar-container">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <input
+                    type="text"
+                    id="tableSearch"
+                    class="form-control search-box"
+                    placeholder="Search..."
+                    style="margin: 0; width: 200px;"
+                  />
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="resStatusSelect" style="margin: 0; font-size: 14px; color: #475569; font-weight: 500;">Category:</label>
+                    <select id="resStatusSelect" class="form-control" style="margin: 0; width: 150px; height: 38px; padding: 6px 12px;">
+                      <option value="">All Categories</option>
+                      <option value="PR">PR</option>
+                      <option value="MUMUKSHU">Mumukshu</option>
+                      <option value="GUEST">Guest</option>
+                      <option value="SEVA KUTIR">Seva Kutir</option>
+                    </select>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="startDateInput" style="margin: 0; font-size: 14px; color: #475569; font-weight: 500;">From:</label>
+                    <input type="date" id="startDateInput" class="form-control" style="margin: 0; width: 140px; height: 38px; padding: 6px 12px;" />
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="endDateInput" style="margin: 0; font-size: 14px; color: #475569; font-weight: 500;">To:</label>
+                    <input type="date" id="endDateInput" class="form-control" style="margin: 0; width: 140px; height: 38px; padding: 6px 12px;" />
+                  </div>
+                  <button id="exportExcelBtn" class="btn-export-csv" title="Export current search results to Excel" style="margin: 0;">
+                    <span>📥</span> Export Excel
+                  </button>
+                  <button id="resetFiltersBtn" class="btn" style="margin: 0; height: 38px; padding: 6px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; color: #475569; font-weight: 500; transition: all 0.2s ease;" title="Reset all filters">
+                    Reset
+                  </button>
+                </div>
+                <div class="pagination-container" id="paginationContainerTop">
+                  <div id="paginationInfoTop" style="color: #666; font-size: 14px; white-space: nowrap;"></div>
+                  <ul id="paginationTop" class="pagination" style="margin: 0;"></ul>
+                  <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                    <select id="pageSizeSelectTop" class="form-control" style="width: 80px; height: 34px; padding: 6px 12px; display: inline-block;">
+                      <option value="10">10</option>
+                      <option value="20" selected>20</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                      <label for="gotoPageInputTop" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                      <input type="number" id="gotoPageInputTop" class="form-control" min="1" style="width: 65px; height: 34px; padding: 6px 10px; display: inline-block;">
+                      <span style="color: #666; font-size: 14px; white-space: nowrap;">of <span id="totalPagesLabelTop">1</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-responsive" style="position: relative;">
+                <div id="tableLoader" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); z-index: 10; justify-content: center; align-items: center; flex-direction: column;">
+                  <div class="spinner"></div>
+                  <p style="color: #64748b; margin-top: 8px; font-weight: 500;">Fetching records...</p>
+                </div>
                 <table id="gateRecordTable" class="table table-striped table-bordered">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Card No</th>
-                      <th>Name</th>
-                      <th>Mobile Number</th>
-                      <th>Status</th>
-                      <th>createdAt</th>
-                      
+                      <th class="sortable" data-sort="cardno">Card No</th>
+                      <th class="sortable" data-sort="issuedto">Name</th>
+                      <th class="sortable" data-sort="mobno">Mobile Number</th>
+                      <th class="sortable" data-sort="status">Status</th>
+                      <th class="sortable desc" data-sort="createdAt">createdAt</th>
                     </tr>
                   </thead>
                   <tbody id="gateRecords"></tbody>
                 </table>
+              </div>
+
+              <div class="pagination-container" id="paginationContainerBottom" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; flex-wrap: wrap; gap: 10px;">
+                <div id="paginationInfoBottom" style="color: #666; font-size: 14px; white-space: nowrap;"></div>
+                <ul id="paginationBottom" class="pagination" style="margin: 0;"></ul>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                  <div class="page-size-selector" style="display: flex; align-items: center; gap: 5px;">
+                    <label for="pageSizeSelectBottom" style="margin: 0; font-size: 14px; color: #666;">Items per page:</label>
+                    <select id="pageSizeSelectBottom" class="form-control" style="width: 80px; height: 34px; padding: 6px 12px; display: inline-block;">
+                      <option value="10">10</option>
+                      <option value="20" selected>20</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+                  <div class="page-goto-selector" style="display: flex; align-items: center; gap: 5px;">
+                    <label for="gotoPageInputBottom" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                    <input type="number" id="gotoPageInputBottom" class="form-control" min="1" style="width: 65px; height: 34px; padding: 6px 10px; display: inline-block;">
+                    <span style="color: #666; font-size: 14px; white-space: nowrap;">of <span id="totalPagesLabelBottom">1</span></span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
