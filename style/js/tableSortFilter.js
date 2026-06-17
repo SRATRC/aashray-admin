@@ -5,12 +5,15 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
   let sortDirection = Array.from(headers).map(() => true);
 
   function updateRowNumbers() {
-  if (!enableRowNumbers) return; // ✅ STOP if disabled
+    if (!enableRowNumbers) return; // ✅ STOP if disabled
     const rows = tbody.querySelectorAll('tr');
     rows.forEach((row, i) => {
-      const firstCell = row.querySelector('td');
-      if (firstCell) {
-        firstCell.textContent = i + 1;
+      let cell = row.querySelector('td.row-number') || row.querySelector('.row-number');
+      if (!cell) {
+        cell = row.querySelector('td');
+      }
+      if (cell && !cell.hasAttribute('data-no-enhance') && !cell.classList.contains('no-enhance')) {
+        cell.textContent = i + 1;
       }
     });
   }
@@ -28,6 +31,7 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
       });
 
       table.querySelectorAll('td').forEach(cell => {
+        if (cell.hasAttribute('data-no-enhance') || cell.classList.contains('no-enhance')) return;
         if (cell.querySelector('a') || cell.querySelector('button')) return; // ✅ Skip anchor/button
 
         const raw = cell.textContent;

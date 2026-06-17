@@ -64,23 +64,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   data.forEach((row, index) => {
     let rowHtml = `
       <tr>
-        <td style="text-align: center;"><input type="checkbox" class="participant-select" data-cardno="${row.cardno}" /></td>
-        <td>${index + 1}</td>
-        <td>${row.cardno}</td>
-        <td>${row.name || ''}</td>
-        <td>${row.mobno || ''}</td>
-        <td>${row.gender || ''}</td>
-        <td>${row.centre || ''}</td>
-        <td>${row.res_status || ''}</td>
+        <td style="text-align: center;" data-no-enhance="true"><input type="checkbox" class="participant-select" data-cardno="${escapeHtml(row.cardno)}" /></td>
+        <td class="row-number">${index + 1}</td>
+        <td>${escapeHtml(row.cardno)}</td>
+        <td>${escapeHtml(row.name)}</td>
+        <td>${escapeHtml(row.mobno)}</td>
+        <td>${escapeHtml(row.gender)}</td>
+        <td>${escapeHtml(row.centre)}</td>
+        <td>${escapeHtml(row.res_status)}</td>
     `;
 
     sessions.forEach(s => {
       const value = row[`session_${s.session_number}`] ?? 'No';
 
       rowHtml += `
-        <td>
+        <td data-no-enhance="true">
           <span id="text-${shibirId}-${row.cardno}-${s.session_number}">
-            ${value}
+            ${escapeHtml(value)}
           </span>
           <span style="cursor:pointer; margin-left:6px;"
             onclick="toggleAttendance('${shibirId}', '${row.cardno}', ${s.session_number})">
@@ -102,7 +102,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const selectedCountText = document.getElementById('selectedCountText');
 
   function updateSelectionState() {
-    const checkedCount = document.querySelectorAll('.participant-select:checked').length;
+    const visibleChecked = Array.from(document.querySelectorAll('.participant-select:checked'))
+      .filter(cb => {
+        const row = cb.closest('tr');
+        return row && row.style.display !== 'none';
+      });
+    const checkedCount = visibleChecked.length;
     selectedCountText.textContent = `${checkedCount} selected`;
 
     const hasCheckedParticipants = checkedCount > 0;
@@ -113,23 +118,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   selectAllCheckbox.addEventListener('change', () => {
     checkboxes.forEach(cb => {
-      cb.checked = selectAllCheckbox.checked;
+      const row = cb.closest('tr');
+      if (row && row.style.display !== 'none') {
+        cb.checked = selectAllCheckbox.checked;
+      }
     });
     updateSelectionState();
   });
 
   checkboxes.forEach(cb => {
     cb.addEventListener('change', () => {
-      // Uncheck "select all" if any item is unchecked
+      const visibleCheckboxes = Array.from(checkboxes).filter(item => {
+        const row = item.closest('tr');
+        return row && row.style.display !== 'none';
+      });
+
       if (!cb.checked) {
         selectAllCheckbox.checked = false;
       } else {
-        const allChecked = Array.from(checkboxes).every(item => item.checked);
-        selectAllCheckbox.checked = allChecked;
+        const allVisibleChecked = visibleCheckboxes.every(item => item.checked);
+        selectAllCheckbox.checked = allVisibleChecked;
       }
       updateSelectionState();
     });
   });
+
+  // Watch for row visibility changes (from search/filtering) to uncheck hidden rows
+  const observer = new MutationObserver(() => {
+    checkboxes.forEach(cb => {
+      const row = cb.closest('tr');
+      if (row && row.style.display === 'none') {
+        cb.checked = false;
+      }
+    });
+
+    const visibleCheckboxes = Array.from(checkboxes).filter(item => {
+      const row = item.closest('tr');
+      return row && row.style.display !== 'none';
+    });
+
+    if (visibleCheckboxes.length > 0) {
+      selectAllCheckbox.checked = visibleCheckboxes.every(item => item.checked);
+    } else {
+      selectAllCheckbox.checked = false;
+    }
+
+    updateSelectionState();
+  });
+
+  observer.observe(tableBody, { attributes: true, subtree: true, attributeFilter: ['style'] });
 
   bulkSelect.addEventListener('change', updateSelectionState);
 
@@ -144,8 +181,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const checkedBoxes = document.querySelectorAll('.participant-select:checked');
-    const cardnos = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-cardno'));
+    const checkedBoxes = Array.from(document.querySelectorAll('.participant-select:checked'))
+      .filter(cb => {
+        const row = cb.closest('tr');
+        return row && row.style.display !== 'none';
+      });
+    const cardnos = checkedBoxes.map(cb => cb.getAttribute('data-cardno'));
 
     if (cardnos.length === 0) return;
 
@@ -284,7 +325,7 @@ async function toggleAttendance(shibirId, cardno, sessionNumber) {
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          shibir_id: shibirId,
+          shibir_id: Number(shibirId),
           cardno,
           sessionNumber,
           value: newValue
@@ -355,4 +396,14 @@ function formatDateTime(input) {
   } catch {
     return '-';
   }
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
