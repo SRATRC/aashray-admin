@@ -20,7 +20,7 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="maintenance.js" defer></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
 
@@ -532,8 +532,8 @@
                     <option value="100">100</option>
                   </select>
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <label for="gotoPageSelectTop" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
-                    <select id="gotoPageSelectTop" class="form-control" style="width: 70px; height: 34px; padding: 6px 12px; display: inline-block;"></select>
+                    <label for="gotoPageInputTop" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                    <input type="number" id="gotoPageInputTop" class="form-control" min="1" style="width: 65px; height: 34px; padding: 6px 10px; display: inline-block;">
                     <span style="color: #666; font-size: 14px; white-space: nowrap;">of <span id="totalPagesLabelTop">1</span></span>
                   </div>
                 </div>
@@ -578,8 +578,8 @@
                     </select>
                   </div>
                   <div class="page-goto-selector" style="display: flex; align-items: center; gap: 5px;">
-                    <label for="gotoPageSelectBottom" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
-                    <select id="gotoPageSelectBottom" class="form-control" style="width: 70px; height: 34px; padding: 6px 12px; display: inline-block;"></select>
+                    <label for="gotoPageInputBottom" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                    <input type="number" id="gotoPageInputBottom" class="form-control" min="1" style="width: 65px; height: 34px; padding: 6px 10px; display: inline-block;">
                     <span style="color: #666; font-size: 14px; white-space: nowrap;">of <span id="totalPagesLabelBottom">1</span></span>
                   </div>
                 </div>

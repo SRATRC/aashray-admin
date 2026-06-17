@@ -237,16 +237,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/maintenance/fetch/${department}?page=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}&sort_by=${sortBy}&sort_order=${sortOrder}&status=${activeStatusFilter}`,
+        `${CONFIG.basePath}/maintenance/fetch/${department}?page=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}&status=${encodeURIComponent(activeStatusFilter)}`,
         options
       );
       const data = await response.json();
       console.log('Maintenance requests received:', data);
 
       if (data && data.data) {
-        const requests = data.data.requests || data.data;
-        const pagination = data.data.pagination || null;
-        const statusCounts = data.data.statusCounts || data.statusCounts || null;
+        const requests = data.data.requests;
+        const pagination = data.data.pagination;
+        const statusCounts = data.data.statusCounts;
         populateTable(requests, pagination, statusCounts);
       }
     } catch (error) {
@@ -409,18 +409,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pUlBottom = document.getElementById('paginationBottom');
     const pInfoTop = document.getElementById('paginationInfoTop');
     const pInfoBottom = document.getElementById('paginationInfoBottom');
-    const gotoSelectTop = document.getElementById('gotoPageSelectTop');
-    const gotoSelectBottom = document.getElementById('gotoPageSelectBottom');
+    const gotoInputTop = document.getElementById('gotoPageInputTop');
+    const gotoInputBottom = document.getElementById('gotoPageInputBottom');
     const labelTop = document.getElementById('totalPagesLabelTop');
     const labelBottom = document.getElementById('totalPagesLabelBottom');
-
-    const makeSelectOptions = (totalPagesCount, selectedPage) => {
-      let optionsHtml = '';
-      for (let i = 1; i <= totalPagesCount; i++) {
-        optionsHtml += `<option value="${i}" ${i === selectedPage ? 'selected' : ''}>${i}</option>`;
-      }
-      return optionsHtml;
-    };
 
     if (!pagination || pagination.totalPages <= 1) {
       if (pUlTop) pUlTop.innerHTML = '';
@@ -431,8 +423,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (pInfoTop) pInfoTop.innerHTML = infoText;
       if (pInfoBottom) pInfoBottom.innerHTML = infoText;
 
-      if (gotoSelectTop) { gotoSelectTop.innerHTML = '<option value="1">1</option>'; gotoSelectTop.value = '1'; }
-      if (gotoSelectBottom) { gotoSelectBottom.innerHTML = '<option value="1">1</option>'; gotoSelectBottom.value = '1'; }
+      if (gotoInputTop) { gotoInputTop.value = 1; gotoInputTop.max = 1; }
+      if (gotoInputBottom) { gotoInputBottom.value = 1; gotoInputBottom.max = 1; }
       if (labelTop) labelTop.textContent = '1';
       if (labelBottom) labelBottom.textContent = '1';
       maxPageValue = 1;
@@ -442,10 +434,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { page, page_size, totalCount, totalPages } = pagination;
     maxPageValue = totalPages;
 
-    // Dynamically build and set Go-To Select Dropdowns options
-    const selectOptions = makeSelectOptions(totalPages, page);
-    if (gotoSelectTop) { gotoSelectTop.innerHTML = selectOptions; gotoSelectTop.value = page; }
-    if (gotoSelectBottom) { gotoSelectBottom.innerHTML = selectOptions; gotoSelectBottom.value = page; }
+    if (gotoInputTop) { gotoInputTop.value = page; gotoInputTop.max = totalPages; }
+    if (gotoInputBottom) { gotoInputBottom.value = page; gotoInputBottom.max = totalPages; }
 
     if (labelTop) labelTop.textContent = totalPages;
     if (labelBottom) labelBottom.textContent = totalPages;
@@ -557,22 +547,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (pageSizeSelectTop) pageSizeSelectTop.addEventListener('change', handlePageSizeChange);
   if (pageSizeSelectBottom) pageSizeSelectBottom.addEventListener('change', handlePageSizeChange);
 
-  // Sync and handle Go-To select elements
-  const gotoSelectTop = document.getElementById('gotoPageSelectTop');
-  const gotoSelectBottom = document.getElementById('gotoPageSelectBottom');
+  // Sync and handle Go-To numeric input elements
+  const gotoInputTop = document.getElementById('gotoPageInputTop');
+  const gotoInputBottom = document.getElementById('gotoPageInputBottom');
 
-  const handleGotoPageSelect = (e) => {
-    const val = parseInt(e.target.value, 10);
+  const handleGotoPageInput = (e) => {
+    // If it's a keydown event, only run if Enter was pressed
+    if (e.type === 'keydown' && e.key !== 'Enter') {
+      return;
+    }
+
+    let val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 1) {
+      val = 1;
+    } else if (val > maxPageValue) {
+      val = maxPageValue;
+    }
+
     currentPage = val;
-
-    if (gotoSelectTop) gotoSelectTop.value = val;
-    if (gotoSelectBottom) gotoSelectBottom.value = val;
+    
+    // Sync both input values
+    if (gotoInputTop) gotoInputTop.value = val;
+    if (gotoInputBottom) gotoInputBottom.value = val;
 
     fetchMaintenance();
   };
 
-  if (gotoSelectTop) gotoSelectTop.addEventListener('change', handleGotoPageSelect);
-  if (gotoSelectBottom) gotoSelectBottom.addEventListener('change', handleGotoPageSelect);
+  [gotoInputTop, gotoInputBottom].forEach(input => {
+    if (!input) return;
+    input.addEventListener('change', handleGotoPageInput);
+    input.addEventListener('keydown', handleGotoPageInput);
+  });
 
   // Sorting Header Click Listeners
   document.querySelectorAll('th.sortable').forEach(th => {
@@ -789,6 +794,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Export current search results to Excel
   const exportToExcel = async () => {
+    if (typeof XLSX === 'undefined') {
+      alert('The Excel export library (SheetJS) failed to load. Please check your network connection and reload the page.');
+      return;
+    }
+
     const exportBtn = document.getElementById('exportExcelBtn');
     if (exportBtn) {
       exportBtn.disabled = true;
@@ -829,7 +839,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } else {
         const response = await fetch(
-          `${CONFIG.basePath}/maintenance/fetch/${department}?search=${encodeURIComponent(searchQuery)}&sort_by=${sortBy}&sort_order=${sortOrder}&status=${activeStatusFilter}`,
+          `${CONFIG.basePath}/maintenance/fetch/${department}?search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}&status=${encodeURIComponent(activeStatusFilter)}`,
           {
             method: 'GET',
             headers: {
@@ -839,7 +849,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         );
         const resData = await response.json();
-        records = resData.data || [];
+        records = (resData && resData.data && resData.data.requests) || [];
       }
 
       if (records.length === 0) {
