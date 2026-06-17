@@ -1,5 +1,16 @@
 let adhyayanfetch = [];
 
+function buildSessionOptions(sessions, placeholder, labelPrefix = 'S') {
+  let opts = `<option value="">${placeholder}</option>`;
+  (sessions || []).forEach(s => {
+    const isMV = s.type === 'MV';
+    opts += `<option value="${s.session_number}">
+      ${labelPrefix}${s.session_number}${isMV ? ' (MV)' : ''}
+    </option>`;
+  });
+  return opts;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const adhyayanTableBody = document.getElementById('adhyayanTable');
 
@@ -89,16 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <select class="attendance-session-dropdown"
     data-type="tap"
     data-shibir-id="${item.id}">
-    ${(() => {
-      let opts = '<option value="">Tap Scan</option>';
-      const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= 9; i++) {
-        opts += `<option value="${i}">
-          S${i}${mvSessions.includes(i) ? ' (MV)' : ''}
-        </option>`;
-      }
-      return opts;
-    })()}
+    ${buildSessionOptions(item.sessions, 'Tap Scan', 'S')}
   </select>
 </td>
 
@@ -106,16 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <select class="attendance-session-dropdown"
     data-type="mobile"
     data-shibir-id="${item.id}">
-    ${(() => {
-      let opts = '<option value="">Mob Scan</option>';
-      const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= 9; i++) {
-        opts += `<option value="${i}">
-          S${i}${mvSessions.includes(i) ? ' (MV)' : ''}
-        </option>`;
-      }
-      return opts;
-    })()}
+    ${buildSessionOptions(item.sessions, 'Mob Scan', 'S')}
   </select>
 
         <td style="text-align:center;">${item.total_seats}</td>
@@ -153,15 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detailRow.classList.add('detail-row');
       detailRow.style.display = 'none';
 
-      let sessionOptions = '<option value="">Select Attendance Session</option>';
-      const mvSessions = [7, 8, 9];
-
-      for (let i = 1; i <= 9; i++) {
-        sessionOptions += `
-          <option value="${i}">
-            Session ${i}${mvSessions.includes(i) ? ' (MV)' : ''}
-          </option>`;
-      }
+      let sessionOptions = buildSessionOptions(item.sessions, 'Select Attendance Session', 'Session ');
 
       detailRow.innerHTML = `
         <td colspan="18">
@@ -300,12 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       const result = await response.json();
-      const mvSessions = [7, 8, 9];
 
       result.data.summary.forEach(row => {
-        const match = String(row.session).match(/\d+/);
-        const sessionNo = match ? Number(match[0]) : null;
-        const isMV = mvSessions.includes(sessionNo);
+        const sessionNo = row.session_number;
+        const isMV = row.type === 'MV';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -321,12 +304,14 @@ document.addEventListener('DOMContentLoaded', () => {
         selector: '#attendanceSummaryDownload',
         getData: () =>
           result.data.summary.map(row => {
-            const match = String(row.session).match(/\d+/);
-            const sessionNo = match ? Number(match[0]) : row.session;
+            const sessionNo = row.session_number;
+            const isMV = row.type === 'MV';
 
             return {
-              ...row,
-              session: `Session ${sessionNo}${mvSessions.includes(sessionNo) ? ' (MV)' : ''}`
+              session: `Session ${sessionNo}${isMV ? ' (MV)' : ''}`,
+              total_registrants: row.total_registrants,
+              total_attended: row.total_attended,
+              total_absentees: row.total_absentees
             };
           }),
         fileName: `${shibirName}_attendance_summary.xlsx`,
