@@ -20,6 +20,7 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/config.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="maintenance.js" defer></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
 
@@ -36,6 +37,442 @@
       .table {
         min-width: 1000px; /* Or adjust based on expected column count */
         width: 100%;
+      }
+
+      .pagination {
+        display: flex !important;
+        list-style: none !important;
+        padding-left: 0 !important;
+        margin: 0 !important;
+        gap: 5px;
+      }
+      .pagination li {
+        display: inline-block !important;
+        list-style-type: none !important;
+      }
+      .pagination li a, .pagination li span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        color: #475569;
+        text-decoration: none;
+        background-color: #fff;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .pagination li a:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+        transform: translateY(-1px);
+      }
+      .pagination li.active span {
+        background-color: #4f46e5;
+        color: #fff;
+        border-color: #4f46e5;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+      }
+      .pagination li.disabled span {
+        color: #94a3b8;
+        cursor: not-allowed;
+        background-color: #f1f5f9;
+        border-color: #e2e8f0;
+        box-shadow: none;
+      }
+
+      /* Skeleton Shimmer Animation */
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .skeleton-row td {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        color: transparent !important;
+      }
+      .skeleton-row td a, .skeleton-row td span {
+        visibility: hidden !important;
+      }
+
+      /* Top bar layout - allows wrapping to prevent cutoff on narrow viewports */
+      .top-bar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .pagination-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 991px) {
+        .top-bar-container {
+          flex-wrap: wrap;
+        }
+        .pagination-container {
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+      }
+
+      /* Fade-in Transition */
+      .fade-in {
+        animation: fadeIn 0.35s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0.4;
+          transform: translateY(2px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Premium Count Badge */
+      #totalCountBadge {
+        background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+        color: #ffffff !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        padding: 4px 10px !important;
+        border-radius: 9999px !important;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25) !important;
+        margin-left: 12px !important;
+        vertical-align: middle !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: none !important;
+        line-height: 1 !important;
+        height: 22px !important;
+        min-width: 28px !important;
+      }
+
+      /* Sortable table headers */
+      th.sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 20px !important;
+      }
+      th.sortable:after {
+        content: ' ↕';
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      th.sortable.asc:after {
+        content: ' ▲';
+        color: #ffffff;
+        opacity: 1;
+      }
+      th.sortable.desc:after {
+        content: ' ▼';
+        color: #ffffff;
+        opacity: 1;
+      }
+
+      /* Status Badges */
+      .badge-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        letter-spacing: 0.5px;
+      }
+      .badge-status:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+      .badge-status.open {
+        background-color: #fef3c7 !important;
+        color: #b45309 !important;
+      }
+      .badge-status.in-progress {
+        background-color: #dbeafe !important;
+        color: #1d4ed8 !important;
+      }
+      .badge-status.closed {
+        background-color: #dcfce7 !important;
+        color: #15803d !important;
+      }
+
+      /* Edit Request Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeInOverlay 0.2s ease-out;
+      }
+      .modal-container {
+        background-color: #ffffff;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        animation: slideInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+      }
+      .modal-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+      }
+      .modal-close {
+        font-size: 28px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: color 0.15s;
+        line-height: 1;
+        user-select: none;
+      }
+      .modal-close:hover {
+        color: #ef4444;
+      }
+      .modal-body {
+        padding: 20px 24px;
+      }
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+      }
+      .modal-footer .btn {
+        margin: 0;
+      }
+      .btn-secondary {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      .btn-secondary:hover {
+        background-color: #e2e8f0 !important;
+        color: #1e293b !important;
+      }
+
+      @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes slideInModal {
+        from { transform: translateY(16px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      /* Search highlighting */
+      mark.highlight {
+        background-color: #fef08a; /* soft yellow */
+        color: #1e293b; /* slate 800 */
+        padding: 0 2px;
+        border-radius: 2px;
+      }
+
+      /* Search spinner */
+      .search-spinner {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        border: 2px solid #cbd5e1;
+        border-top: 2px solid #4f46e5;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+        pointer-events: none;
+      }
+      @keyframes spin {
+        0% { transform: translateY(-50%) rotate(0deg); }
+        100% { transform: translateY(-50%) rotate(360deg); }
+      }
+
+      /* Premium empty state */
+      .empty-state-container {
+        padding: 40px 24px;
+        text-align: center;
+        color: #64748b;
+      }
+      .empty-state-icon {
+        width: 48px;
+        height: 48px;
+        color: #cbd5e1;
+        margin: 0 auto 16px auto;
+      }
+      .empty-state-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 4px;
+      }
+      .empty-state-text {
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      .btn-reset-search {
+        background-color: #4f46e5 !important;
+        color: #ffffff !important;
+        border: none !important;
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+      }
+      .btn-reset-search:hover {
+        background-color: #4338ca !important;
+        transform: translateY(-1px);
+      }
+
+      /* Status tabs filter */
+      .status-tabs-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 12px;
+      }
+      .status-tab {
+        background: none;
+        border: 1px solid #cbd5e1;
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 6px 14px;
+        cursor: pointer;
+        border-radius: 9999px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        outline: none;
+      }
+      .status-tab:hover {
+        background-color: #f1f5f9;
+        color: #1e293b;
+        border-color: #94a3b8;
+      }
+      .status-tab.active {
+        background-color: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+      }
+      .status-tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 9999px;
+        margin-left: 6px;
+        background-color: #e2e8f0;
+        color: #475569;
+        line-height: 1;
+      }
+      .status-tab.active .status-tab-badge {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+      }
+
+      /* Export button */
+      .btn-export-csv {
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        height: 38px !important;
+        padding: 6px 16px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        border: none !important;
+        white-space: nowrap;
+        margin: 0;
+      }
+      .btn-export-csv:hover {
+        background-color: #059669 !important;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+      }
+
+      /* Row status indicators */
+      tr.status-border-open td:first-child {
+        border-left: 4px solid #f59e0b !important; /* amber 500 */
+      }
+      tr.status-border-in-progress td:first-child {
+        border-left: 4px solid #3b82f6 !important; /* blue 500 */
+      }
+      tr.status-border-closed td:first-child {
+        border-left: 4px solid #10b981 !important; /* emerald 500 */
+      }
+
+      /* Row Hover Highlight */
+      #maintenanceTable tbody tr {
+        transition: background-color 0.15s ease;
+      }
+      #maintenanceTable tbody tr:hover {
+        background-color: rgba(79, 70, 229, 0.04) !important;
+      }
+
+      /* WhatsApp Icon Hover Scale */
+      .wa-icon {
+        transition: transform 0.2s ease;
+      }
+      .wa-icon:hover {
+        transform: scale(1.25);
       }
     </style>
   </head>
@@ -58,25 +495,66 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>All Requests</h1>
+              <h1 id="pageHeading" style="display: flex; align-items: center; justify-content: center;">All Requests</h1>
             </div>
-<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+
+            <!-- Status tabs filter container -->
+            <div class="status-tabs-container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="status-tab active" data-status="">All <span class="status-tab-badge" id="badgeAll">0</span></button>
+                <button class="status-tab" data-status="open">Open <span class="status-tab-badge" id="badgeOpen">0</span></button>
+                <button class="status-tab" data-status="in progress">In Progress <span class="status-tab-badge" id="badgeInProgress">0</span></button>
+                <button class="status-tab" data-status="closed">Closed <span class="status-tab-badge" id="badgeClosed">0</span></button>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="position: relative; width: 180px; flex-shrink: 0;">
+                  <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search..." style="margin: 0; width: 100%; padding-right: 25px;">
+                  <span id="clearSearch" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 18px; font-weight: bold; display: none; user-select: none;">&times;</span>
+                  <div id="searchSpinner" class="search-spinner"></div>
+                </div>
+                <button id="exportExcelBtn" class="btn-export-csv" title="Export current search results to Excel" style="margin: 0;">
+                  <span>📥</span> Export Excel
+                </button>
+              </div>
+            </div>
+            
+            <div class="top-bar-container">
+              
+              <!-- Top Pagination Container -->
+              <div class="pagination-container" id="paginationContainerTop" style="margin: 0;">
+                <div id="paginationInfoTop" style="color: #666; font-size: 14px; white-space: nowrap;"></div>
+                <ul id="paginationTop" class="pagination" style="margin: 0;"></ul>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                  <select id="pageSizeSelectTop" class="form-control" style="width: 80px; height: 34px; padding: 6px 12px; display: inline-block;">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <label for="gotoPageSelectTop" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                    <select id="gotoPageSelectTop" class="form-control" style="width: 70px; height: 34px; padding: 6px 12px; display: inline-block;"></select>
+                    <span style="color: #666; font-size: 14px; white-space: nowrap;">of <span id="totalPagesLabelTop">1</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
   
             <div class="form">
-  <div class="table-responsive">
-    <table id="maintenanceTable" class="table table-striped table-bordered">
-      <thead>
+              <div class="table-responsive">
+                <table id="maintenanceTable" class="table table-striped table-bordered">
+                  <thead>
                     <tr>
                       <th>Sr No</th>
-                      <th>Requested By</th>
-                      <th>Mobile No.</th>
-                      <th>Created At</th>
+                      <th class="sortable" data-sort="requested_by">Requested By</th>
+                      <th class="sortable" data-sort="mobno">Mobile No.</th>
+                      <th class="sortable" data-sort="createdAt">Created At</th>
                       <th>Department</th>
-                      <th>Area of Work</th>
-                      <th>Work Detail</th>
+                      <th class="sortable" data-sort="area_of_work">Area of Work</th>
+                      <th class="sortable" data-sort="work_detail">Work Detail</th>
                       <th>Comments</th>
-                      <th>Closed at</th>
-                      <th>Status</th>
+                      <th class="sortable" data-sort="closedAt">Closed at</th>
+                      <th class="sortable" data-sort="priority">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -86,8 +564,63 @@
                   </tbody>
                 </table>
               </div>
+              <div class="pagination-container" id="paginationContainerBottom" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; flex-wrap: wrap; gap: 10px;">
+                <div id="paginationInfoBottom" style="color: #666; font-size: 14px; white-space: nowrap;"></div>
+                <ul id="paginationBottom" class="pagination" style="margin: 0;"></ul>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                  <div class="page-size-selector" style="display: flex; align-items: center; gap: 5px;">
+                    <label for="pageSizeSelectBottom" style="margin: 0; font-size: 14px; color: #666;">Items per page:</label>
+                    <select id="pageSizeSelectBottom" class="form-control" style="width: 80px; height: 34px; padding: 6px 12px; display: inline-block;">
+                      <option value="10">10</option>
+                      <option value="20" selected>20</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+                  <div class="page-goto-selector" style="display: flex; align-items: center; gap: 5px;">
+                    <label for="gotoPageSelectBottom" style="margin: 0; font-size: 14px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                    <select id="gotoPageSelectBottom" class="form-control" style="width: 70px; height: 34px; padding: 6px 12px; display: inline-block;"></select>
+                    <span style="color: #666; font-size: 14px; white-space: nowrap;">of <span id="totalPagesLabelBottom">1</span></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+    <!-- Edit Request Modal -->
+    <div id="editModal" class="modal-overlay" style="display: none;">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2>Update Maintenance Request</h2>
+          <span class="modal-close" id="closeModalBtn">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #475569;">Issued To</label>
+            <input type="text" class="form-control" id="modalIssuedTo" readonly style="background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; cursor: not-allowed;" />
+          </div>
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #475569;">Department</label>
+            <input type="text" class="form-control" id="modalDepartment" readonly style="background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; cursor: not-allowed;" />
+          </div>
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="modalComments" style="display: block; margin-bottom: 5px; font-weight: 500; color: #475569;">Comments</label>
+            <textarea class="form-control" id="modalComments" rows="4" style="resize: vertical; border: 1px solid #cbd5e1; width: 100%; border-radius: 4px; padding: 8px;"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="modalStatus" style="display: block; margin-bottom: 5px; font-weight: 500; color: #475569;">Status</label>
+            <select class="form-control" id="modalStatus" style="border: 1px solid #cbd5e1; width: 100%; border-radius: 4px; padding: 6px 12px; height: 38px;">
+              <option value="open">Open</option>
+              <option value="in progress">In Progress</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelModalBtn" style="padding: 8px 16px; border-radius: 6px;">Cancel</button>
+          <button class="btn btn-primary" id="saveModalBtn" style="padding: 8px 16px; border-radius: 6px; background-color: #4f46e5; border-color: #4f46e5; color: white;">Save Changes</button>
         </div>
       </div>
     </div>
