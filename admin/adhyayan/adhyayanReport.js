@@ -1,5 +1,16 @@
 let adhyayanfetch = [];
 
+function buildSessionOptions(sessions, placeholder, labelPrefix = 'S') {
+  let opts = `<option value="">${placeholder}</option>`;
+  (sessions || []).forEach(s => {
+    const isMV = s.type === 'MV';
+    opts += `<option value="${s.session_number}">
+      ${labelPrefix}${s.session_number}${isMV ? ' (MV)' : ''}
+    </option>`;
+  });
+  return opts;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const adhyayanTableBody = document.getElementById('adhyayanTable');
 
@@ -89,20 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <select class="attendance-session-dropdown"
     data-type="tap"
     data-shibir-id="${item.id}">
-    ${(() => {
-      let opts = '<option value="">Tap Scan</option>';
-      const days = Math.floor((new Date(item.end_date) - new Date(item.start_date)) / (1000 * 60 * 60 * 24)) + 1;
-      const isHistorical = Number(item.id) <= 162;
-      const totalSessions = isHistorical ? 9 : (days * 3);
-      const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= totalSessions; i++) {
-        const isMV = isHistorical ? mvSessions.includes(i) : (i > 2 * days);
-        opts += `<option value="${i}">
-          S${i}${isMV ? ' (MV)' : ''}
-        </option>`;
-      }
-      return opts;
-    })()}
+    ${buildSessionOptions(item.sessions, 'Tap Scan', 'S')}
   </select>
 </td>
 
@@ -110,20 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <select class="attendance-session-dropdown"
     data-type="mobile"
     data-shibir-id="${item.id}">
-    ${(() => {
-      let opts = '<option value="">Mob Scan</option>';
-      const days = Math.floor((new Date(item.end_date) - new Date(item.start_date)) / (1000 * 60 * 60 * 24)) + 1;
-      const isHistorical = Number(item.id) <= 162;
-      const totalSessions = isHistorical ? 9 : (days * 3);
-      const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= totalSessions; i++) {
-        const isMV = isHistorical ? mvSessions.includes(i) : (i > 2 * days);
-        opts += `<option value="${i}">
-          S${i}${isMV ? ' (MV)' : ''}
-        </option>`;
-      }
-      return opts;
-    })()}
+    ${buildSessionOptions(item.sessions, 'Mob Scan', 'S')}
   </select>
 
         <td style="text-align:center;">${item.total_seats}</td>
@@ -161,19 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detailRow.classList.add('detail-row');
       detailRow.style.display = 'none';
 
-      const days = Math.floor((new Date(item.end_date) - new Date(item.start_date)) / (1000 * 60 * 60 * 24)) + 1;
-      const isHistorical = Number(item.id) <= 162;
-      const totalSessions = isHistorical ? 9 : (days * 3);
-      const mvSessions = [7, 8, 9];
-
-      let sessionOptions = '<option value="">Select Attendance Session</option>';
-      for (let i = 1; i <= totalSessions; i++) {
-        const isMV = isHistorical ? mvSessions.includes(i) : (i > 2 * days);
-        sessionOptions += `
-          <option value="${i}">
-            Session ${i}${isMV ? ' (MV)' : ''}
-          </option>`;
-      }
+      let sessionOptions = buildSessionOptions(item.sessions, 'Select Attendance Session', 'Session ');
 
       detailRow.innerHTML = `
         <td colspan="18">
@@ -312,14 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       const result = await response.json();
-      const isHistorical = Number(shibirId) <= 162;
-      const mvSessions = [7, 8, 9];
-      const days = result.data.summary.length / 3;
 
       result.data.summary.forEach(row => {
-        const match = String(row.session).match(/\d+/);
-        const sessionNo = match ? Number(match[0]) : null;
-        const isMV = isHistorical ? mvSessions.includes(sessionNo) : (sessionNo > 2 * days);
+        const sessionNo = row.session_number;
+        const isMV = row.type === 'MV';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -335,13 +304,14 @@ document.addEventListener('DOMContentLoaded', () => {
         selector: '#attendanceSummaryDownload',
         getData: () =>
           result.data.summary.map(row => {
-            const match = String(row.session).match(/\d+/);
-            const sessionNo = match ? Number(match[0]) : row.session;
-            const isMV = isHistorical ? mvSessions.includes(sessionNo) : (sessionNo > 2 * days);
+            const sessionNo = row.session_number;
+            const isMV = row.type === 'MV';
 
             return {
-              ...row,
-              session: `Session ${sessionNo}${isMV ? ' (MV)' : ''}`
+              session: `Session ${sessionNo}${isMV ? ' (MV)' : ''}`,
+              total_registrants: row.total_registrants,
+              total_attended: row.total_attended,
+              total_absentees: row.total_absentees
             };
           }),
         fileName: `${shibirName}_attendance_summary.xlsx`,

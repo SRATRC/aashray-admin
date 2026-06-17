@@ -17,7 +17,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const result = await response.json();
 
-  heading.innerText = `Attendance Report for "${result.shibirName}" \n by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
+  if (!response.ok) {
+    showMessage(result.message || "Failed to load attendance report", "error");
+    heading.innerText = "Error: Failed to load attendance report";
+    return;
+  }
+
+  const sessions = result.sessions || [];
+  const data = result.data || [];
+
+  heading.innerText = `Attendance Report for "${result.shibirName || 'Shibir'}" \n by ${result.speaker || 'Speaker'} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
 
   // Build header
   let headerHtml = `
@@ -32,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <th>Res Status</th>
   `;
 
-  result.sessions.forEach(s => {
+  sessions.forEach(s => {
     const suffix = s.type === 'MV' ? ' (MV)' : '';
     headerHtml += `<th>Session ${s.session_number}${suffix}</th>`;
   });
@@ -43,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Populate bulk session select dropdown
   const bulkSelect = document.getElementById('bulkSessionSelect');
   bulkSelect.innerHTML = '<option value="">Select Session...</option>';
-  result.sessions.forEach(s => {
+  sessions.forEach(s => {
     const suffix = s.type === 'MV' ? ' (MV)' : '';
     const option = document.createElement('option');
     option.value = s.session_number;
@@ -52,20 +61,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Build rows
-  result.data.forEach((row, index) => {
+  data.forEach((row, index) => {
     let rowHtml = `
       <tr>
         <td style="text-align: center;"><input type="checkbox" class="participant-select" data-cardno="${row.cardno}" /></td>
         <td>${index + 1}</td>
         <td>${row.cardno}</td>
-        <td>${row.name}</td>
-        <td>${row.mobno}</td>
-        <td>${row.gender}</td>
-        <td>${row.centre}</td>
-        <td>${row.res_status}</td>
+        <td>${row.name || ''}</td>
+        <td>${row.mobno || ''}</td>
+        <td>${row.gender || ''}</td>
+        <td>${row.centre || ''}</td>
+        <td>${row.res_status || ''}</td>
     `;
 
-    result.sessions.forEach(s => {
+    sessions.forEach(s => {
       const value = row[`session_${s.session_number}`] ?? 'No';
 
       rowHtml += `
@@ -131,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function performBulkToggle(value) {
     const selectedSession = bulkSelect.value;
     if (!selectedSession) {
-      alert("Pls select one session from dropdown");
+      showMessage("Please select a session from the dropdown", "warning");
       return;
     }
 
@@ -166,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const res = await response.json();
       if (!response.ok) {
-        alert(res.message || "Bulk update failed");
+        showMessage(res.message || "Bulk update failed", "error");
         return;
       }
 
@@ -206,30 +215,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sheetData = [];
 
     // Title Row
-    const title = `Attendance Report for "${result.shibirName}" by ${result.speaker} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
+    const title = `Attendance Report for "${result.shibirName || 'Shibir'}" by ${result.speaker || 'Speaker'} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
     sheetData.push([title]);
 
     // Header Row
     const headers = ["Sr No", "cardno", "name", "mobno", "gender", "centre", "res_status"];
-    result.sessions.forEach(s => {
+    sessions.forEach(s => {
       const suffix = s.type === 'MV' ? ' (MV)' : '';
       headers.push(`Session ${s.session_number}${suffix}`);
     });
     sheetData.push(headers);
 
     // Data Rows
-    result.data.forEach((row, index) => {
+    data.forEach((row, index) => {
       const dataRow = [
         index + 1,
         row.cardno,
-        row.name,
-        row.mobno,
-        row.gender,
-        row.centre,
-        row.res_status
+        row.name || '',
+        row.mobno || '',
+        row.gender || '',
+        row.centre || '',
+        row.res_status || ''
       ];
 
-      result.sessions.forEach(s => {
+      sessions.forEach(s => {
         const cellTextEl = document.getElementById(`text-${shibirId}-${row.cardno}-${s.session_number}`);
         const cellValue = cellTextEl ? cellTextEl.innerText.trim() : 'No';
         dataRow.push(cellValue);
@@ -286,7 +295,7 @@ async function toggleAttendance(shibirId, cardno, sessionNumber) {
     const result = await response.json();
 
     if (!response.ok) {
-      alert(result.message || "Update failed");
+      showMessage(result.message || "Update failed", "error");
       return;
     }
 
