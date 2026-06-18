@@ -210,12 +210,17 @@ function displayGateRecords(gateRecords) {
       const name = record.issuedto || record.CardDb?.issuedto || '-';
       const mobno = record.mobno || record.CardDb?.mobno || '-';
       
+      const isCheckIn = String(record.status).toUpperCase() === 'ONPREM' || String(record.status).toUpperCase() === 'CHECKIN';
+      const statusText = isCheckIn ? 'Check In' : 'Check Out';
+      const statusBadgeClass = isCheckIn ? 'badge-onprem' : 'badge-offprem';
+      row.classList.add(isCheckIn ? 'status-border-onprem' : 'status-border-offprem');
+
       row.innerHTML = `
         <td>${globalIndex}</td>
         <td>${record.cardno}</td>
         <td>${name}</td>
         <td>${mobno}</td>
-        <td>${record.status}</td>
+        <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
         <td>${formatDateTime(record.createdAt)}</td>
       `;
       gateRecordsContainer.appendChild(row);
@@ -278,9 +283,17 @@ function renderPagination(pagination) {
   const startEntry = (page - 1) * page_size + 1;
   const endEntry = Math.min(page * page_size, totalCount);
   
-  const infoText = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
-  if (pInfoTop) pInfoTop.innerHTML = infoText;
-  if (pInfoBottom) pInfoBottom.innerHTML = infoText;
+  const infoTextTop = `
+    Showing ${startEntry} to ${endEntry} of ${totalCount} entries
+    <span class="keyboard-helper" style="font-size: 12px; color: #94a3b8; margin-left: 15px; display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
+      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">←</span>
+      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">→</span>
+      <span>navigate pages</span>
+    </span>
+  `;
+  const infoTextBottom = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
+  if (pInfoTop) pInfoTop.innerHTML = infoTextTop;
+  if (pInfoBottom) pInfoBottom.innerHTML = infoTextBottom;
 
   let html = '';
 
@@ -456,3 +469,26 @@ async function exportToExcel() {
     }
   }
 }
+
+// Keyboard navigation shortcuts
+document.addEventListener('keydown', (e) => {
+  const activeEl = document.activeElement;
+  if (activeEl) {
+    const tagName = activeEl.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || activeEl.isContentEditable) {
+      return;
+    }
+  }
+
+  if (e.key === 'ArrowLeft') {
+    if (currentPage > 1) {
+      currentPage--;
+      fetchGateRecords();
+    }
+  } else if (e.key === 'ArrowRight') {
+    if (currentPage < maxPageValue) {
+      currentPage++;
+      fetchGateRecords();
+    }
+  }
+});

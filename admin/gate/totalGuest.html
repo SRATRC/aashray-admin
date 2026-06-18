@@ -97,11 +97,10 @@
     }
     .top-bar-container {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
       margin-bottom: 15px;
-      flex-wrap: wrap;
       width: 100%;
     }
     .pagination-container {
@@ -274,6 +273,76 @@
     .duration-outside {
       color: #b91c1c;
     }
+    .status-filter-group {
+      display: inline-flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+      gap: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .filter-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-btn:hover {
+      color: #0f172a;
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .filter-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+     .view-history-btn {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff !important;
+      border: none !important;
+      padding: 6px 14px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      border-radius: 6px !important;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap !important;
+    }
+    .view-history-btn:hover {
+      background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+    }
+    .view-history-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
+    }
+
+    /* Row status indicators & Hover Highlight */
+    tr.status-border-onprem td:first-child {
+      border-left: 4px solid #10b981 !important; /* emerald 500 */
+    }
+    tr.status-border-offprem td:first-child {
+      border-left: 4px solid #ef4444 !important; /* red 500 */
+    }
+    #prResidents tr {
+      transition: background-color 0.15s ease;
+    }
+    #prResidents tr:hover {
+      background-color: rgba(79, 70, 229, 0.04) !important;
+    }
   </style>
 </head>
 
@@ -300,7 +369,7 @@
 
           <div class="form">
             <div class="top-bar-container">
-              <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <input
                   type="text"
                   id="tableSearch"
@@ -308,6 +377,11 @@
                   placeholder="Search..."
                   style="margin: 0; width: 220px;"
                 />
+                <div class="status-filter-group">
+                  <button type="button" class="filter-btn active" data-status="all">All</button>
+                  <button type="button" class="filter-btn" data-status="onprem">On-Premise</button>
+                  <button type="button" class="filter-btn" data-status="offprem">Off-Premise</button>
+                </div>
                 <button id="exportExcelBtn" class="btn-export-csv" title="Export current search results to Excel" style="margin: 0;">
                   <span>📥</span> Export Excel
                 </button>
@@ -339,6 +413,7 @@
                     <th class="sortable" data-sort="cardno">Card No</th>
                     <th class="sortable" data-sort="issuedto">Issued To</th>
                     <th class="sortable" data-sort="mobno">Mobile No</th>
+                    <th class="sortable" data-sort="status">Status</th>
                     <th class="sortable" data-sort="last_checkin">Last Gate in time</th>
                     <th class="sortable" data-sort="last_checkout">Last Gate out time</th>
                     <th>Action</th>

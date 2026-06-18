@@ -85,11 +85,10 @@
       }
       .top-bar-container {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
         margin-bottom: 15px;
-        flex-wrap: wrap;
         width: 100%;
       }
       .pagination-container {
@@ -147,6 +146,39 @@
         background-color: #059669 !important;
         transform: translateY(-1px);
         color: #ffffff !important;
+      }
+
+      /* Status Badges */
+      .badge-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .badge-onprem {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .badge-offprem {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+
+      /* Row status indicators & Hover Highlight */
+      tr.status-border-onprem td:first-child {
+        border-left: 4px solid #10b981 !important; /* emerald 500 */
+      }
+      tr.status-border-offprem td:first-child {
+        border-left: 4px solid #ef4444 !important; /* red 500 */
+      }
+      #gateRecords tr {
+        transition: background-color 0.15s ease;
+      }
+      #gateRecords tr:hover {
+        background-color: rgba(79, 70, 229, 0.04) !important;
       }
     </style>
   </head>

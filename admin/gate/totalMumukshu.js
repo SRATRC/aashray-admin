@@ -4,6 +4,7 @@ let searchQuery = '';
 let sortBy = 'cardno';
 let sortOrder = 'ASC';
 let maxPageValue = 1;
+let statusFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', async function () {
   const savedPageSize = localStorage.getItem('gatePageSize');
@@ -110,12 +111,23 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }
 
+  // Bind Status Filter Buttons
+  document.querySelectorAll('.status-filter-group .filter-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.status-filter-group .filter-btn').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      statusFilter = btn.getAttribute('data-status');
+      currentPage = 1;
+      fetchMumukshuResidents();
+    });
+  });
+
   fetchMumukshuResidents();
 });
 
 async function fetchMumukshuResidents() {
   try {
-    const response = await fetch(`${CONFIG.basePath}/gate/totalMumukshu?page=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}`, {
+    const response = await fetch(`${CONFIG.basePath}/gate/totalMumukshu?page=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}&status=${encodeURIComponent(statusFilter)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -146,21 +158,35 @@ function displayPRResidents(prResidents) {
     prResidents.forEach((resident, index) => {
       const globalIndex = (currentPage - 1) * pageSize + index + 1;
       const row = document.createElement('tr');
+      row.style.cursor = 'pointer';
+      row.setAttribute('title', 'Double click to see history');
+      const isCheckIn = String(resident.status).toUpperCase() === 'ONPREM';
+      row.classList.add(isCheckIn ? 'status-border-onprem' : 'status-border-offprem');
+      const statusText = isCheckIn ? 'On Premise' : 'Off Premise';
+      const statusBadgeClass = isCheckIn ? 'badge-onprem' : 'badge-offprem';
       row.innerHTML = `
         <td>${globalIndex}</td>
         <td>${resident.cardno}</td>
         <td>${resident.issuedto}</td>
         <td>${resident.mobno}</td>
-        <td>${formatDateTime(resident.last_checkin)}</td>
-        <td>${formatDateTime(resident.last_checkout)}</td>
-        <td><button class="view-history-btn" data-cardno="${resident.cardno}" data-name="${resident.issuedto}">View History</button></td>
+        <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
+        <td>${formatDateTime(resident.last_checkin, true)}</td>
+        <td>${formatDateTime(resident.last_checkout, true)}</td>
+        <td><button class="view-history-btn" data-cardno="${resident.cardno}" data-name="${resident.issuedto}">🕒 History</button></td>
       `;
+
+      // Bind row double-click to open history
+      row.addEventListener('dblclick', () => {
+        fetchGateHistory(resident.cardno, resident.issuedto);
+      });
+
       prResidentsContainer.appendChild(row);
     });
 
     // Bind click listeners to history buttons
     prResidentsContainer.querySelectorAll('.view-history-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
         const cardno = this.dataset.cardno;
         const name = this.dataset.name;
         fetchGateHistory(cardno, name);
@@ -168,12 +194,12 @@ function displayPRResidents(prResidents) {
     });
   } else {
     const noDataRow = document.createElement('tr');
-    noDataRow.innerHTML = `<td colspan="7">No data available</td>`;
+    noDataRow.innerHTML = `<td colspan="8">No data available</td>`;
     prResidentsContainer.appendChild(noDataRow);
   }
 }
 
-function formatDateTime(dateInput) {
+function formatDateTime(dateInput, includeRelative = false) {
   if (!dateInput) return '-';
   const dateObj = new Date(dateInput);
   if (isNaN(dateObj)) return '-';
@@ -182,7 +208,28 @@ function formatDateTime(dateInput) {
   const year = dateObj.getFullYear();
   const hours = String(dateObj.getHours()).padStart(2, '0');
   const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
+  const absoluteStr = `${day}-${month}-${year} ${hours}:${minutes}`;
+
+  if (!includeRelative) return absoluteStr;
+
+  const now = new Date();
+  const diffMs = now - dateObj;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  let relativeStr = '';
+  if (diffDays > 0) {
+    relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffDays}d ago)</span>`;
+  } else if (diffHours > 0) {
+    relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffHours}h ago)</span>`;
+  } else if (diffMins > 0) {
+    relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffMins}m ago)</span>`;
+  } else {
+    relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(just now)</span>`;
+  }
+
+  return `${absoluteStr}${relativeStr}`;
 }
 
 async function fetchGateHistory(cardno, residentName) {
@@ -261,7 +308,7 @@ function showGateHistoryModal(history) {
 
     row.innerHTML = `
       <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
-      <td>${formatDateTime(record.createdAt)}</td>
+      <td>${formatDateTime(record.createdAt, true)}</td>
       <td>${durationHtml}</td>
       <td>${record.updatedBy || '-'}</td>
     `;
@@ -322,7 +369,7 @@ async function exportToExcel() {
   }
 
   try {
-    const response = await fetch(`${CONFIG.basePath}/gate/totalMumukshu?search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}`, {
+    const response = await fetch(`${CONFIG.basePath}/gate/totalMumukshu?search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}&status=${encodeURIComponent(statusFilter)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -344,8 +391,9 @@ async function exportToExcel() {
         r.cardno || '',
         r.issuedto || '',
         r.mobno ? String(r.mobno) : '',
-        formatDateTime(r.last_checkin),
-        formatDateTime(r.last_checkout)
+        r.status === 'onprem' ? 'On Premise' : 'Off Premise',
+        formatDateTime(r.last_checkin, false),
+        formatDateTime(r.last_checkout, false)
       ]);
 
       const headerRow = [
@@ -353,6 +401,7 @@ async function exportToExcel() {
         "Card No",
         "Issued To",
         "Mobile No",
+        "Status",
         "Last Gate In Time",
         "Last Gate Out Time"
       ];
@@ -363,6 +412,7 @@ async function exportToExcel() {
         { wch: 15 }, // Card No
         { wch: 25 }, // Issued To
         { wch: 15 }, // Mobile No
+        { wch: 15 }, // Status
         { wch: 20 }, // Last Gate In Time
         { wch: 20 }  // Last Gate Out Time
       ];
@@ -370,7 +420,8 @@ async function exportToExcel() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Mumukshus Report");
 
-      XLSX.writeFile(wb, `Mumukshus_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      const statusLabel = statusFilter === 'all' ? 'All' : (statusFilter === 'onprem' ? 'OnPremise' : 'OffPremise');
+      XLSX.writeFile(wb, `Mumukshus_Report_${statusLabel}_${new Date().toISOString().slice(0, 10)}.xlsx`);
     } else {
       alert('Failed to fetch data for export.');
     }
@@ -424,9 +475,17 @@ function renderPagination(pagination) {
   const startEntry = (page - 1) * page_size + 1;
   const endEntry = Math.min(page * page_size, totalCount);
   
-  const infoText = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
-  if (pInfoTop) pInfoTop.innerHTML = infoText;
-  if (pInfoBottom) pInfoBottom.innerHTML = infoText;
+  const infoTextTop = `
+    Showing ${startEntry} to ${endEntry} of ${totalCount} entries
+    <span class="keyboard-helper" style="font-size: 12px; color: #94a3b8; margin-left: 15px; display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
+      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">←</span>
+      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">→</span>
+      <span>navigate pages</span>
+    </span>
+  `;
+  const infoTextBottom = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
+  if (pInfoTop) pInfoTop.innerHTML = infoTextTop;
+  if (pInfoBottom) pInfoBottom.innerHTML = infoTextBottom;
 
   let html = '';
 
@@ -500,3 +559,26 @@ function renderPagination(pagination) {
     });
   });
 }
+
+// Keyboard navigation shortcuts
+document.addEventListener('keydown', (e) => {
+  const activeEl = document.activeElement;
+  if (activeEl) {
+    const tagName = activeEl.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || activeEl.isContentEditable) {
+      return;
+    }
+  }
+
+  if (e.key === 'ArrowLeft') {
+    if (currentPage > 1) {
+      currentPage--;
+      fetchMumukshuResidents();
+    }
+  } else if (e.key === 'ArrowRight') {
+    if (currentPage < maxPageValue) {
+      currentPage++;
+      fetchMumukshuResidents();
+    }
+  }
+});
