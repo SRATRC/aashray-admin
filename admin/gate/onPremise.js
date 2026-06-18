@@ -39,14 +39,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Create Count cell with clickable link
         const countCell = document.createElement('td');
         const countLink = document.createElement('a');
-        countLink.href =
-          item.res_status === 'PR'
-            ? 'totalPR.html'
-            : item.res_status === 'MUMUKSHU'
-            ? 'totalMumukshu.html'
-            : item.res_status === 'SEVA KUTIR'
-            ? 'totalSeva.html'
-            : 'totalGuest.html'; // Redirect based on the status
+        countLink.href = `residents.html?type=${encodeURIComponent(item.res_status)}`;
         countLink.textContent = item.count;
         countCell.appendChild(countLink);
         row.appendChild(countCell);
