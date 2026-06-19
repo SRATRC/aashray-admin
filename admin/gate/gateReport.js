@@ -8,17 +8,68 @@ let startDate = '';
 let endDate = '';
 let resStatus = '';
 
-document.addEventListener('DOMContentLoaded', async function () {
-  const savedPageSize = localStorage.getItem('gatePageSize');
-  if (savedPageSize) {
-    pageSize = parseInt(savedPageSize, 10);
+function toggleClearSearchBtn() {
+  const clearBtn = document.getElementById('clearSearchBtn');
+  const searchInput = document.getElementById('tableSearch');
+  if (clearBtn && searchInput) {
+    clearBtn.style.display = searchInput.value ? 'block' : 'none';
   }
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
+  // Parse query parameters from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const pageParam = urlParams.get('page');
+  if (pageParam) currentPage = parseInt(pageParam, 10) || 1;
+  
+  const pageSizeParam = urlParams.get('page_size');
+  if (pageSizeParam) {
+    pageSize = parseInt(pageSizeParam, 10) || 20;
+  } else {
+    const savedPageSize = localStorage.getItem('gatePageSize');
+    if (savedPageSize) {
+      pageSize = parseInt(savedPageSize, 10) || 20;
+    }
+  }
+
+  const searchParam = urlParams.get('search');
+  if (searchParam) searchQuery = searchParam;
+
+  const sortByParam = urlParams.get('sort_by');
+  if (sortByParam) sortBy = sortByParam;
+
+  const sortOrderParam = urlParams.get('sort_order');
+  if (sortOrderParam) sortOrder = sortOrderParam.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+  const startDateParam = urlParams.get('start_date');
+  if (startDateParam) startDate = startDateParam;
+
+  const endDateParam = urlParams.get('end_date');
+  if (endDateParam) endDate = endDateParam;
+
+  const resStatusParam = urlParams.get('res_status');
+  if (resStatusParam) resStatus = resStatusParam;
 
   // Sync initial DOM select elements
   const selectTop = document.getElementById('pageSizeSelectTop');
   const selectBottom = document.getElementById('pageSizeSelectBottom');
   if (selectTop) selectTop.value = pageSize;
   if (selectBottom) selectBottom.value = pageSize;
+
+  const startDateInput = document.getElementById('startDateInput');
+  const endDateInput = document.getElementById('endDateInput');
+  if (startDateInput) startDateInput.value = startDate;
+  if (endDateInput) endDateInput.value = endDate;
+
+  const resStatusSelect = document.getElementById('resStatusSelect');
+  if (resStatusSelect) resStatusSelect.value = resStatus;
+
+  const tableSearchInput = document.getElementById('tableSearch');
+  if (tableSearchInput) {
+    tableSearchInput.value = searchQuery;
+  }
+
+  toggleClearSearchBtn();
 
   // Bind Page Size events
   const handlePageSizeChange = (e) => {
@@ -28,6 +79,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (selectBottom) selectBottom.value = pageSize;
     currentPage = 1;
     fetchGateRecords();
+    updateUrlParams();
   };
   if (selectTop) selectTop.addEventListener('change', handlePageSizeChange);
   if (selectBottom) selectBottom.addEventListener('change', handlePageSizeChange);
@@ -48,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (inputTop) inputTop.value = val;
     if (inputBottom) inputBottom.value = val;
     fetchGateRecords();
+    updateUrlParams();
   };
   [inputTop, inputBottom].forEach(input => {
     if (input) {
@@ -58,15 +111,43 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // Bind Search Debounced
   let searchTimeout = null;
-  const tableSearchInput = document.getElementById('tableSearch');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+
   if (tableSearchInput) {
     tableSearchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value;
+      toggleClearSearchBtn();
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
+        searchQuery = e.target.value;
         currentPage = 1;
         fetchGateRecords();
+        updateUrlParams();
       }, 400);
+    });
+
+    tableSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        tableSearchInput.value = '';
+        searchQuery = '';
+        currentPage = 1;
+        toggleClearSearchBtn();
+        fetchGateRecords();
+        updateUrlParams();
+        tableSearchInput.blur();
+      }
+    });
+  }
+
+  if (clearSearchBtn && tableSearchInput) {
+    clearSearchBtn.addEventListener('click', () => {
+      tableSearchInput.value = '';
+      searchQuery = '';
+      currentPage = 1;
+      toggleClearSearchBtn();
+      fetchGateRecords();
+      updateUrlParams();
+      tableSearchInput.focus();
     });
   }
 
@@ -80,12 +161,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         sortBy = column;
         sortOrder = 'ASC';
       }
-      document.querySelectorAll('th.sortable').forEach(el => {
-        el.classList.remove('asc', 'desc');
-      });
-      th.classList.add(sortOrder.toLowerCase());
       currentPage = 1;
       fetchGateRecords();
+      updateUrlParams();
     });
   });
 
@@ -105,9 +183,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Bind Date Inputs
-  const startDateInput = document.getElementById('startDateInput');
-  const endDateInput = document.getElementById('endDateInput');
-
   const handleDateChange = () => {
     startDate = startDateInput ? startDateInput.value : '';
     endDate = endDateInput ? endDateInput.value : '';
@@ -128,18 +203,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     currentPage = 1;
     fetchGateRecords();
+    updateUrlParams();
   };
 
   if (startDateInput) startDateInput.addEventListener('change', handleDateChange);
   if (endDateInput) endDateInput.addEventListener('change', handleDateChange);
 
   // Bind Category Input
-  const resStatusSelect = document.getElementById('resStatusSelect');
   if (resStatusSelect) {
     resStatusSelect.addEventListener('change', (e) => {
       resStatus = e.target.value;
       currentPage = 1;
       fetchGateRecords();
+      updateUrlParams();
     });
   }
 
@@ -147,23 +223,45 @@ document.addEventListener('DOMContentLoaded', async function () {
   const resetFiltersBtn = document.getElementById('resetFiltersBtn');
   if (resetFiltersBtn) {
     resetFiltersBtn.addEventListener('click', () => {
-      if (tableSearchInput) tableSearchInput.value = '';
-      if (startDateInput) {
-        startDateInput.value = '';
-        startDateInput.removeAttribute('max');
-      }
-      if (endDateInput) {
-        endDateInput.value = '';
-        endDateInput.removeAttribute('min');
-      }
-      if (resStatusSelect) resStatusSelect.value = '';
-      searchQuery = '';
-      startDate = '';
-      endDate = '';
-      resStatus = '';
-      currentPage = 1;
-      fetchGateRecords();
+      resetFiltersAndSearch();
     });
+  }
+
+  // Global key navigation / shortcuts
+  document.addEventListener('keydown', (e) => {
+    const activeEl = document.activeElement;
+    if (activeEl) {
+      const tagName = activeEl.tagName.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || activeEl.isContentEditable) {
+        return;
+      }
+    }
+
+    if (e.key === 'ArrowLeft') {
+      if (currentPage > 1) {
+        currentPage--;
+        fetchGateRecords();
+        updateUrlParams();
+      }
+    } else if (e.key === 'ArrowRight') {
+      if (currentPage < maxPageValue) {
+        currentPage++;
+        fetchGateRecords();
+        updateUrlParams();
+      }
+    } else if (e.key === '/') {
+      const searchInput = document.getElementById('tableSearch');
+      if (searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+    }
+  });
+
+  const initialSearchInput = document.getElementById('tableSearch');
+  if (initialSearchInput) {
+    initialSearchInput.focus();
   }
 
   fetchGateRecords();
@@ -172,6 +270,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 async function fetchGateRecords() {
   const loader = document.getElementById('tableLoader');
   if (loader) loader.style.display = 'flex';
+  const container = document.getElementById('gateRecords');
+  if (container) {
+    container.style.opacity = '0.5';
+    container.style.transition = 'opacity 0.15s ease';
+  }
 
   try {
     const response = await fetch(`${CONFIG.basePath}/gate/gaterecords?page=${currentPage}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}&sort_by=${encodeURIComponent(sortBy)}&sort_order=${encodeURIComponent(sortOrder)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&res_status=${encodeURIComponent(resStatus)}`, {
@@ -188,6 +291,7 @@ async function fetchGateRecords() {
       const pagination = result.data.pagination;
       displayGateRecords(records);
       renderPagination(pagination);
+      highlightActiveHeader();
     } else {
       console.error('Failed to fetch gate records:', result.message);
     }
@@ -196,7 +300,29 @@ async function fetchGateRecords() {
     alert('Failed to fetch gate records. Please try again.');
   } finally {
     if (loader) loader.style.display = 'none';
+    if (container) container.style.opacity = '1';
   }
+}
+
+function highlightActiveHeader() {
+  document.querySelectorAll('th.sortable').forEach(el => {
+    el.classList.remove('asc', 'desc', 'active-sort');
+    if (el.getAttribute('data-sort') === sortBy) {
+      el.classList.add('active-sort', sortOrder.toLowerCase());
+    }
+  });
+}
+
+function highlightText(text, search) {
+  if (!search || !text) return text || '';
+  const textStr = String(text);
+  const index = textStr.toLowerCase().indexOf(search.toLowerCase());
+  if (index === -1) return textStr;
+
+  const before = textStr.substring(0, index);
+  const match = textStr.substring(index, index + search.length);
+  const after = textStr.substring(index + search.length);
+  return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 1px 3px; border-radius: 3px; font-weight: 600;">${match}</mark>${after}`;
 }
 
 function displayGateRecords(gateRecords) {
@@ -214,12 +340,13 @@ function displayGateRecords(gateRecords) {
       const statusText = isCheckIn ? 'Check In' : 'Check Out';
       const statusBadgeClass = isCheckIn ? 'badge-onprem' : 'badge-offprem';
       row.classList.add(isCheckIn ? 'status-border-onprem' : 'status-border-offprem');
+      row.style.animationDelay = `${index * 25}ms`;
 
       row.innerHTML = `
         <td>${globalIndex}</td>
-        <td>${record.cardno}</td>
-        <td>${name}</td>
-        <td>${mobno}</td>
+        <td>${highlightText(record.cardno, searchQuery)}</td>
+        <td>${highlightText(name, searchQuery)}</td>
+        <td>${highlightText(mobno, searchQuery)}</td>
         <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
         <td>${formatDateTime(record.createdAt)}</td>
       `;
@@ -227,7 +354,14 @@ function displayGateRecords(gateRecords) {
     });
   } else {
     const noDataRow = document.createElement('tr');
-    noDataRow.innerHTML = `<td colspan="6">No data available</td>`;
+    noDataRow.innerHTML = `
+      <td colspan="6" style="text-align: center; padding: 40px 20px; color: #64748b;">
+        <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+        <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: #334155;">No Gate Records Found</div>
+        <div style="font-size: 14px; margin-bottom: 15px;">We couldn't find any gate records matching your active search or filters.</div>
+        <button type="button" class="btn btn-default btn-sm" onclick="resetFiltersAndSearch()" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-weight: 500; color: #475569; background: #fff; cursor: pointer; transition: all 0.15s ease;">Clear Search & Filters</button>
+      </td>
+    `;
     gateRecordsContainer.appendChild(noDataRow);
   }
 }
@@ -243,6 +377,46 @@ function formatDateTime(dateInput) {
   const minutes = String(dateObj.getMinutes()).padStart(2, '0');
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
+
+function updateUrlParams() {
+  const params = new URLSearchParams();
+  params.set('page', currentPage);
+  params.set('page_size', pageSize);
+  params.set('search', searchQuery);
+  params.set('sort_by', sortBy);
+  params.set('sort_order', sortOrder);
+  params.set('start_date', startDate);
+  params.set('end_date', endDate);
+  params.set('res_status', resStatus);
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState({}, '', newUrl);
+}
+
+window.resetFiltersAndSearch = function() {
+  const searchInput = document.getElementById('tableSearch');
+  if (searchInput) searchInput.value = '';
+  const startDateInput = document.getElementById('startDateInput');
+  if (startDateInput) {
+    startDateInput.value = '';
+    startDateInput.removeAttribute('max');
+  }
+  const endDateInput = document.getElementById('endDateInput');
+  if (endDateInput) {
+    endDateInput.value = '';
+    endDateInput.removeAttribute('min');
+  }
+  const resStatusSelect = document.getElementById('resStatusSelect');
+  if (resStatusSelect) resStatusSelect.value = '';
+
+  searchQuery = '';
+  startDate = '';
+  endDate = '';
+  resStatus = '';
+  currentPage = 1;
+  toggleClearSearchBtn();
+  fetchGateRecords();
+  updateUrlParams();
+};
 
 function renderPagination(pagination) {
   const pUlTop = document.getElementById('paginationTop');
@@ -284,14 +458,13 @@ function renderPagination(pagination) {
   const endEntry = Math.min(page * page_size, totalCount);
   
   const infoTextTop = `
-    Showing ${startEntry} to ${endEntry} of ${totalCount} entries
-    <span class="keyboard-helper" style="font-size: 12px; color: #94a3b8; margin-left: 15px; display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
-      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">←</span>
-      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">→</span>
-      <span>navigate pages</span>
+    Showing ${startEntry}-${endEntry} of ${totalCount}
+    <span class="keyboard-helper" style="font-size: 12px; color: #94a3b8; margin-left: 8px; display: inline-flex; align-items: center; gap: 2px; vertical-align: middle;">
+      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 4px; font-family: monospace; font-size: 10px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">←</span>
+      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 4px; font-family: monospace; font-size: 10px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">→</span>
     </span>
   `;
-  const infoTextBottom = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
+  const infoTextBottom = `Showing ${startEntry}-${endEntry} of ${totalCount}`;
   if (pInfoTop) pInfoTop.innerHTML = infoTextTop;
   if (pInfoBottom) pInfoBottom.innerHTML = infoTextBottom;
 
@@ -306,17 +479,10 @@ function renderPagination(pagination) {
     html += `<li><a href="#" data-page="${page - 1}" title="Previous Page">‹</a></li>`;
   }
 
-  // Page Numbers
-  const range = 2;
-  let startPage = Math.max(1, page - range);
-  let endPage = Math.min(totalPages, page + range);
-
-  if (page <= range) {
-    endPage = Math.min(totalPages, range * 2 + 1);
-  }
-  if (page > totalPages - range) {
-    startPage = Math.max(1, totalPages - range * 2);
-  }
+  // Page Numbers - Compact Google style
+  const pageRange = 1;
+  let startPage = Math.max(1, page - pageRange);
+  let endPage = Math.min(totalPages, page + pageRange);
 
   if (startPage > 1) {
     html += `<li><a href="#" data-page="1">1</a></li>`;
@@ -362,6 +528,7 @@ function renderPagination(pagination) {
         if (targetPage && targetPage !== page) {
           currentPage = targetPage;
           fetchGateRecords();
+          updateUrlParams();
         }
       });
     });
@@ -465,30 +632,16 @@ async function exportToExcel() {
   } finally {
     if (exportBtn) {
       exportBtn.disabled = false;
-      exportBtn.innerHTML = '<span>📥</span> Export Excel';
+      const originalBg = exportBtn.style.backgroundColor;
+      exportBtn.style.backgroundColor = '#059669';
+      exportBtn.innerHTML = '<span>✅</span> Exported!';
+      exportBtn.style.transform = 'scale(1.05)';
+      
+      setTimeout(() => {
+        exportBtn.style.backgroundColor = originalBg;
+        exportBtn.style.transform = '';
+        exportBtn.innerHTML = '<span>📥</span> Export Excel';
+      }, 1800);
     }
   }
 }
-
-// Keyboard navigation shortcuts
-document.addEventListener('keydown', (e) => {
-  const activeEl = document.activeElement;
-  if (activeEl) {
-    const tagName = activeEl.tagName.toLowerCase();
-    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || activeEl.isContentEditable) {
-      return;
-    }
-  }
-
-  if (e.key === 'ArrowLeft') {
-    if (currentPage > 1) {
-      currentPage--;
-      fetchGateRecords();
-    }
-  } else if (e.key === 'ArrowRight') {
-    if (currentPage < maxPageValue) {
-      currentPage++;
-      fetchGateRecords();
-    }
-  }
-});
