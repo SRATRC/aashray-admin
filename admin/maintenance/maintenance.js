@@ -912,8 +912,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('An error occurred while exporting requests.');
     } finally {
       if (exportBtn) {
-        exportBtn.disabled = false;
-        exportBtn.innerHTML = '<span>📥</span> Export Excel';
+        exportBtn.style.backgroundColor = '#059669';
+        exportBtn.innerHTML = '<span>✅</span> Exported!';
+        exportBtn.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          exportBtn.style.backgroundColor = '';
+          exportBtn.style.transform = '';
+          exportBtn.disabled = false;
+          exportBtn.innerHTML = '<span>📥</span> Export Excel';
+        }, 1800);
       }
     }
   };

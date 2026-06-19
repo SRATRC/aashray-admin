@@ -348,7 +348,7 @@ function displayGateRecords(gateRecords) {
         <td>${highlightText(name, searchQuery)}</td>
         <td>${highlightText(mobno, searchQuery)}</td>
         <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
-        <td>${formatDateTime(record.createdAt)}</td>
+        <td>${formatDateTime(record.createdAt, true)}</td>
       `;
       gateRecordsContainer.appendChild(row);
     });
@@ -366,7 +366,7 @@ function displayGateRecords(gateRecords) {
   }
 }
 
-function formatDateTime(dateInput) {
+function formatDateTime(dateInput, includeRelative = false) {
   if (!dateInput) return '-';
   const dateObj = new Date(dateInput);
   if (isNaN(dateObj)) return '-';
@@ -375,7 +375,23 @@ function formatDateTime(dateInput) {
   const year = dateObj.getFullYear();
   const hours = String(dateObj.getHours()).padStart(2, '0');
   const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
+  const absoluteStr = `${day}-${month}-${year} ${hours}:${minutes}`;
+
+  if (!includeRelative) return absoluteStr;
+
+  const now = new Date();
+  const diffMs = now - dateObj;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  let relativeStr = '';
+  if (diffDays > 0)   relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffDays}d ago)</span>`;
+  else if (diffHours > 0) relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffHours}h ago)</span>`;
+  else if (diffMins > 0)  relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffMins}m ago)</span>`;
+  else                    relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(just now)</span>`;
+
+  return `${absoluteStr}${relativeStr}`;
 }
 
 function updateUrlParams() {
