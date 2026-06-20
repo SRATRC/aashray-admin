@@ -34,6 +34,29 @@
       margin-top: 12px;
     }
 
+    /* Responsive: tablet → 2 cols, mobile → 1 col */
+    @media (max-width: 900px) {
+      .portal-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .portal-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .portal-grid-4,
+      .portal-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .portal-card {
+        padding: 18px !important;
+      }
+    }
+
     .portal-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;

@@ -341,6 +341,117 @@
       color: #0f172a;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
     }
+
+      /* Mobile Responsive */
+    @media (max-width: 680px) {
+      .filter-tabs-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+      }
+      .status-filter-group {
+        flex-wrap: wrap !important;
+        height: auto !important;
+      }
+      .filter-btn {
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+      }
+      #activeCount {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+      #activeCount > div {
+        flex-wrap: nowrap !important;  /* keep Active + Inactive side by side */
+        gap: 6px !important;
+      }
+      .count-badge {
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+        flex: 1;
+        justify-content: center;
+      }
+      /* Toolbar: stack groups vertically, each group stays a row */
+      .toolbar-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 10px 12px !important;
+        gap: 8px !important;
+      }
+      .toolbar-container .search-input-wrapper {
+        width: 100% !important;
+        display: block !important;
+      }
+      /* From+To stays one row, inputs stretch */
+      .wifi-date-group {
+        flex-wrap: nowrap !important;
+        width: 100%;
+      }
+      .wifi-date-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+      }
+      /* Filter+Reset stays one row */
+      .wifi-filter-btn-group {
+        width: 100%;
+      }
+      .wifi-filter-btn-group button {
+        flex: 1 !important;
+      }
+      /* Upload+Export row */
+      .toolbar-container > div:last-child {
+        margin-left: 0 !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+      }
+      .toolbar-container > div:last-child > * {
+        flex: 1 !important;
+        justify-content: center !important;
+        text-align: center;
+      }
+      .pagination-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+      }
+      #paginationTop,
+      #paginationBottom {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 4px !important;
+        padding-bottom: 2px !important;
+        scrollbar-width: none !important;
+      }
+      #paginationTop::-webkit-scrollbar,
+      #paginationBottom::-webkit-scrollbar {
+        display: none;
+      }
+      .pagination li a,
+      .pagination li span {
+        min-width: 28px !important;
+        height: 28px !important;
+        padding: 0 6px !important;
+        font-size: 12px !important;
+        flex-shrink: 0;
+      }
+      #paginationInfoTop,
+      #paginationInfoBottom {
+        font-size: 12px !important;
+        white-space: nowrap;
+      }
+      .pagination-controls {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 6px !important;
+      }
+      .frm-head h1 {
+        font-size: 18px !important;
+      }
+    }
   </style>
 
   <script>
@@ -410,23 +521,21 @@
                 <span id="clearSearchBtn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 16px; font-weight: bold; display: none; user-select: none;">&times;</span>
               </div>
 
-              <!-- Date range filters -->
-              <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                <label style="margin: 0; font-weight: 500; font-size: 13px; color: #475569;">From:</label>
+              <!-- From + To date inputs (always one line) -->
+              <div class="wifi-date-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;">
+                <label style="margin: 0; font-weight: 500; font-size: 13px; color: #475569; white-space: nowrap;">From:</label>
                 <input type="text" id="startDate" class="form-control datepicker" placeholder="From" style="margin: 0; width: 105px; height: 38px; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;" />
-              </div>
-              <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                <label style="margin: 0; font-weight: 500; font-size: 13px; color: #475569;">To:</label>
+                <label style="margin: 0; font-weight: 500; font-size: 13px; color: #475569; white-space: nowrap;">To:</label>
                 <input type="text" id="endDate" class="form-control datepicker" placeholder="To" style="margin: 0; width: 105px; height: 38px; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;" />
               </div>
 
-              <!-- Date Range Filter button -->
-              <button id="applyDateFilter" class="btn btn-primary" style="margin: 0; height: 38px; padding: 6px 14px; border-radius: 6px; font-weight: 600; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border: none; color: #fff; cursor: pointer; transition: all 0.2s ease;">Filter</button>
-              
-              <!-- Reset button -->
-              <button type="button" class="btn btn-default" onclick="resetFiltersAndSearch()" style="margin: 0; height: 38px; padding: 6px 14px; border-radius: 6px; font-weight: 600; border: 1px solid #cbd5e1; background-color: #fff; color: #475569; cursor: pointer; transition: all 0.2s ease;">Reset</button>
+              <!-- Filter + Reset buttons (always one line) -->
+              <div class="wifi-filter-btn-group" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;">
+                <button id="applyDateFilter" class="btn btn-primary" style="margin: 0; height: 38px; padding: 6px 14px; border-radius: 6px; font-weight: 600; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border: none; color: #fff; cursor: pointer; transition: all 0.2s ease;">Filter</button>
+                <button type="button" class="btn btn-default" onclick="resetFiltersAndSearch()" style="margin: 0; height: 38px; padding: 6px 14px; border-radius: 6px; font-weight: 600; border: 1px solid #cbd5e1; background-color: #fff; color: #475569; cursor: pointer; transition: all 0.2s ease;">Reset</button>
+              </div>
 
-              <!-- Actions (Pushed to far right of single row) -->
+              <!-- Actions: Upload + Export (pushed to right) -->
               <div style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <a href="uploadCodes.html" class="btn-upload-codes">
                   <span>📤</span> Upload Codes

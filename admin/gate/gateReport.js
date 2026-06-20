@@ -209,13 +209,24 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (startDateInput) startDateInput.addEventListener('change', handleDateChange);
   if (endDateInput) endDateInput.addEventListener('change', handleDateChange);
 
-  // Bind Category Input
-  if (resStatusSelect) {
-    resStatusSelect.addEventListener('change', (e) => {
-      resStatus = e.target.value;
+  // Bind Category Tab Buttons
+  const categoryTabs = document.querySelectorAll('.category-tab');
+  categoryTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      categoryTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      resStatus = tab.getAttribute('data-category') || '';
       currentPage = 1;
       fetchGateRecords();
       updateUrlParams();
+    });
+  });
+
+  // Sync active tab on initial load (from URL params)
+  if (resStatus) {
+    categoryTabs.forEach(tab => {
+      tab.classList.remove('active');
+      if (tab.getAttribute('data-category') === resStatus) tab.classList.add('active');
     });
   }
 
@@ -423,6 +434,12 @@ window.resetFiltersAndSearch = function() {
   }
   const resStatusSelect = document.getElementById('resStatusSelect');
   if (resStatusSelect) resStatusSelect.value = '';
+
+  // Reset category tabs
+  document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+  const allTab = document.querySelector('.category-tab[data-category=""]');
+  if (allTab) allTab.classList.add('active');
+
 
   searchQuery = '';
   startDate = '';

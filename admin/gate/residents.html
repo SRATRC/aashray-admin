@@ -476,6 +476,112 @@
     #prResidents tr:hover td {
       transform: translateX(3px);
     }
+
+    /* Premium Export Button */
+    .btn-export-csv {
+      background-color: #10b981 !important;
+      border-color: #10b981 !important;
+      color: #ffffff !important;
+      height: 38px !important;
+      padding: 0 16px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      border-radius: 6px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      cursor: pointer !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+      transition: all 0.2s ease !important;
+      text-decoration: none !important;
+      border: none !important;
+      white-space: nowrap !important;
+      margin: 0 !important;
+    }
+    .btn-export-csv:hover {
+      background-color: #059669 !important;
+      transform: translateY(-1px) !important;
+      color: #ffffff !important;
+    }
+    .btn-export-csv:disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 680px) {
+      .category-filter-group,
+      .status-filter-group {
+        flex-wrap: wrap !important;
+        height: auto !important;
+        border-radius: 8px;
+      }
+      .category-btn,
+      .filter-btn {
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+      }
+      .residents-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 10px 12px !important;
+        gap: 8px !important;
+      }
+      .residents-toolbar > div {
+        width: 100%;
+      }
+      .btn-export-csv {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+      .filter-tabs-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+      .pagination-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+      }
+      #paginationTop,
+      #paginationBottom {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 4px !important;
+        padding-bottom: 2px !important;
+        scrollbar-width: none !important;
+      }
+      #paginationTop::-webkit-scrollbar,
+      #paginationBottom::-webkit-scrollbar {
+        display: none;
+      }
+      .pagination li a,
+      .pagination li span {
+        min-width: 28px !important;
+        height: 28px !important;
+        padding: 0 6px !important;
+        font-size: 12px !important;
+        flex-shrink: 0;
+      }
+      #paginationInfoTop,
+      #paginationInfoBottom {
+        font-size: 12px !important;
+        white-space: nowrap;
+      }
+      .pagination-controls {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 6px !important;
+      }
+      .frm-head h1 {
+        font-size: 18px !important;
+      }
+    }
   </style>
 </head>
 
@@ -507,61 +613,52 @@
 
           <div class="form">
             <div class="top-bar-container">
-              <div
-                style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: nowrap; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap;">
-                  <!-- Category Filter tabs -->
-                  <div class="category-filter-group" style="flex-shrink: 0;">
-                    <button type="button" class="category-btn active" data-category="all">All</button>
-                    <button type="button" class="category-btn" data-category="pr">PR</button>
-                    <button type="button" class="category-btn" data-category="mumukshu">Mumukshu</button>
-                    <button type="button" class="category-btn" data-category="guest">Guest</button>
-                    <button type="button" class="category-btn" data-category="seva">Seva Kutir</button>
-                  </div>
-                  <!-- Premise Status Filter buttons -->
-                  <div class="status-filter-group" style="flex-shrink: 0;">
-                    <button type="button" class="filter-btn active" data-status="all">All</button>
-                    <button type="button" class="filter-btn" data-status="onprem">On-Premise</button>
-                    <button type="button" class="filter-btn" data-status="offprem">Off-Premise</button>
-                  </div>
+              <!-- Row 1: Filter Tabs -->
+              <div class="filter-tabs-row" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                <!-- Category Filter tabs -->
+                <div class="category-filter-group" style="flex-shrink: 0;">
+                  <button type="button" class="category-btn active" data-category="all">All</button>
+                  <button type="button" class="category-btn" data-category="pr">PR</button>
+                  <button type="button" class="category-btn" data-category="mumukshu">Mumukshu</button>
+                  <button type="button" class="category-btn" data-category="guest">Guest</button>
+                  <button type="button" class="category-btn" data-category="seva">Seva Kutir</button>
                 </div>
+                <!-- Premise Status Filter buttons -->
+                <div class="status-filter-group" style="flex-shrink: 0;">
+                  <button type="button" class="filter-btn active" data-status="all">All</button>
+                  <button type="button" class="filter-btn" data-status="onprem">On-Premise</button>
+                  <button type="button" class="filter-btn" data-status="offprem">Off-Premise</button>
+                </div>
+              </div>
 
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; flex-shrink: 0;">
-                  <div class="search-input-wrapper" style="position: relative; display: inline-block; width: 220px;">
-                    <input type="text" id="tableSearch" class="form-control search-box"
-                      placeholder="Search... (Press /)" style="margin: 0; width: 100%; padding-right: 28px;" />
-                    <span id="clearSearchBtn"
-                      style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 16px; font-weight: bold; display: none; user-select: none;">&times;</span>
-                  </div>
-                  <button id="exportExcelBtn" class="btn-export-csv" title="Export current search results to Excel"
-                    style="margin: 0;">
+              <!-- Row 2: Search & Export Toolbar -->
+              <div class="residents-toolbar" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; width: 100%; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 10px; box-sizing: border-box;">
+                <div class="search-input-wrapper" style="position: relative; flex: 1; min-width: 160px;">
+                  <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search... (Press /)" style="margin: 0; width: 100%; padding-right: 28px; height: 38px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;" />
+                  <span id="clearSearchBtn" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 16px; font-weight: bold; display: none; user-select: none;">&times;</span>
+                </div>
+                <div style="margin-left: auto; flex-shrink: 0;">
+                  <button id="exportExcelBtn" class="btn-export-csv" title="Export current search results to Excel">
                     <span>📥</span> Export Excel
                   </button>
                 </div>
               </div>
 
               <div class="pagination-container" id="paginationContainerTop"
-                style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; width: 100%;">
-                <div id="paginationInfoTop" style="color: #666; font-size: 13px; white-space: nowrap; flex-shrink: 0;">
-                </div>
+                style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; width: 100%;">
+                <div id="paginationInfoTop" style="color: #666; font-size: 13px; white-space: nowrap; flex-shrink: 0;"></div>
                 <ul id="paginationTop" class="pagination" style="margin: 0; flex-shrink: 0;"></ul>
-                <div class="pagination-controls"
-                  style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
-                  <select id="pageSizeSelectTop" class="form-control"
-                    style="width: 70px; height: 30px; padding: 4px 8px; font-size: 13px; display: inline-block;">
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                  <select id="pageSizeSelectTop" class="form-control" style="width: 70px; height: 30px; padding: 4px 8px; font-size: 13px; display: inline-block;">
                     <option value="10">10</option>
                     <option value="20" selected>20</option>
                     <option value="50">50</option>
                     <option value="100">100</option>
                   </select>
                   <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
-                    <label for="gotoPageInputTop"
-                      style="margin: 0; font-size: 13px; color: #666; font-weight: normal; white-space: nowrap;">Go
-                      to:</label>
-                    <input type="number" id="gotoPageInputTop" class="form-control" min="1"
-                      style="width: 50px; height: 30px; padding: 4px 6px; font-size: 13px; display: inline-block;">
-                    <span style="color: #666; font-size: 13px; white-space: nowrap;">of <span
-                        id="totalPagesLabelTop">1</span></span>
+                    <label for="gotoPageInputTop" style="margin: 0; font-size: 13px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                    <input type="number" id="gotoPageInputTop" class="form-control" min="1" style="width: 50px; height: 30px; padding: 4px 6px; font-size: 13px; display: inline-block;">
+                    <span style="color: #666; font-size: 13px; white-space: nowrap;">of <span id="totalPagesLabelTop">1</span></span>
                   </div>
                 </div>
               </div>

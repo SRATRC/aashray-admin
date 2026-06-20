@@ -469,6 +469,87 @@
     height: 15px;
     margin: 0 !important;
   }
+
+  /* Mobile Responsive */
+  @media (max-width: 680px) {
+    .filter-action-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+    }
+    .status-filter-group {
+      flex-wrap: wrap !important;
+      height: auto !important;
+    }
+    .filter-btn {
+      font-size: 11px !important;
+      padding: 5px 9px !important;
+    }
+    .filter-action-row > button {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    .toolbar-container {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 10px 12px !important;
+      gap: 8px !important;
+    }
+    .toolbar-container .search-input-wrapper {
+      width: 100% !important;
+      display: block !important;
+    }
+    #downloadBtnContainer {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+    #downloadBtnContainer > * {
+      flex: 1 !important;
+      justify-content: center !important;
+      min-width: 120px !important;
+    }
+    .pagination-container {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 6px !important;
+    }
+    #paginationTop,
+    #paginationBottom {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      gap: 4px !important;
+      padding-bottom: 2px !important;
+      scrollbar-width: none !important;
+    }
+    #paginationTop::-webkit-scrollbar,
+    #paginationBottom::-webkit-scrollbar {
+      display: none;
+    }
+    .pagination li a,
+    .pagination li span {
+      min-width: 28px !important;
+      height: 28px !important;
+      padding: 0 6px !important;
+      font-size: 12px !important;
+      flex-shrink: 0;
+    }
+    #paginationInfoTop,
+    #paginationInfoBottom {
+      font-size: 12px !important;
+      white-space: nowrap;
+    }
+    .pagination-controls {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center;
+      gap: 6px !important;
+    }
+    .frm-head h1 {
+      font-size: 18px !important;
+    }
+  }
 </style>
 <!DOCTYPE html>
 <html lang="en">
