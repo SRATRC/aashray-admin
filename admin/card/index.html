@@ -20,10 +20,834 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
     <script src="../../sessionstorage.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="../../style/js/exportToExcel.js"></script>
     <script src="index.js"></script>
 
     <!-- Shared Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      /* ── Stats Strip ── */
+      .stats-strip {
+        display: none;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        padding: 8px 0;
+      }
+      .stat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+      .stat-chip:hover { filter: brightness(0.93); transform: translateY(-1px); }
+      .stat-chip-all    { background:#e0e7ff; color:#3730a3; border-color:#c7d2fe; }
+      .stat-chip-mum    { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
+      .stat-chip-pr     { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+      .stat-chip-seva   { background:#f0f9ff; color:#0369a1; border-color:#bae6fd; }
+      .stat-chip-guest  { background:#f8fafc; color:#475569; border-color:#cbd5e1; }
+
+      /* ── Copy button ── */
+      .copy-btn {
+        display: inline-flex;
+        align-items: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 11px;
+        padding: 1px 3px;
+        border-radius: 3px;
+        opacity: 0;
+        transition: opacity 0.15s, color 0.15s;
+        vertical-align: middle;
+      }
+      td:hover .copy-btn, .mobile-card-row:hover .copy-btn { opacity: 1; }
+      .copy-btn:hover { color: #4f46e5; }
+      .copy-btn.copied { color: #10b981; opacity: 1; }
+      @media (max-width: 680px) {
+        .copy-btn { opacity: 1; } /* always visible on touch screens */
+      }
+
+      /* ── Recent searches dropdown ── */
+      .recent-searches-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        z-index: 200;
+        overflow: hidden;
+        display: none;
+      }
+      .recent-searches-dropdown.visible { display: block; }
+      .recent-searches-header {
+        padding: 8px 12px 4px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .recent-search-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #334155;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .recent-search-item:hover { background: #f8fafc; }
+      .recent-search-item .rs-icon { color: #94a3b8; font-size: 11px; }
+      .recent-search-item .rs-text { flex: 1; }
+      .recent-search-item .rs-del {
+        color: #cbd5e1;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0 2px;
+      }
+      .recent-search-item .rs-del:hover { color: #ef4444; }
+
+      /* ── Quick-view drawer ── */
+      .drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.4);
+        backdrop-filter: blur(2px);
+        z-index: 8000;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .drawer-overlay.active { display: block; opacity: 1; }
+      .quick-drawer {
+        position: fixed;
+        top: 0;
+        right: -440px;
+        width: 420px;
+        max-width: 96vw;
+        height: 100vh;
+        background: #ffffff;
+        box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+        z-index: 8001;
+        display: flex;
+        flex-direction: column;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+      .quick-drawer.open { right: 0; }
+      .drawer-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .drawer-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 22px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .drawer-name { font-size: 17px; font-weight: 700; color: #0f172a; line-height: 1.3; }
+      .drawer-sub  { font-size: 13px; color: #64748b; margin-top: 3px; }
+      .drawer-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 22px;
+        color: #94a3b8;
+        padding: 0;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .drawer-close:hover { color: #475569; }
+      .drawer-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+      }
+      .drawer-section-title {
+        font-size: 10px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 16px 0 8px;
+      }
+      .drawer-section-title:first-child { margin-top: 0; }
+      .drawer-field {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f8fafc;
+        gap: 10px;
+      }
+      .drawer-field-icon { font-size: 15px; color: #94a3b8; width: 20px; text-align: center; flex-shrink: 0; }
+      .drawer-field-label { font-size: 11px; color: #94a3b8; min-width: 90px; flex-shrink: 0; }
+      .drawer-field-value { font-size: 13.5px; color: #1e293b; font-weight: 500; flex: 1; word-break: break-all; }
+      .drawer-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      /* iOS-Style segment tabs for Status Filter */
+      .status-filter-group {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 8px;
+        gap: 4px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 12px;
+      }
+      .filter-btn {
+        border: none;
+        background: transparent;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .filter-btn:hover {
+        color: #0f172a;
+        background: rgba(255, 255, 255, 0.5);
+      }
+      .filter-btn.active {
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+      }
+
+      /* Export Excel Button styling */
+      .btn-export-csv {
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        height: 38px !important;
+        padding: 6px 16px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        border: none !important;
+        white-space: nowrap;
+        margin: 0;
+      }
+      .btn-export-csv:hover {
+        background-color: #059669 !important;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+      }
+
+      /* Sortable Headers */
+      th.sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 20px !important;
+        transition: background-color 0.15s ease, color 0.15s ease;
+      }
+      th.sortable:hover {
+        background-color: rgba(79, 70, 229, 0.06) !important;
+        color: #4f46e5 !important;
+      }
+      th.sortable.active-sort {
+        color: #4f46e5 !important;
+        background-color: rgba(79, 70, 229, 0.04) !important;
+        border-bottom: 2px solid #4f46e5 !important;
+        font-weight: 600 !important;
+      }
+      th.sortable:after {
+        content: ' ↕';
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.3);
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      th.sortable.asc:after {
+        content: ' ▲';
+        color: #4f46e5;
+        opacity: 1;
+      }
+      th.sortable.desc:after {
+        content: ' ▼';
+        color: #4f46e5;
+        opacity: 1;
+      }
+
+      /* Row status indicators */
+      tr.res-border-MUMUKSHU td:first-child, tr.res-border-MUMUKSHU td:nth-child(2) { border-left: 4px solid #8b5cf6 !important; }
+      tr.res-border-PR td:first-child, tr.res-border-PR td:nth-child(2) { border-left: 4px solid #10b981 !important; }
+      tr.res-border-SEVA_KUTIR td:first-child, tr.res-border-SEVA_KUTIR td:nth-child(2) { border-left: 4px solid #0284c7 !important; }
+      tr.res-border-GUEST td:first-child, tr.res-border-GUEST td:nth-child(2) { border-left: 4px solid #64748b !important; }
+
+      /* Residence status badge styling */
+      .badge-res {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        white-space: nowrap !important;
+      }
+      .badge-res-MUMUKSHU { background-color: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+      .badge-res-PR { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+      .badge-res-SEVA_KUTIR { background-color: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+      .badge-res-GUEST { background-color: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+
+      /* Floating Bulk Action Bar */
+      .bulk-action-bar {
+        position: fixed;
+        bottom: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #0f172a;
+        color: #ffffff;
+        padding: 14px 28px;
+        border-radius: 50px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        z-index: 999;
+        transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+      }
+      .bulk-action-bar.active {
+        bottom: 24px;
+      }
+      .bulk-action-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .bulk-action-count {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #94a3b8;
+      }
+      .bulk-action-btn {
+        margin: 0 !important;
+        padding: 6px 14px !important;
+        font-size: 12.5px !important;
+        border-radius: 9999px !important;
+      }
+
+      /* Mobile Card Grid styling */
+      #mobile-cards-grid {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 15px;
+      }
+      .mobile-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        opacity: 0;
+        transform: translateY(8px);
+        animation: rowFadeIn 0.3s ease-out forwards;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .mobile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      .mobile-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+      .mobile-card-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      .mobile-card-row {
+        font-size: 13px;
+        color: #475569;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .mobile-card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 10px;
+      }
+      .mobile-card-checkbox {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Compact Pagination styling */
+      .pagination {
+        display: flex !important;
+        list-style: none !important;
+        padding-left: 0 !important;
+        margin: 0 !important;
+        gap: 3px;
+      }
+      .pagination li {
+        display: inline-block !important;
+        list-style-type: none !important;
+      }
+      .pagination li a, .pagination li span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        color: #475569;
+        text-decoration: none;
+        background-color: #fff;
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .pagination li a:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+        transform: translateY(-1px);
+      }
+      .pagination li.active span {
+        background-color: #4f46e5;
+        color: #fff;
+        border-color: #4f46e5;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+      }
+      .pagination li.disabled span {
+        color: #94a3b8;
+        cursor: not-allowed;
+        background-color: #f1f5f9;
+        border-color: #e2e8f0;
+        box-shadow: none;
+      }
+      .pagination-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        overflow-x: hidden;
+      }
+      .pagination {
+        flex-wrap: wrap !important;
+      }
+
+      /* Responsive rules */
+      @media (max-width: 680px) {
+        .table-responsive {
+          display: none !important;
+        }
+        #mobile-cards-grid {
+          display: flex !important;
+        }
+        .toolbar-container {
+          flex-direction: column !important;
+          align-items: stretch !important;
+        }
+        .toolbar-container .search-and-count {
+          flex-direction: column !important;
+          align-items: stretch !important;
+        }
+        .toolbar-container .search-input-wrapper {
+          max-width: 100% !important;
+        }
+        #exportBtnContainer {
+          width: 100%;
+        }
+        #exportBtnContainer button {
+          width: 100%;
+          justify-content: center;
+        }
+        .status-filter-group {
+          flex-wrap: wrap !important;
+          width: 100%;
+        }
+        .filter-btn {
+          flex: 1;
+          justify-content: center;
+          font-size: 12px !important;
+          padding: 5px 8px !important;
+        }
+      }
+
+      /* ── Search spinner ── */
+      .search-spinner {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        border: 2px solid #e2e8f0;
+        border-top-color: #4f46e5;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        display: none;
+        z-index: 2;
+      }
+      .search-spinner.visible { display: block; }
+      @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+      /* hide the ::before emoji when spinner is active */
+      .search-input-wrapper.loading::before { display: none; }
+
+      /* ── Skeleton rows ── */
+      @keyframes shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position: 600px 0; }
+      }
+      .skeleton-row td {
+        padding: 10px 8px !important;
+      }
+      .skeleton-cell {
+        height: 14px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 600px 100%;
+        animation: shimmer 1.2s ease-in-out infinite;
+      }
+
+      /* ── Select-all banner ── */
+      .select-all-banner {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 9px 14px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #3730a3;
+        margin-bottom: 10px;
+      }
+      .select-all-banner.visible { display: flex; }
+      .select-all-banner button {
+        background: #4f46e5;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .select-all-banner button:hover { background: #4338ca; }
+      .select-all-banner .clear-all-link {
+        color: #6366f1;
+        cursor: pointer;
+        font-size: 12px;
+        text-decoration: underline;
+      }
+
+      /* ── Swipe-to-action on mobile cards ── */
+      .mobile-card-swipe-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        margin-bottom: 12px;
+      }
+      .mobile-card-actions-swipe {
+        position: absolute;
+        top: 0; right: 0; bottom: 0;
+        display: flex;
+        align-items: stretch;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+      }
+      .mobile-card-actions-swipe.revealed { transform: translateX(0); }
+      .mobile-card-actions-swipe button {
+        border: none;
+        cursor: pointer;
+        padding: 0 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 70px;
+      }
+      .swipe-edit-btn  { background: #4f46e5; }
+      .swipe-reset-btn { background: #f59e0b; }
+      .mobile-card-swipe-wrapper .mobile-card {
+        margin-bottom: 0;
+        border-radius: 12px;
+        transition: transform 0.25s ease;
+      }
+      .mobile-card-swipe-wrapper.swiped .mobile-card {
+        transform: translateX(-140px);
+      }
+
+      /* Search Input Wrapper Styles */
+      .search-input-wrapper {
+        position: relative;
+        flex: 1;
+        margin-bottom: 20px;
+      }
+      .search-input-wrapper input {
+        padding-right: 32px;
+        padding-left: 32px;
+        height: 38px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .search-input-wrapper::before {
+        content: "🔍";
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        color: #94a3b8;
+        pointer-events: none;
+        z-index: 1;
+      }
+      #clearSearchBtn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 18px;
+        font-weight: bold;
+        display: none;
+        user-select: none;
+      }
+      #clearSearchBtn:hover {
+        color: #64748b;
+      }
+
+      /* Premium Compact Action Pills */
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 20px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      }
+      .action-btn-edit {
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+        margin-right: 8px;
+      }
+      .action-btn-edit:hover {
+        background-color: #dbeafe;
+      }
+      .action-btn-reset {
+        background-color: #fef3c7;
+        color: #d97706;
+        border-color: #fde68a;
+      }
+      .action-btn-reset:hover {
+        background-color: #fde68a;
+      }
+
+      /* Row fade-in animations */
+      #data-list tbody tr {
+        opacity: 0;
+        transform: translateY(8px);
+        animation: rowFadeIn 0.3s ease-out forwards;
+        transition: background-color 0.15s ease;
+      }
+      @keyframes rowFadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      #data-list tbody tr:hover {
+        background-color: rgba(79, 70, 229, 0.04) !important;
+        cursor: pointer;
+      }
+
+      /* Alert container styling */
+      .alert {
+        padding: 10px 14px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        font-size: 13.5px;
+        font-weight: 500;
+        display: none;
+      }
+      .alert-success {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+      }
+      .alert-danger {
+        background-color: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+      }
+
+      /* Modal styling */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+      }
+      .modal-card {
+        background: #ffffff;
+        padding: 24px;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        position: relative;
+        transform: scale(0.95);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        text-align: center;
+      }
+      .modal-overlay.active .modal-card {
+        transform: scale(1);
+      }
+      .modal-close-icon {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        font-size: 24px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .modal-close-icon:hover {
+        color: #64748b;
+      }
+
+      /* Empty State styling */
+      .empty-state-card {
+        text-align: center;
+        padding: 40px 20px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        margin-top: 20px;
+        width: 100%;
+      }
+      .empty-state-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+        color: #94a3b8;
+      }
+      .empty-state-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+      }
+      .empty-state-desc {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 16px;
+      }
+      .empty-state-btn {
+        background-color: #4f46e5;
+        color: #ffffff;
+        border: none;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .empty-state-btn:hover {
+        background-color: #4338ca;
+      }
+    </style>
   </head>
   <body>
     <div class="header">
@@ -44,16 +868,63 @@
               <h1>Card Management</h1>
             </div>
             <div class="form">
-              <div class="form-group">
-                <label for="search">Search by name or mobno:</label>
-                <input
-                  type="text"
-                  id="search"
-                  class="form-control"
-                  placeholder="Enter name to search"
-                />
+              <!-- Inline Alert Container -->
+              <div id="alert" class="alert" role="alert"></div>
+
+
+
+              <!-- Stats Strip (shown after search results load) -->
+              <div class="stats-strip" id="statsStrip"></div>
+
+              <!-- Search and Export Toolbar -->
+              <div class="toolbar-container" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; width: 100%; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 10px; box-sizing: border-box;">
+                <div class="search-and-count" style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                  <div class="search-input-wrapper" style="margin: 0; flex: 1; max-width: 320px;">
+                    <span class="search-spinner" id="searchSpinner"></span>
+                    <input
+                      type="text"
+                      id="search"
+                      class="form-control"
+                      placeholder="Search by name, card no, or mobile... (Press /)"
+                      autocomplete="off"
+                    />
+                    <span id="clearSearchBtn">&times;</span>
+                    <div class="recent-searches-dropdown" id="recentSearchesDropdown"></div>
+                  </div>
+                  <span id="resultsCountBadge" style="display: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background-color: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap; height: 38px; line-height: 26px; box-sizing: border-box;">● 0 Cards Found</span>
+                </div>
+                <div id="exportBtnContainer" style="display: flex; align-items: center; gap: 8px;">
+                  <button id="exportExcelBtn" class="btn-export-csv">📤 Export Excel</button>
+                </div>
               </div>
 
+
+
+              <!-- Empty state block placeholder -->
+              <div id="empty-state-container"></div>
+
+              <!-- Pagination Container (above table, always visible) -->
+              <div class="pagination-container" id="paginationContainerBottom" style="margin-bottom: 10px; display: none; justify-content: space-between; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
+                <div id="paginationInfoBottom" style="color: #666; font-size: 13px; flex-shrink: 0;"></div>
+                <ul id="paginationBottom" class="pagination" style="margin: 0; flex-wrap: wrap;"></ul>
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0;">
+                  <label style="margin: 0; font-size: 12px; color: #666;">Per page:</label>
+                  <select id="pageSizeSelectBottom" class="form-control" style="width: 65px; height: 28px; padding: 2px 6px; font-size: 12px; display: inline-block; margin: 0;">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <label style="margin: 0; font-size: 12px; color: #666;">Page:</label>
+                  <input type="number" id="gotoPageInputBottom" class="form-control" min="1" style="width: 46px; height: 28px; padding: 2px 4px; font-size: 12px; display: inline-block; margin: 0;">
+                  <span style="color: #666; font-size: 12px;">/ <span id="totalPagesLabelBottom">1</span></span>
+                </div>
+              </div>
+
+              <!-- Select-all cross-page banner -->
+              <div class="select-all-banner" id="selectAllBanner"></div>
+
+              <!-- Desktop Tables View -->
               <div class="table-responsive">
                 <table
                   id="data-list"
@@ -61,9 +932,11 @@
                 >
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Card Number</th>
-                      <th>Mobile Number</th>
+                      <th style="width: 40px; text-align: center; vertical-align: middle;"><input type="checkbox" id="selectAllCards" /></th>
+                      <th class="sortable" data-sort="issuedto">Name</th>
+                      <th class="sortable" data-sort="cardno">Card Number</th>
+                      <th class="sortable" data-sort="mobno">Mobile Number</th>
+                      <th class="sortable" data-sort="res_status">Residence Status</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -73,7 +946,11 @@
                 </table>
               </div>
 
-              <div class="form-group form-submit">
+
+              <!-- Mobile Grid View -->
+              <div id="mobile-cards-grid"></div>
+
+              <div class="form-group form-submit" style="margin-top: 20px;">
                 <button
                   onclick="window.location.href='createCard.html'"
                   class="btn btn-primary"
@@ -88,4 +965,66 @@
                 </button>
               </div>
             </div>
-          </body>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick-View Drawer Overlay -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <div id="quickDrawer" class="quick-drawer">
+      <div class="drawer-header">
+        <div style="display:flex; align-items:center; gap:14px; flex:1; min-width:0;">
+          <div class="drawer-avatar" id="drawerAvatar">?</div>
+          <div style="min-width:0;">
+            <div class="drawer-name" id="drawerName">—</div>
+            <div class="drawer-sub" id="drawerSub">—</div>
+          </div>
+        </div>
+        <button class="drawer-close" id="drawerCloseBtn">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+      <div class="drawer-footer">
+        <button class="btn btn-primary" id="drawerEditBtn" style="margin:0; flex:1;">✏️ Edit Card</button>
+        <button class="btn btn-warning" id="drawerResetPwdBtn" style="margin:0; flex:1;">🔑 Reset PWD</button>
+      </div>
+    </div>
+
+    <!-- Floating Bulk Action Bar -->
+    <div id="bulkActionBar" class="bulk-action-bar">
+      <div class="bulk-action-content" style="flex-direction: column; gap: 8px; align-items: stretch;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="bulkActionCount" class="bulk-action-count">0 cards selected</span>
+            <button id="bulkDeselectBtn" title="Deselect all" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; line-height: 1.4;">✕ Clear</button>
+          </div>
+          <button id="bulkResetPwdBtn" class="btn btn-primary bulk-action-btn">🔑 Bulk Reset Password</button>
+        </div>
+        <!-- Progress bar (hidden until reset starts) -->
+        <div id="bulkProgressWrapper" style="display: none;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">
+            <span id="bulkProgressLabel">Resetting...</span>
+            <span id="bulkProgressPct">0%</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.2); border-radius: 4px; height: 6px; overflow: hidden;">
+            <div id="bulkProgressBar" style="height: 100%; width: 0%; background: #4ade80; border-radius: 4px; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Action Warning Modal Overlay -->
+    <div id="confirmActionModal" class="modal-overlay">
+      <div class="modal-card">
+        <span class="modal-close-icon" id="confirmCancelIcon">&times;</span>
+        <div style="font-size: 40px; margin-bottom: 12px;" id="confirmIcon">⚠️</div>
+        <h3 id="confirmTitle" style="margin-bottom: 10px; font-weight: 700; color: #1e293b;">Confirm Action</h3>
+        <div id="confirmMessage" style="font-size: 14.5px; color: #475569; margin-bottom: 24px; line-height: 1.5;">Are you sure you want to perform this action?</div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button type="button" id="confirmCancelBtn" class="btn btn-secondary" style="margin: 0; padding: 8px 18px;">Cancel</button>
+          <button type="button" id="confirmOkBtn" class="btn btn-primary" style="margin: 0; padding: 8px 18px;">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

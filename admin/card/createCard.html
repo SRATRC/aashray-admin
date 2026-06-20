@@ -24,6 +24,30 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .form-error-container {
+        display: none;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 20px;
+        text-align: left;
+        transition: all 0.3s ease;
+      }
+      .validation-badge {
+        display: none;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 5px;
+        transition: all 0.3s ease;
+      }
+      .form-control:disabled {
+        background-color: rgba(243, 244, 246, 0.6);
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+    </style>
   </head>
 
   <body>
@@ -44,6 +68,7 @@
             <div class="frm-head"><h1>Assign New Card</h1></div>
             <div class="form">
               <form id="cardForm" onsubmit="assignCard(event)">
+                <div id="formErrorContainer" class="form-error-container"></div>
                 <div class="row">
 
                   <div class="form-group">
@@ -182,6 +207,7 @@
                     <div class="form-group">
                       <label for="reference_cardno">Reference Card Number:</label>
                       <input type="text" id="reference_cardno" name="reference_cardno" class="form-control" />
+                      <div id="referenceCardNoValidation" class="validation-badge"></div>
                     </div>
                     <div class="form-group">
                       <label for="guest_type">Guest Type:</label>
