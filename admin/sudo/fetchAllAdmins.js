@@ -24,11 +24,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const createRoleModal = document.getElementById('createRoleModal');
   const createRolesCheckboxContainer = document.getElementById('createRolesCheckboxContainer');
   const assignUserToRoleModal = document.getElementById('assignUserToRoleModal');
+  const bulkAssignRolesModal = document.getElementById('bulkAssignRolesModal');
+  const confirmActionModal = document.getElementById('confirmActionModal');
+  const confirmIcon = document.getElementById('confirmIcon');
+  const confirmTitle = document.getElementById('confirmTitle');
+  const confirmMessage = document.getElementById('confirmMessage');
+  const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+  const confirmOkBtn = document.getElementById('confirmOkBtn');
 
   // Toolbar Actions & Filters
   const openCreateAdminModalBtn = document.getElementById('openCreateAdminModalBtn');
   const openCreateRoleModalBtn = document.getElementById('openCreateRoleModalBtn');
   const statusFilterRow = document.getElementById('statusFilterRow');
+
+  // Statistics Cards & Excel Export
+  const statCardTotalAdmins = document.getElementById('statCardTotalAdmins');
+  const statCardActiveAdmins = document.getElementById('statCardActiveAdmins');
+  const statCardInactiveAdmins = document.getElementById('statCardInactiveAdmins');
+  const statCardTotalRoles = document.getElementById('statCardTotalRoles');
+
+  const statValueTotalAdmins = document.getElementById('statValueTotalAdmins');
+  const statValueActiveAdmins = document.getElementById('statValueActiveAdmins');
+  const statValueInactiveAdmins = document.getElementById('statValueInactiveAdmins');
+  const statValueTotalRoles = document.getElementById('statValueTotalRoles');
+
+  const exportExcelBtn = document.getElementById('exportExcelBtn');
 
   let fetchedAdmins = [];
   let fetchedRoles = [];
@@ -37,6 +57,28 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentlyExpandedRole = null;
   let selectedAdminUsernames = [];
   let selectedAdminUserIds = [];
+
+  const getLoggedInUsername = () => {
+    let username = sessionStorage.getItem('username');
+    if (username) return username;
+
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          if (payload && payload.user && payload.user.username) {
+            sessionStorage.setItem('username', payload.user.username);
+            return payload.user.username;
+          }
+        }
+      } catch (e) {
+        console.error('Error decoding token:', e);
+      }
+    }
+    return '';
+  };
 
   const ROLE_DESCRIPTIONS = {
     'superAdmin': 'Full system access (manage users, roles, system-wide configuration, and exports).',
@@ -100,16 +142,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       // 1. Close Modals
-      if (resetPasswordModal && resetPasswordModal.style.display === 'block') {
+      if (resetPasswordModal && resetPasswordModal.style.display === 'flex') {
         closeResetModal();
-      } else if (editRolesModal && editRolesModal.style.display === 'block') {
+      } else if (editRolesModal && editRolesModal.style.display === 'flex') {
         closeEditRolesModal();
-      } else if (createAdminModal && createAdminModal.style.display === 'block') {
+      } else if (createAdminModal && createAdminModal.style.display === 'flex') {
         closeCreateAdminModal();
-      } else if (createRoleModal && createRoleModal.style.display === 'block') {
+      } else if (createRoleModal && createRoleModal.style.display === 'flex') {
         closeCreateRoleModal();
-      } else if (assignUserToRoleModal && assignUserToRoleModal.style.display === 'block') {
+      } else if (assignUserToRoleModal && assignUserToRoleModal.style.display === 'flex') {
         closeAssignUserModal();
+      } else if (bulkAssignRolesModal && bulkAssignRolesModal.style.display === 'flex') {
+        closeBulkAssignRolesModal();
       } else if (document.activeElement === searchInput) {
         // 2. Clear & Blur Search
         clearAllSearch();
@@ -117,6 +161,75 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // Programmatic custom confirmation warning modal (Promise wrapper)
+  const showConfirmModal = (title, message, isDangerous = false, icon = '⚠️') => {
+    return new Promise((resolve) => {
+      if (!confirmActionModal) {
+        resolve(confirm(message));
+        return;
+      }
+
+      // Configure content
+      confirmIcon.textContent = icon;
+      confirmTitle.textContent = title;
+      confirmMessage.innerHTML = message;
+
+      // Handle danger styling
+      if (isDangerous) {
+        confirmOkBtn.style.backgroundColor = '#ef4444';
+        confirmOkBtn.style.borderColor = '#ef4444';
+      } else {
+        confirmOkBtn.style.backgroundColor = '#4f46e5';
+        confirmOkBtn.style.borderColor = '#4f46e5';
+      }
+
+      // Show modal
+      confirmActionModal.style.display = 'flex';
+      // Force layout reflow
+      confirmActionModal.offsetHeight;
+      confirmActionModal.classList.add('active');
+
+      // Autofocus appropriate button
+      if (isDangerous) {
+        confirmCancelBtn.focus();
+      } else {
+        confirmOkBtn.focus();
+      }
+
+      // Cleanup overlay listeners
+      const cleanup = (confirmed) => {
+        confirmOkBtn.removeEventListener('click', handleOk);
+        confirmCancelBtn.removeEventListener('click', handleCancel);
+        confirmActionModal.removeEventListener('click', handleBackdropClick);
+        document.removeEventListener('keydown', handleEsc);
+
+        confirmActionModal.classList.remove('active');
+        setTimeout(() => {
+          confirmActionModal.style.display = 'none';
+        }, 200);
+
+        resolve(confirmed);
+      };
+
+      const handleOk = () => cleanup(true);
+      const handleCancel = () => cleanup(false);
+      const handleBackdropClick = (event) => {
+        if (event.target === confirmActionModal) cleanup(false);
+      };
+      const handleEsc = (event) => {
+        if (event.key === 'Escape') {
+          event.stopPropagation();
+          cleanup(false);
+        }
+      };
+
+      confirmOkBtn.addEventListener('click', handleOk);
+      confirmCancelBtn.addEventListener('click', handleCancel);
+      confirmActionModal.addEventListener('click', handleBackdropClick);
+      document.addEventListener('keydown', handleEsc);
+    });
+  };
 
   // Helper to clear search results and reset table
   const clearAllSearch = () => {
@@ -239,6 +352,31 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchedRoles = roleData.data || [];
       }
 
+      // Update Tab text with dynamic count badges
+      const usersTabBtn = document.querySelector('#dashboardTabsGroup button[data-tab="users"]');
+      const rolesTabBtn = document.querySelector('#dashboardTabsGroup button[data-tab="roles"]');
+      if (usersTabBtn) usersTabBtn.textContent = `Admin Users (${fetchedAdmins.length})`;
+      if (rolesTabBtn) rolesTabBtn.textContent = `Admin Roles (${fetchedRoles.length})`;
+
+      // Update Status Filter text with dynamic count badges
+      const statusAllBtn = document.querySelector('#statusFilterGroup button[data-status="all"]');
+      const statusActiveBtn = document.querySelector('#statusFilterGroup button[data-status="active"]');
+      const statusInactiveBtn = document.querySelector('#statusFilterGroup button[data-status="inactive"]');
+
+      const totalCount = fetchedAdmins.length;
+      const activeCount = fetchedAdmins.filter(admin => admin.status === 'active').length;
+      const inactiveCount = fetchedAdmins.filter(admin => admin.status === 'inactive').length;
+
+      if (statusAllBtn) statusAllBtn.textContent = `All (${totalCount})`;
+      if (statusActiveBtn) statusActiveBtn.textContent = `Active (${activeCount})`;
+      if (statusInactiveBtn) statusInactiveBtn.textContent = `Inactive (${inactiveCount})`;
+
+      // Update interactive statistics overview cards
+      if (statValueTotalAdmins) statValueTotalAdmins.textContent = totalCount;
+      if (statValueActiveAdmins) statValueActiveAdmins.textContent = activeCount;
+      if (statValueInactiveAdmins) statValueInactiveAdmins.textContent = inactiveCount;
+      if (statValueTotalRoles) statValueTotalRoles.textContent = fetchedRoles.length;
+
       if (tableEl) tableEl.style.opacity = '1.0';
       renderDashboard();
     } catch (error) {
@@ -257,6 +395,79 @@ document.addEventListener('DOMContentLoaded', () => {
     const before = textStr.substring(0, index);
     const after = textStr.substring(index + search.length);
     return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 2px 4px; border-radius: 4px; font-weight: 500;">${matchedText}</mark>${after}`;
+  };
+
+  // Show error message inline within a form modal
+  const showModalError = (formId, message) => {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    // Check if error container already exists
+    let errDiv = form.querySelector('.modal-error-banner');
+    if (!errDiv) {
+      errDiv = document.createElement('div');
+      errDiv.className = 'modal-error-banner';
+      errDiv.style.backgroundColor = '#fef2f2';
+      errDiv.style.color = '#991b1b';
+      errDiv.style.border = '1px solid #fca5a5';
+      errDiv.style.padding = '10px 12px';
+      errDiv.style.borderRadius = '6px';
+      errDiv.style.fontSize = '13px';
+      errDiv.style.fontWeight = '500';
+      errDiv.style.marginBottom = '16px';
+      errDiv.style.display = 'flex';
+      errDiv.style.alignItems = 'center';
+      errDiv.style.justifyContent = 'space-between';
+      errDiv.style.gap = '8px';
+      
+      // Add error icon and text wrapper
+      const contentWrapper = document.createElement('div');
+      contentWrapper.style.display = 'flex';
+      contentWrapper.style.alignItems = 'center';
+      contentWrapper.style.gap = '8px';
+      contentWrapper.className = 'error-message-content';
+      
+      const icon = document.createElement('span');
+      icon.textContent = '⚠️';
+      contentWrapper.appendChild(icon);
+      
+      const textSpan = document.createElement('span');
+      textSpan.className = 'error-text-span';
+      contentWrapper.appendChild(textSpan);
+      errDiv.appendChild(contentWrapper);
+
+      // Close button
+      const closeBtn = document.createElement('span');
+      closeBtn.innerHTML = '&times;';
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.style.fontWeight = 'bold';
+      closeBtn.style.fontSize = '16px';
+      closeBtn.style.color = '#f87171';
+      closeBtn.style.lineHeight = '1';
+      closeBtn.addEventListener('click', () => {
+        errDiv.style.display = 'none';
+      });
+      errDiv.appendChild(closeBtn);
+
+      // Prepend to form
+      form.insertBefore(errDiv, form.firstChild);
+    }
+
+    const textSpan = errDiv.querySelector('.error-text-span');
+    if (textSpan) {
+      textSpan.textContent = message;
+    }
+    errDiv.style.display = 'flex';
+  };
+
+  // Clear modal error messages when opening modals
+  const clearModalError = (formId) => {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    const errDiv = form.querySelector('.modal-error-banner');
+    if (errDiv) {
+      errDiv.style.display = 'none';
+    }
   };
 
   // Check role type for class name
@@ -348,6 +559,13 @@ document.addEventListener('DOMContentLoaded', () => {
         cb.setAttribute('data-username', admin.username);
         cb.setAttribute('data-userid', admin.id);
         cb.checked = selectedAdminUsernames.includes(admin.username);
+
+        const isSelf = (admin.username === getLoggedInUsername());
+        if (isSelf) {
+          cb.disabled = true;
+          cb.title = "You cannot select or deactivate yourself.";
+        }
+
         cb.addEventListener('change', () => {
           toggleAdminSelection(admin.username, admin.id, cb.checked);
         });
@@ -376,6 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const badge = document.createElement('span');
             badge.className = `badge-role ${getRoleBadgeClass(role)}`;
             badge.innerHTML = highlightText(role, query);
+            badge.setAttribute('title', getRoleDescription(role));
             rolesCell.appendChild(badge);
           });
         } else {
@@ -393,12 +612,20 @@ document.addEventListener('DOMContentLoaded', () => {
         actionCell.style.textAlign = 'center';
 
         const toggleBtn = document.createElement('a');
-        toggleBtn.className = `action-btn ${admin.status === 'active' ? 'action-btn-deactivate' : 'action-btn-activate'}`;
-        toggleBtn.innerHTML = admin.status === 'active' ? '🔴 Deactivate' : '🟢 Activate';
-        toggleBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          toggleAdminStatus(admin);
-        });
+        if (isSelf) {
+          toggleBtn.className = 'action-btn';
+          toggleBtn.style.opacity = '0.5';
+          toggleBtn.style.cursor = 'not-allowed';
+          toggleBtn.style.pointerEvents = 'none';
+          toggleBtn.innerHTML = '🔒 Self (Active)';
+        } else {
+          toggleBtn.className = `action-btn ${admin.status === 'active' ? 'action-btn-deactivate' : 'action-btn-activate'}`;
+          toggleBtn.innerHTML = admin.status === 'active' ? '🔴 Deactivate' : '🟢 Activate';
+          toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAdminStatus(admin);
+          });
+        }
 
         const editRolesBtn = document.createElement('a');
         editRolesBtn.className = 'action-btn action-btn-roles';
@@ -417,12 +644,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const deleteUserBtn = document.createElement('a');
-        deleteUserBtn.className = 'action-btn action-btn-delete';
-        deleteUserBtn.innerHTML = '🗑️ Delete';
-        deleteUserBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          triggerDeleteAdmin(admin.username);
-        });
+        if (isSelf) {
+          deleteUserBtn.className = 'action-btn';
+          deleteUserBtn.style.opacity = '0.5';
+          deleteUserBtn.style.cursor = 'not-allowed';
+          deleteUserBtn.style.pointerEvents = 'none';
+          deleteUserBtn.innerHTML = '🔒 Delete';
+        } else {
+          deleteUserBtn.className = 'action-btn action-btn-delete';
+          deleteUserBtn.innerHTML = '🗑️ Delete';
+          deleteUserBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            triggerDeleteAdmin(admin.username);
+          });
+        }
 
         actionCell.appendChild(toggleBtn);
         actionCell.appendChild(editRolesBtn);
@@ -446,6 +681,10 @@ document.addEventListener('DOMContentLoaded', () => {
           cardCb.setAttribute('data-username', admin.username);
           cardCb.setAttribute('data-userid', admin.id);
           cardCb.checked = selectedAdminUsernames.includes(admin.username);
+          if (isSelf) {
+            cardCb.disabled = true;
+            cardCb.title = "You cannot select or deactivate yourself.";
+          }
           cardCb.addEventListener('change', () => {
             toggleAdminSelection(admin.username, admin.id, cardCb.checked);
           });
@@ -488,6 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const badge = document.createElement('span');
               badge.className = `badge-role ${getRoleBadgeClass(role)}`;
               badge.innerHTML = highlightText(role, query);
+              badge.setAttribute('title', getRoleDescription(role));
               cardRoles.appendChild(badge);
             });
           } else {
@@ -501,12 +741,20 @@ document.addEventListener('DOMContentLoaded', () => {
           cardActions.className = 'profile-mobile-card-actions';
 
           const cardToggle = document.createElement('a');
-          cardToggle.className = `action-btn ${admin.status === 'active' ? 'action-btn-deactivate' : 'action-btn-activate'}`;
-          cardToggle.innerHTML = admin.status === 'active' ? '🔴 Deactivate' : '🟢 Activate';
-          cardToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleAdminStatus(admin);
-          });
+          if (isSelf) {
+            cardToggle.className = 'action-btn';
+            cardToggle.style.opacity = '0.5';
+            cardToggle.style.cursor = 'not-allowed';
+            cardToggle.style.pointerEvents = 'none';
+            cardToggle.innerHTML = '🔒 Self (Active)';
+          } else {
+            cardToggle.className = `action-btn ${admin.status === 'active' ? 'action-btn-deactivate' : 'action-btn-activate'}`;
+            cardToggle.innerHTML = admin.status === 'active' ? '🔴 Deactivate' : '🟢 Activate';
+            cardToggle.addEventListener('click', (e) => {
+              e.preventDefault();
+              toggleAdminStatus(admin);
+            });
+          }
 
           const cardEditRoles = document.createElement('a');
           cardEditRoles.className = 'action-btn action-btn-roles';
@@ -525,12 +773,20 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           const cardDelete = document.createElement('a');
-          cardDelete.className = 'action-btn action-btn-delete';
-          cardDelete.innerHTML = '🗑️ Delete';
-          cardDelete.addEventListener('click', (e) => {
-            e.preventDefault();
-            triggerDeleteAdmin(admin.username);
-          });
+          if (isSelf) {
+            cardDelete.className = 'action-btn';
+            cardDelete.style.opacity = '0.5';
+            cardDelete.style.cursor = 'not-allowed';
+            cardDelete.style.pointerEvents = 'none';
+            cardDelete.innerHTML = '🔒 Delete';
+          } else {
+            cardDelete.className = 'action-btn action-btn-delete';
+            cardDelete.innerHTML = '🗑️ Delete';
+            cardDelete.addEventListener('click', (e) => {
+              e.preventDefault();
+              triggerDeleteAdmin(admin.username);
+            });
+          }
 
           cardActions.appendChild(cardToggle);
           cardActions.appendChild(cardEditRoles);
@@ -656,8 +912,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Toggle Admin Active Status
   const toggleAdminStatus = async (admin) => {
     const action = admin.status === 'active' ? 'deactivate' : 'activate';
+    const isDangerous = action === 'deactivate';
+    const title = isDangerous ? 'Deactivate Administrator' : 'Activate Administrator';
+    const icon = isDangerous ? '🛑' : '🟢';
     const confirmText = `Are you sure you want to ${action} admin user "${admin.username}"?`;
-    if (!confirm(confirmText)) return;
+    if (!(await showConfirmModal(title, confirmText, isDangerous, icon))) return;
+
+    // Reset page alerts
+    if (typeof resetAlert === 'function') resetAlert();
 
     const endpoint = `${CONFIG.basePath}/sudo/${action}/${admin.username}`;
     try {
@@ -670,21 +932,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(`Admin user has been ${action}d successfully.`);
+        if (typeof showSuccessMessage === 'function') {
+          showSuccessMessage(`Admin user "${admin.username}" has been ${action}d successfully.`);
+        }
         loadInitialData(); // Reload list
       } else {
-        alert(`Operation failed: ${data.message}`);
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage(`Operation failed: ${data.message}`);
+        }
       }
     } catch (error) {
       console.error(`Error toggling admin status:`, error);
-      alert('An error occurred. Please try again.');
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage('An error occurred. Please try again.');
+      }
     }
   };
 
   // Delete Role
   const triggerDeleteRole = async (roleName) => {
+    const title = 'Delete System Role';
     const confirmText = `Are you sure you want to delete the role "${roleName}"?`;
-    if (!confirm(confirmText)) return;
+    if (!(await showConfirmModal(title, confirmText, true, '🗑️'))) return;
+
+    if (typeof resetAlert === 'function') resetAlert();
 
     try {
       const response = await fetch(`${CONFIG.basePath}/sudo/role/${encodeURIComponent(roleName)}`, {
@@ -696,21 +967,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(data.message || 'Role deleted successfully.');
+        if (typeof showSuccessMessage === 'function') {
+          showSuccessMessage(data.message || 'Role deleted successfully.');
+        }
         loadInitialData();
       } else {
-        alert(`Failed to delete role: ${data.message}`);
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage(`Failed to delete role: ${data.message}`);
+        }
       }
     } catch (error) {
       console.error('Error deleting role:', error);
-      alert('An error occurred while deleting the role.');
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage('An error occurred while deleting the role.');
+      }
     }
   };
 
   // Delete Administrator
   const triggerDeleteAdmin = async (username) => {
+    const title = 'Delete Administrator';
     const confirmText = `Are you sure you want to permanently delete administrator "${username}"? This action cannot be undone.`;
-    if (!confirm(confirmText)) return;
+    if (!(await showConfirmModal(title, confirmText, true, '🚨'))) return;
+
+    if (typeof resetAlert === 'function') resetAlert();
 
     try {
       const response = await fetch(`${CONFIG.basePath}/sudo/user/${encodeURIComponent(username)}`, {
@@ -722,14 +1002,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(data.message || 'Administrator deleted successfully.');
+        if (typeof showSuccessMessage === 'function') {
+          showSuccessMessage(data.message || 'Administrator deleted successfully.');
+        }
         loadInitialData();
       } else {
-        alert(`Failed to delete administrator: ${data.message}`);
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage(`Failed to delete administrator: ${data.message}`);
+        }
       }
     } catch (error) {
       console.error('Error deleting administrator:', error);
-      alert('An error occurred while deleting the administrator.');
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage('An error occurred while deleting the administrator.');
+      }
     }
   };
 
@@ -775,9 +1061,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Reset Password Modal Functions ---
   const openResetModal = (username) => {
+    clearModalError('adminResetPasswordForm');
     document.getElementById('resetTargetUsername').value = username;
     document.getElementById('resetUsernameDisplay').innerText = username;
     document.getElementById('newAdminPassword').value = '';
+    document.getElementById('confirmNewAdminPassword').value = '';
+    
+    const checklist = document.getElementById('resetPasswordChecklist');
+    if (checklist) checklist.style.display = 'none';
+    const strength = document.getElementById('resetPasswordStrength');
+    if (strength) strength.style.display = 'none';
+
     resetPasswordModal.style.display = 'flex';
 
     // Autofocus input
@@ -792,13 +1086,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const submitResetPassword = async (event) => {
     event.preventDefault();
+    clearModalError('adminResetPasswordForm');
     const submitBtn = document.getElementById('resetPasswordSubmitBtn');
     const oldText = submitBtn.textContent;
-    submitBtn.textContent = '⏳ Resetting...';
-    submitBtn.disabled = true;
 
     const username = document.getElementById('resetTargetUsername').value;
     const newPassword = document.getElementById('newAdminPassword').value;
+    const confirmPassword = document.getElementById('confirmNewAdminPassword').value;
+
+    if (newPassword !== confirmPassword) {
+      showModalError('adminResetPasswordForm', 'Passwords do not match.');
+      return;
+    }
+
+    if (!isPasswordStrong(newPassword)) {
+      showModalError('adminResetPasswordForm', 'Password must be at least 8 characters long, contain at least 1 uppercase letter, and at least 1 number or special character.');
+      return;
+    }
+
+    submitBtn.textContent = '⏳ Resetting...';
+    submitBtn.disabled = true;
 
     try {
       const res = await fetch(`${CONFIG.basePath}/auth/reset-password`, {
@@ -811,18 +1118,26 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await res.json();
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
 
       if (res.ok) {
-        alert(`Password reset successfully for ${username}`);
-        closeResetModal();
+        submitBtn.innerHTML = '✅ Password Reset!';
+        submitBtn.style.backgroundColor = '#10b981';
+        submitBtn.style.borderColor = '#10b981';
+        setTimeout(() => {
+          closeResetModal();
+          submitBtn.innerHTML = oldText;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.borderColor = '';
+          submitBtn.disabled = false;
+        }, 1000);
       } else {
-        alert(`Failed to reset password: ${data.message}`);
+        showModalError('adminResetPasswordForm', data.message);
+        submitBtn.textContent = oldText;
+        submitBtn.disabled = false;
       }
     } catch (err) {
       console.error('Reset error:', err);
-      alert('Something went wrong. Try again.');
+      showModalError('adminResetPasswordForm', 'Something went wrong. Try again.');
       submitBtn.textContent = oldText;
       submitBtn.disabled = false;
     }
@@ -835,23 +1150,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Edit Roles Modal Functions ---
   const openEditRolesModal = (userid, username, activeRoles) => {
+    clearModalError('editRolesForm');
     document.getElementById('editRolesTargetUserId').value = userid;
     document.getElementById('editRolesUsernameDisplay').innerText = username;
     rolesCheckboxContainer.innerHTML = '';
 
     // Populate checkboxes
     fetchedRoles.forEach(roleName => {
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.gap = '8px';
-      wrapper.style.padding = '4px 0';
+      const itemContainer = document.createElement('div');
+      itemContainer.className = 'role-checkbox-item';
+      itemContainer.style.display = 'flex';
+      itemContainer.style.flexDirection = 'column';
+      itemContainer.style.gap = '2px';
+      itemContainer.style.padding = '8px';
+      itemContainer.style.borderBottom = '1px solid #f1f5f9';
+
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.name = 'roles[]';
       checkbox.value = roleName;
       checkbox.id = `role-check-${roleName}`;
+      checkbox.style.cursor = 'pointer';
+      checkbox.style.width = '15px';
+      checkbox.style.height = '15px';
+      checkbox.style.margin = '0';
 
       if (activeRoles.includes(roleName)) {
         checkbox.checked = true;
@@ -859,14 +1186,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const label = document.createElement('label');
       label.setAttribute('for', `role-check-${roleName}`);
-      label.textContent = roleName;
       label.style.cursor = 'pointer';
-      label.style.fontSize = '13px';
       label.style.margin = '0';
+      label.style.display = 'inline-flex';
 
-      wrapper.appendChild(checkbox);
-      wrapper.appendChild(label);
-      rolesCheckboxContainer.appendChild(wrapper);
+      const badge = document.createElement('span');
+      badge.className = `badge-role ${getRoleBadgeClass(roleName)}`;
+      badge.style.margin = '0';
+      badge.textContent = roleName;
+      label.appendChild(badge);
+
+      row.appendChild(checkbox);
+      row.appendChild(label);
+      itemContainer.appendChild(row);
+
+      const desc = document.createElement('span');
+      desc.style.fontSize = '11px';
+      desc.style.color = '#64748b';
+      desc.style.paddingLeft = '23px';
+      desc.textContent = getRoleDescription(roleName);
+      itemContainer.appendChild(desc);
+
+      rolesCheckboxContainer.appendChild(itemContainer);
     });
 
     editRolesModal.style.display = 'flex';
@@ -885,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Collect selected roles
     const checkedCheckboxes = rolesCheckboxContainer.querySelectorAll('input[type="checkbox"]:checked');
     if (checkedCheckboxes.length === 0) {
-      alert('An administrator must have at least one role.');
+      showModalError('editRolesForm', 'An administrator must have at least one role.');
       return;
     }
 
@@ -905,19 +1246,27 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await response.json();
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
 
       if (response.ok) {
-        alert('Roles updated successfully!');
-        closeEditRolesModal();
-        loadInitialData(); // Refresh list to show new roles
+        submitBtn.innerHTML = '✅ Roles Saved!';
+        submitBtn.style.backgroundColor = '#10b981';
+        submitBtn.style.borderColor = '#10b981';
+        setTimeout(() => {
+          closeEditRolesModal();
+          submitBtn.innerHTML = oldText;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.borderColor = '';
+          submitBtn.disabled = false;
+          loadInitialData(); // Refresh list to show new roles
+        }, 1000);
       } else {
-        alert(`Failed to update roles: ${data.message}`);
+        showModalError('editRolesForm', data.message);
+        submitBtn.textContent = oldText;
+        submitBtn.disabled = false;
       }
     } catch (error) {
       console.error('Error updating roles:', error);
-      alert('An error occurred while updating roles.');
+      showModalError('editRolesForm', 'An error occurred while updating roles.');
       submitBtn.textContent = oldText;
       submitBtn.disabled = false;
     }
@@ -925,35 +1274,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Create Admin Modal Functions ---
   const openCreateAdminModal = () => {
+    clearModalError('createAdminForm');
     document.getElementById('createUsername').value = '';
     document.getElementById('createPassword').value = '';
+    document.getElementById('confirmCreatePassword').value = '';
     document.getElementById('createCardNo').value = '';
     createRolesCheckboxContainer.innerHTML = '';
 
+    const checklist = document.getElementById('createPasswordChecklist');
+    if (checklist) checklist.style.display = 'none';
+    const strength = document.getElementById('createPasswordStrength');
+    if (strength) strength.style.display = 'none';
+    const validationDiv = document.getElementById('createCardNoValidation');
+    if (validationDiv) {
+      validationDiv.style.display = 'none';
+      validationDiv.className = '';
+      validationDiv.innerHTML = '';
+    }
+
     // Populate roles checklist
     fetchedRoles.forEach(roleName => {
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.gap = '8px';
-      wrapper.style.padding = '4px 0';
+      const itemContainer = document.createElement('div');
+      itemContainer.className = 'role-checkbox-item';
+      itemContainer.style.display = 'flex';
+      itemContainer.style.flexDirection = 'column';
+      itemContainer.style.gap = '2px';
+      itemContainer.style.padding = '8px';
+      itemContainer.style.borderBottom = '1px solid #f1f5f9';
+
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.name = 'createRoles[]';
       checkbox.value = roleName;
       checkbox.id = `create-role-check-${roleName}`;
+      checkbox.style.cursor = 'pointer';
+      checkbox.style.width = '15px';
+      checkbox.style.height = '15px';
+      checkbox.style.margin = '0';
 
       const label = document.createElement('label');
       label.setAttribute('for', `create-role-check-${roleName}`);
-      label.textContent = roleName;
       label.style.cursor = 'pointer';
-      label.style.fontSize = '13px';
       label.style.margin = '0';
+      label.style.display = 'inline-flex';
 
-      wrapper.appendChild(checkbox);
-      wrapper.appendChild(label);
-      createRolesCheckboxContainer.appendChild(wrapper);
+      const badge = document.createElement('span');
+      badge.className = `badge-role ${getRoleBadgeClass(roleName)}`;
+      badge.style.margin = '0';
+      badge.textContent = roleName;
+      label.appendChild(badge);
+
+      row.appendChild(checkbox);
+      row.appendChild(label);
+      itemContainer.appendChild(row);
+
+      const desc = document.createElement('span');
+      desc.style.fontSize = '11px';
+      desc.style.color = '#64748b';
+      desc.style.paddingLeft = '23px';
+      desc.textContent = getRoleDescription(roleName);
+      itemContainer.appendChild(desc);
+
+      createRolesCheckboxContainer.appendChild(itemContainer);
     });
 
     createAdminModal.style.display = 'flex';
@@ -970,20 +1357,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const submitCreateAdmin = async (event) => {
     event.preventDefault();
+    clearModalError('createAdminForm');
     const submitBtn = document.getElementById('createAdminSubmitBtn');
     const oldText = submitBtn.textContent;
 
     const username = document.getElementById('createUsername').value.trim();
     const password = document.getElementById('createPassword').value.trim();
+    const confirmPassword = document.getElementById('confirmCreatePassword').value.trim();
     const cardno = document.getElementById('createCardNo').value.trim();
+
+    if (password !== confirmPassword) {
+      showModalError('createAdminForm', 'Passwords do not match.');
+      return;
+    }
+
+    if (!isPasswordStrong(password)) {
+      showModalError('createAdminForm', 'Password must be at least 8 characters long, contain at least 1 uppercase letter, and at least 1 number or special character.');
+      return;
+    }
 
     // Collect roles
     const checkedCheckboxes = createRolesCheckboxContainer.querySelectorAll('input[type="checkbox"]:checked');
     if (checkedCheckboxes.length === 0) {
-      alert('An administrator must have at least one role.');
+      showModalError('createAdminForm', 'An administrator must have at least one role.');
       return;
     }
     const roles = Array.from(checkedCheckboxes).map(cb => cb.value);
+
+    // Check if card validation returned duplicate/invalid warning
+    const validationDiv = document.getElementById('createCardNoValidation');
+    if (validationDiv && validationDiv.style.display !== 'none' && validationDiv.classList.contains('validation-invalid')) {
+      showModalError('createAdminForm', 'Please fix the linked resident card number before creating the administrator.');
+      return;
+    }
 
     submitBtn.textContent = '⏳ Creating...';
     submitBtn.disabled = true;
@@ -999,19 +1405,27 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await response.json();
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
 
       if (response.ok) {
-        alert(`Admin user "${username}" created successfully!`);
-        closeCreateAdminModal();
-        loadInitialData(); // Refresh list
+        submitBtn.innerHTML = '✅ Admin Created!';
+        submitBtn.style.backgroundColor = '#10b981';
+        submitBtn.style.borderColor = '#10b981';
+        setTimeout(() => {
+          closeCreateAdminModal();
+          submitBtn.innerHTML = oldText;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.borderColor = '';
+          submitBtn.disabled = false;
+          loadInitialData(); // Refresh list
+        }, 1000);
       } else {
-        alert(`Failed to create admin: ${data.message}`);
+        showModalError('createAdminForm', data.message);
+        submitBtn.textContent = oldText;
+        submitBtn.disabled = false;
       }
     } catch (error) {
       console.error('Error creating admin:', error);
-      alert('An error occurred. Please try again.');
+      showModalError('createAdminForm', 'An error occurred. Please try again.');
       submitBtn.textContent = oldText;
       submitBtn.disabled = false;
     }
@@ -1019,6 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Create Role Modal Functions ---
   const openCreateRoleModal = () => {
+    clearModalError('createRoleForm');
     document.getElementById('createRoleName').value = '';
     createRoleModal.style.display = 'flex';
 
@@ -1033,12 +1448,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const submitCreateRole = async (event) => {
     event.preventDefault();
+    clearModalError('createRoleForm');
     const submitBtn = document.getElementById('createRoleSubmitBtn');
     const oldText = submitBtn.textContent;
 
     const roleName = document.getElementById('createRoleName').value.trim();
     if (!roleName) {
-      alert('Role name cannot be empty.');
+      showModalError('createRoleForm', 'Role name cannot be empty.');
+      return;
+    }
+
+    // Client-side duplicate check (case-insensitive)
+    const isDuplicate = fetchedRoles.some(role => role.toLowerCase() === roleName.toLowerCase());
+    if (isDuplicate) {
+      showModalError('createRoleForm', `Role "${roleName}" already exists.`);
       return;
     }
 
@@ -1056,19 +1479,27 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await response.json();
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
 
       if (response.ok) {
-        alert(`Role "${roleName}" created successfully!`);
-        closeCreateRoleModal();
-        loadInitialData(); // Refresh list
+        submitBtn.innerHTML = '✅ Role Created!';
+        submitBtn.style.backgroundColor = '#10b981';
+        submitBtn.style.borderColor = '#10b981';
+        setTimeout(() => {
+          closeCreateRoleModal();
+          submitBtn.innerHTML = oldText;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.borderColor = '';
+          submitBtn.disabled = false;
+          loadInitialData(); // Refresh list
+        }, 1000);
       } else {
-        alert(`Failed to create role: ${data.message}`);
+        showModalError('createRoleForm', data.message);
+        submitBtn.textContent = oldText;
+        submitBtn.disabled = false;
       }
     } catch (error) {
       console.error('Error creating role:', error);
-      alert('An error occurred while trying to create the role.');
+      showModalError('createRoleForm', 'An error occurred while trying to create the role.');
       submitBtn.textContent = oldText;
       submitBtn.disabled = false;
     }
@@ -1094,14 +1525,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if there is already an expanded subrow directly below this row
     const existingSubrow = parentRow.nextSibling;
     if (!forceExpand && existingSubrow && existingSubrow.classList && existingSubrow.classList.contains('roles-assigned-users-row')) {
-      existingSubrow.remove();
+      const wrapperRole = existingSubrow.querySelector('td:first-child .subrow-users-list-wrapper');
+      const wrapperDesc = existingSubrow.querySelector('td:nth-child(2) .subrow-users-list-wrapper');
+      if (wrapperRole && wrapperDesc) {
+        wrapperRole.classList.remove('expanded');
+        wrapperDesc.classList.remove('expanded');
+        setTimeout(() => {
+          existingSubrow.remove();
+        }, 300);
+      } else {
+        existingSubrow.remove();
+      }
       currentlyExpandedRole = null;
       return;
     }
 
     // Collapse other subrows
     const openSubrows = tableBody.querySelectorAll('.roles-assigned-users-row');
-    openSubrows.forEach(row => row.remove());
+    openSubrows.forEach(row => {
+      const wrapperRole = row.querySelector('td:first-child .subrow-users-list-wrapper');
+      const wrapperDesc = row.querySelector('td:nth-child(2) .subrow-users-list-wrapper');
+      if (wrapperRole && wrapperDesc) {
+        wrapperRole.classList.remove('expanded');
+        wrapperDesc.classList.remove('expanded');
+        setTimeout(() => {
+          row.remove();
+        }, 300);
+      } else {
+        row.remove();
+      }
+    });
 
     currentlyExpandedRole = roleName;
 
@@ -1119,6 +1572,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const tdRole = document.createElement('td');
     tdRole.style.borderTop = 'none';
     tdRole.style.verticalAlign = 'middle';
+    tdRole.style.padding = '0 8px';
+
+    const wrapperRole = document.createElement('div');
+    wrapperRole.className = 'subrow-users-list-wrapper';
+    wrapperRole.style.padding = '12px 0';
 
     const assignBtn = document.createElement('span');
     assignBtn.className = 'btn-assign-user';
@@ -1128,13 +1586,19 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       openAssignUserModal(roleName);
     });
-    tdRole.appendChild(assignBtn);
+    wrapperRole.appendChild(assignBtn);
+    tdRole.appendChild(wrapperRole);
     subrow.appendChild(tdRole);
 
     // Column 2: Access / Description column (Assigned Users badges)
     const tdDesc = document.createElement('td');
     tdDesc.style.borderTop = 'none';
     tdDesc.style.verticalAlign = 'middle';
+    tdDesc.style.padding = '0 8px';
+
+    const wrapperDesc = document.createElement('div');
+    wrapperDesc.className = 'subrow-users-list-wrapper';
+    wrapperDesc.style.padding = '12px 0';
 
     const usersListContainer = document.createElement('div');
     usersListContainer.className = 'subrow-users-list';
@@ -1183,7 +1647,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    tdDesc.appendChild(usersListContainer);
+    wrapperDesc.appendChild(usersListContainer);
+    tdDesc.appendChild(wrapperDesc);
     subrow.appendChild(tdDesc);
 
     // Column 3: Action column (empty)
@@ -1192,6 +1657,12 @@ document.addEventListener('DOMContentLoaded', () => {
     subrow.appendChild(tdAction);
 
     tableBody.insertBefore(subrow, parentRow.nextSibling);
+
+    // Trigger animation in the next frame
+    requestAnimationFrame(() => {
+      wrapperRole.classList.add('expanded');
+      wrapperDesc.classList.add('expanded');
+    });
   };
 
   // Close modals on click outside card
@@ -1200,11 +1671,26 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Assign User to Role Modal Functions ---
+  // --- Assign User to Role Modal Functions ---
+  let activeEligibleUsers = [];
+
   const openAssignUserModal = (roleName) => {
+    clearModalError('assignUserToRoleForm');
     document.getElementById('assignTargetRoleName').value = roleName;
     document.getElementById('assignRoleNameDisplay').innerText = roleName;
-    const select = document.getElementById('assignUserSelect');
-    select.innerHTML = '';
+    
+    const searchInput = document.getElementById('assignSearchInput');
+    const container = document.getElementById('assignUsersCheckboxContainer');
+    
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.disabled = false;
+      searchInput.placeholder = '🔍 Type to filter active administrators...';
+    }
+    
+    if (container) {
+      container.innerHTML = '';
+    }
 
     // Filter active users who do NOT have the current role
     const eligibleUsers = fetchedAdmins.filter(admin => {
@@ -1216,24 +1702,88 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('assignUserSubmitBtn');
 
     if (eligibleUsers.length === 0) {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'No eligible active administrators (all already have this role)';
-      option.disabled = true;
-      option.selected = true;
-      select.appendChild(option);
+      activeEligibleUsers = [];
+      if (searchInput) {
+        searchInput.value = 'All active administrators already assigned to this role';
+        searchInput.disabled = true;
+      }
+      if (container) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.style.color = '#64748b';
+        emptyDiv.style.fontSize = '13px';
+        emptyDiv.style.textAlign = 'center';
+        emptyDiv.style.fontStyle = 'italic';
+        emptyDiv.style.padding = '20px 0';
+        emptyDiv.textContent = 'No eligible active administrators found.';
+        container.appendChild(emptyDiv);
+      }
       submitBtn.disabled = true;
     } else {
       // Sort alphabetically by username
       eligibleUsers.sort((a, b) => a.username.localeCompare(b.username));
-
-      eligibleUsers.forEach(user => {
-        const option = document.createElement('option');
-        option.value = user.id;
-        option.textContent = user.username;
-        select.appendChild(option);
-      });
+      activeEligibleUsers = eligibleUsers;
       submitBtn.disabled = false;
+
+      // Populate checklist
+      eligibleUsers.forEach(user => {
+        const itemContainer = document.createElement('div');
+        itemContainer.className = 'user-checkbox-item';
+        itemContainer.setAttribute('data-username', user.username);
+        itemContainer.style.display = 'flex';
+        itemContainer.style.alignItems = 'center';
+        itemContainer.style.gap = '8px';
+        itemContainer.style.padding = '6px 8px';
+        itemContainer.style.borderRadius = '4px';
+        itemContainer.style.transition = 'background-color 0.15s ease';
+
+        // Hover feedback
+        itemContainer.addEventListener('mouseenter', () => {
+          itemContainer.style.backgroundColor = '#f1f5f9';
+        });
+        itemContainer.addEventListener('mouseleave', () => {
+          itemContainer.style.backgroundColor = '';
+        });
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'assignUsers[]';
+        checkbox.value = user.id;
+        checkbox.id = `assign-user-check-${user.id}`;
+        checkbox.style.cursor = 'pointer';
+        checkbox.style.width = '16px';
+        checkbox.style.height = '16px';
+        checkbox.style.margin = '0';
+        checkbox.style.accentColor = '#4f46e5';
+
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            const assignSearchInput = document.getElementById('assignSearchInput');
+            if (assignSearchInput) {
+              assignSearchInput.value = '';
+            }
+            const container = document.getElementById('assignUsersCheckboxContainer');
+            if (container) {
+              const items = container.querySelectorAll('.user-checkbox-item');
+              items.forEach(item => {
+                item.style.display = 'flex';
+              });
+            }
+          }
+        });
+
+        const label = document.createElement('label');
+        label.setAttribute('for', `assign-user-check-${user.id}`);
+        label.style.cursor = 'pointer';
+        label.style.margin = '0';
+        label.style.fontSize = '13.5px';
+        label.style.color = '#334155';
+        label.style.fontWeight = '500';
+        label.textContent = user.username;
+
+        itemContainer.appendChild(checkbox);
+        itemContainer.appendChild(label);
+        container.appendChild(itemContainer);
+      });
     }
 
     assignUserToRoleModal.style.display = 'flex';
@@ -1245,51 +1795,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const submitAssignUserToRole = async (event) => {
     event.preventDefault();
+    clearModalError('assignUserToRoleForm');
     const roleName = document.getElementById('assignTargetRoleName').value;
-    const userid = document.getElementById('assignUserSelect').value;
-    if (!userid) return;
+    
+    const container = document.getElementById('assignUsersCheckboxContainer');
+    if (!container) return;
+    
+    const checkedCheckboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+    if (checkedCheckboxes.length === 0) {
+      showModalError('assignUserToRoleForm', 'Please select at least one administrator to assign.');
+      return;
+    }
+
+    const selectedUserIds = Array.from(checkedCheckboxes).map(cb => cb.value);
 
     const submitBtn = document.getElementById('assignUserSubmitBtn');
     const oldText = submitBtn.textContent;
     submitBtn.textContent = '⏳ Assigning...';
     submitBtn.disabled = true;
 
-    // Find the user's current roles and append the new one
-    const user = fetchedAdmins.find(admin => String(admin.id) === String(userid));
-    if (!user) {
-      alert('Error finding selected user.');
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
-      return;
-    }
-
-    const currentRoles = (user.AdminRoles || []).map(ar => ar.role_name);
-    const updatedRoles = [...new Set([...currentRoles, roleName])];
-
     try {
-      const response = await fetch(`${CONFIG.basePath}/sudo/update_roles`, {
+      // Use bulkAssignRoles endpoint to add the role to all selected users
+      const response = await fetch(`${CONFIG.basePath}/sudo/bulk-assign-roles`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         },
-        body: JSON.stringify({ userid, roles: updatedRoles })
+        body: JSON.stringify({ userids: selectedUserIds, roles: [roleName] })
       });
 
       const data = await response.json();
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
 
       if (response.ok) {
-        alert(`User "${user.username}" successfully assigned to role "${roleName}"!`);
-        closeAssignUserModal();
-        loadInitialData(); // Reload list
+        submitBtn.innerHTML = '✅ Assigned!';
+        submitBtn.style.backgroundColor = '#10b981';
+        submitBtn.style.borderColor = '#10b981';
+        setTimeout(() => {
+          closeAssignUserModal();
+          submitBtn.innerHTML = oldText;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.borderColor = '';
+          submitBtn.disabled = false;
+          loadInitialData(); // Reload list
+        }, 1000);
       } else {
-        alert(`Failed to assign user: ${data.message}`);
+        showModalError('assignUserToRoleForm', data.message);
+        submitBtn.textContent = oldText;
+        submitBtn.disabled = false;
       }
     } catch (error) {
-      console.error('Error assigning user to role:', error);
-      alert('An error occurred. Please try again.');
+      console.error('Error assigning users to role:', error);
+      showModalError('assignUserToRoleForm', 'An error occurred. Please try again.');
       submitBtn.textContent = oldText;
       submitBtn.disabled = false;
     }
@@ -1297,12 +1854,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Remove User from Role Function ---
   const removeUserFromRole = async (userId, username, roleName) => {
+    const title = 'Remove Role from User';
     const confirmText = `Are you sure you want to remove the role "${roleName}" from administrator "${username}"?`;
-    if (!confirm(confirmText)) return;
+    if (!(await showConfirmModal(title, confirmText, true, '⚠️'))) return;
+
+    if (typeof resetAlert === 'function') resetAlert();
 
     const user = fetchedAdmins.find(admin => String(admin.id) === String(userId));
     if (!user) {
-      alert('Error finding selected user.');
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage('Error finding selected user.');
+      }
       return;
     }
 
@@ -1310,7 +1872,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const updatedRoles = currentRoles.filter(r => r !== roleName);
 
     if (updatedRoles.length === 0) {
-      alert('An administrator must have at least one role. You cannot remove the last role.');
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage('An administrator must have at least one role. You cannot remove the last role.');
+      }
       return;
     }
 
@@ -1326,20 +1890,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await response.json();
       if (response.ok) {
-        alert(`Successfully removed role "${roleName}" from user "${username}".`);
+        if (typeof showSuccessMessage === 'function') {
+          showSuccessMessage(`Successfully removed role "${roleName}" from user "${username}".`);
+        }
         loadInitialData(); // Reload list
       } else {
-        alert(`Failed to remove role: ${data.message}`);
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage(`Failed to remove role: ${data.message}`);
+        }
       }
     } catch (error) {
       console.error('Error removing role from user:', error);
-      alert('An error occurred. Please try again.');
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage('An error occurred. Please try again.');
+      }
     }
   };
 
-  // ==========================================
-  // PASSWORD STRENGTH AND GENERATOR UTILITIES
-  // ==========================================
+  const isPasswordStrong = (password) => {
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumberOrSpecial = /[\d\W]/.test(password);
+    return hasLength && hasUppercase && hasNumberOrSpecial;
+  };
+
   const evaluatePasswordStrength = (password, textEl, barEl, strengthIndicatorEl) => {
     if (!password) {
       strengthIndicatorEl.style.display = 'none';
@@ -1394,11 +1968,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return password.split('').sort(() => 0.5 - Math.random()).join('');
   };
 
-  const setupPasswordFeatures = (inputId, indicatorId, toggleEyeId, generateBtnId) => {
+  const setupPasswordFeatures = (inputId, indicatorId, toggleEyeId, generateBtnId, checklistId) => {
     const input = document.getElementById(inputId);
     const indicator = document.getElementById(indicatorId);
     const eye = document.getElementById(toggleEyeId);
     const genBtn = document.getElementById(generateBtnId);
+    const checklist = document.getElementById(checklistId);
 
     if (!input || !indicator) return;
 
@@ -1407,9 +1982,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!bar || !text) return;
 
+    // Checklist validation logic
+    const validateChecklist = (password) => {
+      if (!checklist) return;
+      if (!password) {
+        checklist.style.display = 'none';
+        return;
+      }
+      checklist.style.display = 'flex';
+
+      const reqLength = checklist.querySelector('[id$="-req-length"]');
+      const reqUppercase = checklist.querySelector('[id$="-req-uppercase"]');
+      const reqNumber = checklist.querySelector('[id$="-req-number"]');
+
+      // 1. Length check (min 8 chars)
+      const hasLength = password.length >= 8;
+      if (reqLength) {
+        reqLength.className = `checklist-item ${hasLength ? 'valid' : 'invalid'}`;
+      }
+
+      // 2. Uppercase letter check
+      const hasUppercase = /[A-Z]/.test(password);
+      if (reqUppercase) {
+        reqUppercase.className = `checklist-item ${hasUppercase ? 'valid' : 'invalid'}`;
+      }
+
+      // 3. Number or special char check
+      const hasNumberOrSpecial = /[\d\W]/.test(password);
+      if (reqNumber) {
+        reqNumber.className = `checklist-item ${hasNumberOrSpecial ? 'valid' : 'invalid'}`;
+      }
+    };
+
     // Strength listener
     input.addEventListener('input', () => {
       evaluatePasswordStrength(input.value, text, bar, indicator);
+      validateChecklist(input.value);
     });
 
     // Eye toggle listener
@@ -1439,13 +2047,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Trigger strength updates
         evaluatePasswordStrength(generated, text, bar, indicator);
+        validateChecklist(generated);
       });
     }
   };
 
   // Wire up password features
-  setupPasswordFeatures('createPassword', 'createPasswordStrength', 'toggleCreatePasswordEye', 'generateCreatePasswordBtn');
-  setupPasswordFeatures('newAdminPassword', 'resetPasswordStrength', 'toggleResetPasswordEye', 'generateResetPasswordBtn');
+  setupPasswordFeatures('createPassword', 'createPasswordStrength', 'toggleCreatePasswordEye', 'generateCreatePasswordBtn', 'createPasswordChecklist');
+  setupPasswordFeatures('newAdminPassword', 'resetPasswordStrength', 'toggleResetPasswordEye', 'generateResetPasswordBtn', 'resetPasswordChecklist');
+
+  // Helper to setup a simple eye toggler for confirm fields
+  const setupSimpleEyeToggler = (inputId, eyeId) => {
+    const input = document.getElementById(inputId);
+    const eye = document.getElementById(eyeId);
+    if (input && eye) {
+      eye.addEventListener('click', () => {
+        if (input.type === 'password') {
+          input.type = 'text';
+          eye.textContent = '🙈';
+          eye.title = 'Hide password';
+        } else {
+          input.type = 'password';
+          eye.textContent = '👁️';
+          eye.title = 'Show password';
+        }
+      });
+    }
+  };
+  setupSimpleEyeToggler('confirmCreatePassword', 'toggleConfirmCreatePasswordEye');
+  setupSimpleEyeToggler('confirmNewAdminPassword', 'toggleConfirmResetPasswordEye');
 
 
   // ==========================================
@@ -1593,7 +2223,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const bulkDeactivateBtn = document.getElementById('bulkDeactivateBtn');
   const bulkRolesBtn = document.getElementById('bulkRolesBtn');
   const bulkCancelBtn = document.getElementById('bulkCancelBtn');
-  const bulkAssignRolesModal = document.getElementById('bulkAssignRolesModal');
   const bulkRolesCheckboxContainer = document.getElementById('bulkRolesCheckboxContainer');
 
   const updateBulkBarUI = () => {
@@ -1649,6 +2278,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const checked = selectAllAdmins.checked;
       const visibleCheckboxes = document.querySelectorAll('.admin-select-checkbox');
       visibleCheckboxes.forEach(cb => {
+        if (cb.disabled) return; // Skip disabled (e.g. self)
         const username = cb.getAttribute('data-username');
         const userid = cb.getAttribute('data-userid');
         if (username && userid) {
@@ -1668,14 +2298,20 @@ document.addEventListener('DOMContentLoaded', () => {
     bulkDeactivateBtn.addEventListener('click', async () => {
       if (selectedAdminUsernames.length === 0) return;
 
-      const selfUsername = sessionStorage.getItem('username') || '';
+      if (typeof resetAlert === 'function') resetAlert();
+
+      const selfUsername = getLoggedInUsername();
       if (selectedAdminUsernames.includes(selfUsername)) {
-        alert('You cannot deactivate yourself. Please uncheck your account.');
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage('You cannot deactivate yourself. Please uncheck your account.');
+        }
         return;
       }
 
-      const confirmText = `Are you sure you want to deactivate all ${selectedAdminUsernames.length} selected administrators?`;
-      if (!confirm(confirmText)) return;
+      const title = 'Bulk Deactivate Administrators';
+      const userListHtml = selectedAdminUsernames.map(u => `<li><strong>${u}</strong></li>`).join('');
+      const confirmText = `Are you sure you want to deactivate the following <strong>${selectedAdminUsernames.length}</strong> administrators?<ul style="text-align: left; margin: 12px auto; max-width: 250px; padding-left: 20px; max-height: 120px; overflow-y: auto; line-height: 1.5; color: #334155;">${userListHtml}</ul>This action will revoke their login access immediately.`;
+      if (!(await showConfirmModal(title, confirmText, true, '🛑'))) return;
 
       try {
         const response = await fetch(`${CONFIG.basePath}/sudo/bulk-deactivate`, {
@@ -1689,48 +2325,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await response.json();
         if (response.ok) {
-          alert('Selected administrators deactivated successfully!');
+          if (typeof showSuccessMessage === 'function') {
+            showSuccessMessage('Selected administrators deactivated successfully!');
+          }
           clearBulkSelection();
           loadInitialData();
         } else {
-          alert(`Deactivation failed: ${data.message}`);
+          if (typeof showErrorMessage === 'function') {
+            showErrorMessage(`Deactivation failed: ${data.message}`);
+          }
         }
       } catch (err) {
         console.error('Bulk deactivate error:', err);
-        alert('An error occurred during bulk deactivation.');
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage('An error occurred during bulk deactivation.');
+        }
       }
     });
   }
 
   // Bulk Assign Roles Trigger
   const openBulkAssignRolesModal = () => {
+    clearModalError('bulkAssignRolesForm');
     document.getElementById('bulkRolesCountDisplay').innerText = selectedAdminUsernames.length;
     bulkRolesCheckboxContainer.innerHTML = '';
 
     // Populate roles checkboxes
     fetchedRoles.forEach(roleName => {
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.gap = '8px';
-      wrapper.style.padding = '4px 0';
+      const itemContainer = document.createElement('div');
+      itemContainer.className = 'role-checkbox-item';
+      itemContainer.style.display = 'flex';
+      itemContainer.style.flexDirection = 'column';
+      itemContainer.style.gap = '2px';
+      itemContainer.style.padding = '8px';
+      itemContainer.style.borderBottom = '1px solid #f1f5f9';
+
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.name = 'bulkRoles[]';
       checkbox.value = roleName;
       checkbox.id = `bulk-role-check-${roleName}`;
+      checkbox.style.cursor = 'pointer';
+      checkbox.style.width = '15px';
+      checkbox.style.height = '15px';
+      checkbox.style.margin = '0';
 
       const label = document.createElement('label');
       label.setAttribute('for', `bulk-role-check-${roleName}`);
-      label.textContent = roleName;
       label.style.cursor = 'pointer';
-      label.style.fontSize = '13px';
       label.style.margin = '0';
+      label.style.display = 'inline-flex';
 
-      wrapper.appendChild(checkbox);
-      wrapper.appendChild(label);
-      bulkRolesCheckboxContainer.appendChild(wrapper);
+      const badge = document.createElement('span');
+      badge.className = `badge-role ${getRoleBadgeClass(roleName)}`;
+      badge.style.margin = '0';
+      badge.textContent = roleName;
+      label.appendChild(badge);
+
+      row.appendChild(checkbox);
+      row.appendChild(label);
+      itemContainer.appendChild(row);
+
+      const desc = document.createElement('span');
+      desc.style.fontSize = '11px';
+      desc.style.color = '#64748b';
+      desc.style.paddingLeft = '23px';
+      desc.textContent = getRoleDescription(roleName);
+      itemContainer.appendChild(desc);
+
+      bulkRolesCheckboxContainer.appendChild(itemContainer);
     });
 
     bulkAssignRolesModal.style.display = 'flex';
@@ -1742,12 +2410,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const submitBulkAssignRoles = async (event) => {
     event.preventDefault();
+    clearModalError('bulkAssignRolesForm');
     const submitBtn = document.getElementById('bulkAssignRolesSubmitBtn');
     const oldText = submitBtn.textContent;
 
     const checkedCheckboxes = bulkRolesCheckboxContainer.querySelectorAll('input[type="checkbox"]:checked');
     if (checkedCheckboxes.length === 0) {
-      alert('Please select at least one role to add.');
+      showModalError('bulkAssignRolesForm', 'Please select at least one role to add.');
       return;
     }
 
@@ -1767,20 +2436,28 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await response.json();
-      submitBtn.textContent = oldText;
-      submitBtn.disabled = false;
 
       if (response.ok) {
-        alert('Roles assigned in bulk successfully!');
-        closeBulkAssignRolesModal();
-        clearBulkSelection();
-        loadInitialData();
+        submitBtn.innerHTML = '✅ Roles Assigned!';
+        submitBtn.style.backgroundColor = '#10b981';
+        submitBtn.style.borderColor = '#10b981';
+        setTimeout(() => {
+          closeBulkAssignRolesModal();
+          submitBtn.innerHTML = oldText;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.borderColor = '';
+          submitBtn.disabled = false;
+          clearBulkSelection();
+          loadInitialData();
+        }, 1000);
       } else {
-        alert(`Failed to assign roles: ${data.message}`);
+        showModalError('bulkAssignRolesForm', data.message);
+        submitBtn.textContent = oldText;
+        submitBtn.disabled = false;
       }
     } catch (err) {
       console.error('Bulk assign roles error:', err);
-      alert('An error occurred during bulk role assignment.');
+      showModalError('bulkAssignRolesForm', 'An error occurred during bulk role assignment.');
       submitBtn.textContent = oldText;
       submitBtn.disabled = false;
     }
@@ -1819,6 +2496,176 @@ document.addEventListener('DOMContentLoaded', () => {
   window.submitAssignUserToRole = submitAssignUserToRole;
   window.removeUserFromRole = removeUserFromRole;
   window.triggerDeleteAdmin = triggerDeleteAdmin;
+
+  // Helper to switch active tab programmatically
+  const switchTab = (tabName) => {
+    const targetBtn = document.querySelector(`#dashboardTabsGroup .filter-btn[data-tab="${tabName}"]`);
+    if (targetBtn) {
+      targetBtn.click();
+    }
+  };
+
+  // Helper to switch status filter programmatically
+  const switchStatusFilter = (statusName) => {
+    const targetBtn = document.querySelector(`#statusFilterGroup .filter-btn[data-status="${statusName}"]`);
+    if (targetBtn) {
+      targetBtn.click();
+    }
+  };
+
+  if (statCardTotalAdmins) {
+    statCardTotalAdmins.addEventListener('click', () => {
+      switchTab('users');
+      switchStatusFilter('all');
+    });
+  }
+  if (statCardActiveAdmins) {
+    statCardActiveAdmins.addEventListener('click', () => {
+      switchTab('users');
+      switchStatusFilter('active');
+    });
+  }
+  if (statCardInactiveAdmins) {
+    statCardInactiveAdmins.addEventListener('click', () => {
+      switchTab('users');
+      switchStatusFilter('inactive');
+    });
+  }
+  if (statCardTotalRoles) {
+    statCardTotalRoles.addEventListener('click', () => {
+      switchTab('roles');
+    });
+  }
+
+  // Excel Export logic
+  const handleExcelExport = () => {
+    if (!exportExcelBtn) return;
+    const oldText = exportExcelBtn.innerHTML;
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    if (activeTab === 'users') {
+      let exportAdmins = fetchedAdmins;
+      if (activeStatusFilter !== 'all') {
+        exportAdmins = exportAdmins.filter(admin => admin.status === activeStatusFilter);
+      }
+      if (query) {
+        exportAdmins = exportAdmins.filter(admin => {
+          const username = (admin.username || '').toLowerCase();
+          const cardno = (admin.cardno || '').toLowerCase();
+          const roles = (admin.AdminRoles || []).map(ar => ar.role_name.toLowerCase());
+          return username.includes(query) ||
+            cardno.includes(query) ||
+            roles.some(r => r.includes(query));
+        });
+      }
+
+      if (exportAdmins.length === 0) {
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage('No admin data available to export.');
+        } else {
+          alert('No admin data available to export.');
+        }
+        return;
+      }
+
+      // Format for Excel
+      const dataToExport = exportAdmins.map(admin => {
+        const rolesList = (admin.AdminRoles || []).map(ar => ar.role_name).join(', ');
+        return {
+          'ID': admin.id,
+          'Username': admin.username,
+          'Card Number': admin.cardno || 'N/A',
+          'Assigned Roles': rolesList || 'None',
+          'Status': admin.status
+        };
+      });
+
+      try {
+        const fileName = `admin_users_export_${activeStatusFilter}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        downloadExcelFromJSON(dataToExport, fileName, 'Admin Users');
+
+        // Visual success feedback
+        exportExcelBtn.innerHTML = '✅ Exported!';
+        exportExcelBtn.disabled = true;
+        setTimeout(() => {
+          exportExcelBtn.innerHTML = oldText;
+          exportExcelBtn.disabled = false;
+        }, 1000);
+      } catch (err) {
+        console.error('Export failed:', err);
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage('Failed to export data to Excel.');
+        }
+      }
+
+    } else {
+      let exportRoles = fetchedRoles;
+      if (query) {
+        exportRoles = exportRoles.filter(role => {
+          const nameMatches = role.toLowerCase().includes(query);
+          const descMatches = getRoleDescription(role).toLowerCase().includes(query);
+          return nameMatches || descMatches;
+        });
+      }
+
+      if (exportRoles.length === 0) {
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage('No roles data available to export.');
+        } else {
+          alert('No roles data available to export.');
+        }
+        return;
+      }
+
+      const dataToExport = exportRoles.map(role => {
+        return {
+          'Role': role,
+          'Access / Description': getRoleDescription(role)
+        };
+      });
+
+      try {
+        const fileName = `admin_roles_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        downloadExcelFromJSON(dataToExport, fileName, 'Admin Roles');
+
+        // Visual success feedback
+        exportExcelBtn.innerHTML = '✅ Exported!';
+        exportExcelBtn.disabled = true;
+        setTimeout(() => {
+          exportExcelBtn.innerHTML = oldText;
+          exportExcelBtn.disabled = false;
+        }, 1000);
+      } catch (err) {
+        console.error('Export failed:', err);
+        if (typeof showErrorMessage === 'function') {
+          showErrorMessage('Failed to export data to Excel.');
+        }
+      }
+    }
+  };
+
+  if (exportExcelBtn) {
+    exportExcelBtn.addEventListener('click', handleExcelExport);
+  }
+
+  // Searchable Users Checklist Filter Event Listener
+  const assignSearchInput = document.getElementById('assignSearchInput');
+  if (assignSearchInput) {
+    assignSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const container = document.getElementById('assignUsersCheckboxContainer');
+      if (!container) return;
+      const items = container.querySelectorAll('.user-checkbox-item');
+      items.forEach(item => {
+        const username = item.getAttribute('data-username').toLowerCase();
+        if (username.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
 
   // Load dashboard data on DOM ready
   loadInitialData();
