@@ -194,55 +194,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      let txRows = '';
+      let timelineItems = '';
       let totalAmount = 0;
 
       txs.forEach(tx => {
         const isCredit = tx.transaction_type === 'CREDITED';
         const amt = isCredit ? tx.credited_amount : -1 * tx.discount_used;
         totalAmount += amt;
-        const amtColor = amt >= 0 ? '#16a34a' : '#dc2626'; // Green vs Red
-        const typeBadge = isCredit 
-          ? `<span style="background-color: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Credited</span>`
-          : `<span style="background-color: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Debited</span>`;
 
-        txRows += `
-          <tr>
-            <td style="font-weight: 500;">${tx.bookingid || '-'}</td>
-            <td>${tx.razorpay_order_id || '-'}</td>
-            <td style="color: ${amtColor}; font-weight: 700;">${amt >= 0 ? '+' : ''}${amt}</td>
-            <td>${new Date(tx.date).toLocaleString()}</td>
-            <td style="text-align: center;">${typeBadge}</td>
-          </tr>
+        timelineItems += `
+          <li class="timeline-item">
+            <div class="timeline-dot ${isCredit ? 'credited' : 'debited'}"></div>
+            <div class="timeline-content">
+              <div class="timeline-info">
+                <div class="timeline-booking">Booking ID: ${tx.bookingid || '—'}</div>
+                <div class="timeline-date">${new Date(tx.date).toLocaleString()}</div>
+                <div class="timeline-desc">Order ID: ${tx.razorpay_order_id || '—'} ${tx.description ? '· ' + tx.description : ''}</div>
+              </div>
+              <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}">
+                ${amt >= 0 ? '+' : ''}${amt}
+              </div>
+            </div>
+          </li>
         `;
       });
 
       const timelineHtml = `
         <td colspan="10">
-          <div class="timeline-container" style="animation: rowFadeIn 0.25s ease-out forwards;">
-            <div class="timeline-header">
-              <span>🛡️ <strong>${category.toUpperCase()} Credit History (Card: ${cardno})</strong></span>
-              <span class="timeline-close" id="closeTxBtn">&times;</span>
+          <div class="timeline-container" style="animation: rowFadeIn 0.25s ease-out forwards; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+            <div class="timeline-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+              <span style="font-size: 14.5px; font-weight: bold; color: #0f172a;">🛡️ ${category.toUpperCase()} Credit History (Card: ${cardno})</span>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="printLedgerBtn" style="padding: 4px 10px; font-size: 12px; margin: 0; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; color: #475569; font-weight: 500;">🖨️ Print Ledger</button>
+                <span class="timeline-close" id="closeTxBtn" style="font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8;">&times;</span>
+              </div>
             </div>
-            <table class="table table-bordered table-striped" style="margin-top: 10px; background-color: #ffffff;">
-              <thead>
-                <tr style="background-color: #f8fafc;">
-                  <th>Booking ID</th>
-                  <th>Order ID</th>
-                  <th>Amount</th>
-                  <th>Transaction Date</th>
-                  <th style="text-align: center;">Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${txRows}
-                <tr style="font-weight: bold; background-color: #f8fafc;">
-                  <td colspan="2">Net Ledger Balance</td>
-                  <td style="color: ${totalAmount >= 0 ? '#16a34a' : '#dc2626'}">${totalAmount >= 0 ? '+' : ''}${totalAmount}</td>
-                  <td colspan="3"></td>
-                </tr>
-              </tbody>
-            </table>
+            <ul class="timeline-list">
+              ${timelineItems}
+            </ul>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; color: #0f172a;">
+              <span>Net Ledger Balance</span>
+              <span style="color: ${totalAmount >= 0 ? '#16a34a' : '#dc2626'}">${totalAmount >= 0 ? '+' : ''}${totalAmount}</span>
+            </div>
           </div>
         </td>
       `;
@@ -253,6 +246,76 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (closeBtn) {
         closeBtn.addEventListener('click', () => {
           closeTransactionDetails();
+        });
+      }
+
+      const printBtn = document.getElementById('printLedgerBtn');
+      if (printBtn) {
+        printBtn.addEventListener('click', () => {
+          const printWindow = window.open('', '_blank');
+          const printRows = txs.map(tx => {
+            const isCredit = tx.transaction_type === 'CREDITED';
+            const amt = isCredit ? tx.credited_amount : -1 * tx.discount_used;
+            return `
+              <tr>
+                <td>${tx.bookingid || '—'}</td>
+                <td>${tx.razorpay_order_id || '—'}</td>
+                <td style="font-weight: bold; color: ${amt >= 0 ? '#16a34a' : '#dc2626'}">${amt >= 0 ? '+' : ''}${amt}</td>
+                <td>${new Date(tx.date).toLocaleString()}</td>
+                <td>${isCredit ? 'CREDITED' : 'DEBITED'}</td>
+              </tr>
+            `;
+          }).join('');
+
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Ledger Statement - Card ${cardno}</title>
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #1e293b; }
+                  h2 { margin-bottom: 5px; color: #0f172a; }
+                  .meta { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+                  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                  th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 13.5px; }
+                  th { background: #f8fafc; color: #475569; font-weight: 600; }
+                  .total-row { font-weight: bold; background: #f8fafc; }
+                </style>
+              </head>
+              <body>
+                <h2>Ledger Statement</h2>
+                <div class="meta">
+                  <div><strong>Card Number:</strong> ${cardno}</div>
+                  <div><strong>Category:</strong> ${category.toUpperCase()}</div>
+                  <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Booking ID</th>
+                      <th>Order ID</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${printRows}
+                    <tr class="total-row">
+                      <td colspan="2">Net Ledger Balance</td>
+                      <td colspan="3" style="color: ${totalAmount >= 0 ? '#16a34a' : '#dc2626'}">${totalAmount >= 0 ? '+' : ''}${totalAmount}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <script>
+                  window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 500);
+                  };
+                </script>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
         });
       }
     } catch (err) {

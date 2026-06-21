@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Global Keyboard Shortcuts
   document.addEventListener('keydown', (e) => {
+    const fPanel = document.getElementById('formPanel');
+    if (fPanel && fPanel.classList.contains('open')) return;
+
     // 1. Focus search with "/"
     if (e.key === '/' && document.activeElement !== searchInput &&
         document.activeElement.tagName !== 'INPUT' &&
@@ -54,6 +57,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Keyboard Arrow Keys Navigation
   document.addEventListener('keydown', (e) => {
+    const fPanel = document.getElementById('formPanel');
+    if (fPanel && fPanel.classList.contains('open')) return;
+
     // Skip if focus is on inputs, select dropdowns, etc.
     if (document.activeElement.tagName === 'INPUT' || 
         document.activeElement.tagName === 'TEXTAREA' || 
@@ -329,6 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof renderStatsStrip === 'function') renderStatsStrip(allData);
     if (typeof syncUrlState === 'function') syncUrlState();
     if (typeof updateSelectAllBanner === 'function') updateSelectAllBanner();
+    if (typeof applyColumnVisibility === 'function') applyColumnVisibility();
   };
 
 
@@ -433,7 +440,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (dataListTable) dataListTable.style.display = 'table';
       renderDesktopRows(paginatedData, query);
       renderMobileGrid(paginatedData, query);
+      if (typeof wrapMobileCardsWithSwipe === 'function') wrapMobileCardsWithSwipe();
       renderPagination(totalItems, totalPages);
+      if (typeof _postRenderHooks === 'function') _postRenderHooks(query);
     } else {
       if (dataListTable) dataListTable.style.display = 'none';
       const mobileGrid = document.getElementById('mobile-cards-grid');
@@ -457,8 +466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Double-click shortcut to edit
       row.addEventListener('dblclick', () => {
-        sessionStorage.setItem('cardno', item.cardno);
-        window.location.href = 'updateCard.html';
+        openFormPanel('edit', item.cardno);
       });
       row.setAttribute('title', 'Double-click to edit card');
 
@@ -512,8 +520,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       editButton.className = 'action-btn action-btn-edit';
       editButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        sessionStorage.setItem('cardno', item.cardno);
-        window.location.href = 'updateCard.html';
+        openFormPanel('edit', item.cardno);
       });
       actionCell.appendChild(editButton);
 
@@ -557,6 +564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     data.forEach((item, index) => {
       const card = document.createElement('div');
       card.className = 'mobile-card';
+      card.dataset.cardno = item.cardno;
       card.style.animationDelay = `${index * 25}ms`;
       card.style.borderLeft = `4px solid ${getResidenceStatusColor(item.res_status)}`;
 
@@ -567,8 +575,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       card.addEventListener('dblclick', () => {
-        sessionStorage.setItem('cardno', item.cardno);
-        window.location.href = 'updateCard.html';
+        openFormPanel('edit', item.cardno);
       });
 
       // Checkbox selector
@@ -643,8 +650,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       editBtn.className = 'action-btn action-btn-edit';
       editBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        sessionStorage.setItem('cardno', item.cardno);
-        window.location.href = 'updateCard.html';
+        openFormPanel('edit', item.cardno);
       });
       actions.appendChild(editBtn);
 
@@ -1002,10 +1008,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const exportToExcel = () => {
-    const data = getFilteredData();
+    let data = getFilteredData();
     if (data.length === 0) {
       showErrorMessage('No cards available to export.');
       return;
+    }
+
+    let isSelectedOnly = false;
+    if (selectedCards.size > 0) {
+      data = data.filter(item => selectedCards.has(item.cardno));
+      isSelectedOnly = true;
     }
 
     const exportRows = data.map(item => ({
@@ -1025,20 +1037,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       'Residence Status': item.res_status || ''
     }));
 
-    const oldText = exportBtn.innerHTML;
+    const oldText = exportBtn ? exportBtn.innerHTML : '';
+    const progressToast = showToast(`⏳ Preparing export of ${exportRows.length} card${exportRows.length === 1 ? '' : 's'}...`, 'loading');
+
     try {
-      downloadExcelFromJSON(exportRows, `Card_Management_Report_${activeStatus}`);
+      const filename = isSelectedOnly 
+        ? `cards_selected_${selectedCards.size}` 
+        : `Card_Management_Report_${activeStatus}`;
       
-      exportBtn.style.backgroundColor = '#059669';
-      exportBtn.innerHTML = '✅ Exported!';
-      exportBtn.style.transform = 'scale(1.05)';
       setTimeout(() => {
-        exportBtn.style.backgroundColor = '';
-        exportBtn.innerHTML = oldText;
-        exportBtn.style.transform = '';
-      }, 1500);
+        downloadExcelFromJSON(exportRows, filename);
+        
+        progressToast.update(`✓ Export completed! Saved ${exportRows.length} card${exportRows.length === 1 ? '' : 's'} as ${filename}.xlsx`, 'success');
+        
+        if (exportBtn) {
+          exportBtn.style.backgroundColor = '#059669';
+          exportBtn.innerHTML = '✅ Exported!';
+          exportBtn.style.transform = 'scale(1.05)';
+          setTimeout(() => {
+            exportBtn.style.backgroundColor = '';
+            exportBtn.innerHTML = oldText;
+            exportBtn.style.transform = '';
+          }, 1500);
+        }
+      }, 600);
     } catch (err) {
       console.error('Export failed:', err);
+      progressToast.update(`✗ Export failed: ${err.message}`, 'error');
       showErrorMessage('Export failed: ' + err.message);
     }
   };
@@ -1049,12 +1074,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       toggleClearSearchBtn();
       resetAlert();
       renderRecentSearchesDropdown();
-      // Save to recent searches IMMEDIATELY (before API call) so dropdown is instant
-      const q = searchInput.value.trim();
-      if (q && q.length >= 2) saveRecentSearch(q);
     });
 
     searchInput.addEventListener('focus', () => {
+      renderRecentSearchesDropdown();
+    });
+
+    searchInput.addEventListener('click', (e) => {
+      e.stopPropagation();
       renderRecentSearchesDropdown();
     });
 
@@ -1162,7 +1189,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    dd.innerHTML = `<div class="recent-searches-header">🕐 Recent Searches</div>`;
+    dd.innerHTML = `
+      <div class="recent-searches-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>🕐 Recent Searches</span>
+        <span id="clearRecentSearchesBtn" style="cursor:pointer; text-transform:none; font-size:10px; color:#ef4444; font-weight:600; padding:2px 6px;">Clear All</span>
+      </div>
+    `;
     list.forEach(term => {
       const item = document.createElement('div');
       item.className = 'recent-search-item';
@@ -1184,6 +1216,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       dd.appendChild(item);
     });
     dd.classList.add('visible');
+
+    const clearBtn = dd.querySelector('#clearRecentSearchesBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        localStorage.removeItem(RS_KEY);
+        hideRecentSearchesDropdown();
+      });
+    }
   };
 
   // ─── Feature 3: Stats Strip ───────────────────────────────────────────────
@@ -1324,6 +1365,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       ${field('🎂', 'Date of Birth', item.dob)}
       ${field('🏠', 'Res. Status', normStatus)}
 
+      <div class="drawer-section-title">Credits</div>
+      <div class="drawer-credits-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 12px;">
+        <span class="credit-pill credit-pill-room" style="font-size:12px; padding: 4px 10px;">Room: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
+        <span class="credit-pill credit-pill-food" style="font-size:12px; padding: 4px 10px;">Food: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
+        <span class="credit-pill credit-pill-travel" style="font-size:12px; padding: 4px 10px;">Travel: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
+        <span class="credit-pill credit-pill-utsav" style="font-size:12px; padding: 4px 10px;">Utsav: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
+      </div>
+
       <div class="drawer-section-title">Contact</div>
       ${field('📱', 'Mobile', mobStr, waLink)}
       ${field('✉️', 'Email', item.email ? `<a href="mailto:${item.email}" style="color:#4f46e5;">${item.email}</a>` : '')}
@@ -1365,8 +1414,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (drawerEditBtn) {
     drawerEditBtn.addEventListener('click', () => {
       if (!drawerCurrentItem) return;
-      sessionStorage.setItem('cardno', drawerCurrentItem.cardno);
-      window.location.href = 'updateCard.html';
+      closeQuickDrawer();
+      openFormPanel('edit', drawerCurrentItem.cardno);
     });
   }
 
@@ -1506,38 +1555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // We can't reassign const, so we call it from the select-all checkbox and individual checkboxes
   // It's already wired via filterAndRender → updateBulkActionBar, and _postRenderHooks calls updateSelectAllBanner
 
-  // ─── Feature: Export Selected Cards Only ─────────────────────────────────
-  // Patch the export button to respect selection
-  const exportBtn = document.getElementById('exportExcelBtn');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      if (selectedCards.size > 0) {
-        // Export only selected
-        const selectedData = getFilteredData().filter(item => selectedCards.has(item.cardno));
-        // Reuse existing export but with filtered data
-        _exportData(selectedData, `cards_selected_${selectedCards.size}`);
-      }
-      // If nothing selected, the original handler in excel export already handles it
-    });
-  }
 
-  const _exportData = (data, filename) => {
-    if (!data || data.length === 0) return;
-    try {
-      const headers = ['Card No', 'Name', 'Mobile', 'Email', 'Residence Status', 'City', 'State'];
-      const rows = data.map(item => [
-        item.cardno, item.issuedto, item.mobno, item.email,
-        item.res_status, item.city, item.state
-      ]);
-      const wsData = [headers, ...rows];
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, 'Cards');
-      XLSX.writeFile(wb, `${filename}.xlsx`);
-    } catch (e) {
-      console.warn('Export failed:', e);
-    }
-  };
 
   // ─── Feature: Mobile Swipe-to-Action ─────────────────────────────────────
   // Wraps each mobile card in a swipe container with hidden edit/reset buttons on the right
@@ -1609,8 +1627,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       editBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (cardno) {
-          sessionStorage.setItem('cardno', cardno);
-          window.location.href = 'updateCard.html';
+          wrapper.classList.remove('swiped');
+          actions.classList.remove('revealed');
+          openFormPanel('edit', cardno);
         }
       });
       resetBtn.addEventListener('click', async (e) => {
@@ -1634,6 +1653,1654 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   };
+
+  // ─── Feature: Keyboard Shortcuts Help Modal ──────────────────────────────
+  const kbdBtn = document.getElementById('keyboardShortcutsBtn');
+  const kbdModal = document.getElementById('keyboardShortcutsModal');
+  const kbdCloseIcon = document.getElementById('shortcutsCloseIcon');
+  const kbdOkBtn = document.getElementById('shortcutsOkBtn');
+
+  if (kbdBtn && kbdModal) {
+    const showKbdModal = () => {
+      kbdModal.style.display = 'flex';
+      kbdModal.offsetHeight;
+      kbdModal.classList.add('active');
+    };
+    const hideKbdModal = () => {
+      kbdModal.classList.remove('active');
+      setTimeout(() => { kbdModal.style.display = 'none'; }, 200);
+    };
+
+    kbdBtn.addEventListener('click', showKbdModal);
+    if (kbdCloseIcon) kbdCloseIcon.addEventListener('click', hideKbdModal);
+    if (kbdOkBtn) kbdOkBtn.addEventListener('click', hideKbdModal);
+    kbdModal.addEventListener('click', (e) => {
+      if (e.target === kbdModal) hideKbdModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && kbdModal.classList.contains('active')) {
+        hideKbdModal();
+      }
+    });
+  }
+
+  // ─── Feature: Column Visibility Toggle ──────────────────────────────────
+  const colBtn = document.getElementById('columnVisibilityBtn');
+  const colDropdown = document.getElementById('columnVisibilityDropdown');
+
+  if (colBtn && colDropdown) {
+    colBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      colDropdown.style.display = colDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (colDropdown && !colDropdown.contains(e.target) && e.target !== colBtn) {
+        colDropdown.style.display = 'none';
+      }
+    });
+
+    colDropdown.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+      chk.addEventListener('change', () => {
+        updateColumnVisibility();
+      });
+    });
+  }
+
+  const updateColumnVisibility = () => {
+    if (!colDropdown) return;
+    const config = {};
+    colDropdown.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+      const colIdx = parseInt(chk.dataset.col);
+      const isChecked = chk.checked;
+      config[colIdx] = isChecked;
+
+      const th = document.querySelector(`#data-list thead th:nth-child(${colIdx + 1})`);
+      if (th) th.style.display = isChecked ? '' : 'none';
+
+      document.querySelectorAll(`#data-list tbody tr`).forEach(row => {
+        const td = row.cells[colIdx];
+        if (td) td.style.display = isChecked ? '' : 'none';
+      });
+    });
+    localStorage.setItem('cardMgmt_columnVisibility', JSON.stringify(config));
+  };
+
+  const applyColumnVisibility = () => {
+    if (!colDropdown) return;
+    const config = JSON.parse(localStorage.getItem('cardMgmt_columnVisibility') || '{}');
+    colDropdown.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+      const colIdx = parseInt(chk.dataset.col);
+      if (config[colIdx] !== undefined) {
+        chk.checked = config[colIdx];
+      }
+      const isChecked = chk.checked;
+
+      const th = document.querySelector(`#data-list thead th:nth-child(${colIdx + 1})`);
+      if (th) th.style.display = isChecked ? '' : 'none';
+
+      document.querySelectorAll(`#data-list tbody tr`).forEach(row => {
+        const td = row.cells[colIdx];
+        if (td) td.style.display = isChecked ? '' : 'none';
+      });
+    });
+  };
+
+  // --- Slide-over Form Panel Integration ---
+  let panelMode = 'create';
+  let isFormDirty = false;
+  let validatedSponsorData = null;
+  let isCardNumberAvailable = true;
+  let referenceCardValid = false;
+
+  const calculateAge = (dobString) => {
+    if (!dobString) return '';
+    const dob = new Date(dobString);
+    if (isNaN(dob.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age >= 0 ? `(Age: ${age})` : '';
+  };
+
+  const updateAgeDisplay = () => {
+    const pDobInput = document.getElementById('p_dob');
+    const pDobAge = document.getElementById('p_dobAge');
+    if (!pDobInput || !pDobAge) return;
+
+    const dobVal = pDobInput.value;
+    if (!dobVal) {
+      pDobAge.innerHTML = '';
+      return;
+    }
+    const dob = new Date(dobVal);
+    if (isNaN(dob.getTime())) {
+      pDobAge.innerHTML = '';
+      return;
+    }
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age < 0) {
+      pDobAge.innerHTML = '';
+      return;
+    }
+
+    if (age > 100 || age < 5) {
+      pDobAge.style.color = '#d97706';
+      pDobAge.innerHTML = `(Age: ${age}) ⚠️ Please verify`;
+    } else {
+      pDobAge.style.color = '#4f46e5';
+      pDobAge.innerHTML = `(Age: ${age})`;
+    }
+  };
+
+  const updateIdNoPattern = (clearValue = true) => {
+    const pIdTypeSelect = document.getElementById('p_idType');
+    const pIdNoInput = document.getElementById('p_idNo');
+    const pIdNoToggle = document.getElementById('p_idNoToggle');
+    if (!pIdTypeSelect || !pIdNoInput) return;
+    const idType = pIdTypeSelect.value;
+    if (clearValue) pIdNoInput.value = '';
+    if (pIdNoToggle) pIdNoToggle.style.display = idType === 'Aadhar' ? 'block' : 'none';
+    
+    if (idType === 'Aadhar') {
+      pIdNoInput.placeholder = 'e.g. 1234 5678 9012';
+      pIdNoInput.pattern = '[0-9]{4} [0-9]{4} [0-9]{4}';
+      pIdNoInput.maxLength = 14;
+      pIdNoInput.required = true;
+      pIdNoInput.disabled = false;
+    } else if (idType === 'PAN') {
+      pIdNoInput.placeholder = 'e.g. ABCDE1234F';
+      pIdNoInput.pattern = '[A-Z]{5}[0-9]{4}[A-Z]{1}';
+      pIdNoInput.maxLength = 10;
+      pIdNoInput.required = true;
+      pIdNoInput.disabled = false;
+    } else {
+      pIdNoInput.placeholder = 'Not required';
+      pIdNoInput.removeAttribute('pattern');
+      pIdNoInput.removeAttribute('maxlength');
+      pIdNoInput.required = false;
+      if (clearValue) pIdNoInput.value = 'Pending';
+      pIdNoInput.disabled = true;
+    }
+  };
+
+  const updateFormProgress = () => {
+    const fields = [
+      document.getElementById('p_cardno'),
+      document.getElementById('p_issuedto'),
+      document.getElementById('p_dob'),
+      document.getElementById('p_mobno'),
+      document.getElementById('p_email'),
+      document.getElementById('p_address'),
+      document.getElementById('p_country'),
+      document.getElementById('p_state'),
+      document.getElementById('p_city'),
+      document.getElementById('p_pin'),
+      document.getElementById('p_centre')
+    ];
+    
+    const idTypeSelect = document.getElementById('p_idType');
+    const idNoInput = document.getElementById('p_idNo');
+    if (idTypeSelect && idTypeSelect.value !== 'Pending' && idNoInput) {
+      fields.push(idNoInput);
+    }
+    
+    const resStatusSelect = document.getElementById('p_res_status');
+    if (resStatusSelect && resStatusSelect.value === 'GUEST') {
+      fields.push(document.getElementById('p_reference_cardno'));
+      fields.push(document.getElementById('p_guest_type'));
+    }
+    
+    let filledCount = 0;
+    fields.forEach(el => {
+      if (el) {
+        let val = el.value.trim();
+        if (el.id === 'p_idNo' && idTypeSelect && idTypeSelect.value === 'Aadhar') {
+          val = el.dataset.raw || '';
+        }
+        if (val && val !== 'Pending' && !el.classList.contains('is-invalid')) {
+          filledCount++;
+        }
+      }
+    });
+    
+    const totalFields = fields.length;
+    const percent = totalFields > 0 ? Math.round((filledCount / totalFields) * 100) : 0;
+    
+    const progressBar = document.getElementById('p_formProgressBar');
+    const progressText = document.getElementById('p_formProgressText');
+    if (progressBar && progressText) {
+      progressBar.style.width = `${percent}%`;
+      progressText.textContent = `${percent}%`;
+      
+      if (percent < 50) {
+        progressBar.style.backgroundColor = '#f97316';
+      } else if (percent < 100) {
+        progressBar.style.backgroundColor = '#3b82f6';
+      } else {
+        progressBar.style.backgroundColor = '#22c55e';
+      }
+    }
+  };
+  
+  const formPanelOverlay = document.getElementById('formPanelOverlay');
+  const formPanel = document.getElementById('formPanel');
+  const formPanelCloseBtn = document.getElementById('formPanelCloseBtn');
+  const formPanelCancelBtn = document.getElementById('formPanelCancelBtn');
+  const formPanelSubmitBtn = document.getElementById('formPanelSubmitBtn');
+  const formPanelTitle = document.getElementById('formPanelTitle');
+  const formPanelErrorContainer = document.getElementById('formPanelErrorContainer');
+  const panelCardForm = document.getElementById('panelCardForm');
+
+  const pCardnoInput = document.getElementById('p_cardno');
+  const pCardnoVal = document.getElementById('p_cardnoVal');
+  const pMobnoInput = document.getElementById('p_mobno');
+  const pMobnoVal = document.getElementById('p_mobnoVal');
+  const pEmailInput = document.getElementById('p_email');
+  const pEmailVal = document.getElementById('p_emailVal');
+  const pResStatusSelect = document.getElementById('p_res_status');
+  const pGuestFields = document.getElementById('p_guestFields');
+  const pRefCardInput = document.getElementById('p_reference_cardno');
+  const pRefCardValidation = document.getElementById('p_referenceCardNoValidation');
+  const pSponsorPreviewCard = document.getElementById('p_sponsorPreviewCard');
+
+  const saveFormDraft = () => {
+    if (panelMode === 'create' || panelMode === 'edit') {
+      const data = {};
+      const fields = [
+        'p_cardno', 'p_issuedto', 'p_gender', 'p_dob', 'p_mobno', 'p_email', 
+        'p_idType', 'p_idNo', 'p_address', 'p_country', 'p_state', 'p_city', 
+        'p_pin', 'p_centre', 'p_res_status', 'p_reference_cardno', 'p_guest_type'
+      ];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          data[id] = el.value;
+          if (id === 'p_idNo') {
+            data.p_idNoRaw = el.dataset.raw || '';
+          }
+        }
+      });
+      localStorage.setItem('cardMgmt_formDraft', JSON.stringify({
+        mode: panelMode,
+        cardno: panelMode === 'edit' ? document.getElementById('p_cardno').value : null,
+        data: data
+      }));
+    }
+  };
+
+  const clearFormDraft = () => {
+    localStorage.removeItem('cardMgmt_formDraft');
+  };
+
+  const showToast = (message, type = 'success') => {
+    let container = document.getElementById('toast-notification-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-notification-container';
+      container.style.position = 'fixed';
+      container.style.top = '20px';
+      container.style.right = '20px';
+      container.style.zIndex = '99999';
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.gap = '10px';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notif toast-${type}`;
+    toast.style.padding = '12px 20px';
+    toast.style.borderRadius = '8px';
+    toast.style.fontSize = '14px';
+    toast.style.fontWeight = '500';
+    toast.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)';
+    toast.style.minWidth = '280px';
+    toast.style.maxWidth = '380px';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.justifyContent = 'space-between';
+    toast.style.gap = '12px';
+    toast.style.color = '#fff';
+    toast.style.transform = 'translateX(120%)';
+    toast.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    
+    let bg = '#3b82f6';
+    let icon = 'ℹ️';
+    if (type === 'success') {
+      bg = '#10b981';
+      icon = '✓';
+    } else if (type === 'error') {
+      bg = '#ef4444';
+      icon = '⚠️';
+    } else if (type === 'loading') {
+      bg = '#4f46e5';
+      icon = '⏳';
+    }
+    toast.style.backgroundColor = bg;
+
+    toast.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-weight:bold; font-size:16px;">${icon}</span>
+        <span>${message}</span>
+      </div>
+      <span class="toast-close-btn" style="cursor:pointer; opacity:0.7; font-weight:bold; font-size:16px; line-height:1;">&times;</span>
+    `;
+
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+      toast.style.transform = 'translateX(0)';
+    });
+
+    const closeToast = () => {
+      toast.style.transform = 'translateX(120%)';
+      setTimeout(() => {
+        toast.remove();
+        if (container.children.length === 0) {
+          container.remove();
+        }
+      }, 300);
+    };
+
+    toast.querySelector('.toast-close-btn').addEventListener('click', closeToast);
+
+    if (type !== 'loading') {
+      setTimeout(closeToast, 4000);
+    }
+
+    return {
+      close: closeToast,
+      update: (newMessage, newType = 'success') => {
+        let newBg = '#10b981';
+        let newIcon = '✓';
+        if (newType === 'error') {
+          newBg = '#ef4444';
+          newIcon = '⚠️';
+        } else if (newType === 'loading') {
+          newBg = '#4f46e5';
+          newIcon = '⏳';
+        }
+        toast.style.backgroundColor = newBg;
+        toast.querySelector('span:first-child').textContent = newIcon;
+        toast.querySelector('span:first-child + span').textContent = newMessage;
+        if (newType !== 'loading') {
+          setTimeout(closeToast, 4000);
+        }
+      }
+    };
+  };
+
+  const restoreFormDraft = async () => {
+    const draftContainer = document.getElementById('formPanelDraftContainer');
+    if (draftContainer) draftContainer.style.display = 'none';
+    
+    const draftStr = localStorage.getItem('cardMgmt_formDraft');
+    if (!draftStr) return;
+    
+    try {
+      const draft = JSON.parse(draftStr);
+      if (draft && draft.data) {
+        const data = draft.data;
+        ['cardno','issuedto','gender','dob','mobno','email','idType','address','pin','res_status'].forEach(field => {
+          const el = document.getElementById('p_' + field);
+          if (el && data['p_' + field] !== undefined) {
+            el.value = data['p_' + field];
+          }
+        });
+        
+        const idNoEl = document.getElementById('p_idNo');
+        if (idNoEl) {
+          if (data.p_idNo !== undefined) idNoEl.value = data.p_idNo;
+          if (data.p_idNoRaw !== undefined) idNoEl.dataset.raw = data.p_idNoRaw;
+        }
+        
+        if (pRefCardInput && data.p_reference_cardno !== undefined) pRefCardInput.value = data.p_reference_cardno;
+        const pGuestTypeSelect = document.getElementById('p_guest_type');
+        if (pGuestTypeSelect && data.p_guest_type !== undefined) pGuestTypeSelect.value = data.p_guest_type;
+        
+        if (pGuestFields) {
+          pGuestFields.style.display = document.getElementById('p_res_status').value === 'GUEST' ? 'block' : 'none';
+        }
+        
+        if (document.getElementById('p_res_status').value === 'GUEST' && pRefCardInput.value) {
+          validateReferenceCard(pRefCardInput.value);
+        }
+        
+        await panelFetchCountries(data.p_country, data.p_state, data.p_city);
+        await panelFetchCentres(data.p_centre);
+        
+        updateAgeDisplay();
+        updateIdNoPattern(false);
+        
+        if (pCardnoInput) pCardnoInput.dispatchEvent(new Event('input'));
+        if (pMobnoInput) pMobnoInput.dispatchEvent(new Event('input'));
+        if (pEmailInput) pEmailInput.dispatchEvent(new Event('input'));
+        
+        const pIdTypeSelect = document.getElementById('p_idType');
+        if (pIdTypeSelect && pIdTypeSelect.value === 'PAN') {
+          validatePANNameMatch();
+        } else if (pIdTypeSelect && pIdTypeSelect.value === 'Aadhar') {
+          const raw = idNoEl ? (idNoEl.dataset.raw || '') : '';
+          const idNoVal = document.getElementById('p_idNoVal');
+          if (idNoVal) {
+            if (raw.length === 12) {
+              idNoVal.classList.add('visible');
+              idNoVal.style.color = '#16a34a';
+              idNoVal.innerHTML = '✓ Valid Aadhar Number';
+            }
+          }
+        }
+        
+        updateFormProgress();
+        isFormDirty = true;
+      }
+    } catch (e) {
+      console.error('Failed to restore draft:', e);
+    }
+  };
+
+  const discardFormDraft = () => {
+    clearFormDraft();
+    const draftContainer = document.getElementById('formPanelDraftContainer');
+    if (draftContainer) draftContainer.style.display = 'none';
+  };
+
+  const showPanelError = (msg) => {
+    if (formPanelErrorContainer) {
+      formPanelErrorContainer.textContent = msg;
+      formPanelErrorContainer.style.display = 'block';
+      formPanelErrorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  const clearPanelError = () => {
+    if (formPanelErrorContainer) {
+      formPanelErrorContainer.style.display = 'none';
+      formPanelErrorContainer.textContent = '';
+    }
+  };
+
+  const closeFormPanel = () => {
+    if (formPanel) formPanel.classList.remove('open');
+    if (formPanelOverlay) {
+      formPanelOverlay.classList.remove('active');
+      setTimeout(() => {
+        formPanelOverlay.style.display = 'none';
+      }, 200);
+    }
+    document.body.style.overflow = '';
+  };
+
+  const handlePanelCloseAttempt = async () => {
+    if (isFormDirty) {
+      const confirmed = await showConfirmModal(
+        'Unsaved Changes',
+        'You have unsaved changes in the form. Are you sure you want to discard them?',
+        true,
+        '⚠️'
+      );
+      if (!confirmed) return;
+    }
+    closeFormPanel();
+  };
+
+  const openFormPanel = async (mode, cardno = null) => {
+    panelMode = mode;
+    
+    // Check if there is an unsaved draft in localStorage
+    const draftContainer = document.getElementById('formPanelDraftContainer');
+    if (draftContainer) {
+      const draft = localStorage.getItem('cardMgmt_formDraft');
+      if (draft) {
+        try {
+          const parsed = JSON.parse(draft);
+          const isCreateMatch = (mode === 'create' && parsed.mode === 'create');
+          const isEditMatch = (mode === 'edit' && parsed.mode === 'edit' && parsed.cardno === cardno);
+          
+          if (isCreateMatch || isEditMatch) {
+            draftContainer.style.display = 'flex';
+          } else {
+            draftContainer.style.display = 'none';
+          }
+        } catch (e) {
+          draftContainer.style.display = 'none';
+        }
+      } else {
+        draftContainer.style.display = 'none';
+      }
+    }
+
+    clearPanelError();
+    if (panelCardForm) panelCardForm.reset();
+    isFormDirty = false;
+    
+    // Clear validations and details
+    if (pCardnoVal) pCardnoVal.classList.remove('visible');
+    if (pMobnoVal) pMobnoVal.classList.remove('visible');
+    if (pEmailVal) pEmailVal.classList.remove('visible');
+    if (pRefCardValidation) pRefCardValidation.classList.remove('visible');
+    if (pSponsorPreviewCard) pSponsorPreviewCard.style.display = 'none';
+    if (pGuestFields) pGuestFields.style.display = 'none';
+    referenceCardValid = false;
+    validatedSponsorData = null;
+    isCardNumberAvailable = true;
+    const pCopySponsorLocationBtn = document.getElementById('p_copySponsorLocationBtn');
+    if (pCopySponsorLocationBtn) pCopySponsorLocationBtn.style.display = 'none';
+    const pDobAge = document.getElementById('p_dobAge');
+    if (pDobAge) pDobAge.textContent = '';
+    if (panelCardForm) {
+      panelCardForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    }
+
+    if (formPanelTitle) {
+      formPanelTitle.textContent = mode === 'create' ? 'Add New Card' : 'Edit Resident Details';
+    }
+
+    if (mode === 'create') {
+      if (pCardnoInput) {
+        pCardnoInput.readOnly = false;
+        pCardnoInput.disabled = false;
+      }
+      
+      await panelFetchCountries();
+      await panelFetchCentres();
+      updateIdNoPattern(true);
+      updateFormProgress();
+
+      if (formPanelOverlay) {
+        formPanelOverlay.style.display = 'block';
+        formPanelOverlay.offsetHeight; // force reflow
+        formPanelOverlay.classList.add('active');
+      }
+      if (formPanel) formPanel.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      setTimeout(() => {
+        if (pCardnoInput) pCardnoInput.focus();
+      }, 300);
+
+    } else {
+      if (pCardnoInput) {
+        pCardnoInput.readOnly = true;
+      }
+
+      if (formPanelOverlay) {
+        formPanelOverlay.style.display = 'block';
+        formPanelOverlay.offsetHeight; // force reflow
+        formPanelOverlay.classList.add('active');
+      }
+      if (formPanel) formPanel.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        const token = sessionStorage.getItem('token');
+        const res = await fetch(`${CONFIG.basePath}/card/search/${encodeURIComponent(cardno)}`, {
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch details');
+        const result = await res.json();
+        if (!result.data || !result.data[0]) {
+          showPanelError('No person found for card number: ' + cardno);
+          return;
+        }
+        
+        const data = result.data[0];
+        
+        ['cardno','issuedto','gender','dob','mobno','email','idType','idNo','address','pin','res_status'].forEach(field => {
+          const el = document.getElementById('p_' + field);
+          if (el) {
+            if (field === 'idNo') {
+              el.dataset.raw = data[field] || '';
+              if (data.idType === 'Aadhar') {
+                const raw = data[field] || '';
+                el.value = raw.length === 12 ? '•••• •••• ' + raw.substring(8) : raw;
+              } else {
+                el.value = data[field] || '';
+              }
+            } else {
+              el.value = data[field] || '';
+            }
+          }
+        });
+
+        updateAgeDisplay();
+        updateIdNoPattern(false);
+
+        if (pRefCardInput) pRefCardInput.value = data.referenceCardno || '';
+        const pGuestTypeSelect = document.getElementById('p_guest_type');
+        if (pGuestTypeSelect) pGuestTypeSelect.value = data.guestType || '';
+
+        if (pGuestFields) {
+          pGuestFields.style.display = data.res_status === 'GUEST' ? 'block' : 'none';
+        }
+
+        if (data.res_status === 'GUEST' && data.referenceCardno) {
+          validateReferenceCard(data.referenceCardno);
+        }
+
+        await panelFetchCountries(data.country, data.state, data.city);
+        await panelFetchCentres(data.center);
+
+        // Trigger validations to show checkmarks on load
+        if (pCardnoInput) pCardnoInput.dispatchEvent(new Event('input'));
+        if (pMobnoInput) pMobnoInput.dispatchEvent(new Event('input'));
+        if (pEmailInput) pEmailInput.dispatchEvent(new Event('input'));
+        if (pIdTypeSelect && pIdTypeSelect.value === 'PAN') {
+          validatePANNameMatch();
+        } else if (pIdTypeSelect && pIdTypeSelect.value === 'Aadhar') {
+          const raw = pIdNoInput ? (pIdNoInput.dataset.raw || '') : '';
+          const idNoVal = document.getElementById('p_idNoVal');
+          if (idNoVal) {
+            if (raw.length === 12) {
+              idNoVal.classList.add('visible');
+              idNoVal.style.color = '#16a34a';
+              idNoVal.innerHTML = '✓ Valid Aadhar Number';
+            } else if (raw.length > 0) {
+              idNoVal.classList.add('visible');
+              idNoVal.style.color = '#dc2626';
+              idNoVal.innerHTML = '✗ Aadhar number must be exactly 12 digits';
+            } else {
+              idNoVal.classList.remove('visible');
+              idNoVal.innerHTML = '';
+            }
+          }
+        }
+
+        updateFormProgress();
+        isFormDirty = false; // Reset dirty flag after loading edit data
+
+        setTimeout(() => {
+          const pIssuedto = document.getElementById('p_issuedto');
+          if (pIssuedto) pIssuedto.focus();
+        }, 100);
+
+      } catch (err) {
+        console.error(err);
+        showPanelError('Error loading person details: ' + err.message);
+      }
+    }
+  };
+
+  const validateReferenceCard = async (cardno) => {
+    const badge = document.getElementById('p_referenceCardNoValidation');
+    const sponsorCard = document.getElementById('p_sponsorPreviewCard');
+    const nameEl = document.getElementById('p_sponsorName');
+    const metaEl = document.getElementById('p_sponsorMeta');
+    const avatarEl = document.getElementById('p_sponsorAvatar');
+
+    if (!badge) return;
+
+    const trimmed = cardno.trim();
+    const pCopySponsorLocationBtn = document.getElementById('p_copySponsorLocationBtn');
+
+    const resetSponsor = () => {
+      referenceCardValid = false;
+      validatedSponsorData = null;
+      if (sponsorCard) sponsorCard.style.display = 'none';
+      if (pCopySponsorLocationBtn) pCopySponsorLocationBtn.style.display = 'none';
+    };
+
+    if (!trimmed) {
+      badge.classList.remove('visible');
+      badge.innerHTML = '';
+      resetSponsor();
+      return;
+    }
+
+    const currentCardInput = document.getElementById('p_cardno');
+    if (currentCardInput && trimmed === currentCardInput.value.trim()) {
+      badge.classList.add('visible');
+      badge.style.color = '#dc2626';
+      badge.innerHTML = `✗ Reference card cannot be the same as the card being assigned`;
+      resetSponsor();
+      return;
+    }
+
+    badge.classList.add('visible');
+    badge.style.color = '#d97706';
+    badge.innerHTML = `⏳ Checking card number...`;
+    if (sponsorCard) sponsorCard.style.display = 'none';
+    if (pCopySponsorLocationBtn) pCopySponsorLocationBtn.style.display = 'none';
+
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`${CONFIG.basePath}/card/search/${encodeURIComponent(trimmed)}`, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        badge.style.color = '#dc2626';
+        badge.innerHTML = `✗ Card not found or error checking card`;
+        resetSponsor();
+        return;
+      }
+      const result = await res.json();
+      if (result.data && result.data[0]) {
+        const info = result.data[0];
+        badge.style.color = '#16a34a';
+        badge.innerHTML = `✓ Validated sponsor`;
+        referenceCardValid = true;
+        validatedSponsorData = info;
+
+        if (sponsorCard && nameEl && metaEl && avatarEl) {
+          nameEl.textContent = info.issuedto;
+          metaEl.textContent = `${info.res_status} · Phone: ${info.mobno || '—'}`;
+          avatarEl.textContent = (info.issuedto || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+          const gender = (info.gender || '').toUpperCase();
+          if (gender === 'F') {
+            avatarEl.style.backgroundColor = '#fce7f3';
+            avatarEl.style.color = '#be185d';
+          } else if (gender === 'M') {
+            avatarEl.style.backgroundColor = '#e0e7ff';
+            avatarEl.style.color = '#4338ca';
+          } else {
+            avatarEl.style.backgroundColor = '#f1f5f9';
+            avatarEl.style.color = '#475569';
+          }
+
+          sponsorCard.style.display = 'flex';
+          sponsorCard.style.marginTop = '10px';
+          if (pCopySponsorLocationBtn) pCopySponsorLocationBtn.style.display = 'block';
+        }
+      } else {
+        badge.style.color = '#dc2626';
+        badge.innerHTML = `✗ Card not found`;
+        resetSponsor();
+      }
+    } catch (err) {
+      badge.style.color = '#dc2626';
+      badge.innerHTML = `✗ Error: ${err.message}`;
+      resetSponsor();
+    }
+  };
+
+  const panelFetchCountries = async (currentCountry = '', currentState = '', currentCity = '') => {
+    const token = sessionStorage.getItem('token');
+    const countrySelect = document.getElementById('p_country');
+    const stateSelect = document.getElementById('p_state');
+    const citySelect = document.getElementById('p_city');
+    const countrySpinner = document.getElementById('p_countrySpinner');
+
+    if (!countrySelect) return;
+
+    countrySelect.disabled = true;
+    if (countrySpinner) countrySpinner.classList.add('visible');
+    countrySelect.innerHTML = '<option value="">Select Country</option>';
+    if (stateSelect) {
+      stateSelect.disabled = true;
+      stateSelect.innerHTML = '<option value="">Select State</option>';
+    }
+    if (citySelect) {
+      citySelect.disabled = true;
+      citySelect.innerHTML = '<option value="">Select City</option>';
+    }
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/location/countries`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const result = await res.json();
+      countrySelect.innerHTML = '<option value="">Select Country</option>';
+      
+      const countries = result.data || ['India','USA','UK','UAE','Canada'];
+      countries.forEach(c => {
+        const val = c.value || c;
+        const selected = val === currentCountry ? 'selected' : '';
+        countrySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      });
+
+      if (currentCountry) {
+        await panelFetchStates(currentCountry, currentState, currentCity);
+      }
+    } catch (err) {
+      console.error('Failed to load countries:', err);
+    } finally {
+      countrySelect.disabled = false;
+      if (countrySpinner) countrySpinner.classList.remove('visible');
+    }
+  };
+
+  const panelFetchStates = async (country, currentState = '', currentCity = '') => {
+    const token = sessionStorage.getItem('token');
+    const stateSelect = document.getElementById('p_state');
+    const citySelect = document.getElementById('p_city');
+    const stateSpinner = document.getElementById('p_stateSpinner');
+
+    if (!stateSelect) return;
+
+    stateSelect.disabled = true;
+    if (stateSpinner) stateSpinner.classList.add('visible');
+    stateSelect.innerHTML = '<option value="">Select State</option>';
+    if (citySelect) {
+      citySelect.disabled = true;
+      citySelect.innerHTML = '<option value="">Select City</option>';
+    }
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/location/states/${encodeURIComponent(country)}`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const result = await res.json();
+      stateSelect.innerHTML = '<option value="">Select State</option>';
+
+      const states = result.data || [];
+      states.forEach(s => {
+        const val = s.value || s;
+        const selected = val === currentState ? 'selected' : '';
+        stateSelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      });
+
+      if (currentState) {
+        await panelFetchCities(country, currentState, currentCity);
+      }
+    } catch (err) {
+      console.error('Failed to load states:', err);
+    } finally {
+      stateSelect.disabled = false;
+      if (stateSpinner) stateSpinner.classList.remove('visible');
+    }
+  };
+
+  const panelFetchCities = async (country, state, currentCity = '') => {
+    const token = sessionStorage.getItem('token');
+    const citySelect = document.getElementById('p_city');
+    const citySpinner = document.getElementById('p_citySpinner');
+
+    if (!citySelect) return;
+
+    citySelect.disabled = true;
+    if (citySpinner) citySpinner.classList.add('visible');
+    citySelect.innerHTML = '<option value="">Select City</option>';
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/location/cities/${encodeURIComponent(country)}/${encodeURIComponent(state)}`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const result = await res.json();
+      citySelect.innerHTML = '<option value="">Select City</option>';
+
+      const cities = result.data || [];
+      cities.forEach(c => {
+        const val = c.value || c;
+        const selected = val === currentCity ? 'selected' : '';
+        citySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      });
+    } catch (err) {
+      console.error('Failed to load cities:', err);
+    } finally {
+      citySelect.disabled = false;
+      if (citySpinner) citySpinner.classList.remove('visible');
+    }
+  };
+
+  const panelFetchCentres = async (currentCentre = '') => {
+    const token = sessionStorage.getItem('token');
+    const centreSelect = document.getElementById('p_centre');
+    if (!centreSelect) return;
+
+    centreSelect.innerHTML = '<option value="">Select Centre</option>';
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/location/centres`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const result = await res.json();
+      const centres = result.data || [];
+
+      centres.forEach(c => {
+        const val = c.value || c;
+        const selected = val === currentCentre ? 'selected' : '';
+        centreSelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      });
+
+      if (currentCentre && !centres.find(c => (c.value || c) === currentCentre)) {
+        centreSelect.innerHTML += `<option value="${currentCentre}" selected>${currentCentre}</option>`;
+      }
+    } catch (err) {
+      console.error('Failed to load centres:', err);
+    }
+  };
+
+  // Wire Location Cascading Dropdowns
+  const pCountrySelect = document.getElementById('p_country');
+  const pStateSelect = document.getElementById('p_state');
+  const pCitySelect = document.getElementById('p_city');
+
+  if (pCountrySelect) {
+    pCountrySelect.addEventListener('change', async (e) => {
+      const country = e.target.value;
+      if (!country) {
+        if (pStateSelect) {
+          pStateSelect.innerHTML = '<option value="">Select State</option>';
+          pStateSelect.disabled = true;
+        }
+        if (pCitySelect) {
+          pCitySelect.innerHTML = '<option value="">Select City</option>';
+          pCitySelect.disabled = true;
+        }
+        return;
+      }
+      await panelFetchStates(country);
+    });
+  }
+
+  if (pStateSelect) {
+    pStateSelect.addEventListener('change', async (e) => {
+      const country = pCountrySelect ? pCountrySelect.value : '';
+      const state = e.target.value;
+      if (!state) {
+        if (pCitySelect) {
+          pCitySelect.innerHTML = '<option value="">Select City</option>';
+          pCitySelect.disabled = true;
+        }
+        return;
+      }
+      await panelFetchCities(country, state);
+    });
+  }
+
+  // Input Validations listeners
+  if (pCardnoInput && pCardnoVal) {
+    pCardnoInput.addEventListener('input', debounce(async () => {
+      const val = pCardnoInput.value.trim();
+      if (!val) {
+        pCardnoVal.classList.remove('visible');
+        isCardNumberAvailable = true;
+      } else if (!/^\d+$/.test(val)) {
+        pCardnoVal.classList.add('visible');
+        pCardnoVal.style.color = '#dc2626';
+        pCardnoVal.textContent = '✗ Card number must contain numbers only';
+        isCardNumberAvailable = false;
+      } else if (val.length !== 10) {
+        pCardnoVal.classList.add('visible');
+        pCardnoVal.style.color = '#dc2626';
+        pCardnoVal.textContent = '✗ Card number must be exactly 10 digits';
+        isCardNumberAvailable = false;
+      } else {
+        if (panelMode === 'edit') {
+          pCardnoVal.classList.add('visible');
+          pCardnoVal.style.color = '#16a34a';
+          pCardnoVal.textContent = '✓ Valid Card Number';
+          isCardNumberAvailable = true;
+          return;
+        }
+
+        pCardnoVal.classList.add('visible');
+        pCardnoVal.style.color = '#d97706';
+        pCardnoVal.textContent = '⏳ Checking card availability...';
+        isCardNumberAvailable = false;
+
+        try {
+          const token = sessionStorage.getItem('token');
+          const res = await fetch(`${CONFIG.basePath}/card/search/${encodeURIComponent(val)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const result = await res.json();
+            const match = (result.data || []).find(d => String(d.cardno) === val);
+            if (match) {
+              pCardnoVal.classList.add('visible');
+              pCardnoVal.style.color = '#d97706';
+              pCardnoVal.textContent = `⚠️ Card already assigned to ${match.issuedto}`;
+              isCardNumberAvailable = false;
+            } else {
+              pCardnoVal.classList.add('visible');
+              pCardnoVal.style.color = '#16a34a';
+              pCardnoVal.textContent = '✓ Valid Card Number (Available)';
+              isCardNumberAvailable = true;
+            }
+          } else {
+            pCardnoVal.classList.add('visible');
+            pCardnoVal.style.color = '#dc2626';
+            pCardnoVal.textContent = '✗ Error checking card availability';
+            isCardNumberAvailable = false;
+          }
+        } catch (e) {
+          pCardnoVal.classList.add('visible');
+          pCardnoVal.style.color = '#dc2626';
+          pCardnoVal.textContent = '✗ Error checking card availability';
+          isCardNumberAvailable = false;
+        }
+      }
+      updateFormProgress();
+    }, 400));
+  }
+
+  if (pMobnoInput && pMobnoVal) {
+    pMobnoInput.addEventListener('input', debounce(async () => {
+      const val = pMobnoInput.value.trim();
+      if (!val) {
+        pMobnoVal.classList.remove('visible');
+        return;
+      }
+      if (!/^\d{10}$/.test(val)) {
+        pMobnoVal.classList.add('visible');
+        pMobnoVal.style.color = '#dc2626';
+        pMobnoVal.textContent = '✗ Phone number must be exactly 10 digits';
+        return;
+      }
+      try {
+        const token = sessionStorage.getItem('token');
+        const res = await fetch(`${CONFIG.basePath}/card/search/${encodeURIComponent(val)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const result = await res.json();
+          const currentCard = pCardnoInput ? pCardnoInput.value.trim() : '';
+          const match = (result.data || []).find(d => String(d.mobno) === val && (panelMode === 'create' || d.cardno !== currentCard));
+          if (match) {
+            pMobnoVal.classList.add('visible');
+            pMobnoVal.style.color = '#d97706';
+            pMobnoVal.textContent = `⚠️ Phone already assigned to ${match.issuedto} (${match.cardno})`;
+          } else {
+            pMobnoVal.classList.add('visible');
+            pMobnoVal.style.color = '#16a34a';
+            pMobnoVal.textContent = '✓ Valid Phone Number';
+          }
+        }
+      } catch (e) {
+        pMobnoVal.classList.remove('visible');
+      }
+    }, 400));
+  }
+
+  if (pEmailInput && pEmailVal) {
+    pEmailInput.addEventListener('input', () => {
+      const val = pEmailInput.value.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!val) {
+        pEmailVal.classList.remove('visible');
+      } else if (!emailRegex.test(val)) {
+        pEmailVal.classList.add('visible');
+        pEmailVal.style.color = '#dc2626';
+        pEmailVal.textContent = '✗ Invalid email format';
+      } else {
+        pEmailVal.classList.add('visible');
+        pEmailVal.style.color = '#16a34a';
+        pEmailVal.textContent = '✓ Valid Email Address';
+      }
+    });
+  }
+
+  if (pResStatusSelect) {
+    pResStatusSelect.addEventListener('change', () => {
+      const resStatus = pResStatusSelect.value;
+      if (pGuestFields) {
+        pGuestFields.style.display = resStatus === 'GUEST' ? 'block' : 'none';
+      }
+      if (resStatus !== 'GUEST') {
+        referenceCardValid = false;
+        if (pRefCardValidation) {
+          pRefCardValidation.classList.remove('visible');
+          pRefCardValidation.innerHTML = '';
+        }
+        if (pSponsorPreviewCard) pSponsorPreviewCard.style.display = 'none';
+      } else {
+        if (pRefCardInput && pRefCardInput.value.trim()) {
+          validateReferenceCard(pRefCardInput.value);
+        }
+      }
+    });
+  }
+
+  if (pRefCardInput) {
+    pRefCardInput.addEventListener('input', debounce((e) => {
+      validateReferenceCard(e.target.value);
+    }, 300));
+  }
+
+  // Auto-capitalization / formatting on blur
+  const pIssuedtoInput = document.getElementById('p_issuedto');
+  const pAddressInput = document.getElementById('p_address');
+  const pIdNoInput = document.getElementById('p_idNo');
+
+  if (pIssuedtoInput) {
+    pIssuedtoInput.addEventListener('blur', () => {
+      pIssuedtoInput.value = pIssuedtoInput.value.trim().replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    });
+  }
+
+  if (pAddressInput) {
+    pAddressInput.addEventListener('blur', () => {
+      pAddressInput.value = pAddressInput.value.trim().replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    });
+  }
+
+  if (pIdNoInput) {
+    pIdNoInput.addEventListener('blur', () => {
+      pIdNoInput.value = pIdNoInput.value.trim().toUpperCase();
+    });
+  }
+
+  // Dynamic Age Calculator Listener
+  const pDobInput = document.getElementById('p_dob');
+  const pDobAge = document.getElementById('p_dobAge');
+  if (pDobInput && pDobAge) {
+    pDobInput.max = new Date().toISOString().split('T')[0];
+    pDobInput.addEventListener('input', updateAgeDisplay);
+    pDobInput.addEventListener('change', updateAgeDisplay);
+  }
+
+  // Real-time Numeric Sanitizer
+  const sanitizeNumericInput = (el) => {
+    if (!el) return;
+    el.addEventListener('input', function() {
+      const sanitized = this.value.replace(/[^\d]/g, '');
+      if (this.value !== sanitized) {
+        this.value = sanitized;
+      }
+    });
+  };
+  sanitizeNumericInput(pCardnoInput);
+  sanitizeNumericInput(pMobnoInput);
+  sanitizeNumericInput(pRefCardInput);
+  sanitizeNumericInput(document.getElementById('p_pin'));
+
+  // Clipboard Paste Sanitizer
+  const setupPasteSanitizer = (el) => {
+    if (!el) return;
+    el.addEventListener('paste', function(e) {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      
+      let regex = /[^\d]/g;
+      if (el.id === 'p_idNo') {
+        const idType = pIdTypeSelect ? pIdTypeSelect.value : '';
+        if (idType === 'PAN') {
+          regex = /[^a-zA-Z0-9]/g;
+        }
+      }
+      
+      const sanitized = text.replace(regex, '');
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      const currentVal = this.value;
+      const newVal = currentVal.substring(0, start) + sanitized + currentVal.substring(end);
+      
+      this.value = newVal;
+      this.dispatchEvent(new Event('input'));
+      
+      const nextCursor = start + sanitized.length;
+      this.setSelectionRange(nextCursor, nextCursor);
+    });
+  };
+  setupPasteSanitizer(pCardnoInput);
+  setupPasteSanitizer(pMobnoInput);
+  setupPasteSanitizer(pRefCardInput);
+  setupPasteSanitizer(document.getElementById('p_pin'));
+  setupPasteSanitizer(pIdNoInput);
+
+  // Auto-Tab on completed numeric inputs
+  if (pCardnoInput) {
+    pCardnoInput.addEventListener('input', function() {
+      if (this.value.length === 10) {
+        const nextEl = document.getElementById('p_issuedto');
+        if (nextEl) nextEl.focus();
+      }
+    });
+  }
+
+  if (pMobnoInput) {
+    pMobnoInput.addEventListener('input', function() {
+      if (this.value.length === 10) {
+        const nextEl = document.getElementById('p_email');
+        if (nextEl) nextEl.focus();
+      }
+    });
+  }
+
+  // HTML5 Validation Invalid class togglers
+  if (panelCardForm) {
+    panelCardForm.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('invalid', () => {
+        el.classList.add('is-invalid');
+      });
+      el.addEventListener('input', () => {
+        el.classList.remove('is-invalid');
+      });
+      el.addEventListener('change', () => {
+        el.classList.remove('is-invalid');
+      });
+    });
+  }
+
+  // Copy Sponsor Address & Location details click handler
+  const pCopySponsorLocationBtn = document.getElementById('p_copySponsorLocationBtn');
+  if (pCopySponsorLocationBtn) {
+    pCopySponsorLocationBtn.addEventListener('click', async () => {
+      if (!validatedSponsorData) return;
+      
+      const pAddress = document.getElementById('p_address');
+      const pPin = document.getElementById('p_pin');
+      const pCentre = document.getElementById('p_centre');
+      
+      if (pAddress) pAddress.value = validatedSponsorData.address || '';
+      if (pPin) pPin.value = validatedSponsorData.pin || '';
+      if (pCentre) pCentre.value = validatedSponsorData.center || validatedSponsorData.centre || '';
+      
+      if (pAddress) pAddress.classList.remove('is-invalid');
+      if (pPin) pPin.classList.remove('is-invalid');
+      if (pCentre) pCentre.classList.remove('is-invalid');
+      
+      // Trigger cascading location dropdowns
+      await panelFetchCountries(
+        validatedSponsorData.country,
+        validatedSponsorData.state,
+        validatedSponsorData.city
+      );
+    });
+  }
+
+  // E-mail Domain Autocomplete event listener
+  if (pEmailInput) {
+    pEmailInput.addEventListener('input', function() {
+      const val = this.value;
+      const datalist = document.getElementById('emailDomains');
+      if (!datalist) return;
+      datalist.innerHTML = '';
+      
+      const atIdx = val.indexOf('@');
+      if (atIdx !== -1) {
+        const prefix = val.substring(0, atIdx);
+        const domainPart = val.substring(atIdx + 1);
+        const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+        domains.forEach(d => {
+          if (d.startsWith(domainPart)) {
+            const option = document.createElement('option');
+            option.value = `${prefix}@${d}`;
+            datalist.appendChild(option);
+          }
+        });
+      }
+    });
+  }
+
+  // Dynamic ID Document input masking for Aadhar and PAN
+  let isAadharMasked = true;
+  const pIdTypeSelect = document.getElementById('p_idType');
+  const pIdNoToggle = document.getElementById('p_idNoToggle');
+
+  const validatePANNameMatch = () => {
+    if (!pIdTypeSelect || !pIdNoInput) return;
+    const idType = pIdTypeSelect.value;
+    if (idType !== 'PAN') {
+      const idNoVal = document.getElementById('p_idNoVal');
+      if (idNoVal) {
+        idNoVal.classList.remove('visible');
+        idNoVal.innerHTML = '';
+      }
+      return;
+    }
+    
+    const pan = pIdNoInput.value.trim().toUpperCase();
+    const name = pIssuedtoInput ? pIssuedtoInput.value.trim() : '';
+    const idNoVal = document.getElementById('p_idNoVal');
+    if (!idNoVal) return;
+
+    if (!pan) {
+      idNoVal.classList.remove('visible');
+      idNoVal.innerHTML = '';
+      return;
+    }
+
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+
+    if (pan.length === 10 && panRegex.test(pan)) {
+      if (name) {
+        const nameParts = name.split(/\s+/).filter(Boolean);
+        const targetChar = pan[4];
+        const expectedChars = nameParts.map(part => part[0].toUpperCase());
+        const isMatch = expectedChars.includes(targetChar);
+        if (!isMatch) {
+          idNoVal.classList.add('visible');
+          idNoVal.style.color = '#d97706';
+          idNoVal.innerHTML = `⚠️ 5th letter of PAN (${targetChar}) doesn't match name initials (${expectedChars.join('/')})`;
+        } else {
+          idNoVal.classList.add('visible');
+          idNoVal.style.color = '#16a34a';
+          idNoVal.innerHTML = `✓ Valid PAN Number`;
+        }
+      } else {
+        idNoVal.classList.add('visible');
+        idNoVal.style.color = '#16a34a';
+        idNoVal.innerHTML = `✓ Valid PAN Number`;
+      }
+    } else {
+      idNoVal.classList.add('visible');
+      idNoVal.style.color = '#dc2626';
+      if (pan.length < 10) {
+        idNoVal.innerHTML = `✗ PAN must be exactly 10 characters (e.g. ABCDE1234F)`;
+      } else {
+        idNoVal.innerHTML = `✗ Invalid PAN format (e.g. ABCDE1234F)`;
+      }
+    }
+  };
+
+  if (pIdTypeSelect && pIdNoInput) {
+    pIdTypeSelect.addEventListener('change', () => {
+      updateIdNoPattern(true);
+      const pIdNoVal = document.getElementById('p_idNoVal');
+      if (pIdNoVal) {
+        pIdNoVal.classList.remove('visible');
+        pIdNoVal.innerHTML = '';
+      }
+      isAadharMasked = true;
+      if (pIdNoToggle) {
+        pIdNoToggle.style.display = pIdTypeSelect.value === 'Aadhar' ? 'block' : 'none';
+        pIdNoToggle.textContent = '👁️';
+      }
+      updateFormProgress();
+    });
+
+    pIdNoInput.addEventListener('input', function() {
+      const idType = pIdTypeSelect.value;
+      if (idType === 'Aadhar') {
+        let val = this.value.replace(/[^\d]/g, '');
+        val = val.substring(0, 12);
+        this.dataset.raw = val;
+
+        if (document.activeElement === this) {
+          let formatted = '';
+          for (let i = 0; i < val.length; i++) {
+            if (i > 0 && i % 4 === 0) {
+              formatted += ' ';
+            }
+            formatted += val[i];
+          }
+          this.value = formatted;
+        }
+
+        const idNoVal = document.getElementById('p_idNoVal');
+        if (idNoVal) {
+          if (val.length === 12) {
+            idNoVal.classList.add('visible');
+            idNoVal.style.color = '#16a34a';
+            idNoVal.innerHTML = '✓ Valid Aadhar Number';
+          } else if (val.length > 0) {
+            idNoVal.classList.add('visible');
+            idNoVal.style.color = '#dc2626';
+            idNoVal.innerHTML = '✗ Aadhar number must be exactly 12 digits';
+          } else {
+            idNoVal.classList.remove('visible');
+            idNoVal.innerHTML = '';
+          }
+        }
+      } else if (idType === 'PAN') {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10);
+        validatePANNameMatch();
+      }
+      updateFormProgress();
+    });
+
+    pIdNoInput.addEventListener('focus', function() {
+      const idType = pIdTypeSelect.value;
+      if (idType === 'Aadhar') {
+        const raw = this.dataset.raw || '';
+        let formatted = '';
+        for (let i = 0; i < raw.length; i++) {
+          if (i > 0 && i % 4 === 0) formatted += ' ';
+          formatted += raw[i];
+        }
+        this.value = formatted;
+      }
+    });
+
+    pIdNoInput.addEventListener('blur', function() {
+      const idType = pIdTypeSelect.value;
+      if (idType === 'Aadhar') {
+        const raw = this.dataset.raw || '';
+        if (raw.length === 12 && isAadharMasked) {
+          this.value = '•••• •••• ' + raw.substring(8);
+        }
+      } else if (idType === 'PAN') {
+        validatePANNameMatch();
+      }
+    });
+  }
+
+  if (pIssuedtoInput) {
+    pIssuedtoInput.addEventListener('blur', () => {
+      validatePANNameMatch();
+    });
+  }
+
+  if (pIdNoToggle && pIdNoInput && pIdTypeSelect) {
+    pIdNoToggle.addEventListener('click', () => {
+      isAadharMasked = !isAadharMasked;
+      pIdNoToggle.textContent = isAadharMasked ? '👁️' : '🙈';
+      
+      if (pIdTypeSelect.value === 'Aadhar') {
+        const raw = pIdNoInput.dataset.raw || '';
+        if (isAadharMasked) {
+          if (raw.length === 12 && document.activeElement !== pIdNoInput) {
+            pIdNoInput.value = '•••• •••• ' + raw.substring(8);
+          }
+        } else {
+          let formatted = '';
+          for (let i = 0; i < raw.length; i++) {
+            if (i > 0 && i % 4 === 0) formatted += ' ';
+            formatted += raw[i];
+          }
+          pIdNoInput.value = formatted;
+        }
+      }
+    });
+  }
+
+  // Dirty Form Tracking & Progress Bar Updates & Auto-Save Draft
+  if (panelCardForm) {
+    panelCardForm.addEventListener('input', () => {
+      isFormDirty = true;
+      updateFormProgress();
+      saveFormDraft();
+    });
+    panelCardForm.addEventListener('change', () => {
+      isFormDirty = true;
+      updateFormProgress();
+      saveFormDraft();
+    });
+  }
+
+  // Form Panel Buttons Events
+  if (formPanelCloseBtn) formPanelCloseBtn.addEventListener('click', handlePanelCloseAttempt);
+  if (formPanelCancelBtn) formPanelCancelBtn.addEventListener('click', handlePanelCloseAttempt);
+  if (formPanelOverlay) formPanelOverlay.addEventListener('click', handlePanelCloseAttempt);
+  if (formPanelSubmitBtn) {
+    formPanelSubmitBtn.addEventListener('click', () => {
+      // Small delay to let browser HTML5 validation trigger and add .is-invalid via invalid listeners
+      setTimeout(() => {
+        const firstInvalid = panelCardForm.querySelector('.is-invalid, :invalid');
+        if (firstInvalid) {
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstInvalid.focus();
+        }
+      }, 50);
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (formPanel && formPanel.classList.contains('open')) {
+      if (e.key === 'Escape') {
+        handlePanelCloseAttempt();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (panelCardForm) {
+          panelCardForm.requestSubmit();
+        }
+      }
+    }
+  });
+
+  const addNewCardBtn = document.getElementById('addNewCardBtn');
+  if (addNewCardBtn) {
+    addNewCardBtn.addEventListener('click', () => openFormPanel('create'));
+  }
+
+  const restoreDraftBtn = document.getElementById('p_restoreDraftBtn');
+  if (restoreDraftBtn) {
+    restoreDraftBtn.addEventListener('click', restoreFormDraft);
+  }
+
+  const discardDraftBtn = document.getElementById('p_discardDraftBtn');
+  if (discardDraftBtn) {
+    discardDraftBtn.addEventListener('click', discardFormDraft);
+  }
+
+  // Panel Form Submission
+  if (panelCardForm) {
+    panelCardForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearPanelError();
+      panelCardForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+      let customValid = true;
+      let firstInvalidEl = null;
+
+      const markInvalid = (el) => {
+        if (el) {
+          el.classList.add('is-invalid');
+          if (!firstInvalidEl) firstInvalidEl = el;
+        }
+      };
+
+      const resStatus = pResStatusSelect.value;
+      if (resStatus === "GUEST") {
+        const referenceCardno = pRefCardInput?.value?.trim();
+        const guestType = document.getElementById('p_guest_type')?.value?.trim();
+
+        if (!referenceCardno || !guestType) {
+          showPanelError("Please enter both Reference Card Number and Guest Type for GUEST users.");
+          if (!referenceCardno) markInvalid(pRefCardInput);
+          if (!guestType) markInvalid(document.getElementById('p_guest_type'));
+          customValid = false;
+        } else if (!referenceCardValid) {
+          showPanelError("Please enter a valid Reference Card Number before submitting.");
+          markInvalid(pRefCardInput);
+          customValid = false;
+        }
+      }
+
+      if (panelMode === 'create') {
+        const cardno = pCardnoInput.value.trim();
+        if (!/^\d{10}$/.test(cardno)) {
+          showPanelError("Please enter a valid 10-digit card number.");
+          markInvalid(pCardnoInput);
+          customValid = false;
+        } else if (!isCardNumberAvailable) {
+          showPanelError("Card number is already assigned or checking availability.");
+          markInvalid(pCardnoInput);
+          customValid = false;
+        }
+      }
+
+      const mobno = pMobnoInput.value.trim();
+      if (!/^\d{10}$/.test(mobno)) {
+        showPanelError("Please enter a valid 10-digit phone number.");
+        markInvalid(pMobnoInput);
+        customValid = false;
+      }
+
+      const email = pEmailInput.value.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (email && !emailRegex.test(email)) {
+        showPanelError("Please enter a valid email address.");
+        markInvalid(pEmailInput);
+        customValid = false;
+      }
+
+      if (!customValid) {
+        if (firstInvalidEl) {
+          firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstInvalidEl.focus();
+        }
+        return;
+      }
+
+      if (formPanelSubmitBtn.disabled) return;
+      formPanelSubmitBtn.disabled = true;
+      const originalSubmitText = formPanelSubmitBtn.textContent;
+      formPanelSubmitBtn.textContent = '⏳ Saving...';
+
+      const bodyData = {
+        cardno: pCardnoInput.value.trim(),
+        issuedto: document.getElementById('p_issuedto').value.trim(),
+        gender: document.getElementById('p_gender').value,
+        dob: document.getElementById('p_dob').value,
+        mobno: mobno,
+        email: email,
+        idType: document.getElementById('p_idType').value,
+        idNo: document.getElementById('p_idType').value === 'Aadhar'
+          ? (document.getElementById('p_idNo').dataset.raw || document.getElementById('p_idNo').value.replace(/[^\d]/g, ''))
+          : document.getElementById('p_idNo').value.trim(),
+        address: document.getElementById('p_address').value.trim(),
+        country: document.getElementById('p_country').value,
+        state: document.getElementById('p_state').value,
+        city: document.getElementById('p_city').value,
+        pin: document.getElementById('p_pin').value.trim(),
+        centre: document.getElementById('p_centre').value,
+        center: document.getElementById('p_centre').value,
+        res_status: resStatus
+      };
+
+      if (resStatus === "GUEST") {
+        bodyData.referenceCardno = pRefCardInput.value.trim();
+        bodyData.guestType = document.getElementById('p_guest_type').value.trim();
+      }
+
+      try {
+        const token = sessionStorage.getItem('token');
+        const url = panelMode === 'create' 
+          ? `${CONFIG.basePath}/card/create` 
+          : `${CONFIG.basePath}/card/update`;
+        
+        const method = panelMode === 'create' ? 'POST' : 'PUT';
+
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(bodyData)
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || `Failed to ${panelMode === 'create' ? 'create' : 'update'} card`);
+
+        isFormDirty = false;
+        clearFormDraft();
+        closeFormPanel();
+        showSuccessMessage(panelMode === 'create' ? 'Card created successfully!' : 'Card updated successfully!');
+
+        const query = searchInput.value.trim();
+        if (query) {
+          await fetchData(query);
+        } else {
+          searchInput.value = bodyData.cardno;
+          toggleClearSearchBtn();
+          await fetchData(bodyData.cardno);
+        }
+
+      } catch (err) {
+        showPanelError('Error: ' + err.message);
+      } finally {
+        formPanelSubmitBtn.disabled = false;
+        formPanelSubmitBtn.textContent = originalSubmitText;
+      }
+    });
+  }
 
   // Initialize: restore URL state first, then render
   restoreUrlState().then(() => {

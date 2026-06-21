@@ -55,6 +55,24 @@
       .stat-chip-seva   { background:#f0f9ff; color:#0369a1; border-color:#bae6fd; }
       .stat-chip-guest  { background:#f8fafc; color:#475569; border-color:#cbd5e1; }
 
+      /* Clickable Credit Pills */
+      .credit-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 9999px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 1px solid transparent;
+        user-select: none;
+      }
+      .credit-pill-room { background-color: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+      .credit-pill-food { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
+      .credit-pill-travel { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+      .credit-pill-utsav { background-color: #f8fafc; color: #475569; border-color: #cbd5e1; }
+
       /* ── Copy button ── */
       .copy-btn {
         display: inline-flex;
@@ -205,6 +223,174 @@
         border-bottom: 1px solid #f8fafc;
         gap: 10px;
       }
+      
+      /* ── Form Slide-over Panel ── */
+      .form-panel-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.4);
+        backdrop-filter: blur(2px);
+        z-index: 9000;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .form-panel-overlay.active { display: block; opacity: 1; }
+      .form-panel {
+        position: fixed;
+        top: 0;
+        right: -550px;
+        width: 530px;
+        max-width: 96vw;
+        height: 100vh;
+        background: #ffffff;
+        box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+        z-index: 9001;
+        display: flex;
+        flex-direction: column;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+      .form-panel.open { right: 0; }
+      .form-panel-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .form-panel-title { font-size: 18px; font-weight: 700; color: #0f172a; }
+      .form-panel-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 22px;
+        color: #94a3b8;
+        padding: 0;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .form-panel-close:hover { color: #475569; }
+      .form-panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+      }
+      .form-panel-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        gap: 12px;
+        flex-shrink: 0;
+        background: #f8fafc;
+      }
+      .form-group-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .form-panel-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #4f46e5;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 0 12px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .form-panel-section-title:first-of-type { margin-top: 0; }
+      .form-control:disabled {
+        background-color: rgba(243, 244, 246, 0.6);
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+      @keyframes inline-spin {
+        to { transform: rotate(360deg); }
+      }
+      .dropdown-spinner {
+        display: none;
+        width: 12px;
+        height: 12px;
+        margin-left: 6px;
+        border: 2px solid #e2e8f0;
+        border-top-color: #4f46e5;
+        border-radius: 50%;
+        animation: inline-spin 0.6s linear infinite;
+        vertical-align: middle;
+      }
+      .dropdown-spinner.visible {
+        display: inline-block;
+      }
+      .validation-badge {
+        font-size: 11px;
+        font-weight: 500;
+        margin-top: 0;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.25s ease;
+      }
+      .validation-badge.visible {
+        margin-top: 4px;
+        max-height: 40px;
+        opacity: 1;
+      }
+      .form-control.is-invalid {
+        border-color: #ef4444 !important;
+        background-color: #fef2f2 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+      }
+      .form-error-container {
+        background-color: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+      }
+      
+      /* Sponsor Preview Card inside Form Panel */
+      .sponsor-preview-card {
+        display: none;
+        margin-top: 10px;
+        padding: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      }
+      .sponsor-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 17px;
+        flex-shrink: 0;
+      }
+      .sponsor-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .sponsor-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sponsor-meta {
+        font-size: 12.5px;
+        color: #64748b;
+        margin-top: 2px;
+      }
       .drawer-field-icon { font-size: 15px; color: #94a3b8; width: 20px; text-align: center; flex-shrink: 0; }
       .drawer-field-label { font-size: 11px; color: #94a3b8; min-width: 90px; flex-shrink: 0; }
       .drawer-field-value { font-size: 13.5px; color: #1e293b; font-weight: 500; flex: 1; word-break: break-all; }
@@ -275,6 +461,57 @@
         background-color: #059669 !important;
         transform: translateY(-1px);
         color: #ffffff !important;
+      }
+      #addNewCardBtn {
+        background-color: #4f46e5 !important;
+        border: 1px solid #4f46e5 !important;
+        color: #fff !important;
+        border-radius: 6px !important;
+        padding: 6px 14px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        border: none !important;
+        margin: 0 !important;
+      }
+      #addNewCardBtn:hover {
+        background-color: #4338ca !important;
+        border-color: #4338ca !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08) !important;
+      }
+      .btn-report-link {
+        background-color: #fff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #475569 !important;
+        border-radius: 6px !important;
+        padding: 6px 14px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        margin: 0 !important;
+        text-decoration: none !important;
+      }
+      .btn-report-link:hover {
+        background-color: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08) !important;
       }
 
       /* Sortable Headers */
@@ -893,7 +1130,32 @@
                   </div>
                   <span id="resultsCountBadge" style="display: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background-color: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap; height: 38px; line-height: 26px; box-sizing: border-box;">● 0 Cards Found</span>
                 </div>
-                <div id="exportBtnContainer" style="display: flex; align-items: center; gap: 8px;">
+                <div id="exportBtnContainer" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <button
+                    type="button"
+                    id="addNewCardBtn"
+                  >
+                    ➕ Add New Card
+                  </button>
+                  <button
+                    onclick="window.location.href='creditsReport.html'"
+                    class="btn-report-link"
+                  >
+                    📊 Mumukshu Credit Report
+                  </button>
+                  <button id="keyboardShortcutsBtn" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 16px; cursor: pointer; color: #64748b; height: 38px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); background-color: #fff; transition: all 0.2s ease;" title="Keyboard Shortcuts">⌨️</button>
+                  
+                  <div class="column-visibility-wrapper" style="position: relative; display: inline-block;">
+                    <button id="columnVisibilityBtn" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #64748b; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); background-color: #fff; transition: all 0.2s ease; font-weight: 500;" title="Toggle Column Visibility">👁️ Columns</button>
+                    <div class="column-visibility-dropdown" id="columnVisibilityDropdown" style="position: absolute; top: calc(100% + 4px); right: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); z-index: 200; overflow: hidden; display: none; min-width: 180px; padding: 8px 0;">
+                      <div style="padding: 4px 12px 6px; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; margin-bottom: 6px;">Show/Hide Columns</div>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: #334155; cursor: pointer; margin: 0; font-weight: 500;"><input type="checkbox" data-col="1" checked /> Name</label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: #334155; cursor: pointer; margin: 0; font-weight: 500;"><input type="checkbox" data-col="2" checked /> Card Number</label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: #334155; cursor: pointer; margin: 0; font-weight: 500;"><input type="checkbox" data-col="3" checked /> Mobile Number</label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: #334155; cursor: pointer; margin: 0; font-weight: 500;"><input type="checkbox" data-col="4" checked /> Residence Status</label>
+                    </div>
+                  </div>
+
                   <button id="exportExcelBtn" class="btn-export-csv">📤 Export Excel</button>
                 </div>
               </div>
@@ -950,20 +1212,7 @@
               <!-- Mobile Grid View -->
               <div id="mobile-cards-grid"></div>
 
-              <div class="form-group form-submit" style="margin-top: 20px;">
-                <button
-                  onclick="window.location.href='createCard.html'"
-                  class="btn btn-primary"
-                >
-                  Add New Card
-                </button>
-                <button
-                  onclick="window.location.href='creditsReport.html'"
-                  class="btn btn-primary"
-                >
-                  Mumukshu Credit Report 
-                </button>
-              </div>
+
             </div>
           </div>
         </div>
@@ -1024,6 +1273,273 @@
           <button type="button" id="confirmCancelBtn" class="btn btn-secondary" style="margin: 0; padding: 8px 18px;">Cancel</button>
           <button type="button" id="confirmOkBtn" class="btn btn-primary" style="margin: 0; padding: 8px 18px;">Confirm</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="keyboardShortcutsModal" class="modal-overlay">
+      <div class="modal-card" style="text-align: left; max-width: 450px;">
+        <span class="modal-close-icon" id="shortcutsCloseIcon">&times;</span>
+        <h3 style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">⌨️ Keyboard Shortcuts</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="font-size: 13.5px; color: #475569;">Focus Search Input</span>
+            <kbd style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">/</kbd>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="font-size: 13.5px; color: #475569;">Clear Search / Blur Input</span>
+            <kbd style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">Esc</kbd>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="font-size: 13.5px; color: #475569;">Previous Page (in results)</span>
+            <kbd style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">&larr; (Left Arrow)</kbd>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="font-size: 13.5px; color: #475569;">Next Page (in results)</span>
+            <kbd style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">&rarr; (Right Arrow)</kbd>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="font-size: 13.5px; color: #475569;">Close Drawer / Modals</span>
+            <kbd style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">Esc</kbd>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="font-size: 13.5px; color: #475569;">Quick View Details (Row)</span>
+            <span style="font-size: 12px; color: #64748b; font-weight: 500;">Single Click</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13.5px; color: #475569;">Edit Resident Details</span>
+            <span style="font-size: 12px; color: #64748b; font-weight: 500;">Double Click</span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <button type="button" id="shortcutsOkBtn" class="btn btn-secondary" style="margin: 0; padding: 8px 18px;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide-over Form Panel -->
+    <div id="formPanelOverlay" class="form-panel-overlay"></div>
+    <div id="formPanel" class="form-panel">
+      <div class="form-panel-header">
+        <span class="form-panel-title" id="formPanelTitle">Add New Card</span>
+        <button class="form-panel-close" id="formPanelCloseBtn">&times;</button>
+      </div>
+      <div class="form-panel-body">
+        <!-- Form Completion Progress Bar -->
+        <div class="form-progress-wrapper" style="padding: 0 0 16px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">
+            <span>Form Completion Progress</span>
+            <span id="p_formProgressText">0%</span>
+          </div>
+          <div style="width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+            <div id="p_formProgressBar" style="width: 0%; height: 100%; background: #f97316; transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px;"></div>
+          </div>
+        </div>
+        <div id="formPanelErrorContainer" class="form-error-container" style="display:none; padding:12px 16px; border-radius:8px; font-size:14px; font-weight:500; margin-bottom:20px;"></div>
+        <div id="formPanelDraftContainer" style="display:none; background-color:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:12px 16px; border-radius:8px; font-size:13.5px; font-weight:500; margin-bottom:20px; align-items:center; justify-content:space-between; gap:12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          <span>📝 You have an unsaved draft from a previous session.</span>
+          <div style="display:flex; gap:8px; flex-shrink:0;">
+            <button type="button" id="p_restoreDraftBtn" style="background-color:#2563eb; border:1px solid #2563eb; color:#fff; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition: all 0.15s ease;">Restore</button>
+            <button type="button" id="p_discardDraftBtn" style="background-color:#fff; border:1px solid #cbd5e1; color:#475569; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition: all 0.15s ease;">Discard</button>
+          </div>
+        </div>
+        <form id="panelCardForm">
+          <div class="form-panel-section-title">Identity</div>
+          
+          <div class="form-group">
+            <label for="p_cardno">Card Number:</label>
+            <input type="text" id="p_cardno" name="cardno" class="form-control" pattern="[0-9]{10}" maxlength="10" required />
+            <div id="p_cardnoVal" class="validation-badge" style="color: #dc2626;"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="p_issuedto">Card Issued To:</label>
+            <input type="text" id="p_issuedto" name="issuedto" class="form-control" required />
+          </div>
+          
+          <div class="form-group-grid">
+            <div class="form-group">
+              <label for="p_gender">Gender:</label>
+              <select id="p_gender" name="gender" class="form-control">
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p_dob">Date of Birth: <span id="p_dobAge" style="font-weight: 600; color: #4f46e5; margin-left: 6px; font-size: 12.5px;"></span></label>
+              <input type="date" id="p_dob" name="dob" class="form-control" required />
+            </div>
+          </div>
+
+          <div class="form-panel-section-title">Contact</div>
+          <div class="form-group-grid">
+            <div class="form-group">
+              <label for="p_mobno">Phone No:</label>
+              <input type="text" id="p_mobno" name="mobno" class="form-control" maxlength="10" pattern="\d{10}" title="Please enter exactly 10 digits" required />
+              <div id="p_mobnoVal" class="validation-badge" style="color: #dc2626;"></div>
+            </div>
+            <div class="form-group">
+              <label for="p_email">E-mail Address:</label>
+              <input type="email" id="p_email" name="email" class="form-control" list="emailDomains" required />
+              <datalist id="emailDomains"></datalist>
+              <div id="p_emailVal" class="validation-badge" style="color: #dc2626;"></div>
+            </div>
+          </div>
+
+          <div class="form-panel-section-title">ID Document</div>
+          <div class="form-group-grid">
+            <div class="form-group">
+              <label for="p_idType">ID Type:</label>
+              <select id="p_idType" name="idType" class="form-control">
+                <option value="PAN">PAN No</option>
+                <option value="Aadhar">Aadhar No</option>
+                <option value="Pending">None</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p_idNo">ID No:</label>
+              <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                <input type="text" id="p_idNo" name="idNo" class="form-control" required style="padding-right: 35px; width: 100%;" />
+                <span id="p_idNoToggle" style="position: absolute; right: 10px; cursor: pointer; font-size: 14px; user-select: none; display: none;">👁️</span>
+              </div>
+              <div id="p_idNoVal" class="validation-badge" style="color: #dc2626;"></div>
+            </div>
+          </div>
+
+          <div class="form-panel-section-title">Address & Location</div>
+          <div class="form-group">
+            <label for="p_address">Address:</label>
+            <input type="text" id="p_address" name="address" class="form-control" required />
+          </div>
+          
+          <div class="form-group-grid">
+            <div class="form-group">
+              <label for="p_country">Country:<span id="p_countrySpinner" class="dropdown-spinner"></span></label>
+              <select id="p_country" name="country" class="form-control" required>
+                <option value="">Select Country</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p_state">State:<span id="p_stateSpinner" class="dropdown-spinner"></span></label>
+              <select id="p_state" name="state" class="form-control" required>
+                <option value="">Select State</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group-grid">
+            <div class="form-group">
+              <label for="p_city">City:<span id="p_citySpinner" class="dropdown-spinner"></span></label>
+              <select id="p_city" name="city" class="form-control" required>
+                <option value="">Select City</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p_pin">PIN:</label>
+              <input type="text" id="p_pin" name="pin" class="form-control" maxlength="6" pattern="[0-9]{6}" required />
+            </div>
+          </div>
+
+          <div class="form-group-grid">
+            <div class="form-group">
+              <label for="p_centre">Centre:</label>
+              <select id="p_centre" name="centre" class="form-control" required>
+                <option value="">Select Centre</option>
+                <option value="Ahmedabad">Ahmedabad</option>
+                <option value="Anand">Anand</option>
+                <option value="Andheri">Andheri</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="Bhandup">Bhandup</option>
+                <option value="Bhayandar">Bhayandar</option>
+                <option value="Borivali">Borivali</option>
+                <option value="Canada">Canada</option>
+                <option value="Chembur">Chembur</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Coimbatore">Coimbatore</option>
+                <option value="Dahisar">Dahisar</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Dhule">Dhule</option>
+                <option value="Dombivali">Dombivali</option>
+                <option value="Dubai">Dubai</option>
+                <option value="Ghatkopar">Ghatkopar</option>
+                <option value="Hubli">Hubli</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Jabalpur">Jabalpur</option>
+                <option value="Jamshedpur">Jamshedpur</option>
+                <option value="Kandivali">Kandivali</option>
+                <option value="Khar">Khar</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Kuwait">Kuwait</option>
+                <option value="Mahim">Mahim</option>
+                <option value="Malad">Malad</option>
+                <option value="Matunga">Matunga</option>
+                <option value="Mulund">Mulund</option>
+                <option value="Nagpur">Nagpur</option>
+                <option value="Nagri">Nagri</option>
+                <option value="New Mumbai">New Mumbai</option>
+                <option value="Pondichhery">Pondichhery</option>
+                <option value="Pune">Pune</option>
+                <option value="Raipur">Raipur</option>
+                <option value="Raj Nagar">Raj Nagar</option>
+                <option value="Rajim">Rajim</option>
+                <option value="Rajkot">Rajkot</option>
+                <option value="Rajnandgaon">Rajnandgaon</option>
+                <option value="Ranchi">Ranchi</option>
+                <option value="Santacruz">Santacruz</option>
+                <option value="South Mumbai">South Mumbai</option>
+                <option value="Thane">Thane</option>
+                <option value="UAE">UAE</option>
+                <option value="USA East Coast">USA East Coast</option>
+                <option value="USA West Coast">USA West Coast</option>
+                <option value="Vile Parla">Vile Parla</option>
+                <option value="Wadala">Wadala</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p_res_status">Residential Status:</label>
+              <select id="p_res_status" name="res_status" class="form-control" required>
+                <option value="MUMUKSHU">MUMUKSHU</option>
+                <option value="PR">PR</option>
+                <option value="SEVA KUTIR">SEVA KUTIR</option>
+                <option value="GUEST">GUEST</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Guest-specific fields -->
+          <div id="p_guestFields" style="display: none;">
+            <div class="form-panel-section-title">Guest Sponsor Details</div>
+            <div class="form-group">
+              <label for="p_reference_cardno">Reference Card Number:</label>
+              <input type="text" id="p_reference_cardno" name="reference_cardno" class="form-control" maxlength="10" />
+              <div id="p_referenceCardNoValidation" class="validation-badge"></div>
+              
+              <div class="sponsor-preview-card" id="p_sponsorPreviewCard">
+                <div class="sponsor-avatar" id="p_sponsorAvatar">?</div>
+                <div class="sponsor-info">
+                  <div class="sponsor-name" id="p_sponsorName">—</div>
+                  <div class="sponsor-meta" id="p_sponsorMeta">—</div>
+                </div>
+              </div>
+              <button type="button" id="p_copySponsorLocationBtn" style="display:none; font-size:11.5px; padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; margin-top:8px; cursor:pointer; font-weight:600; transition:all 0.15s ease; width:100%; text-align:center;">📋 Copy Sponsor Address & Location</button>
+            </div>
+            <div class="form-group">
+              <label for="p_guest_type">Guest Type:</label>
+              <select id="p_guest_type" name="guest_type" class="form-control">
+                <option value="">Select Type</option>
+                <option value="Family">Family</option>
+                <option value="Friend">Friend</option>
+                <option value="Driver">Driver</option>
+                <option value="VIP">VIP</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="form-panel-footer">
+        <button type="button" class="btn btn-secondary" id="formPanelCancelBtn" style="margin: 0; flex: 1;">Cancel</button>
+        <button type="submit" form="panelCardForm" class="btn btn-primary" id="formPanelSubmitBtn" style="margin: 0; flex: 1;">Submit</button>
       </div>
     </div>
   </body>
