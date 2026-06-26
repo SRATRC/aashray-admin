@@ -5,29 +5,551 @@
 
 <style>
   .action-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
 
-.action-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+  .action-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
-.action-controls label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin: 0;
-}
+  .action-controls label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+  }
 
-.search-box {
-  max-width: 250px;
-}
+  /* iOS-Style segment tabs for Status Filter */
+  .status-filter-group {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 8px;
+    gap: 4px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 12px;
+  }
 
+  .filter-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .filter-btn:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .filter-btn.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Search Input Wrapper */
+  .search-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 220px;
+  }
+
+  /* Compact Pagination styling */
+  .pagination {
+    display: flex !important;
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin: 0 !important;
+    gap: 3px;
+  }
+  .pagination li {
+    display: inline-block !important;
+    list-style-type: none !important;
+  }
+  .pagination li a, .pagination li span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    color: #475569;
+    text-decoration: none;
+    background-color: #fff;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  .pagination li a:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    transform: translateY(-1px);
+  }
+  .pagination li.active span {
+    background-color: #4f46e5;
+    color: #fff;
+    border-color: #4f46e5;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+  }
+  .pagination li.disabled span {
+    color: #94a3b8;
+    cursor: not-allowed;
+    background-color: #f1f5f9;
+    border-color: #e2e8f0;
+    box-shadow: none;
+  }
+  .pagination-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Sortable Headers */
+  th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 20px !important;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  th.sortable:hover {
+    background-color: rgba(79, 70, 229, 0.06) !important;
+    color: #4f46e5 !important;
+  }
+  th.sortable.active-sort {
+    color: #4f46e5 !important;
+    background-color: rgba(79, 70, 229, 0.04) !important;
+    border-bottom: 2px solid #4f46e5 !important;
+    font-weight: 600 !important;
+  }
+  th.sortable:after {
+    content: ' ↕';
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.3);
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  th.sortable.asc:after {
+    content: ' ▲';
+    color: #4f46e5;
+    opacity: 1;
+  }
+  th.sortable.desc:after {
+    content: ' ▼';
+    color: #4f46e5;
+    opacity: 1;
+  }
+
+  /* Status Badges */
+  .badge-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap !important;
+  }
+  .badge-approved {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+  .badge-pending {
+    background-color: #fef3c7;
+    color: #78350f;
+  }
+  .badge-reset {
+    background-color: #e0f2fe;
+    color: #0369a1;
+  }
+  .badge-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  .badge-deleted {
+    background-color: #f1f5f9;
+    color: #475569;
+  }
+
+  /* Row animations */
+  @keyframes rowFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  #wifiRequestTable tbody tr {
+    animation: rowFadeIn 0.25s ease-out forwards;
+    opacity: 0;
+    transition: background-color 0.15s ease;
+  }
+  #wifiRequestTable tbody tr td {
+    transition: transform 0.15s ease;
+  }
+  #wifiRequestTable tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.04) !important;
+  }
+  #wifiRequestTable tbody tr:hover td {
+    transform: translateX(3px);
+  }
+
+  /* Row status indicators */
+  tr.status-border-approved td:first-child { border-left: 4px solid #10b981 !important; }
+  tr.status-border-pending td:first-child { border-left: 4px solid #f59e0b !important; }
+  tr.status-border-reset td:first-child { border-left: 4px solid #3b82f6 !important; }
+  tr.status-border-rejected td:first-child { border-left: 4px solid #ef4444 !important; }
+  tr.status-border-deleted td:first-child { border-left: 4px solid #64748b !important; }
+
+  /* Premium Custom Modal Styles */
+  .custom-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .custom-modal-backdrop.show {
+    display: flex;
+    opacity: 1;
+  }
+  .custom-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 500px;
+    overflow: hidden;
+    transform: translateY(-20px);
+    transition: transform 0.25s ease;
+    padding: 0;
+  }
+  .custom-modal-backdrop.show .custom-modal-content {
+    transform: translateY(0);
+  }
+  .custom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background-color: #f8fafc;
+  }
+  .custom-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .custom-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.15s ease;
+  }
+  .custom-modal-close-btn:hover {
+    color: #334155;
+  }
+  .custom-modal-body {
+    padding: 20px;
+  }
+  .modal-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .btn-export-csv {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    height: 38px !important;
+    padding: 6px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    border: none !important;
+    white-space: nowrap;
+    margin: 0;
+  }
+  .btn-export-csv:hover {
+    background-color: #059669 !important;
+    transform: translateY(-1px);
+    color: #ffffff !important;
+  }
+
+  /* Expand container width on this page to fit all 13 columns */
+  .container {
+    max-width: 1450px !important;
+    width: 95% !important;
+  }
+
+  .inner-padding {
+    padding: 1.5rem !important;
+  }
+
+  /* Premium Responsive Table Container */
+  .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-top: 15px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  }
+
+  .table {
+    width: 100% !important;
+    min-width: auto !important;
+    margin-bottom: 0 !important;
+    border-collapse: collapse;
+  }
+
+  #wifiRequestTable th, #wifiRequestTable td {
+    vertical-align: middle !important;
+    padding: 8px 5px !important;
+    font-size: 12px !important;
+  }
+
+  #wifiRequestTable th {
+    font-weight: 600 !important;
+  }
+
+  /* Keep specific columns from wrapping to maintain horizontal integrity, but let names/dates/emails wrap */
+  #wifiRequestTable td:nth-child(1), #wifiRequestTable th:nth-child(1), /* Id */
+  #wifiRequestTable td:nth-child(2), #wifiRequestTable th:nth-child(2), /* Card No */
+  #wifiRequestTable td:nth-child(4), #wifiRequestTable th:nth-child(4), /* Mobile */
+  #wifiRequestTable td:nth-child(6), #wifiRequestTable th:nth-child(6), /* Res Status */
+  #wifiRequestTable td:nth-child(10), #wifiRequestTable th:nth-child(10), /* SSID */
+  #wifiRequestTable td:nth-child(11), #wifiRequestTable th:nth-child(11), /* Code */
+  #wifiRequestTable td:nth-child(12), #wifiRequestTable th:nth-child(12), /* Status */
+  #wifiRequestTable td:nth-child(13), #wifiRequestTable th:nth-child(13)  /* Action */ {
+    white-space: nowrap !important;
+  }
+
+  /* Premium Utility Buttons */
+  .btn-utility {
+    height: 38px !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+  }
+  .btn-utility:hover {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Premium Take Action Button */
+  .btn-take-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.01em;
+    margin: 0;
+  }
+  .btn-take-action:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #312e81 100%);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px) scale(1.02);
+    color: #ffffff;
+  }
+  .btn-take-action:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.2);
+  }
+  .btn-utility-primary {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+  }
+  .btn-utility-primary:hover {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+  }
+  .btn-utility-warning {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+  }
+  .btn-utility-warning:hover {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+  }
+  .dry-run-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap !important;
+  }
+  .dry-run-label input {
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    margin: 0 !important;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 680px) {
+    .filter-action-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+    }
+    .status-filter-group {
+      flex-wrap: wrap !important;
+      height: auto !important;
+    }
+    .filter-btn {
+      font-size: 11px !important;
+      padding: 5px 9px !important;
+    }
+    .filter-action-row > button {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    .toolbar-container {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 10px 12px !important;
+      gap: 8px !important;
+    }
+    .toolbar-container .search-input-wrapper {
+      width: 100% !important;
+      display: block !important;
+    }
+    #downloadBtnContainer {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+    #downloadBtnContainer > * {
+      flex: 1 !important;
+      justify-content: center !important;
+      min-width: 120px !important;
+    }
+    .pagination-container {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 6px !important;
+    }
+    #paginationTop,
+    #paginationBottom {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      gap: 4px !important;
+      padding-bottom: 2px !important;
+      scrollbar-width: none !important;
+    }
+    #paginationTop::-webkit-scrollbar,
+    #paginationBottom::-webkit-scrollbar {
+      display: none;
+    }
+    .pagination li a,
+    .pagination li span {
+      min-width: 28px !important;
+      height: 28px !important;
+      padding: 0 6px !important;
+      font-size: 12px !important;
+      flex-shrink: 0;
+    }
+    #paginationInfoTop,
+    #paginationInfoBottom {
+      font-size: 12px !important;
+      white-space: nowrap;
+    }
+    .pagination-controls {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center;
+      gap: 6px !important;
+    }
+    .frm-head h1 {
+      font-size: 18px !important;
+    }
+  }
 </style>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,249 +596,289 @@
           </div>
 
           <div class="form">
-            <label>Status:
-              <select id="statusFilter">
-                <option value="">All</option>
-                <option value="pending-new">Pending – New</option>
-                <option value="pending-reset">Pending – Reset</option>
-                <option value="approved">Approved</option>
-                <option value="deleted">Deleted</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </label>
+            <!-- Row 1: Segment Tabs and Primary Action Button -->
+            <div class="filter-action-row" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; width: 100%;">
+              <!-- Status Filter segment tabs -->
+              <div class="status-filter-group" style="margin: 0; display: inline-flex;">
+                <button type="button" class="filter-btn active" data-status="">All</button>
+                <button type="button" class="filter-btn" data-status="pending-new">Pending – New</button>
+                <button type="button" class="filter-btn" data-status="pending-reset">Pending – Reset</button>
+                <button type="button" class="filter-btn" data-status="approved">Approved</button>
+                <button type="button" class="filter-btn" data-status="deleted">Deleted</button>
+                <button type="button" class="filter-btn" data-status="rejected">Rejected</button>
+              </div>
 
-        <div class="action-bar">
-  <input
-    type="text"
-    id="tableSearch"
-    class="form-control search-box"
-    placeholder="Search..."
-  />
+              <!-- Primary Action Button -->
+              <button class="btn btn-primary" onclick="openManualAddModal()" style="margin: 0; height: 38px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border: none; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1); color: #fff; cursor: pointer; transition: all 0.2s ease;">
+                <span>➕</span> Add Code Manually
+              </button>
+            </div>
 
-  <div id="downloadBtnContainer" class="action-controls"></div>
+            <!-- Row 2: Search Box & Data Utility Toolbar -->
+            <div class="toolbar-container" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; width: 100%; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 10px;">
+              <!-- Search box on left -->
+              <div class="search-input-wrapper" style="position: relative; display: inline-block; width: 260px;">
+                <input
+                  type="text"
+                  id="tableSearch"
+                  class="form-control search-box"
+                  placeholder="Search... (Press /)"
+                  style="margin: 0; width: 100%; padding-right: 28px; height: 38px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;"
+                />
+                <span id="clearSearchBtn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 16px; font-weight: bold; display: none; user-select: none;">&times;</span>
+              </div>
 
-  <button class="btn btn-success" onclick="openManualAddModal()">
-    Add Code Manually
-  </button>
-</div>
+              <!-- Excel & Import Utilities on right -->
+              <div id="downloadBtnContainer" class="action-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"></div>
+            </div>
 
+            <!-- Top Pagination Container -->
+            <div class="pagination-container" id="paginationContainerTop" style="margin-top: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; width: 100%;">
+              <div id="paginationInfoTop" style="color: #666; font-size: 13px; white-space: nowrap; flex-shrink: 0;"></div>
+              <ul id="paginationTop" class="pagination" style="margin: 0; flex-shrink: 0;"></ul>
+              <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                <select id="pageSizeSelectTop" class="form-control" style="width: 70px; height: 30px; padding: 4px 8px; font-size: 13px; display: inline-block; margin: 0;">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
+                  <label for="gotoPageInputTop" style="margin: 0; font-size: 13px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                  <input type="number" id="gotoPageInputTop" class="form-control" min="1" style="width: 50px; height: 30px; padding: 4px 6px; font-size: 13px; display: inline-block; margin: 0;">
+                  <span style="color: #666; font-size: 13px; white-space: nowrap;">of <span id="totalPagesLabelTop">1</span></span>
+                </div>
+              </div>
+            </div>
 
             <div class="table-responsive">
+              <div id="tableLoader" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); z-index: 10; justify-content: center; align-items: center; flex-direction: column;">
+                <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 8px;"></div>
+                <p style="color: #64748b; font-weight: 500; font-size: 14px;">Fetching records...</p>
+              </div>
               <table id="wifiRequestTable" class="table table-striped table-bordered">
                 <thead>
-  <tr>
-    <th data-key="sr">Id</th>
-    <th data-key="cardno">Card No</th>
-    <th data-key="issuedto">Issued To</th>
-    <th data-key="mobno">Mobile</th>
-    <th data-key="email">Email Id</th>
-    <th data-key="res_status">Res Status</th>
-    <th data-key="requested_at">Request Came At</th>
-    <th data-key="updatedAt">Request Last Updated At</th>
-    <th data-key="username">User Name</th>
-    <th data-key="ssid">SSID</th>
-    <th data-key="code">Code</th>
-    <th data-key="status">Status</th>
-    <th>Action</th>
-  </tr>
-</thead>
-<tbody></tbody>
+                  <tr>
+                    <th class="sortable" data-sort="id">Id</th>
+                    <th class="sortable" data-sort="cardno">Card No</th>
+                    <th class="sortable" data-sort="issuedto">Issued To</th>
+                    <th class="sortable" data-sort="mobno">Mobile</th>
+                    <th class="sortable" data-sort="email">Email Id</th>
+                    <th class="sortable" data-sort="res_status">Res Status</th>
+                    <th class="sortable" data-sort="requested_at">Request Came At</th>
+                    <th class="sortable" data-sort="updatedAt">Request Last Updated At</th>
+                    <th class="sortable" data-sort="username">User Name</th>
+                    <th class="sortable" data-sort="ssid">SSID</th>
+                    <th class="sortable" data-sort="code">Code</th>
+                    <th class="sortable" data-sort="status">Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
               </table>
-              <div id="pagination" style="margin-top: 10px;"></div>
               <div id="message" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Bottom Pagination Container -->
+            <div class="pagination-container" id="paginationContainerBottom" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; width: 100%;">
+              <div id="paginationInfoBottom" style="color: #666; font-size: 13px; white-space: nowrap; flex-shrink: 0;"></div>
+              <ul id="paginationBottom" class="pagination" style="margin: 0; flex-shrink: 0;"></ul>
+              <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                <div class="page-size-selector" style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
+                  <label for="pageSizeSelectBottom" style="margin: 0; font-size: 13px; color: #666; white-space: nowrap;">Items per page:</label>
+                  <select id="pageSizeSelectBottom" class="form-control" style="width: 70px; height: 30px; padding: 4px 8px; font-size: 13px; display: inline-block; margin: 0;">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+                <div class="page-goto-selector" style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
+                  <label for="gotoPageInputBottom" style="margin: 0; font-size: 13px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
+                  <input type="number" id="gotoPageInputBottom" class="form-control" min="1" style="width: 50px; height: 30px; padding: 4px 6px; font-size: 13px; display: inline-block; margin: 0;">
+                  <span style="color: #666; font-size: 13px; white-space: nowrap;">of <span id="totalPagesLabelBottom">1</span></span>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Modals Section -->
+          
           <!-- Action Modal -->
-          <!-- Modal Backdrop -->
-<!-- Action Modal -->
-<div id="modalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;"></div>
+          <div id="modalBackdrop" class="custom-modal-backdrop" onclick="closeModal()"></div>
+          <div id="actionModal" class="custom-modal-backdrop" onclick="closeModalOnBackdrop(event, this)">
+            <div class="custom-modal-content">
+              <div class="custom-modal-header">
+                <h2>Update WiFi Request</h2>
+                <button class="custom-modal-close-btn" onclick="closeModal()">&times;</button>
+              </div>
+              <div class="custom-modal-body">
+                <input type="hidden" id="modalRequestId" />
+                <div class="form-group">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="margin: 0; font-weight: 500; color: #475569;">Current Status:</label>
+                    <span id="modalCurrentStatus" style="font-weight: 600;"></span>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="modalNewStatus">New Status:</label>
+                  <select id="modalNewStatus" class="form-control">
+                    <option value="approved" selected>Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="deleted">Deleted</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="modalUsername">User Name:</label>
+                  <input type="text" id="modalUsername" class="form-control" readonly/>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="modalSsid">SSID:</label>
+                  <select id="modalSsid" class="form-control">
+                    <option value="">-- Select SSID --</option>
+                    <option value="SRATRC">SRATRC</option>
+                    <option value="BACKOFFICE">BACKOFFICE</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="modalCode">Permanent Code (if approving):</label>
+                  <input type="text" id="modalCode" class="form-control" />
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="modalComments">Admin Comments:</label>
+                  <textarea id="modalComments" rows="3" class="form-control" style="width: 100%;"></textarea>
+                </div>
+                <div class="modal-btn-row">
+                  <button id="actionModalSubmitBtn" onclick="submitAction()" class="btn btn-primary">Submit</button>
+                  <button id="actionModalCancelBtn" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-<div id="actionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;">
-  <div class="modal-content" style="background: white; padding: 2rem; margin: 5% auto; width: 90%; max-width: 500px; position: relative; border-radius: 10px;">
-    <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
+          <!-- Router Portal Export Modal -->
+          <div id="routerExportBackdrop" class="custom-modal-backdrop" onclick="closeRouterExportModal()"></div>
+          <div id="routerExportModal" class="custom-modal-backdrop" onclick="closeModalOnBackdrop(event, this)">
+            <div class="custom-modal-content" style="max-width: 450px;">
+              <div class="custom-modal-header">
+                <h2>Export Router Portal Excel</h2>
+                <button class="custom-modal-close-btn" onclick="closeRouterExportModal()">&times;</button>
+              </div>
+              <div class="custom-modal-body">
+                <div class="form-group">
+                  <label for="exportFilterType">Filter Type:</label>
+                  <select id="exportFilterType" class="form-control" onchange="toggleExportFilterFields()">
+                    <option value="all">All Approved Codes</option>
+                    <option value="hours" selected>Newly Approved (Last N Hours)</option>
+                    <option value="date-range">Date Range</option>
+                  </select>
+                </div>
+                <div class="form-group" id="exportHoursGroup" style="margin-top: 12px;">
+                  <label for="exportHours">Hours:</label>
+                  <input type="number" id="exportHours" class="form-control" min="1" placeholder="e.g. 2, 24" value="2" />
+                </div>
+                <div id="exportDateRangeGroup" style="display: none; margin-top: 12px;">
+                  <div class="form-group">
+                    <label for="exportStartDate">Start Date:</label>
+                    <input type="date" id="exportStartDate" class="form-control" />
+                  </div>
+                  <div class="form-group" style="margin-top: 12px;">
+                    <label for="exportEndDate">End Date:</label>
+                    <input type="date" id="exportEndDate" class="form-control" />
+                  </div>
+                </div>
+                <div class="modal-btn-row">
+                  <button onclick="submitRouterExport()" class="btn btn-primary">Export</button>
+                  <button onclick="closeRouterExportModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <h2>Update WiFi Request</h2>
-    <input type="hidden" id="modalRequestId" />
+          <!-- Upload Result Modal -->
+          <div id="uploadResultBackdrop" class="custom-modal-backdrop" onclick="closeUploadResultModal()"></div>
+          <div id="uploadResultModal" class="custom-modal-backdrop" onclick="closeModalOnBackdrop(event, this)">
+            <div class="custom-modal-content" style="max-width: 600px;">
+              <div class="custom-modal-header">
+                <h2 id="resultTitle">Upload Status</h2>
+                <button class="custom-modal-close-btn" onclick="closeUploadResultModal()">&times;</button>
+              </div>
+              <div class="custom-modal-body">
+                <div id="resultSummary" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #007bff;"></div>
+                <div id="resultDetailContainer" style="max-height: 300px; overflow-y: auto;">
+                  <table class="table table-bordered table-condensed" id="resultDetailTable" style="margin-bottom: 0;">
+                    <thead>
+                      <tr id="resultTableHeader"></tr>
+                    </thead>
+                    <tbody id="resultTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="modal-btn-row">
+                  <button onclick="closeUploadResultModal()" class="btn btn-primary">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-<div class="form-group">
-  <div style="display: flex; align-items: center; gap: 6px;">
-    <label style="margin: 0;">Current Status:</label>
-    <span id="modalCurrentStatus" style="font-weight: 600;"></span>
-  </div>
-</div>
-
-    <div class="form-group">
-      <label for="modalNewStatus">New Status:</label>
-      <select id="modalNewStatus" class="form-control">
-  <option value="approved" selected>Approved</option>
-  <option value="rejected">Rejected</option>
-  <option value="deleted">Deleted</option>
-</select>
-
-    </div>
-
-    <div class="form-group">
-      <label for="modalUsername">User Name:</label>
-      <input type="text" id="modalUsername" class="form-control" readonly/>
-    </div>
-
-    <div class="form-group">
-  <label for="modalSsid">SSID:</label>
-  <select id="modalSsid" class="form-control">
-    <option value="">-- Select SSID --</option>
-    <option value="SRATRC">SRATRC</option>
-    <option value="BACKOFFICE">BACKOFFICE</option>
-  </select>
-</div>
-
-    <div class="form-group">
-      <label for="modalCode">Permanent Code (if approving):</label>
-      <input type="text" id="modalCode" class="form-control" />
-    </div>
-
-    <div class="form-group">
-      <label for="modalComments">Admin Comments:</label>
-      <textarea id="modalComments" rows="3" class="form-control" style="width: 100%;"></textarea>
-    </div>
-
-    <div class="form-group form-submit" style="text-align: right;">
-      <button onclick="submitAction()" class="btn btn-primary">Submit</button>
-      <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Router Portal Export Modal -->
-<div id="routerExportBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;"></div>
-<div id="routerExportModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;">
-  <div class="modal-content" style="background: white; padding: 2rem; margin: 10% auto; width: 90%; max-width: 450px; position: relative; border-radius: 10px;">
-    <span onclick="closeRouterExportModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
-    <h2>Export Router Portal Excel</h2>
-    <div class="form-group">
-      <label for="exportFilterType">Filter Type:</label>
-      <select id="exportFilterType" class="form-control" onchange="toggleExportFilterFields()">
-        <option value="all">All Approved Codes</option>
-        <option value="hours" selected>Newly Approved (Last N Hours)</option>
-        <option value="date-range">Date Range</option>
-      </select>
-    </div>
-    <div class="form-group" id="exportHoursGroup">
-      <label for="exportHours">Hours:</label>
-      <input type="number" id="exportHours" class="form-control" min="1" placeholder="e.g. 2, 24" value="2" />
-    </div>
-    <div id="exportDateRangeGroup" style="display: none;">
-      <div class="form-group">
-        <label for="exportStartDate">Start Date:</label>
-        <input type="date" id="exportStartDate" class="form-control" />
-      </div>
-      <div class="form-group">
-        <label for="exportEndDate">End Date:</label>
-        <input type="date" id="exportEndDate" class="form-control" />
-      </div>
-    </div>
-    <div class="form-group form-submit" style="text-align: right; margin-top: 20px;">
-      <button onclick="submitRouterExport()" class="btn btn-primary">Export</button>
-      <button onclick="closeRouterExportModal()" class="btn btn-secondary">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Upload Result Modal -->
-<div id="uploadResultBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;"></div>
-<div id="uploadResultModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; overflow: auto;">
-  <div class="modal-content" style="background: white; padding: 2rem; margin: 5% auto; width: 90%; max-width: 600px; position: relative; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-    <span onclick="closeUploadResultModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
-    <h2 id="resultTitle">Upload Status</h2>
-    <div id="resultSummary" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #007bff;"></div>
-    <div id="resultDetailContainer" style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
-      <table class="table table-bordered table-condensed" id="resultDetailTable">
-        <thead>
-          <tr id="resultTableHeader"></tr>
-        </thead>
-        <tbody id="resultTableBody"></tbody>
-      </table>
-    </div>
-    <div style="text-align: right; margin-top: 20px;">
-      <button onclick="closeUploadResultModal()" class="btn btn-primary">Close</button>
-    </div>
-  </div>
-</div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Manual Add Backdrop -->
-<div id="manualAddBackdrop"
-     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999;">
-</div>
-
-<!-- Manual Add Modal -->
-<div id="manualAddModal"
-     style="display:none; position:fixed; inset:0; z-index:10000; overflow:auto;">
-  <div style="background:#fff; padding:2rem; margin:5% auto; max-width:500px; border-radius:10px; position:relative;">
-    <span onclick="closeManualAddModal()"
-          style="position:absolute; right:15px; top:10px; font-size:24px; cursor:pointer;">&times;</span>
-
-    <h2>Add Permanent WiFi Code</h2>
-
-    <div class="form-group">
-      <label>Mobile No</label>
-      <input type="text" id="manualMobno" class="form-control" onblur="fetchCardByMobno()" />
-    </div>
-
-    <div class="form-group">
-      <label>Issued To</label>
-      <input type="text" id="manualIssuedto" class="form-control" readonly />
-    </div>
-
-    <div class="form-group">
-      <label>Card No</label>
-      <input type="text" id="manualCardno" class="form-control" readonly />
-    </div>
-
-    <div class="form-group">
-      <label>Res Status</label>
-      <input type="text" id="manualResStatus" class="form-control" readonly />
-    </div>
-
-    <div class="form-group">
-      <label>SSID</label>
-      <select id="manualSsid" class="form-control">
-        <option value="">-- Select --</option>
-        <option value="SRATRC">SRATRC</option>
-        <option value="BACKOFFICE">BACKOFFICE</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Device Type</label>
-      <select id="manualDeviceType" class="form-control">
-        <option value="">-- Select --</option>
-        <option value="MOBILE">Mobile</option>
-        <option value="LAPTOP">Laptop</option>
-        <option value="TABLET">Tablet</option>
-        <option value="OTHER">Other</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="manualUsername" class="form-control" />
-    </div>
-
-    <div class="form-group">
-      <label>Permanent Code</label>
-      <input type="text" id="manualCode" class="form-control" />
-    </div>
-
-    <div style="text-align:right;">
-      <button class="btn btn-primary" onclick="submitManualAdd()">Submit</button>
-      <button class="btn btn-secondary" onclick="closeManualAddModal()">Cancel</button>
-    </div>
-  </div>
-</div>
+          <!-- Manual Add Modal -->
+          <div id="manualAddBackdrop" class="custom-modal-backdrop" onclick="closeManualAddModal()"></div>
+          <div id="manualAddModal" class="custom-modal-backdrop" onclick="closeModalOnBackdrop(event, this)">
+            <div class="custom-modal-content" style="max-width: 500px;">
+              <div class="custom-modal-header">
+                <h2>Add Permanent WiFi Code</h2>
+                <button class="custom-modal-close-btn" onclick="closeManualAddModal()">&times;</button>
+              </div>
+              <div class="custom-modal-body">
+                <div id="manualAddErrorContainer" style="color: #ef4444; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 12px; display: none;"></div>
+                <div class="form-group">
+                  <label>Mobile No</label>
+                  <input type="text" id="manualMobno" class="form-control" onblur="fetchCardByMobno()" />
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>Issued To</label>
+                  <input type="text" id="manualIssuedto" class="form-control" readonly />
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>Card No</label>
+                  <input type="text" id="manualCardno" class="form-control" readonly />
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>Res Status</label>
+                  <input type="text" id="manualResStatus" class="form-control" readonly />
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>SSID</label>
+                  <select id="manualSsid" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="SRATRC">SRATRC</option>
+                    <option value="BACKOFFICE">BACKOFFICE</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>Device Type</label>
+                  <select id="manualDeviceType" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="MOBILE">Mobile</option>
+                    <option value="LAPTOP">Laptop</option>
+                    <option value="TABLET">Tablet</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>Username</label>
+                  <input type="text" id="manualUsername" class="form-control" />
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label>Permanent Code</label>
+                  <input type="text" id="manualCode" class="form-control" />
+                </div>
+                <div class="modal-btn-row">
+                  <button id="manualAddSubmitBtn" class="btn btn-primary" onclick="submitManualAdd()">Submit</button>
+                  <button id="manualAddCancelBtn" class="btn btn-secondary" onclick="closeManualAddModal()">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
 </body>
 </html>
