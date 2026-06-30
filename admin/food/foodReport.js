@@ -50,11 +50,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   try {
     const apiUrl = `${CONFIG.basePath}/food/report?start_date=${start_date}&end_date=${end_date}${ignore_events ? '&ignore_events=true' : ''}`;
     const response = await fetch(apiUrl, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
-      });
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      }
+    });
 
     const data = await response.json();
     if (!response.ok) {
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const issuedReportParams = new URLSearchParams({
           date: report.date,
           meal,
-          is_issued: 1
+          is_issued: '1'
         });
 
         const issuedGuestParams = new URLSearchParams({
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const noshowReportParams = new URLSearchParams({
           date: report.date,
           meal,
-          is_issued: 0
+          is_issued: '0'
         });
 
         const noshowGuestParams = new URLSearchParams({
@@ -154,9 +154,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     const highteaReportTable = document.getElementById('highteaReportTable');
-    highteaReportTable.innerHTML = '';
+    let highteaRows = '';
     data.data.forEach((report) => {
-      highteaReportTable.innerHTML += `
+      highteaRows += `
         <tr>
           <td><center>${formatDate(report.date)}</center></td>
           <td><center>${report.tea}</center></td>
@@ -164,13 +164,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         </tr>
       `;
     });
+    highteaReportTable.innerHTML = highteaRows;
 
   } catch (err) {
     console.error(err);
-    showErrorMessage(err);
+    showErrorMessage(err.message || err);
   }
 
-    // ✅ QUICK FILTER BUTTONS
+  // ✅ QUICK FILTER BUTTONS
   const btnToday = document.getElementById('btnToday');
   const btnYesterday = document.getElementById('btnYesterday');
 
@@ -208,34 +209,34 @@ function downloadCSV() {
 
   const rows = [];
   const startDate = new URLSearchParams(window.location.search).get('start_date') || '';
-  const endDate   = new URLSearchParams(window.location.search).get('end_date')   || '';
+  const endDate = new URLSearchParams(window.location.search).get('end_date') || '';
 
   const meals = [
     { key: 'breakfast', label: 'Breakfast' },
-    { key: 'lunch',     label: 'Lunch'     },
-    { key: 'dinner',    label: 'Dinner'    }
+    { key: 'lunch', label: 'Lunch' },
+    { key: 'dinner', label: 'Dinner' }
   ];
 
   meals.forEach(({ key, label }) => {
     rows.push([label]);
-    rows.push(['Date', 'Regd (M)', 'Regd (G)', 'Regd Total', 'Issued (M)', 'Issued (G)', 'Issued Total', 'No Show (M)', 'No Show (G)', 'No Show Total', 'K2 Kitchen Count']);
+    rows.push(['Date', 'Regd (M)', 'Regd (G)', 'Regd Total', 'Issued (M)', 'Issued (G)', 'Issued Total', 'No Show (M)', 'No Show (G)', 'No Show Total', 'K1 Kitchen Count']);
 
     let tRegd = 0, tIssuedM = 0, tIssuedG = 0, tNoShowM = 0, tNoShowG = 0, tPhysical = 0;
 
     _reportData.forEach(r => {
-      const countM    = r[key]                        || 0;
-      const countG    = r[`${key}_guest_count`]       || 0;
-      const issuedM   = r[`${key}_plate_issued`]      || 0;
-      const issuedG   = r[`${key}_guest_issued`]      || 0;
-      const noShowM   = r[`${key}_noshow`]            || 0;
-      const noShowG   = r[`${key}_guest_noshow`]      || 0;
-      const physical  = r[`${key}_physical_plates`]   || 0;
+      const countM = r[key] || 0;
+      const countG = r[`${key}_guest_count`] || 0;
+      const issuedM = r[`${key}_plate_issued`] || 0;
+      const issuedG = r[`${key}_guest_issued`] || 0;
+      const noShowM = r[`${key}_noshow`] || 0;
+      const noShowG = r[`${key}_guest_noshow`] || 0;
+      const physical = r[`${key}_physical_plates`] || 0;
 
-      tRegd     += countM + countG;
-      tIssuedM  += issuedM;
-      tIssuedG  += issuedG;
-      tNoShowM  += noShowM;
-      tNoShowG  += noShowG;
+      tRegd += countM + countG;
+      tIssuedM += issuedM;
+      tIssuedG += issuedG;
+      tNoShowM += noShowM;
+      tNoShowG += noShowG;
       tPhysical += physical;
 
       rows.push([
@@ -265,9 +266,9 @@ function downloadCSV() {
 
   // Trigger download
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
   a.download = `food_report_${startDate}_to_${endDate}.csv`;
   document.body.appendChild(a);
   a.click();

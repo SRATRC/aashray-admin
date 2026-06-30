@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           },
-          body: JSON.stringify({ date, type: meal.type, count: meal.count })
+          body: JSON.stringify({ date, type: meal.type, count: parseInt(meal.count, 10) })
         });
 
         const data = await response.json();
@@ -84,7 +84,7 @@ async function loadExistingCounts() {
   if (!date) return;
 
   try {
-    const response = await fetch(`${CONFIG.basePath}/food/physicalPlates`, {
+    const response = await fetch(`${CONFIG.basePath}/food/physicalPlates?date=${date}`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${sessionStorage.getItem('token')}`

@@ -26,7 +26,7 @@ function checkRoleAccess(allowedRoles) {
     if (hasRoleAccess && !allowedPages.includes(currentPage)) {
       // User has the role but is restricted from this specific page
       alert('You are not authorized to access this page.\nRedirecting you to the admin home page...');
-      setTimeout(() => { window.location.href = '/admin/adminhome.html'; });
+      window.location.href = '/admin/adminhome.html';
       return;
     }
   }
@@ -68,9 +68,7 @@ function checkRoleAccess(allowedRoles) {
       alert(
         'You are not authorized to access this page.\nRedirecting you to the admin home page...'
       );
-      setTimeout(() => {
-        window.location.href = '/admin/adminhome.html';
-      });
+      window.location.href = '/admin/adminhome.html';
       return;
     }
 
