@@ -20,7 +20,6 @@ function login(event) {
     .then((data) => {
       sessionStorage.setItem('token', data.token);
       sessionStorage.setItem('roles', JSON.stringify(data.roles));
-      sessionStorage.setItem('username', data.username || '');
 
       const roles = data.roles;
 
@@ -32,6 +31,7 @@ function login(event) {
         'cardAdmin',
         'officeAdmin',
         'foodAdmin',
+        'foodPlateAdmin',
         'gateAdmin',
         'adhyayanAdmin',
         'travelAdmin',
