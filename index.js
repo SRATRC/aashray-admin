@@ -31,6 +31,7 @@ function login(event) {
         'cardAdmin',
         'officeAdmin',
         'foodAdmin',
+        'foodPlateAdmin',
         'gateAdmin',
         'adhyayanAdmin',
         'travelAdmin',
