@@ -166,13 +166,13 @@
       avtAdmin: [{ href: 'avt/index.html', text: 'AVT Management' }],
       utsavAdminReadOnly: [{ href: 'utsav/utsavCentre.html', text: 'Utsav Report' }],
       wifiAdmin: [{ href: 'wifi/index.html', text: 'WiFi Management' }],
-      smilesAdmin: [{ href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }]
+      smilesAdmin: [{ href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }],
+      foodPlateAdmin: [{ href: 'food/plateCount.html', text: 'K1 Kitchen Count' }]
     };
 
     // Function to populate buttons based on user roles
     function populateAdminButtons() {
       const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-      const username = sessionStorage.getItem('username') || '';
       const menuGrid = document.getElementById('adminMenuGrid');
 
       if (!menuGrid) {
@@ -189,13 +189,7 @@
       roles.forEach((role) => {
         if (roleButtonMap[role]) {
           roleButtonMap[role].forEach((button) => {
-            let btn = { ...button };
-            // Override Food Management link to go directly to Physical Plate Count page for bikram.thapa
-            if (username === 'bikram.thapa' && btn.href === 'food/index.html') {
-              btn.href = 'food/plateCount.html';
-              btn.text = 'K1 Kitchen Count';
-            }
-            userButtons.set(btn.href, btn);
+            userButtons.set(button.href, button);
           });
         }
       });

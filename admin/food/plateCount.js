@@ -83,6 +83,8 @@ async function loadExistingCounts() {
 
   if (!date) return;
 
+  submitBtn.disabled = true;
+
   try {
     const response = await fetch(`${CONFIG.basePath}/food/physicalPlates?date=${date}`, {
       headers: {
@@ -91,7 +93,10 @@ async function loadExistingCounts() {
       }
     });
 
-    if (!response.ok) return;
+    if (!response.ok) {
+      resetFields();
+      return;
+    }
 
     const data = await response.json();
     const records = (data.data || []).filter(r => (r.date || '').substring(0, 10) === date);
@@ -115,6 +120,19 @@ async function loadExistingCounts() {
 
   } catch (err) {
     console.error('Error loading existing plate counts:', err);
+    resetFields();
+  } finally {
+    submitBtn.disabled = false;
+  }
+
+  function resetFields() {
+    document.getElementById('breakfast').value = '';
+    document.getElementById('lunch').value     = '';
+    document.getElementById('dinner').value    = '';
+    updateTotal();
+    submitBtn.dataset.mode    = 'add';
+    submitBtn.textContent     = 'Submit';
+    modeLabel.textContent     = '';
   }
 }
 

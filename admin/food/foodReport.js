@@ -41,9 +41,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
   }
 
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const reportTitle = document.getElementById('reportTitle');
   const eventNote = ignore_events ? ' <span style="font-size:0.75em; color:#c0392b; font-weight:600;">(excl. events)</span>' : '';
-  reportTitle.innerHTML = `<b><u>Food Report ${formatDate(start_date)} - ${formatDate(end_date)}</u></b>${eventNote}`;
+  reportTitle.innerHTML = `<b><u>Food Report ${escapeHtml(formatDate(start_date))} - ${escapeHtml(formatDate(end_date))}</u></b>${eventNote}`;
 
   resetAlert();
 
