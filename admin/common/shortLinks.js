@@ -30,8 +30,6 @@ const BASE_API = `${CONFIG.baseUrl}/short-links`;
 
 const token = sessionStorage.getItem('token');
 
-const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-
 document.addEventListener('DOMContentLoaded', () => {
   populateAllowedTypes();
   fetchLinks();
@@ -71,8 +69,21 @@ async function fetchLinks() {
       return data.data || [];
     });
 
-    const results = await Promise.all(fetchPromises);
-    allLinks = results.flat();
+    const results = await Promise.allSettled(fetchPromises);
+
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error(
+          `Failed to fetch links for type ${allowedTypes[i]}:`,
+          r.reason
+        );
+      }
+    });
+
+    allLinks = results
+      .filter((r) => r.status === 'fulfilled')
+      .map((r) => r.value)
+      .flat();
 
     renderSummary();
     renderLinks(allLinks);
@@ -304,7 +315,6 @@ async function createShortLink(e) {
 
     document.getElementById('shortLinkForm').reset();
 
-    populateAllowedTypes();
     fetchLinks();
   } catch (error) {
     console.error(error);
