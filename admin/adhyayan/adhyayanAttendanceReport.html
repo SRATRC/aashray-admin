@@ -39,6 +39,16 @@
             <h1 id="pageHeading">Attendance Report</h1>
           </div>
 
+          <div class="bulk-action-panel" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px;">
+            <span style="font-weight: bold; font-size: 14px; color: #333;">Bulk Action:</span>
+            <select id="bulkSessionSelect" class="form-control" style="width: auto; padding: 5px 10px; min-width: 150px;">
+              <option value="">Select Session...</option>
+            </select>
+            <button id="btnBulkPresent" class="btn" style="background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;" disabled>Mark Selected Present</button>
+            <button id="btnBulkAbsent" class="btn" style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;" disabled>Mark Selected Absent</button>
+            <span id="selectedCountText" style="font-size: 13px; color: #6c757d; margin-left: auto;">0 selected</span>
+          </div>
+
           <input
             type="text"
             id="tableSearch"

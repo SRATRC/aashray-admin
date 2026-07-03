@@ -5,72 +5,72 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Users List</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Users List</title>
 
-    <!-- Additional Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../sessionstorage.js"></script>
-    <script src="fetchAllAdmins.js"></script>
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-  </head>
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+  <script src="fetchAllAdmins.js"></script>
 
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
+  </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Admin Users List</h1>
-            </div>
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Admin Users List</h1>
+          </div>
 
-            <div class="table-responsive">
-              <table id="adminTable" class="table table-striped table-bordered">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Populated dynamically -->
-                </tbody>
-              </table>
-            </div>
+          <div class="table-responsive">
+            <table id="adminTable" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Card No</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
 
-            <div class="form-group form-submit">
-              <button
-                onclick="window.location.href='createAdmin.html'"
-                class="btn btn-primary"
-              >
-                Add New Admin User
-              </button>
-            </div>
+          <div class="form-group form-submit">
+            <button onclick="window.location.href='createAdmin.html'" class="btn btn-primary">
+              Add New Admin User
+            </button>
           </div>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>

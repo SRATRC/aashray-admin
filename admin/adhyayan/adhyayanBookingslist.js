@@ -82,10 +82,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 </td>
   <td>
-  <button class="btn btn-small"
-    onclick="createAttendance('${item.bookingid}')">
-    click here
-  </button>
+  ${
+    item.attendance_id
+      ? `<span style="color: green; font-weight: bold;">✔ Added</span>`
+      : `<button class="btn btn-small" onclick="createAttendance('${item.bookingid}', this)">Add Attendance</button>`
+  }
 </td>
 
   `;
@@ -151,7 +152,7 @@ const setupDownloadButton = () => {
   });
 };
 
-async function createAttendance(bookingid) {
+async function createAttendance(bookingid, buttonEl) {
   try {
     const response = await fetch(
       `${CONFIG.basePath}/adhyayan/attendance/create`,
@@ -169,6 +170,9 @@ async function createAttendance(bookingid) {
 
     if (response.status === 409) {
       alert("Attendance record already exists");
+      if (buttonEl) {
+        buttonEl.parentElement.innerHTML = `<span style="color: green; font-weight: bold;">✔ Added</span>`;
+      }
       return;
     }
 
@@ -178,6 +182,9 @@ async function createAttendance(bookingid) {
     }
 
     alert("Attendance record created successfully");
+    if (buttonEl) {
+      buttonEl.parentElement.innerHTML = `<span style="color: green; font-weight: bold;">✔ Added</span>`;
+    }
 
   } catch (error) {
     console.error(error);
