@@ -1,213 +1,100 @@
 const roleTypeMap = {
-    superAdmin: [
-        'accounts',
-        'room',
-        'card',
-        'office',
-        'food',
-        'adhyayan',
-        'travel',
-        'utsav',
-        'avt',
-        'wifi'
-    ],
+  superAdmin: [
+    'accounts',
+    'room',
+    'card',
+    'office',
+    'food',
+    'adhyayan',
+    'travel',
+    'utsav',
+    'avt',
+    'wifi'
+  ],
 
-    accountsAdmin: ['accounts'],
-    roomAdmin: ['room'],
-    cardAdmin: ['card'],
-    officeAdmin: ['office'],
-    foodAdmin: ['food'],
-    adhyayanAdmin: ['adhyayan'],
-    travelAdmin: ['travel'],
-    utsavAdmin: ['utsav'],
-    avtAdmin: ['avt'],
-    wifiAdmin: ['wifi']
+  accountsAdmin: ['accounts'],
+  roomAdmin: ['room'],
+  cardAdmin: ['card'],
+  officeAdmin: ['office'],
+  foodAdmin: ['food'],
+  adhyayanAdmin: ['adhyayan'],
+  travelAdmin: ['travel'],
+  utsavAdmin: ['utsav'],
+  avtAdmin: ['avt'],
+  wifiAdmin: ['wifi']
 };
 
 let allLinks = [];
 
-const BASE_API =
-    `${CONFIG.baseUrl}/short-links`;
+const BASE_API = `${CONFIG.baseUrl}/short-links`;
 
-const token =
-    sessionStorage.getItem('token');
+const token = sessionStorage.getItem('token');
 
-const storedRoles =
-    sessionStorage.getItem('roles');
+const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 
+document.addEventListener('DOMContentLoaded', () => {
+  populateAllowedTypes();
+  fetchLinks();
 
+  document
+    .getElementById('searchInput')
+    .addEventListener('input', applyFilters);
 
-const roles =
-    JSON.parse(
-        sessionStorage.getItem('roles') || '[]'
-    );
+  document
+    .getElementById('typeFilter')
+    .addEventListener('change', applyFilters);
 
-let selectedType = 'wifi';
+  document
+    .getElementById('statusFilter')
+    .addEventListener('change', applyFilters);
 
-if (
-    roles.includes('wifiAdmin')
-) {
-
-    selectedType = 'wifi';
-
-} else if (
-    roles.includes('avtAdmin')
-) {
-
-    selectedType = 'avt';
-
-} else if (
-    roles.includes('accountsAdmin')
-) {
-
-    selectedType = 'accounts';
-
-} else if (
-    roles.includes('roomAdmin')
-) {
-
-    selectedType = 'room';
-
-} else if (
-    roles.includes('cardAdmin')
-) {
-
-    selectedType = 'card';
-
-} else if (
-    roles.includes('officeAdmin')
-) {
-
-    selectedType = 'office';
-
-} else if (
-    roles.includes('foodAdmin')
-) {
-
-    selectedType = 'food';
-
-} else if (
-    roles.includes('adhyayanAdmin')
-) {
-
-    selectedType = 'adhyayan';
-
-} else if (
-    roles.includes('travelAdmin')
-) {
-
-    selectedType = 'travel';
-
-} else if (
-    roles.includes('utsavAdmin')
-) {
-
-    selectedType = 'utsav';
-}
-
-const API_BASE =
-    `${BASE_API}/${selectedType}`;
-
-
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
-        populateAllowedTypes();
-        fetchLinks();
-
-        document
-            .getElementById('searchInput')
-            .addEventListener(
-                'input',
-                applyFilters
-            );
-
-        document
-            .getElementById('typeFilter')
-            .addEventListener(
-                'change',
-                applyFilters
-            );
-
-        document
-            .getElementById('statusFilter')
-            .addEventListener(
-                'change',
-                applyFilters
-            );
-
-        document
-            .getElementById('shortLinkForm')
-            .addEventListener(
-                'submit',
-                createShortLink
-            );
-    }
-);
+  document
+    .getElementById('shortLinkForm')
+    .addEventListener('submit', createShortLink);
+});
 
 async function fetchLinks() {
-
-    try {
-        const response =
-            await fetch(API_BASE, {
-
-                headers: {
-                    Authorization:
-                        `Bearer ${token}`
-                }
-            });
-
-        const data =
-            await response.json();
-        console.log(data);
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message
-            );
+  try {
+    const allowedTypes = getAllowedTypes();
+    const fetchPromises = allowedTypes.map(async (type) => {
+      const response = await fetch(`${BASE_API}/${type}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data.message || `Failed to fetch links for type ${type}`
+        );
+      }
+      return data.data || [];
+    });
 
-        allLinks =
-            data.data || [];
+    const results = await Promise.all(fetchPromises);
+    allLinks = results.flat();
 
-        renderSummary();
-
-        renderLinks(allLinks);
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(error.message);
-    }
+    renderSummary();
+    renderLinks(allLinks);
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
 }
 
 function renderSummary() {
+  const total = allLinks.length;
 
-    const total =
-        allLinks.length;
+  const active = allLinks.filter((link) => link.active).length;
 
-    const active =
-        allLinks.filter(
-            link => link.active
-        ).length;
+  const inactive = total - active;
 
-    const inactive =
-        total - active;
+  const clicks = allLinks.reduce(
+    (total, link) => total + (link.click_count || 0),
+    0
+  );
 
-    const clicks =
-        allLinks.reduce(
-            (
-                total,
-                link
-            ) => total + (link.click_count || 0),
-            0
-        );
-
-    document
-        .getElementById('summaryCards')
-        .innerHTML = `
+  document.getElementById('summaryCards').innerHTML = `
 
       <div class="dashboard-card">
 
@@ -260,478 +147,301 @@ function renderSummary() {
 }
 
 function renderLinks(links) {
+  const tbody = document.querySelector('#linksTable tbody');
+  tbody.innerHTML = '';
 
-    const tbody =
-        document.querySelector(
-            '#linksTable tbody'
-        );
+  if (!links.length) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 8;
+    cell.textContent = 'No links found';
+    row.appendChild(cell);
+    tbody.appendChild(row);
+    return;
+  }
 
-    tbody.innerHTML = '';
+  links.forEach((link, index) => {
+    const shortUrl = `https://aashray.vitraagvigyaan.org/go/${link.slug}`;
+    const row = document.createElement('tr');
 
-    if (!links.length) {
+    // Column 1: Index
+    const tdIndex = document.createElement('td');
+    tdIndex.textContent = index + 1;
+    row.appendChild(tdIndex);
 
-        tbody.innerHTML = `
+    // Column 2: Slug
+    const tdSlug = document.createElement('td');
+    tdSlug.textContent = link.slug;
+    row.appendChild(tdSlug);
 
-      <tr>
+    // Column 3: Short URL Link
+    const tdShortUrl = document.createElement('td');
+    const linkElem = document.createElement('a');
+    linkElem.href = shortUrl;
+    linkElem.target = '_blank';
+    linkElem.className = 'short-link';
+    linkElem.textContent = shortUrl;
+    tdShortUrl.appendChild(linkElem);
+    row.appendChild(tdShortUrl);
 
-        <td colspan="8">
-          No links found
-        </td>
+    // Column 4: Type
+    const tdType = document.createElement('td');
+    tdType.textContent = link.type;
+    row.appendChild(tdType);
 
-      </tr>
-    `;
+    // Column 5: Click Count
+    const tdClicks = document.createElement('td');
+    tdClicks.textContent = link.click_count || 0;
+    row.appendChild(tdClicks);
 
-        return;
-    }
+    // Column 6: Status
+    const tdStatus = document.createElement('td');
+    tdStatus.textContent = link.active ? '🟢 Active' : '🔴 Disabled';
+    row.appendChild(tdStatus);
 
-    links.forEach(
-        (
-            link,
-            index
-        ) => {
+    // Column 7: Created Date
+    const tdCreated = document.createElement('td');
+    tdCreated.textContent = new Date(link.createdAt).toLocaleDateString();
+    row.appendChild(tdCreated);
 
-            const shortUrl =
-                `https://aashray.vitraagvigyaan.org/go/${link.slug}`;
+    // Column 8: Action Buttons
+    const tdActions = document.createElement('td');
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'action-buttons';
 
-            const row =
-                document.createElement('tr');
+    // Copy Button
+    const btnCopy = document.createElement('button');
+    btnCopy.className = 'btn btn-primary';
+    btnCopy.textContent = 'Copy';
+    btnCopy.addEventListener('click', () => copyLink(shortUrl));
+    btnContainer.appendChild(btnCopy);
 
-            row.innerHTML = `
-
-        <td>
-          ${index + 1}
-        </td>
-
-        <td>
-          ${link.slug}
-        </td>
-
-        <td>
-
-          <a
-            href="${shortUrl}"
-            target="_blank"
-            class="short-link"
-          >
-            ${shortUrl}
-          </a>
-
-        </td>
-
-        <td>
-          ${link.type}
-        </td>
-
-        <td>
-          ${link.click_count || 0}
-        </td>
-
-        <td>
-
-          ${link.active
-                    ? '🟢 Active'
-                    : '🔴 Disabled'
-                }
-
-        </td>
-
-        <td>
-
-          ${new Date(
-                    link.createdAt
-                ).toLocaleDateString()}
-
-        </td>
-
-        <td>
-
-          <div class="action-buttons">
-
-            <button
-              class="btn btn-primary"
-              onclick="
-                copyLink(
-                  '${shortUrl}'
-                )
-              "
-            >
-              Copy
-            </button>
-
-            <button
-              class="btn btn-primary"
-              onclick="
-                toggleStatus(
-                  ${link.id},
-                  ${link.active}
-                )
-              "
-            >
-
-              ${link.active
-                    ? 'Disable'
-                    : 'Enable'
-                }
-
-            </button>
-
-            <button
-              class="btn btn-danger"
-              onclick="
-                deleteLink(
-                  ${link.id}
-                )
-              "
-            >
-              Delete
-            </button>
-
-          </div>
-
-        </td>
-      `;
-
-            tbody.appendChild(row);
-        }
+    // Disable/Enable Button
+    const btnToggle = document.createElement('button');
+    btnToggle.className = 'btn btn-primary';
+    btnToggle.textContent = link.active ? 'Disable' : 'Enable';
+    btnToggle.addEventListener('click', () =>
+      toggleStatus(link.id, link.active)
     );
+    btnContainer.appendChild(btnToggle);
+
+    // Delete Button
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'btn btn-danger';
+    btnDelete.textContent = 'Delete';
+    btnDelete.addEventListener('click', () => deleteLink(link.id));
+    btnContainer.appendChild(btnDelete);
+
+    tdActions.appendChild(btnContainer);
+    row.appendChild(tdActions);
+
+    tbody.appendChild(row);
+  });
 }
 
 function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
 
-    const search =
-        document
-            .getElementById('searchInput')
-            .value
-            .toLowerCase();
+  const type = document.getElementById('typeFilter').value;
 
-    const type =
-        document
-            .getElementById('typeFilter')
-            .value;
+  const status = document.getElementById('statusFilter').value;
 
-    const status =
-        document
-            .getElementById('statusFilter')
-            .value;
+  let filtered = [...allLinks];
 
-    let filtered =
-        [...allLinks];
+  filtered = filtered.filter((link) => {
+    return (
+      link.slug?.toLowerCase().includes(search) ||
+      link.target_url?.toLowerCase().includes(search)
+    );
+  });
 
-    filtered =
-        filtered.filter(
-            link => {
+  if (type !== 'all') {
+    filtered = filtered.filter((link) => link.type === type);
+  }
 
-                return (
+  if (status === 'active') {
+    filtered = filtered.filter((link) => link.active);
+  }
 
-                    link.slug
-                        ?.toLowerCase()
-                        .includes(search)
+  if (status === 'inactive') {
+    filtered = filtered.filter((link) => !link.active);
+  }
 
-                    ||
-
-                    link.target_url
-                        ?.toLowerCase()
-                        .includes(search)
-                );
-            }
-        );
-
-    if (type !== 'all') {
-
-        filtered =
-            filtered.filter(
-                link => link.type === type
-            );
-    }
-
-    if (status === 'active') {
-
-        filtered =
-            filtered.filter(
-                link => link.active
-            );
-    }
-
-    if (status === 'inactive') {
-
-        filtered =
-            filtered.filter(
-                link => !link.active
-            );
-    }
-
-    renderLinks(filtered);
+  renderLinks(filtered);
 }
 
 async function createShortLink(e) {
+  e.preventDefault();
 
-    e.preventDefault();
+  try {
+    const body = {
+      slug: document.getElementById('slug').value.trim(),
 
-    try {
+      target_url: document.getElementById('target_url').value.trim(),
 
-        const body = {
+      type: document.getElementById('type').value
+    };
 
-            slug:
-                document
-                    .getElementById('slug')
-                    .value
-                    .trim(),
+    const response = await fetch(BASE_API, {
+      method: 'POST',
 
-            target_url:
-                document
-                    .getElementById('target_url')
-                    .value
-                    .trim(),
+      headers: {
+        'Content-Type': 'application/json',
 
-            type:
-                document
-                    .getElementById('type')
-                    .value
-        };
+        Authorization: `Bearer ${token}`
+      },
 
-        const response =
-            await fetch(BASE_API, {
+      body: JSON.stringify(body)
+    });
 
-                method: 'POST',
+    const data = await response.json();
 
-                headers: {
-
-                    'Content-Type':
-                        'application/json',
-
-                    Authorization:
-                        `Bearer ${token}`
-                },
-
-                body: JSON.stringify(body)
-            });
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message
-            );
-        }
-
-        alert(
-            'Short link created successfully'
-        );
-
-        document
-            .getElementById(
-                'shortLinkForm'
-            )
-            .reset();
-
-        populateAllowedTypes();
-        fetchLinks();
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(error.message);
+    if (!response.ok) {
+      throw new Error(data.message);
     }
+
+    alert('Short link created successfully');
+
+    document.getElementById('shortLinkForm').reset();
+
+    populateAllowedTypes();
+    fetchLinks();
+  } catch (error) {
+    console.error(error);
+
+    alert(error.message);
+  }
 }
 
 async function copyLink(url) {
+  try {
+    await navigator.clipboard.writeText(url);
 
-    try {
-
-        await navigator.clipboard
-            .writeText(url);
-
-        alert(
-            'Copied successfully'
-        );
-
-    } catch (error) {
-
-        console.error(error);
-    }
+    alert('Copied successfully');
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-async function toggleStatus(
-    id,
-    active
-) {
+async function toggleStatus(id, active) {
+  try {
+    const response = await fetch(
+      `${BASE_API}/${id}`,
 
-    try {
+      {
+        method: 'PUT',
 
-        const response =
-            await fetch(
+        headers: {
+          'Content-Type': 'application/json',
 
-                `${BASE_API}/${id}`,
+          Authorization: `Bearer ${token}`
+        },
 
-                {
+        body: JSON.stringify({
+          active: !active
+        })
+      }
+    );
 
-                    method: 'PUT',
+    const data = await response.json();
 
-                    headers: {
-
-                        'Content-Type':
-                            'application/json',
-
-                        Authorization:
-                            `Bearer ${token}`
-                    },
-
-                    body: JSON.stringify({
-                        active: !active
-                    })
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message
-            );
-        }
-
-        fetchLinks();
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(error.message);
+    if (!response.ok) {
+      throw new Error(data.message);
     }
+
+    fetchLinks();
+  } catch (error) {
+    console.error(error);
+
+    alert(error.message);
+  }
 }
 
 async function deleteLink(id) {
+  try {
+    const confirmed = confirm('Delete this link?');
 
-    try {
-
-        const confirmed =
-            confirm(
-                'Delete this link?'
-            );
-
-        if (!confirmed) {
-
-            return;
-        }
-
-        const response =
-            await fetch(
-
-                `${BASE_API}/${id}`,
-
-                {
-                    method: 'DELETE',
-
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message
-            );
-        }
-
-        fetchLinks();
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(error.message);
+    if (!confirmed) {
+      return;
     }
+
+    const response = await fetch(
+      `${BASE_API}/${id}`,
+
+      {
+        method: 'DELETE',
+
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+
+    fetchLinks();
+  } catch (error) {
+    console.error(error);
+
+    alert(error.message);
+  }
 }
 
 function getAllowedTypes() {
+  const storedRoles = sessionStorage.getItem('roles');
+  let roles = [];
 
-    const storedRoles =
-        sessionStorage.getItem('roles');
-
-    let roles = [];
-
-    try {
-
-        roles =
-            JSON.parse(storedRoles);
-
-        if (!Array.isArray(roles)) {
-
-            roles = [roles];
-        }
-
-    } catch {
-
-        roles = [storedRoles];
+  try {
+    roles = JSON.parse(storedRoles);
+    if (!Array.isArray(roles)) {
+      roles = [roles];
     }
+  } catch {
+    roles = [storedRoles];
+  }
 
-    console.log('roles', roles);
+  const allowed = new Set();
+  roles.forEach((role) => {
+    if (roleTypeMap[role]) {
+      roleTypeMap[role].forEach((type) => {
+        allowed.add(type);
+      });
+    }
+  });
 
-    const allowed =
-        new Set();
-
-    roles.forEach(role => {
-
-        if (roleTypeMap[role]) {
-
-            roleTypeMap[role].forEach(type => {
-
-                allowed.add(type);
-            });
-        }
-    });
-
-    console.log(
-        'allowedTypes',
-        [...allowed]
-    );
-
-    return [...allowed];
+  return [...allowed];
 }
 
 function capitalize(str) {
-
-    return str.charAt(0).toUpperCase()
-        + str.slice(1);
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function populateAllowedTypes() {
+  const allowedTypes = getAllowedTypes();
 
-    const allowedTypes =
-        getAllowedTypes();
+  const typeSelect = document.getElementById('type');
 
-    const typeSelect =
-        document.getElementById('type');
+  const filterSelect = document.getElementById('typeFilter');
 
-    const filterSelect =
-        document.getElementById('typeFilter');
-
-    const options =
-        allowedTypes
-            .map(type => `
+  const options = allowedTypes
+    .map(
+      (type) => `
 
                 <option value="${type}">
                     ${capitalize(type)}
                 </option>
 
-            `)
-            .join('');
+            `
+    )
+    .join('');
 
-    typeSelect.innerHTML =
-        options;
+  typeSelect.innerHTML = options;
 
-    filterSelect.innerHTML = `
+  filterSelect.innerHTML = `
 
         <option value="all">
             All Types
