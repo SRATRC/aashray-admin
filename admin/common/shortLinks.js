@@ -80,6 +80,10 @@ async function fetchLinks() {
       }
     });
 
+    if (results.length > 0 && results.every((r) => r.status === 'rejected')) {
+      alert('Failed to fetch short links.');
+    }
+
     allLinks = results
       .filter((r) => r.status === 'fulfilled')
       .map((r) => r.value)
