@@ -235,6 +235,10 @@ async function updatePlateIssued(bookingId, mealType, delta) {
   }
 }
 
+// Global tracking objects for debouncing adjustMeal API requests
+const debounceTimers = {};
+const pendingUpdates = {};
+
 async function adjustMeal(bookingId, mealType, delta) {
   const spanId = {
     breakfast: `bf-${bookingId}`,
@@ -248,38 +252,53 @@ async function adjustMeal(bookingId, mealType, delta) {
 
   if (newCount < 0) return alert("❌ Cannot be negative");
 
+  // Update UI immediately for instant feedback
+  countSpan.textContent = newCount;
+
   const bf = parseInt(document.getElementById(`bf-${bookingId}`)?.textContent || '0', 10);
   const ln = parseInt(document.getElementById(`ln-${bookingId}`)?.textContent || '0', 10);
   const dn = parseInt(document.getElementById(`dn-${bookingId}`)?.textContent || '0', 10);
+  const guestCount = Math.max(bf, ln, dn);
+  
+  document.getElementById(`gc-${bookingId}`).textContent = guestCount;
 
-  const updated = {
-    breakfast: mealType === 'breakfast' ? newCount : bf,
-    lunch: mealType === 'lunch' ? newCount : ln,
-    dinner: mealType === 'dinner' ? newCount : dn,
+  // Store the pending values
+  pendingUpdates[bookingId] = {
+    breakfast: bf,
+    lunch: ln,
+    dinner: dn,
+    guestCount
   };
 
-  const guestCount = Math.max(updated.breakfast, updated.lunch, updated.dinner);
-
-  try {
-    const response = await fetch(`${CONFIG.basePath}/food/edit_bulk_booking/${bookingId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ ...updated, guestCount })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      countSpan.textContent = newCount;
-      document.getElementById(`gc-${bookingId}`).textContent = guestCount;
-    } else {
-      alert(`❌ ${result.message}`);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("❌ Network error");
+  // Reset the debounce timer for this specific booking
+  if (debounceTimers[bookingId]) {
+    clearTimeout(debounceTimers[bookingId]);
   }
+
+  debounceTimers[bookingId] = setTimeout(async () => {
+    const dataToSave = pendingUpdates[bookingId];
+    delete pendingUpdates[bookingId];
+    delete debounceTimers[bookingId];
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/food/edit_bulk_booking/${bookingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify(dataToSave)
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        alert(`❌ Failed to save updates: ${result.message}`);
+        getExistingGuestBookings();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Network error saving updates");
+      getExistingGuestBookings();
+    }
+  }, 2500);
 }

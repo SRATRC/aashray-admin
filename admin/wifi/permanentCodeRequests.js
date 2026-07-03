@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
   });
-  
+
   document.getElementById('manualDeviceType')
     .addEventListener('change', autoGenerateUsername);
 
@@ -214,13 +214,16 @@ function showMessage(msg, type) {
 /* ============================================================
    DOWNLOAD & UPLOAD BUTTONS - UPDATED WITH SEPARATE BUTTONS
 ============================================================ */
-
 function setupDownloadAndUploadButtons(data) {
   const container = document.getElementById('downloadBtnContainer');
   container.innerHTML = `
     <button id="downloadExcelBtn" class="btn btn-primary">Download Excel</button>
+    <button id="exportRouterBtn" class="btn btn-warning" onclick="openRouterExportModal()"> For Router Portal</button>
     <button id="updateExcelBtn" class="btn btn-secondary">Update from Excel</button>
     <button id="insertExcelBtn" class="btn btn-success">Insert from Excel</button>
+    <label style="display:inline-flex; align-items:center; gap:4px; margin:0 10px; cursor:pointer;">
+      <input type="checkbox" id="dryRunCheckbox" checked /> Dry Run
+    </label>
     <input type="file" id="updateExcelInput" accept=".xlsx,.xls" hidden />
     <input type="file" id="insertExcelInput" accept=".xlsx,.xls" hidden />
   `;
@@ -277,7 +280,9 @@ function setupDownloadAndUploadButtons(data) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!confirm('This will UPDATE existing records. Continue?')) {
+    const dryRun = document.getElementById('dryRunCheckbox').checked;
+
+    if (!dryRun && !confirm('This will UPDATE existing records in database. Continue?')) {
       e.target.value = '';
       return;
     }
@@ -286,7 +291,8 @@ function setupDownloadAndUploadButtons(data) {
     formData.append('file', file);
 
     try {
-      const url = `${CONFIG.basePath}/wifi/uploadpercode`;
+      let url = `${CONFIG.basePath}/wifi/uploadpercode`;
+      if (dryRun) url += '?dryRun=true';
 
       const res = await fetch(url, {
         method: 'POST',
@@ -297,17 +303,16 @@ function setupDownloadAndUploadButtons(data) {
       });
 
       const result = await res.json();
-      
-      if (res.ok) {
-        let msg = `✅ UPDATE SUCCESSFUL\n\n`;
-        msg += `Updated: ${result.updatedCount || 0}\n`;
-        msg += `Invalid rows: ${result.skipped?.invalidRows || 0}\n`;
-        msg += `Mismatched rows: ${result.skipped?.mismatched || 0}`;
 
-        alert(msg);
-        fetchRequests();
+      if (res.ok) {
+        if (dryRun) {
+          showUploadResult('Dry Run: Plan for Update', result);
+        } else {
+          showUploadResult('Update Successful', result);
+          fetchRequests();
+        }
       } else {
-        alert('❌ Update failed: ' + (result.message || result.error));
+        showUploadResult('Upload Failed', result, true);
       }
     } catch (err) {
       console.error(err);
@@ -322,7 +327,9 @@ function setupDownloadAndUploadButtons(data) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!confirm('This will INSERT new records. Continue?')) {
+    const dryRun = document.getElementById('dryRunCheckbox').checked;
+
+    if (!dryRun && !confirm('This will INSERT new records into database. Continue?')) {
       e.target.value = '';
       return;
     }
@@ -331,7 +338,8 @@ function setupDownloadAndUploadButtons(data) {
     formData.append('file', file);
 
     try {
-      const url = `${CONFIG.basePath}/wifi/insertpercode?allowInsert=true`;
+      let url = `${CONFIG.basePath}/wifi/insertpercode?allowInsert=true`;
+      if (dryRun) url += '&dryRun=true';
 
       const res = await fetch(url, {
         method: 'POST',
@@ -342,17 +350,16 @@ function setupDownloadAndUploadButtons(data) {
       });
 
       const result = await res.json();
-      
-      if (res.ok) {
-        let msg = `✅ INSERT SUCCESSFUL\n\n`;
-        msg += `Inserted: ${result.insertedCount || 0}\n`;
-        msg += `Skipped (already exists): ${result.skippedExisting || 0}\n`;
-        msg += `Invalid rows: ${result.invalidRows || 0}`;
 
-        alert(msg);
-        fetchRequests();
+      if (res.ok) {
+        if (dryRun) {
+          showUploadResult('Dry Run: Plan for Insert', result);
+        } else {
+          showUploadResult('Insert Successful', result);
+          fetchRequests();
+        }
       } else {
-        alert('❌ Insert failed: ' + (result.message || result.error));
+        showUploadResult('Upload Failed', result, true);
       }
     } catch (err) {
       console.error(err);
@@ -365,7 +372,7 @@ function setupDownloadAndUploadButtons(data) {
 
 /* ============================================================
    ADD CODE MANUALLY – MODAL LOGIC
-============================================================ */
+   ============================================================ */
 
 // open manual add modal
 function openManualAddModal() {
@@ -489,4 +496,197 @@ async function submitManualAdd() {
   } catch (err) {
     alert(err.message || 'Failed to add code');
   }
+}
+
+/* ============================================================
+   ROUTER PORTAL EXPORT & UPLOAD RESULTS UI HELPERS
+============================================================ */
+
+function openRouterExportModal() {
+  document.getElementById('routerExportModal').style.display = 'block';
+  document.getElementById('routerExportBackdrop').style.display = 'block';
+  document.getElementById('exportFilterType').value = 'hours';
+  toggleExportFilterFields();
+}
+
+function closeRouterExportModal() {
+  document.getElementById('routerExportModal').style.display = 'none';
+  document.getElementById('routerExportBackdrop').style.display = 'none';
+}
+
+function toggleExportFilterFields() {
+  const type = document.getElementById('exportFilterType').value;
+  document.getElementById('exportHoursGroup').style.display = type === 'hours' ? 'block' : 'none';
+  document.getElementById('exportDateRangeGroup').style.display = type === 'date-range' ? 'block' : 'none';
+}
+
+async function submitRouterExport() {
+  const type = document.getElementById('exportFilterType').value;
+  const token = sessionStorage.getItem('token');
+  let url = `${CONFIG.basePath}/wifi/permanent/portal-export`;
+  const params = new URLSearchParams();
+
+  if (type === 'hours') {
+    const hours = document.getElementById('exportHours').value;
+    if (!hours || hours <= 0) {
+      alert('Please enter a valid number of hours');
+      return;
+    }
+    params.set('hours', hours);
+  } else if (type === 'date-range') {
+    const start = document.getElementById('exportStartDate').value;
+    const end = document.getElementById('exportEndDate').value;
+    if (!start || !end) {
+      alert('Please select both start and end dates');
+      return;
+    }
+    params.set('startDate', start);
+    params.set('endDate', end);
+  }
+
+  const query = params.toString();
+  if (query) url += '?' + query;
+
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const json = await res.json();
+      throw new Error(json.error || 'Failed to download portal export');
+    }
+
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `wifi_portal_accounts_${type}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    link.click();
+    closeRouterExportModal();
+  } catch (err) {
+    console.error(err);
+    alert('Export failed: ' + err.message);
+  }
+}
+
+
+function showUploadResult(title, data, isError = false) {
+  document.getElementById('resultTitle').innerText = title;
+  const summaryDiv = document.getElementById('resultSummary');
+  const headerRow = document.getElementById('resultTableHeader');
+  const body = document.getElementById('resultTableBody');
+
+  headerRow.innerHTML = '';
+  body.innerHTML = '';
+
+  if (isError) {
+    summaryDiv.style.borderLeftColor = '#dc3545';
+    summaryDiv.innerHTML = `<strong>Error:</strong> ${data.error || 'Failed to process file'}`;
+
+    if (data.errors && data.errors.length > 0) {
+      headerRow.innerHTML = '<th>Excel Row</th><th>Validation Error Description</th>';
+      data.errors.forEach(err => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>Row ${err.row}</td>
+          <td style="color: #dc3545;">${err.error}</td>
+        `;
+        body.appendChild(row);
+      });
+    } else {
+      headerRow.innerHTML = '<th>Status</th>';
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>No detailed row errors available. Check backend server logs.</td>`;
+      body.appendChild(row);
+    }
+  } else if (data.dryRun) {
+    summaryDiv.style.borderLeftColor = '#ffc107';
+
+    if (title.includes('Update')) {
+      summaryDiv.innerHTML = `
+        <strong>Dry Run Summary:</strong><br/>
+        Total rows in file: ${data.summary.totalRows}<br/>
+        Valid rows: ${data.summary.validRows}<br/>
+        Mismatched rows (skipped): ${data.summary.invalidRows}<br/>
+        Planned updates: ${data.summary.changesCount}
+      `;
+
+      headerRow.innerHTML = '<th>Row</th><th>Card No</th><th>Field Name</th><th>Old Value</th><th>New Value</th>';
+      if (data.changes && data.changes.length > 0) {
+        data.changes.forEach(ch => {
+          Object.keys(ch.changes).forEach(field => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>Row ${ch.rowNumber}</td>
+              <td>${ch.cardno}</td>
+              <td><strong>${field}</strong></td>
+              <td style="color: #6c757d; text-decoration: line-through;">${ch.changes[field].old || '-'}</td>
+              <td style="color: #28a745; font-weight: 600;">${ch.changes[field].new || '-'}</td>
+            `;
+            body.appendChild(row);
+          });
+        });
+      } else {
+        body.innerHTML = '<tr><td colspan="5" class="text-center">No changes detected compared to database.</td></tr>';
+      }
+    } else {
+      // Insert dry run
+      summaryDiv.innerHTML = `
+        <strong>Dry Run Summary:</strong><br/>
+        Total rows in file: ${data.summary.totalRows}<br/>
+        Valid rows: ${data.summary.validRows}<br/>
+        Skipped (already exists): ${data.summary.skippedExisting}<br/>
+        Invalid rows: ${data.summary.invalidRows}<br/>
+        Planned inserts: ${data.summary.toInsert.length}
+      `;
+
+      headerRow.innerHTML = '<th>Row</th><th>Card No</th><th>Username</th><th>WiFi Code</th><th>SSID</th><th>Status</th>';
+      if (data.toInsert && data.toInsert.length > 0) {
+        data.toInsert.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>Row ${item.rowNumber}</td>
+            <td>${item.cardno}</td>
+            <td>${item.username || '(auto-generated)'}</td>
+            <td>${item.code || '-'}</td>
+            <td>${item.ssid || '-'}</td>
+            <td><span class="label label-info">${item.status}</span></td>
+          `;
+          body.appendChild(row);
+        });
+      } else {
+        body.innerHTML = '<tr><td colspan="6" class="text-center">No new rows to insert.</td></tr>';
+      }
+    }
+  } else {
+    // Normal Success
+    summaryDiv.style.borderLeftColor = '#28a745';
+    if (title.includes('Update')) {
+      summaryDiv.innerHTML = `
+        <strong>Updates Committed Successfully!</strong><br/>
+        Updated records: ${data.updatedCount || 0}<br/>
+        Skipped invalid: ${data.skipped?.invalidRows || 0}<br/>
+        Skipped mismatched: ${data.skipped?.mismatched || 0}<br/>
+        WhatsApp notifications queued: ${data.notificationsQueued || 0}
+      `;
+    } else {
+      summaryDiv.innerHTML = `
+        <strong>Inserts Committed Successfully!</strong><br/>
+        Inserted records: ${data.insertedCount || 0}<br/>
+        Skipped existing: ${data.skippedExisting || 0}<br/>
+        Skipped invalid: ${data.invalidRows || 0}<br/>
+        WhatsApp notifications queued: ${data.notificationsQueued || 0}
+      `;
+    }
+    headerRow.innerHTML = '<th>Status</th>';
+    body.innerHTML = '<tr><td style="color: #28a745; font-weight:600;">Data committed successfully to database!</td></tr>';
+  }
+
+  document.getElementById('uploadResultModal').style.display = 'block';
+  document.getElementById('uploadResultBackdrop').style.display = 'block';
+}
+
+function closeUploadResultModal() {
+  document.getElementById('uploadResultModal').style.display = 'none';
+  document.getElementById('uploadResultBackdrop').style.display = 'none';
 }
