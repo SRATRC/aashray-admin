@@ -8,6 +8,7 @@
     'cardAdmin',
     'officeAdmin',
     'foodAdmin',
+    'foodPlateAdmin',
     'gateAdmin',
     'adhyayanAdmin',
     'travelAdmin',
@@ -77,11 +78,11 @@
     </div>
   </div>
   <script>
-
     const shortLinkButton = {
       href: 'common/shortLinks.html',
       text: 'Short Link Management'
     };
+
     // Role-based button configuration
     const roleButtonMap = {
       superAdmin: [
@@ -175,7 +176,8 @@
       avtAdmin: [{ href: 'avt/index.html', text: 'AVT Management' }, shortLinkButton],
       utsavAdminReadOnly: [{ href: 'utsav/utsavCentre.html', text: 'Utsav Report' }],
       wifiAdmin: [{ href: 'wifi/index.html', text: 'WiFi Management' }, shortLinkButton],
-      smilesAdmin: [{ href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }]
+      smilesAdmin: [{ href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }],
+      foodPlateAdmin: [{ href: 'food/plateCount.html', text: 'K1 Kitchen Count' }]
     };
 
     // Function to populate buttons based on user roles
