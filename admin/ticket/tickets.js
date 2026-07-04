@@ -3,6 +3,16 @@ let currentTicketId = null;
 let refreshInterval = null;
 let currentStreamAbort = null;
 let currentTicket = null;
+let streamReconnectTimer = null;
+let streamWatchdogTimer = null;
+let lastStreamActivity = 0;
+
+// A connection that's gone silently stale (a graceful close produces no
+// fetch error) is detected by the absence of the backend's ~25s heartbeat:
+// if nothing — not even a ping — arrives for this long, the stream is
+// assumed dead and force-reconnected.
+const SSE_WATCHDOG_TIMEOUT_MS = 40000;
+const SSE_WATCHDOG_CHECK_INTERVAL_MS = 10000;
 
 document.addEventListener('DOMContentLoaded', () => {
   fetchTickets();
@@ -107,6 +117,8 @@ async function openTicket(ticketId) {
     currentStreamAbort.abort();
     currentStreamAbort = null;
   }
+  clearTimeout(streamReconnectTimer);
+  streamReconnectTimer = null;
   stopAutoRefresh();
 
   currentTicketId = ticketId;
@@ -353,6 +365,10 @@ function closeDrawer() {
     currentStreamAbort.abort();
     currentStreamAbort = null;
   }
+  clearTimeout(streamReconnectTimer);
+  streamReconnectTimer = null;
+  clearInterval(streamWatchdogTimer);
+  streamWatchdogTimer = null;
   stopAutoRefresh();
   startTicketListRefresh(); // resume list polling
   currentTicketId = null;
@@ -366,6 +382,17 @@ function closeDrawer() {
 async function openTicketStream(ticketId) {
   const controller = new AbortController();
   currentStreamAbort = controller;
+  lastStreamActivity = Date.now();
+
+  clearInterval(streamWatchdogTimer);
+  streamWatchdogTimer = setInterval(() => {
+    if (Date.now() - lastStreamActivity > SSE_WATCHDOG_TIMEOUT_MS) {
+      console.warn('Ticket stream watchdog: no activity, forcing reconnect');
+      controller.abort();
+    }
+  }, SSE_WATCHDOG_CHECK_INTERVAL_MS);
+
+  let wasEverConnected = false;
 
   try {
     const resp = await fetch(`${CONFIG.basePath}/tickets/${ticketId}/stream`, {
@@ -381,16 +408,28 @@ async function openTicketStream(ticketId) {
       const { done, value } = await reader.read();
       if (done) break;
 
+      lastStreamActivity = Date.now();
       buf += decoder.decode(value, { stream: true });
       const frames = buf.split('\n\n');
       buf = frames.pop();
 
       for (const f of frames) {
         const line = f.split('\n').find((l) => l.startsWith('data:'));
-        if (!line) continue; // ignore ": ping" heartbeats and other comment lines
+        if (!line) continue; // ignore raw comment lines, if any
 
         const msg = JSON.parse(line.slice(5).trim());
-        if (msg.type === 'connected') continue;
+        if (msg.type === 'ping') continue; // liveness signal only
+        if (msg.type === 'connected') {
+          // A second (or later) "connected" means we reconnected after a
+          // drop — reload once to backfill anything missed while down, and
+          // stop the polling fallback now that the stream is back.
+          if (wasEverConnected && currentTicketId === ticketId) {
+            stopAutoRefresh();
+            loadTicketDetails();
+          }
+          wasEverConnected = true;
+          continue;
+        }
 
         // only append messages relevant to the ticket currently open
         if (currentTicketId === ticketId) {
@@ -398,12 +437,32 @@ async function openTicketStream(ticketId) {
         }
       }
     }
+    // Stream ended without an error (server closed it gracefully) — this
+    // produces no exception, so it must be handled the same as a failure.
+    scheduleStreamReconnect(ticketId);
   } catch (e) {
-    if (!controller.signal.aborted) {
-      console.warn('Ticket stream failed, falling back to polling', e);
-      startAutoRefresh(); // fallback to polling
-    }
+    // Reconnect on both a genuine network error and a watchdog-forced abort.
+    // An abort caused by the user closing the drawer / switching tickets is
+    // a no-op in scheduleStreamReconnect, since currentTicketId will no
+    // longer match `ticketId` by the time this runs.
+    console.warn('Ticket stream disconnected, will retry', e);
+    scheduleStreamReconnect(ticketId);
+  } finally {
+    clearInterval(streamWatchdogTimer);
+    streamWatchdogTimer = null;
   }
+}
+
+function scheduleStreamReconnect(ticketId) {
+  if (currentTicketId !== ticketId) return; // drawer moved on / closed
+  startAutoRefresh(); // keep polling as a safety net while the stream retries
+  clearTimeout(streamReconnectTimer);
+  streamReconnectTimer = setTimeout(() => {
+    streamReconnectTimer = null;
+    if (currentTicketId === ticketId) {
+      openTicketStream(ticketId);
+    }
+  }, 3000);
 }
 
 /* =====================================================
