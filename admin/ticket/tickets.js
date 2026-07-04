@@ -419,6 +419,15 @@ async function openTicketStream(ticketId) {
 
         const msg = JSON.parse(line.slice(5).trim());
         if (msg.type === 'ping') continue; // liveness signal only
+        if (msg.type === 'status_update') {
+          // A status change isn't always paired with a new message (e.g. the
+          // ticket owner tapping "Close Ticket" from the app) — reload so the
+          // status badge/dropdown reflect it without a manual refresh.
+          if (currentTicketId === ticketId) {
+            loadTicketDetails();
+          }
+          continue;
+        }
         if (msg.type === 'connected') {
           // A second (or later) "connected" means we reconnected after a
           // drop — reload once to backfill anything missed while down, and
