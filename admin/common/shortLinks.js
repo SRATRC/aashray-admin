@@ -25,6 +25,19 @@ const roleTypeMap = {
 };
 
 let allLinks = [];
+let isSaving = false;
+
+function disableAllButtons() {
+  document.querySelectorAll('#linksTable button, #shortLinkForm button').forEach(btn => {
+    btn.disabled = true;
+  });
+}
+
+function enableAllButtons() {
+  document.querySelectorAll('#linksTable button, #shortLinkForm button').forEach(btn => {
+    btn.disabled = false;
+  });
+}
 
 const BASE_API = `${CONFIG.baseUrl}/short-links`;
 
@@ -287,6 +300,17 @@ function applyFilters() {
 
 async function createShortLink(e) {
   e.preventDefault();
+  if (isSaving) return;
+
+  const submitBtn = document.querySelector('#shortLinkForm button[type="submit"]');
+  let originalText = '';
+  if (submitBtn) {
+    originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Creating...';
+  }
+
+  isSaving = true;
+  disableAllButtons();
 
   try {
     const body = {
@@ -324,6 +348,12 @@ async function createShortLink(e) {
     console.error(error);
 
     alert(error.message);
+  } finally {
+    isSaving = false;
+    enableAllButtons();
+    if (submitBtn) {
+      submitBtn.textContent = originalText;
+    }
   }
 }
 
@@ -338,6 +368,10 @@ async function copyLink(url) {
 }
 
 async function toggleStatus(id, active) {
+  if (isSaving) return;
+  isSaving = true;
+  disableAllButtons();
+
   try {
     const response = await fetch(
       `${BASE_API}/${id}`,
@@ -368,17 +402,25 @@ async function toggleStatus(id, active) {
     console.error(error);
 
     alert(error.message);
+  } finally {
+    isSaving = false;
+    enableAllButtons();
   }
 }
 
 async function deleteLink(id) {
+  if (isSaving) return;
+
+  const confirmed = confirm('Delete this link?');
+
+  if (!confirmed) {
+    return;
+  }
+
+  isSaving = true;
+  disableAllButtons();
+
   try {
-    const confirmed = confirm('Delete this link?');
-
-    if (!confirmed) {
-      return;
-    }
-
     const response = await fetch(
       `${BASE_API}/${id}`,
 
@@ -402,6 +444,9 @@ async function deleteLink(id) {
     console.error(error);
 
     alert(error.message);
+  } finally {
+    isSaving = false;
+    enableAllButtons();
   }
 }
 

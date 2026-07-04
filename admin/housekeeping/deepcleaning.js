@@ -171,7 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Format owners text
-      const ownersList = item.owners.map(o => `${o.issuedto || 'Owner'} (${o.mobno || '-'})`).join('<br>');
+      const owners = Array.isArray(item.owners) ? item.owners : [];
+      const ownersList = owners.map(o => `${escapeHtml(o.issuedto || 'Owner')} (${escapeHtml(o.mobno || '-')})`).join('<br>');
 
       row.innerHTML = `
         <td style="text-align: center;"><input type="checkbox" class="flat-checkbox" data-flatno="${item.flatno}" style="margin: 0; cursor: pointer;"></td>
@@ -341,7 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       row.innerHTML = `
         <td>${dateStr}</td>
-        <td>${log.cleaned_by || '-'}</td>
+        <td>${escapeHtml(log.cleaned_by || '-')}</td>
       `;
       tbody.appendChild(row);
     });
@@ -499,3 +500,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   fetchHousekeeping();
 });
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

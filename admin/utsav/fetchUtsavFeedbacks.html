@@ -1,19 +1,19 @@
-<!-- Keep all your original includes intact -->
-<script src="/style/js/roleCheck.js"></script>
-
-<script>
-    checkRoleAccess([
-        'utsavAdmin',
-        'superAdmin',
-        'utsavAdminReadOnly',
-        'utsavAdminRaj'
-    ]);
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
+    <!-- Keep all your original includes intact -->
+    <script src="/style/js/roleCheck.js"></script>
+
+    <script>
+        checkRoleAccess([
+            'utsavAdmin',
+            'superAdmin',
+            'utsavAdminReadOnly',
+            'utsavAdminRaj'
+        ]);
+    </script>
 
     <meta charset="UTF-8" />
 
@@ -132,26 +132,6 @@
                 </div>
 
             </div>
-
-        </div>
-
-    </div>
-
-    <!-- FEEDBACK MODAL -->
-
-    <div id="feedbackModal" class="modal" style="display:none;">
-
-        <div class="modal-content">
-
-            <span onclick="closeFeedbackModal()">
-                &times;
-            </span>
-
-            <h3>
-                Feedback Answers
-            </h3>
-
-            <div id="feedbackAnswersContainer"></div>
 
         </div>
 

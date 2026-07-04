@@ -7,8 +7,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const titleEl = document.getElementById('pageTitle');
   if (department === 'housekeeping') {
     if (titleEl) titleEl.textContent = 'Housekeeping Management';
-    const btnContainer = document.getElementById('deepCleaningBtnContainer');
-    if (btnContainer) btnContainer.style.display = 'block';
+    let hasAccess = false;
+    try {
+      const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+      const allowedRoles = ['housekeepingAdmin', 'superAdmin'];
+      hasAccess = Array.isArray(roles)
+        ? roles.some(r => allowedRoles.includes(r))
+        : allowedRoles.includes(roles);
+    } catch (e) {
+      console.error('Error parsing roles:', e);
+    }
+    if (hasAccess) {
+      const btnContainer = document.getElementById('deepCleaningBtnContainer');
+      if (btnContainer) btnContainer.style.display = 'block';
+    }
   } else if (department === 'electrical') {
     if (titleEl) titleEl.textContent = 'Electrical Management';
   } else if (department === 'maintenance') {

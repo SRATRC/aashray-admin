@@ -23,8 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const response = await fetch(url, options);
       const result = await response.json();
-      utsavfetch = result.data || [];
-      populateTable(result.data);
+      const sortedData = (result.data || []).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      utsavfetch = sortedData;
+      populateTable(sortedData);
       setupDownloadButton();
     } catch (error) {
       console.error('Error fetching Utsav report:', error);
@@ -34,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const populateTable = (data) => {
     utsavTableBody.innerHTML = ''; // Clear existing rows
-    console.log(data);
 
     if (!Array.isArray(data) || data.length === 0) {
       utsavTableBody.innerHTML =
@@ -245,17 +245,6 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
       'waitlistTable',
       'tableSearch'
     );
-    document.addEventListener('click', function (event) {
-
-      const button = event.target.closest('.toggle-status');
-
-      if (!button) return;
-
-      toggleStatus({
-        target: button
-      });
-
-    });
   };
 
   const toggleStatus = async (event) => {
@@ -320,6 +309,13 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
 
       }
 
+    }
+
+    const toggleStatusBtn = e.target.closest('.toggle-status');
+    if (toggleStatusBtn) {
+      toggleStatus({
+        target: toggleStatusBtn
+      });
     }
 
   });

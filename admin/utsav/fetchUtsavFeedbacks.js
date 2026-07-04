@@ -93,24 +93,25 @@ function renderTable() {
     <tbody>
 
   ${feedbacks.map((item, index) => {
+        const answers = Array.isArray(item.answers) ? item.answers : [];
 
         const foodRating =
-            item.answers.find(a => a.question_id === 'food_rating')?.answer || '-';
+            answers.find(a => a.question_id === 'food_rating')?.answer || '-';
 
         const stayRating =
-            item.answers.find(a => a.question_id === 'stay_rating')?.answer || '-';
+            answers.find(a => a.question_id === 'stay_rating')?.answer || '-';
 
         const eventRating =
-            item.answers.find(a => a.question_id === 'event_rating')?.answer || '-';
+            answers.find(a => a.question_id === 'event_rating')?.answer || '-';
 
         const programRating =
-            item.answers.find(a => a.question_id === 'program_rating')?.answer || '-';
+            answers.find(a => a.question_id === 'program_rating')?.answer || '-';
 
         const lovedMost =
-            item.answers.find(a => a.question_id === 'loved_most')?.answer || '-';
+            answers.find(a => a.question_id === 'loved_most')?.answer || '-';
 
         const suggestions =
-            item.answers.find(a => a.question_id === 'improvement_suggestions')?.answer || '-';
+            answers.find(a => a.question_id === 'improvement_suggestions')?.answer || '-';
 
         return `
 
@@ -118,33 +119,33 @@ function renderTable() {
 
         <td>${index + 1}</td>
 
-        <td>${item.cardno || '-'}</td>
+        <td>${escapeHtml(item.cardno || '-')}</td>
 
-        <td>${item.issuedto || '-'}</td>
+        <td>${escapeHtml(item.issuedto || '-')}</td>
 
-        <td>${item.mobno || '-'}</td>
+        <td>${escapeHtml(item.mobno || '-')}</td>
 
-        <td>${item.gender || '-'}</td>
+        <td>${escapeHtml(item.gender || '-')}</td>
 
-        <td>${item.center || '-'}</td>
+        <td>${escapeHtml(item.center || '-')}</td>
 
-        <td>${item.res_status || '-'}</td>
+        <td>${escapeHtml(item.res_status || '-')}</td>
 
-        <td>${item.utsav_name || '-'}</td>
+        <td>${escapeHtml(item.utsav_name || '-')}</td>
 
-        <td>${formatDateTime(item.createdAt)}</td>
+        <td>${escapeHtml(formatDateTime(item.createdAt))}</td>
 
-        <td>${foodRating}</td>
+        <td>${escapeHtml(foodRating)}</td>
 
-        <td>${stayRating}</td>
+        <td>${escapeHtml(stayRating)}</td>
 
-        <td>${eventRating}</td>
+        <td>${escapeHtml(eventRating)}</td>
 
-<td>${programRating}</td>
+        <td>${escapeHtml(programRating)}</td>
 
-        <td>${lovedMost}</td>
+        <td>${escapeHtml(lovedMost)}</td>
 
-        <td>${suggestions}</td>
+        <td>${escapeHtml(suggestions)}</td>
 
       </tr>
 
@@ -164,55 +165,6 @@ function renderTable() {
         );
 
     }, 100);
-
-}
-
-function openFeedbackModal(feedbackId) {
-
-    const feedback = feedbacks.find(
-        (item) => item.id === feedbackId
-    );
-
-    if (!feedback) return;
-
-    const container = document.getElementById(
-        'feedbackAnswersContainer'
-    );
-
-    container.innerHTML = '';
-
-    feedback.answers.forEach((answer) => {
-
-        const div = document.createElement('div');
-
-        div.className = 'feedback-card';
-
-        div.innerHTML = `
-      <h4>
-        ${answer.question_text}
-      </h4>
-
-      <p>
-        <strong>Answer:</strong>
-        ${answer.answer}
-      </p>
-    `;
-
-        container.appendChild(div);
-
-    });
-
-    document.getElementById(
-        'feedbackModal'
-    ).style.display = 'block';
-
-}
-
-function closeFeedbackModal() {
-
-    document.getElementById(
-        'feedbackModal'
-    ).style.display = 'none';
 
 }
 
@@ -238,6 +190,16 @@ function formatDateTime(dateInput) {
 
 }
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function setupDownloadButton() {
     document.getElementById(
         'downloadBtnContainer'
@@ -249,34 +211,35 @@ function setupDownloadButton() {
         getData: () => {
 
             return feedbacks.map((item, index) => {
+                const answers = Array.isArray(item.answers) ? item.answers : [];
 
                 const foodRating =
-                    item.answers.find(
+                    answers.find(
                         a => a.question_id === 'food_rating'
                     )?.answer || '-';
 
                 const stayRating =
-                    item.answers.find(
+                    answers.find(
                         a => a.question_id === 'stay_rating'
                     )?.answer || '-';
 
                 const eventRating =
-                    item.answers.find(
+                    answers.find(
                         a => a.question_id === 'event_rating'
                     )?.answer || '-';
 
                 const programRating =
-                    item.answers.find(
+                    answers.find(
                         a => a.question_id === 'program_rating'
                     )?.answer || '-';
 
                 const lovedMost =
-                    item.answers.find(
+                    answers.find(
                         a => a.question_id === 'loved_most'
                     )?.answer || '-';
 
                 const suggestions =
-                    item.answers.find(
+                    answers.find(
                         a => a.question_id === 'improvement_suggestions'
                     )?.answer || '-';
 
