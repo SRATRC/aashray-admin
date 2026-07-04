@@ -10,6 +10,24 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =====================================================
+   HTML ESCAPING
+   Ticket description / service and chat messages are
+   submitted by app users, so they must be escaped before
+   being placed into innerHTML to avoid stored HTML injection
+   executing in an authenticated admin session.
+   ===================================================== */
+
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* =====================================================
    UNREAD TRACKING (LAST MESSAGE BASED)
    ===================================================== */
 
@@ -65,14 +83,14 @@ function renderTicketTable(tickets) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${dot}${t.id}</td>
-      <td>${t.issued_by}</td>
-      <td>${t.service}</td>
-      <td>${t.status}</td>
+      <td>${dot}${escapeHtml(t.id)}</td>
+      <td>${escapeHtml(t.issued_by)}</td>
+      <td>${escapeHtml(t.service)}</td>
+      <td>${escapeHtml(t.status)}</td>
       <td>${new Date(t.createdAt).toLocaleString()}</td>
       <td>${t.last_message_at ? new Date(t.last_message_at).toLocaleString() : '-'}</td>
       <td>
-        <button class="btn" onclick="openTicket('${t.id}')">View</button>
+        <button class="btn" onclick="openTicket('${encodeURIComponent(t.id)}')">View</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -136,11 +154,11 @@ function populateDrawer(ticket) {
   document.getElementById('ticketTitle').innerText = `Ticket #${ticket.id} (${ticket.status})`;
 
   document.getElementById('ticketMeta').innerHTML = `
-    <p><b>Service:</b> ${ticket.service}</p>
-    <p><b>Issued By:</b> ${ticket.issued_by}</p>
-    <p><b>Description:</b> ${ticket.description}</p>
-    <p><b>OS:</b> ${ticket.os || '-'}</p>
-    <p><b>App Version:</b> ${ticket.app_version || '-'}</p>
+    <p><b>Service:</b> ${escapeHtml(ticket.service)}</p>
+    <p><b>Issued By:</b> ${escapeHtml(ticket.issued_by)}</p>
+    <p><b>Description:</b> ${escapeHtml(ticket.description)}</p>
+    <p><b>OS:</b> ${escapeHtml(ticket.os) || '-'}</p>
+    <p><b>App Version:</b> ${escapeHtml(ticket.app_version) || '-'}</p>
   `;
 
   document.getElementById('statusUpdateSelect').value = ticket.status;
@@ -174,13 +192,13 @@ function renderMessage(msg, container) {
   }
 
   const div = document.createElement('div');
-  div.className = `message ${msg.sender_type}`;
+  div.className = msg.sender_type === 'admin' ? 'message admin' : 'message user';
   if (msg.id !== undefined && msg.id !== null) {
     div.setAttribute('data-msg-id', msg.id);
   }
   div.innerHTML = `
-    <p>${msg.message}</p>
-    <span>${msg.sender_type} &bull; ${new Date(msg.createdAt).toLocaleString()}</span>
+    <p>${escapeHtml(msg.message)}</p>
+    <span>${escapeHtml(msg.sender_type)} &bull; ${new Date(msg.createdAt).toLocaleString()}</span>
   `;
   container.appendChild(div);
 }
