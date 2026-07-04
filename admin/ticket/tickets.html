@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/style/js/roleCheck.js"></script>
+    <script>
+      checkRoleAccess(['superAdmin', 'maintenanceAdmin']); // customize allowed roles per page
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin | Support Tickets</title>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="tickets.js" defer></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+
+    <style>
+      .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table {
+        min-width: 900px;
+        width: 100%;
+      }
+
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .filters select {
+        width: auto;
+      }
+
+      .unread-dot {
+        color: #d9534f;
+        font-weight: bold;
+        margin-right: 4px;
+      }
+
+      /* Drawer */
+      .drawer-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: 998;
+      }
+
+      .drawer-overlay.open {
+        display: block;
+      }
+
+      .drawer {
+        position: fixed;
+        top: 0;
+        right: -520px;
+        width: 500px;
+        max-width: 92%;
+        height: 100%;
+        background: #fff;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease;
+        z-index: 999;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .drawer.open {
+        right: 0;
+      }
+
+      .drawer h3 {
+        color: #204060;
+      }
+
+      .ticket-meta p {
+        margin: 4px 0;
+      }
+
+      .messages {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        max-height: 320px;
+        overflow-y: auto;
+        margin: 10px 0;
+        background: #fafafa;
+      }
+
+      .message {
+        margin-bottom: 10px;
+      }
+
+      .message.admin {
+        text-align: right;
+        color: #0066cc;
+      }
+
+      .message.user {
+        text-align: left;
+        color: #333;
+      }
+
+      .message p {
+        display: inline-block;
+        background: #eef2f7;
+        padding: 6px 10px;
+        border-radius: 8px;
+        max-width: 85%;
+        word-wrap: break-word;
+      }
+
+      .message.admin p {
+        background: #d7e8fc;
+      }
+
+      .message span {
+        display: block;
+        font-size: 11px;
+        color: #777;
+        margin-top: 2px;
+      }
+
+      #adminMessage {
+        width: 100%;
+        height: 70px;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        resize: vertical;
+      }
+
+      .drawer-actions {
+        margin-top: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .status-update {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      /* Debug info panel */
+      .debug-panel {
+        margin-top: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .debug-panel-header {
+        background: #204060;
+        color: #fff;
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        border-radius: 4px 4px 0 0;
+      }
+
+      .debug-panel-body {
+        display: none;
+        padding: 10px 12px;
+      }
+
+      .debug-panel-body.open {
+        display: block;
+      }
+
+      .debug-kv-grid {
+        display: grid;
+        grid-template-columns: minmax(120px, 40%) 1fr;
+        gap: 4px 10px;
+        font-size: 13px;
+      }
+
+      .debug-kv-grid .debug-key {
+        font-weight: 600;
+        color: #204060;
+        word-break: break-word;
+      }
+
+      .debug-kv-grid .debug-value {
+        color: #333;
+        word-break: break-word;
+      }
+
+      .debug-raw-toggle {
+        margin-top: 10px;
+        display: inline-block;
+        cursor: pointer;
+        color: #4c86b0;
+        font-size: 12px;
+        text-decoration: underline;
+      }
+
+      .debug-raw-json {
+        display: none;
+        margin-top: 8px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        max-height: 240px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .debug-raw-json.open {
+        display: block;
+      }
+
+      .debug-empty {
+        color: #777;
+        font-style: italic;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Support Tickets</h1>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+              <select id="statusFilter" class="form-control">
+                <option value="">All Status</option>
+                <option value="open">Open</option>
+                <option value="in progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+              </select>
+
+              <select id="serviceFilter" class="form-control">
+                <option value="">All Services</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="IT Support">IT Support</option>
+                <option value="Housekeeping">Housekeeping</option>
+                <option value="Food">Food</option>
+                <option value="Travel">Travel</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <button class="btn" onclick="fetchTickets()">Apply</button>
+            </div>
+
+            <!-- Tickets Table -->
+            <div class="table-responsive">
+              <table class="table" id="ticketTable">
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Issued By</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Last Message</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer overlay + panel -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <div class="drawer" id="ticketDrawer">
+      <h3 id="ticketTitle"></h3>
+      <div class="ticket-meta" id="ticketMeta"></div>
+
+      <hr />
+
+      <div class="messages" id="messageContainer"></div>
+
+      <textarea id="adminMessage" placeholder="Type your reply..."></textarea>
+
+      <div class="drawer-actions">
+        <div class="status-update">
+          <select id="statusUpdateSelect" class="form-control">
+            <option value="open">Open</option>
+            <option value="in progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+          <button class="btn" onclick="updateStatus()">Update Status</button>
+        </div>
+        <div>
+          <button class="btn" onclick="sendReply()">Send</button>
+          <button class="btn" onclick="closeDrawer()">Close</button>
+        </div>
+      </div>
+
+      <!-- Debug info panel -->
+      <div class="debug-panel">
+        <div class="debug-panel-header" onclick="toggleDebugPanel()">
+          <span>Debug info</span>
+          <span id="debugPanelToggleIcon">&#9656;</span>
+        </div>
+        <div class="debug-panel-body" id="debugPanelBody">
+          <div id="debugKvGrid" class="debug-kv-grid"></div>
+          <span class="debug-raw-toggle" id="debugRawToggle" onclick="toggleDebugRaw()">Show raw JSON</span>
+          <pre class="debug-raw-json" id="debugRawJson"></pre>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
