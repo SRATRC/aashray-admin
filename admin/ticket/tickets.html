@@ -25,6 +25,8 @@
     <!-- Additional Scripts -->
     <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/htmlEscape.js"></script>
+    <script src="../../style/js/tableSortFilter.js" defer></script>
     <script src="tickets.js" defer></script>
 
     <!-- Shared Styles -->
@@ -292,6 +294,13 @@
               </select>
 
               <button class="btn" onclick="fetchTickets()">Apply</button>
+
+              <input
+                type="text"
+                id="ticketSearch"
+                class="form-control search-box"
+                placeholder="Search..."
+              />
             </div>
 
             <!-- Tickets Table -->
