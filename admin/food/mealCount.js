@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 async function fetchMealCount(mobno, start_date, end_date) {
+  const alertEl = document.getElementById('alert');
+  if (alertEl) alertEl.style.display = 'none';
   resetAlert();
 
   try {
@@ -72,7 +74,8 @@ async function fetchMealCount(mobno, start_date, end_date) {
 
     const result = await response.json();
 
-    if (!response.ok || !result.success) {
+    if (!response.ok) {
+      if (alertEl) alertEl.style.display = 'block';
       showErrorMessage(result.message || 'Failed to load');
       return;
     }
@@ -82,6 +85,7 @@ async function fetchMealCount(mobno, start_date, end_date) {
     renderUtsavWarning(result.utsavExcluded);
   } catch (err) {
     console.error('Meal count fetch error:', err);
+    if (alertEl) alertEl.style.display = 'block';
     showErrorMessage(err.message || 'Something went wrong');
   }
 }
