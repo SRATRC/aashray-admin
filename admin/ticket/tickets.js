@@ -103,6 +103,9 @@ async function fetchTickets() {
     const res = await fetch(`${CONFIG.basePath}/tickets?${params.toString()}`, {
       headers: authHeaders()
     });
+    // fetch only rejects on network errors, not on HTTP 4xx/5xx — guard so an
+    // error response doesn't wipe the table to empty; keep the last-good rows.
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 
     const result = await res.json();
     renderTicketTable(result.data || []);
@@ -175,6 +178,12 @@ function teardownStream() {
 }
 
 async function openTicket(ticketId) {
+  // The list embeds an encodeURIComponent'd id in its inline onclick; decode
+  // it back to the raw id so currentTicketId matches the keys used by
+  // getLastSeen(t.id) in the table (a no-op for the current hex ids, but keeps
+  // unread-tracking correct if the id format ever gains encodable characters).
+  ticketId = decodeURIComponent(ticketId);
+
   teardownStream(); // stop whatever ticket's stream was previously open
 
   currentTicketId = ticketId;
@@ -186,7 +195,7 @@ async function openTicket(ticketId) {
   // details fetch to finish before connecting the stream.
   const detailsPromise = loadTicketDetails();
   openTicketStream(ticketId);
-  await detailsPromise;
+  const loaded = await detailsPromise;
 
   // The admin may have clicked a different ticket before this one's details
   // finished loading — if so, let that newer call own opening the drawer
@@ -196,6 +205,12 @@ async function openTicket(ticketId) {
   // already guards its own populateDrawer() call the same way.
   if (currentTicketId !== ticketId) return;
 
+  // Don't open a blank drawer on a failed load — surface the error instead.
+  if (!loaded) {
+    alert('Failed to load ticket. Please try again.');
+    return;
+  }
+
   openDrawer();
 }
 
@@ -203,23 +218,33 @@ async function openTicket(ticketId) {
    LOAD TICKET DETAILS (MESSAGES)
    ===================================================== */
 
+// Returns true if the drawer was populated for the current ticket, false on
+// any error or if the request was superseded. Callers that opened the drawer
+// (openTicket) use this to surface an error instead of showing an empty
+// drawer; background callers (polling, SSE reload) ignore the result. It
+// deliberately does NOT alert on its own — that would spam on every 60s poll
+// or reconnect reload.
 async function loadTicketDetails() {
   const targetTicketId = currentTicketId;
-  if (!targetTicketId) return;
+  if (!targetTicketId) return false;
 
   try {
     const res = await fetch(`${CONFIG.basePath}/tickets/${targetTicketId}`, {
       headers: authHeaders()
     });
+    // Guard on HTTP status + payload so an error response doesn't reach
+    // populateDrawer(undefined) and throw while silently opening an empty drawer.
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 
     const result = await res.json();
     const ticket = result.data;
+    if (!ticket) throw new Error('Ticket data missing from response');
 
     // The admin may have switched to a different ticket (or closed the
     // drawer) while this fetch was in flight — don't let a slow response
     // for the OLD ticket overwrite the NOW-current ticket's drawer/unread
     // state.
-    if (currentTicketId !== targetTicketId) return;
+    if (currentTicketId !== targetTicketId) return false;
 
     populateDrawer(ticket);
 
@@ -228,8 +253,10 @@ async function loadTicketDetails() {
       const lastMsg = ticket.messages[ticket.messages.length - 1];
       setLastSeen(targetTicketId, lastMsg.createdAt);
     }
+    return true;
   } catch (e) {
     console.error('Failed to load ticket details', e);
+    return false;
   }
 }
 
@@ -248,7 +275,17 @@ function populateDrawer(ticket) {
     <p><b>App Version:</b> ${escapeHtml(ticket.app_version) || '-'}</p>
   `;
 
-  document.getElementById('statusUpdateSelect').value = ticket.status;
+  const statusSelect = document.getElementById('statusUpdateSelect');
+  statusSelect.value = ticket.status;
+  // A closed ticket can't be reopened by an admin (the backend rejects any
+  // status change on it), so lock the control + button rather than letting a
+  // click PATCH a value the server will 400 on. The disabled "Closed" option
+  // in the markup lets the select still display the closed state correctly
+  // instead of rendering blank (selectedIndex -1).
+  const isClosed = ticket.status === 'closed';
+  statusSelect.disabled = isClosed;
+  const updateStatusBtn = document.getElementById('updateStatusBtn');
+  if (updateStatusBtn) updateStatusBtn.disabled = isClosed;
 
   const container = document.getElementById('messageContainer');
 
@@ -384,11 +421,14 @@ async function sendReply() {
   if (!message || !currentTicketId) return;
 
   try {
-    await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/messages`, {
+    const res = await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/messages`, {
       method: 'POST',
       headers: authHeaders(true),
       body: JSON.stringify({ message })
     });
+    // fetch doesn't reject on 4xx/5xx — without this, a failed send would clear
+    // the textarea and reload as if it succeeded, silently losing the reply.
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 
     messageBox.value = '';
     await loadTicketDetails();
@@ -406,13 +446,17 @@ async function updateStatus() {
   if (!currentTicketId) return;
 
   const status = document.getElementById('statusUpdateSelect').value;
+  if (!status) return; // nothing selected (e.g. a closed ticket's blank state)
 
   try {
-    await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/status`, {
+    const res = await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/status`, {
       method: 'PATCH',
       headers: authHeaders(true),
       body: JSON.stringify({ status })
     });
+    // fetch doesn't reject on 4xx/5xx — without this the admin sees no error
+    // and believes the status changed when it didn't.
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 
     await loadTicketDetails();
     fetchTickets();
@@ -463,6 +507,15 @@ async function openTicketStream(ticketId) {
       headers: authHeaders(),
       signal: controller.signal
     });
+    // Without this, a non-2xx response still has a (small error JSON) body, so
+    // the reader below drains it, finds no frames, hits `done`, and reconnects
+    // every 3s forever — hammering the backend with a token/permission that
+    // will never work. A null body would also throw a TypeError here.
+    if (!resp.ok || !resp.body) {
+      const err = new Error(`Stream request failed: ${resp.status}`);
+      err.httpStatus = resp.status;
+      throw err;
+    }
 
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
@@ -481,7 +534,15 @@ async function openTicketStream(ticketId) {
         const line = f.split('\n').find((l) => l.startsWith('data:'));
         if (!line) continue; // ignore raw comment lines, if any
 
-        const msg = JSON.parse(line.slice(5).trim());
+        // One malformed frame must not throw out of the read loop (which would
+        // drop the connection + buffer and trigger a reconnect) — skip it.
+        let msg;
+        try {
+          msg = JSON.parse(line.slice(5).trim());
+        } catch (parseErr) {
+          console.warn('Ticket stream: skipping malformed frame', parseErr);
+          continue;
+        }
         if (msg.type === 'ping') continue; // liveness signal only
         if (msg.type === 'status_update') {
           // A status change isn't always paired with a new message (e.g. the
@@ -519,10 +580,17 @@ async function openTicketStream(ticketId) {
     // produces no exception, so it must be handled the same as a failure.
     scheduleStreamReconnect(ticketId);
   } catch (e) {
-    // Reconnect on both a genuine network error and a watchdog-forced abort.
-    // An abort caused by the user closing the drawer / switching tickets is
-    // a no-op in scheduleStreamReconnect, since currentTicketId will no
-    // longer match `ticketId` by the time this runs.
+    // A client error (expired token → 401, forbidden ticket/department → 403)
+    // will never succeed on retry, so don't storm the backend every 3s — fall
+    // back to slow polling instead. Network errors, 5xx, and watchdog-forced
+    // aborts are transient, so those still reconnect. An abort from the user
+    // closing the drawer / switching tickets is a no-op in
+    // scheduleStreamReconnect, since currentTicketId won't match by then.
+    if (e.httpStatus >= 400 && e.httpStatus < 500) {
+      console.error('Ticket stream auth/permission error, not retrying', e);
+      if (currentTicketId === ticketId) startAutoRefresh();
+      return;
+    }
     console.warn('Ticket stream disconnected, will retry', e);
     scheduleStreamReconnect(ticketId);
   } finally {

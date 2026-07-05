@@ -343,8 +343,12 @@
             <option value="open">Open</option>
             <option value="in progress">In Progress</option>
             <option value="resolved">Resolved</option>
+            <!-- Display-only: admins can't set "closed" (backend rejects it),
+                 but the option must exist so a closed ticket's select shows the
+                 correct value instead of rendering blank. -->
+            <option value="closed" disabled>Closed</option>
           </select>
-          <button class="btn" onclick="updateStatus()">Update Status</button>
+          <button id="updateStatusBtn" class="btn" onclick="updateStatus()">Update Status</button>
         </div>
         <div>
           <button class="btn" onclick="sendReply()">Send</button>
