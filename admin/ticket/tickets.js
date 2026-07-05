@@ -2,10 +2,18 @@ let ticketListInterval = null;
 let currentTicketId = null;
 let refreshInterval = null;
 let currentStreamAbort = null;
-let currentTicket = null;
 let streamReconnectTimer = null;
 let streamWatchdogTimer = null;
 let lastStreamActivity = 0;
+// Tracks whether the current ticket's stream has ever received a "connected"
+// frame. Lives at module scope (not inside openTicketStream) so it persists
+// across reconnect attempts for the same ticket — see the "connected" frame
+// handler below for why that matters. Reset only when switching/closing a
+// ticket, not on every reconnect.
+let streamEverConnected = false;
+// Prevents openTicket() from being re-entered (e.g. a fast double-click)
+// before its first invocation's async work has finished.
+let isOpeningTicket = false;
 
 // A connection that's gone silently stale (a graceful close produces no
 // fetch error) is detected by the absence of the backend's ~25s heartbeat:
@@ -26,12 +34,23 @@ const TICKET_ROLE_SERVICE_MAP = {
   officeAdmin: 'Other'
 };
 
+function authHeaders(withJsonContentType) {
+  const headers = { Authorization: `Bearer ${sessionStorage.getItem('token')}` };
+  if (withJsonContentType) headers['Content-Type'] = 'application/json';
+  return headers;
+}
+
 /* =====================================================
    RESTRICT SERVICE FILTER TO THE LOGGED-IN ADMIN'S DEPARTMENT
    ===================================================== */
 
 function restrictServiceFilterByRole() {
-  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  let roles;
+  try {
+    roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  } catch (e) {
+    roles = []; // malformed session data fails closed (no services shown)
+  }
   if (roles.includes('superAdmin')) return; // sees every service, no restriction
 
   const allowedServices = Object.entries(TICKET_ROLE_SERVICE_MAP)
@@ -51,7 +70,10 @@ function restrictServiceFilterByRole() {
   if (select.options.length > 0) {
     select.value = select.options[0].value;
   }
-  select.disabled = true;
+  // Only lock the dropdown when there's nothing to choose between — an admin
+  // with 2+ department roles (e.g. foodAdmin + travelAdmin) must still be
+  // able to switch between their own allowed services.
+  select.disabled = select.options.length <= 1;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -59,24 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchTickets();
   startTicketListRefresh();
 });
-
-/* =====================================================
-   HTML ESCAPING
-   Ticket description / service and chat messages are
-   submitted by app users, so they must be escaped before
-   being placed into innerHTML to avoid stored HTML injection
-   executing in an authenticated admin session.
-   ===================================================== */
-
-function escapeHtml(value) {
-  if (value === null || value === undefined) return '';
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 /* =====================================================
    UNREAD TRACKING (LAST MESSAGE BASED)
@@ -104,9 +108,7 @@ async function fetchTickets() {
 
   try {
     const res = await fetch(`${CONFIG.basePath}/tickets?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      }
+      headers: authHeaders()
     });
 
     const result = await res.json();
@@ -119,6 +121,8 @@ async function fetchTickets() {
 /* =====================================================
    RENDER TICKET TABLE (UNREAD INDICATOR)
    ===================================================== */
+
+let ticketTableEnhanced = false;
 
 function renderTicketTable(tickets) {
   const tbody = document.querySelector('#ticketTable tbody');
@@ -146,6 +150,16 @@ function renderTicketTable(tickets) {
     `;
     tbody.appendChild(tr);
   });
+
+  // enhanceTable's header enhancement is idempotent-guarded internally, but
+  // its search-box listener is not — only wire it up once (on first render)
+  // rather than re-binding a duplicate listener on every 10s poll.
+  if (!ticketTableEnhanced && typeof enhanceTable === 'function') {
+    // enableRowNumbers=false: the first column is the ticket id/unread-dot,
+    // not a row index — enhanceTable would otherwise overwrite it.
+    enhanceTable('ticketTable', 'ticketSearch', false);
+    ticketTableEnhanced = true;
+  }
 }
 
 /* =====================================================
@@ -153,20 +167,34 @@ function renderTicketTable(tickets) {
    ===================================================== */
 
 async function openTicket(ticketId) {
-  // abort any previous stream before switching tickets
-  if (currentStreamAbort) {
-    currentStreamAbort.abort();
-    currentStreamAbort = null;
-  }
-  clearTimeout(streamReconnectTimer);
-  streamReconnectTimer = null;
-  stopAutoRefresh();
+  // Guard against re-entry (e.g. a fast double-click on "View") — without
+  // this, two concurrent invocations could each start their own stream, and
+  // only the second's AbortController/watchdog would remain reachable via
+  // the shared module-level variables, leaking the first connection.
+  if (isOpeningTicket) return;
+  isOpeningTicket = true;
 
-  currentTicketId = ticketId;
-  stopTicketListRefresh(); // pause list polling while drawer is open
-  await loadTicketDetails();
-  openDrawer();
-  openTicketStream(ticketId);
+  try {
+    // abort any previous stream before switching tickets
+    if (currentStreamAbort) {
+      currentStreamAbort.abort();
+      currentStreamAbort = null;
+    }
+    clearTimeout(streamReconnectTimer);
+    streamReconnectTimer = null;
+    clearInterval(streamWatchdogTimer);
+    streamWatchdogTimer = null;
+    stopAutoRefresh();
+
+    currentTicketId = ticketId;
+    streamEverConnected = false;
+    stopTicketListRefresh(); // pause list polling while drawer is open
+    await loadTicketDetails();
+    openDrawer();
+    openTicketStream(ticketId);
+  } finally {
+    isOpeningTicket = false;
+  }
 }
 
 /* =====================================================
@@ -174,25 +202,29 @@ async function openTicket(ticketId) {
    ===================================================== */
 
 async function loadTicketDetails() {
-  if (!currentTicketId) return;
+  const targetTicketId = currentTicketId;
+  if (!targetTicketId) return;
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}`, {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      }
+    const res = await fetch(`${CONFIG.basePath}/tickets/${targetTicketId}`, {
+      headers: authHeaders()
     });
 
     const result = await res.json();
     const ticket = result.data;
-    currentTicket = ticket;
+
+    // The admin may have switched to a different ticket (or closed the
+    // drawer) while this fetch was in flight — don't let a slow response
+    // for the OLD ticket overwrite the NOW-current ticket's drawer/unread
+    // state.
+    if (currentTicketId !== targetTicketId) return;
 
     populateDrawer(ticket);
 
     // Mark ticket as read using LAST MESSAGE TIME, not current time
     if (ticket.messages && ticket.messages.length > 0) {
       const lastMsg = ticket.messages[ticket.messages.length - 1];
-      setLastSeen(currentTicketId, lastMsg.createdAt);
+      setLastSeen(targetTicketId, lastMsg.createdAt);
     }
   } catch (e) {
     console.error('Failed to load ticket details', e);
@@ -220,13 +252,16 @@ function populateDrawer(ticket) {
 
   const wasAtBottom =
     container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
+  const scrollTopBeforeRebuild = container.scrollTop;
 
   container.innerHTML = '';
 
   (ticket.messages || []).forEach((msg) => renderMessage(msg, container));
 
-  container.scrollTop = container.scrollHeight;
-  void wasAtBottom;
+  // Only auto-scroll to the newest message if the admin was already reading
+  // the bottom of the thread; otherwise a background poll/reconnect/status
+  // update would yank them away from whatever they were reading.
+  container.scrollTop = wasAtBottom ? container.scrollHeight : scrollTopBeforeRebuild;
 
   renderDebugPanel(ticket.metadata);
 }
@@ -347,10 +382,7 @@ async function sendReply() {
   try {
     await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/messages`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      },
+      headers: authHeaders(true),
       body: JSON.stringify({ message })
     });
 
@@ -374,10 +406,7 @@ async function updateStatus() {
   try {
     await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/status`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      },
+      headers: authHeaders(true),
       body: JSON.stringify({ status })
     });
 
@@ -413,7 +442,7 @@ function closeDrawer() {
   stopAutoRefresh();
   startTicketListRefresh(); // resume list polling
   currentTicketId = null;
-  currentTicket = null;
+  streamEverConnected = false;
 }
 
 /* =====================================================
@@ -433,11 +462,9 @@ async function openTicketStream(ticketId) {
     }
   }, SSE_WATCHDOG_CHECK_INTERVAL_MS);
 
-  let wasEverConnected = false;
-
   try {
     const resp = await fetch(`${CONFIG.basePath}/tickets/${ticketId}/stream`, {
-      headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+      headers: authHeaders(),
       signal: controller.signal
     });
 
@@ -473,11 +500,16 @@ async function openTicketStream(ticketId) {
           // A second (or later) "connected" means we reconnected after a
           // drop — reload once to backfill anything missed while down, and
           // stop the polling fallback now that the stream is back.
-          if (wasEverConnected && currentTicketId === ticketId) {
+          // streamEverConnected lives at module scope (not local to this
+          // function) specifically so this check survives across the
+          // separate openTicketStream() invocation that scheduleStreamReconnect
+          // makes on each retry — a function-local flag would reset to false
+          // on every reconnect and this branch would never fire.
+          if (streamEverConnected && currentTicketId === ticketId) {
             stopAutoRefresh();
             loadTicketDetails();
           }
-          wasEverConnected = true;
+          streamEverConnected = true;
           continue;
         }
 

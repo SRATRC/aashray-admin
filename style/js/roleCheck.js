@@ -7,7 +7,12 @@ function checkRoleAccess(allowedRoles) {
     return;
   }
 
-  const roles    = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  let roles;
+  try {
+    roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  } catch (e) {
+    roles = []; // malformed session data must fail closed, not throw past the check
+  }
   const currentPage = window.location.pathname.split('/').pop();
 
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
@@ -64,7 +69,12 @@ function logout() {
 }
 
 function getHomePageForRole() {
-  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  let roles;
+  try {
+    roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  } catch (e) {
+    roles = [];
+  }
 
   // Check if user has any valid roles
   const validRoles = [
