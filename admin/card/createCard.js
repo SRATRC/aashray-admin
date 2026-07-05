@@ -44,7 +44,6 @@
 //   }
 // }
 
-
 //   const options = {
 //     method: 'POST',
 //     headers: {
@@ -146,11 +145,76 @@ document.addEventListener('DOMContentLoaded', function () {
   // Load countries and setup cascading dropdowns
   loadLocationData();
 
-  // Guest-specific fields toggle
+  // Load departments
+  loadDepartments();
+
+  // Residential status fields toggle
   const resStatusSelect = document.getElementById('res_status');
-  resStatusSelect.addEventListener('change', () => toggleGuestFields(resStatusSelect.value));
-  toggleGuestFields(resStatusSelect.value);
+  resStatusSelect.addEventListener('change', () =>
+    toggleResStatusFields(resStatusSelect.value)
+  );
+  toggleResStatusFields(resStatusSelect.value);
+
+  // Reference phone validation listener
+  const refPhoneInput = document.getElementById('reference_phone');
+  if (refPhoneInput) {
+    refPhoneInput.addEventListener('input', async (e) => {
+      const val = e.target.value.trim();
+      const nameEl = document.getElementById('refPhoneName');
+      if (val.length === 10) {
+        nameEl.textContent = 'Checking...';
+        nameEl.style.color = '#777';
+        try {
+          const res = await fetch(
+            `${CONFIG.baseUrl}/client/checkMobile/${val}`
+          );
+          const data = await res.json();
+          if (data.exists) {
+            if (data.res_status === 'MUMUKSHU') {
+              nameEl.textContent = `Name: ${data.name} (Mumukshu)`;
+              nameEl.style.color = '#2e7d32';
+            } else {
+              nameEl.textContent = `Name: ${data.name} (${data.res_status}) - Warning: Not a Mumukshu`;
+              nameEl.style.color = '#c62828';
+            }
+          } else {
+            nameEl.textContent = 'Phone number is not registered!';
+            nameEl.style.color = '#c62828';
+          }
+        } catch (err) {
+          nameEl.textContent = 'Error checking phone number';
+          nameEl.style.color = '#c62828';
+        }
+      } else {
+        nameEl.textContent = '';
+      }
+    });
+  }
 });
+
+// --- Fetch and populate departments ---
+async function loadDepartments() {
+  try {
+    const res = await fetch(`${CONFIG.basePath}/location/departments`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const result = await res.json();
+    const deptSelect = document.getElementById('department');
+    deptSelect.innerHTML = '<option value="">Select Department</option>';
+    (result.data || []).forEach((d) => {
+      const val = d.value || d;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      deptSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load departments:', err);
+  }
+}
 
 // --- Form submit handler ---
 async function assignCard(event) {
@@ -181,11 +245,23 @@ async function assignCard(event) {
     res_status: form.res_status.value
   };
 
-  if (form.res_status.value === "GUEST") {
-    bodyData.referenceCardno = form.reference_cardno?.value?.trim();
+  if (form.res_status.value === 'GUEST') {
+    bodyData.referencePhone = form.reference_phone?.value?.trim();
     bodyData.guestType = form.guest_type?.value?.trim();
-    if (!bodyData.referenceCardno || !bodyData.guestType) {
-      alert("Please enter both Reference Card Number and Guest Type for GUEST users.");
+    if (!bodyData.referencePhone || !bodyData.guestType) {
+      alert(
+        'Please enter both Reference Phone Number and Guest Type for GUEST users.'
+      );
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit';
+      return;
+    }
+  }
+
+  if (form.res_status.value === 'SEVA KUTIR') {
+    bodyData.department = form.department?.value;
+    if (!bodyData.department) {
+      alert('Please select a department for SEVA KUTIR users.');
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit';
       return;
@@ -215,31 +291,44 @@ async function assignCard(event) {
   }
 }
 
-
-// --- Toggle GUEST fields ---
-function toggleGuestFields(res_status) {
-  document.getElementById('guestFields').style.display = res_status === 'GUEST' ? 'block' : 'none';
+// --- Toggle status fields ---
+function toggleResStatusFields(res_status) {
+  document.getElementById('guestFields').style.display =
+    res_status === 'GUEST' ? 'block' : 'none';
+  document.getElementById('sevaKutirFields').style.display =
+    res_status === 'SEVA KUTIR' ? 'block' : 'none';
 }
 
 // --- Load countries, states, cities ---
-async function loadLocationData(currentCountry = '', currentState = '', currentCity = '') {
+async function loadLocationData(
+  currentCountry = '',
+  currentState = '',
+  currentCity = ''
+) {
   const token = sessionStorage.getItem('token');
 
   // --- Countries ---
   try {
     const countriesRes = await fetch(`${CONFIG.basePath}/location/countries`, {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     });
     const countriesData = await countriesRes.json();
     const countrySelect = document.getElementById('country');
     countrySelect.innerHTML = '<option value="">Select Country</option>';
-    (countriesData.data || ['India','USA','UK','UAE','Canada']).forEach(c => {
-      const val = c.value || c;
-      const selected = val === currentCountry ? 'selected' : '';
-      countrySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
-    });
+    (countriesData.data || ['India', 'USA', 'UK', 'UAE', 'Canada']).forEach(
+      (c) => {
+        const val = c.value || c;
+        const selected = val === currentCountry ? 'selected' : '';
+        countrySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      }
+    );
 
-    countrySelect.addEventListener('change', () => fetchStates(countrySelect.value));
+    countrySelect.addEventListener('change', () =>
+      fetchStates(countrySelect.value)
+    );
     if (currentCountry) fetchStates(currentCountry, currentState, currentCity);
   } catch (err) {
     console.error('Failed to load countries:', err);
@@ -249,21 +338,30 @@ async function loadLocationData(currentCountry = '', currentState = '', currentC
   async function fetchStates(country, selectedState = '', selectedCity = '') {
     const stateSelect = document.getElementById('state');
     stateSelect.innerHTML = '<option value="">Select State</option>';
-    document.getElementById('city').innerHTML = '<option value="">Select City</option>';
+    document.getElementById('city').innerHTML =
+      '<option value="">Select City</option>';
     if (!country) return;
 
     try {
-      const stateRes = await fetch(`${CONFIG.basePath}/location/states/${country}`, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
+      const stateRes = await fetch(
+        `${CONFIG.basePath}/location/states/${country}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       const stateData = await stateRes.json();
-      (stateData.data || []).forEach(s => {
+      (stateData.data || []).forEach((s) => {
         const val = s.value || s;
         const selected = val === selectedState ? 'selected' : '';
         stateSelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
       });
 
-      stateSelect.addEventListener('change', () => fetchCities(country, stateSelect.value));
+      stateSelect.addEventListener('change', () =>
+        fetchCities(country, stateSelect.value)
+      );
       if (selectedState) fetchCities(country, selectedState, selectedCity);
     } catch (err) {
       console.error('Failed to load states:', err);
@@ -277,11 +375,17 @@ async function loadLocationData(currentCountry = '', currentState = '', currentC
     if (!country || !state) return;
 
     try {
-      const cityRes = await fetch(`${CONFIG.basePath}/location/cities/${country}/${state}`, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
+      const cityRes = await fetch(
+        `${CONFIG.basePath}/location/cities/${country}/${state}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       const cityData = await cityRes.json();
-      (cityData.data || []).forEach(c => {
+      (cityData.data || []).forEach((c) => {
         const val = c.value || c;
         const selected = val === selectedCity ? 'selected' : '';
         citySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
