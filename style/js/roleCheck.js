@@ -1,3 +1,15 @@
+// Shared by every page that loads this script (via a plain <script> tag,
+// not a module import) — reads the logged-in admin's roles out of
+// sessionStorage, failing closed to no roles rather than throwing past
+// whatever access check called this.
+function getRoles() {
+  try {
+    return JSON.parse(sessionStorage.getItem('roles') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
 function checkRoleAccess(allowedRoles) {
   // First check if user is logged in
   const userToken =
@@ -7,12 +19,7 @@ function checkRoleAccess(allowedRoles) {
     return;
   }
 
-  let roles;
-  try {
-    roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-  } catch (e) {
-    roles = []; // malformed session data must fail closed, not throw past the check
-  }
+  const roles = getRoles();
   const currentPage = window.location.pathname.split('/').pop();
 
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
@@ -69,12 +76,7 @@ function logout() {
 }
 
 function getHomePageForRole() {
-  let roles;
-  try {
-    roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-  } catch (e) {
-    roles = [];
-  }
+  const roles = getRoles();
 
   // Check if user has any valid roles
   const validRoles = [

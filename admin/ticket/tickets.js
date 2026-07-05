@@ -11,9 +11,6 @@ let lastStreamActivity = 0;
 // handler below for why that matters. Reset only when switching/closing a
 // ticket, not on every reconnect.
 let streamEverConnected = false;
-// Prevents openTicket() from being re-entered (e.g. a fast double-click)
-// before its first invocation's async work has finished.
-let isOpeningTicket = false;
 
 // A connection that's gone silently stale (a graceful close produces no
 // fetch error) is detected by the absence of the backend's ~25s heartbeat:
@@ -45,12 +42,8 @@ function authHeaders(withJsonContentType) {
    ===================================================== */
 
 function restrictServiceFilterByRole() {
-  let roles;
-  try {
-    roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-  } catch (e) {
-    roles = []; // malformed session data fails closed (no services shown)
-  }
+  // getRoles() comes from style/js/roleCheck.js, loaded before this script.
+  const roles = getRoles();
   if (roles.includes('superAdmin')) return; // sees every service, no restriction
 
   const allowedServices = Object.entries(TICKET_ROLE_SERVICE_MAP)
@@ -166,35 +159,44 @@ function renderTicketTable(tickets) {
    OPEN TICKET (DRAWER)
    ===================================================== */
 
-async function openTicket(ticketId) {
-  // Guard against re-entry (e.g. a fast double-click on "View") — without
-  // this, two concurrent invocations could each start their own stream, and
-  // only the second's AbortController/watchdog would remain reachable via
-  // the shared module-level variables, leaking the first connection.
-  if (isOpeningTicket) return;
-  isOpeningTicket = true;
-
-  try {
-    // abort any previous stream before switching tickets
-    if (currentStreamAbort) {
-      currentStreamAbort.abort();
-      currentStreamAbort = null;
-    }
-    clearTimeout(streamReconnectTimer);
-    streamReconnectTimer = null;
-    clearInterval(streamWatchdogTimer);
-    streamWatchdogTimer = null;
-    stopAutoRefresh();
-
-    currentTicketId = ticketId;
-    streamEverConnected = false;
-    stopTicketListRefresh(); // pause list polling while drawer is open
-    await loadTicketDetails();
-    openDrawer();
-    openTicketStream(ticketId);
-  } finally {
-    isOpeningTicket = false;
+// Aborts the in-flight stream (if any) and clears every timer associated
+// with it. Shared by openTicket() (switching to a different ticket) and
+// closeDrawer() so the two can't drift out of sync with each other.
+function teardownStream() {
+  if (currentStreamAbort) {
+    currentStreamAbort.abort();
+    currentStreamAbort = null;
   }
+  clearTimeout(streamReconnectTimer);
+  streamReconnectTimer = null;
+  clearInterval(streamWatchdogTimer);
+  streamWatchdogTimer = null;
+  stopAutoRefresh();
+}
+
+async function openTicket(ticketId) {
+  teardownStream(); // stop whatever ticket's stream was previously open
+
+  currentTicketId = ticketId;
+  streamEverConnected = false;
+  stopTicketListRefresh(); // pause list polling while drawer is open
+
+  // Fetching the ticket's details and opening its live stream don't depend
+  // on each other — start both immediately instead of waiting for the
+  // details fetch to finish before connecting the stream.
+  const detailsPromise = loadTicketDetails();
+  openTicketStream(ticketId);
+  await detailsPromise;
+
+  // The admin may have clicked a different ticket before this one's details
+  // finished loading — if so, let that newer call own opening the drawer
+  // instead of us popping it open for the wrong ticket. (This replaces a
+  // previous re-entrancy guard that blocked a second click outright, even
+  // when it was for a different ticket than the first.) loadTicketDetails()
+  // already guards its own populateDrawer() call the same way.
+  if (currentTicketId !== ticketId) return;
+
+  openDrawer();
 }
 
 /* =====================================================
@@ -256,7 +258,9 @@ function populateDrawer(ticket) {
 
   container.innerHTML = '';
 
-  (ticket.messages || []).forEach((msg) => renderMessage(msg, container));
+  (ticket.messages || []).forEach((msg) =>
+    renderMessage(msg, container, { skipDedupCheck: true })
+  );
 
   // Only auto-scroll to the newest message if the admin was already reading
   // the bottom of the thread; otherwise a background poll/reconnect/status
@@ -270,11 +274,11 @@ function populateDrawer(ticket) {
    RENDER A SINGLE MESSAGE BUBBLE
    ===================================================== */
 
-function renderMessage(msg, container) {
-  container = container || document.getElementById('messageContainer');
-
-  // avoid duplicate rendering (e.g. SSE echo of a message already loaded)
-  if (msg.id !== undefined && msg.id !== null) {
+function renderMessage(msg, container, { skipDedupCheck = false } = {}) {
+  // avoid duplicate rendering (e.g. SSE echo of a message already loaded).
+  // Callers that just cleared `container` (a full rebuild) can skip this —
+  // there's nothing in it yet for the check to find.
+  if (!skipDedupCheck && msg.id !== undefined && msg.id !== null) {
     const existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
     if (existing) return;
   }
@@ -431,15 +435,7 @@ function closeDrawer() {
   document.getElementById('ticketDrawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
 
-  if (currentStreamAbort) {
-    currentStreamAbort.abort();
-    currentStreamAbort = null;
-  }
-  clearTimeout(streamReconnectTimer);
-  streamReconnectTimer = null;
-  clearInterval(streamWatchdogTimer);
-  streamWatchdogTimer = null;
-  stopAutoRefresh();
+  teardownStream();
   startTicketListRefresh(); // resume list polling
   currentTicketId = null;
   streamEverConnected = false;
