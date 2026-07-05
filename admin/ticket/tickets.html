@@ -3,7 +3,17 @@
   <head>
     <script src="/style/js/roleCheck.js"></script>
     <script>
-      checkRoleAccess(['superAdmin', 'maintenanceAdmin']); // customize allowed roles per page
+      // Department roles are scoped server-side to their own service — this
+      // list must stay in sync with TICKET_SERVICE_ROLE_MAP in the backend's
+      // config/constants.js.
+      checkRoleAccess([
+        'superAdmin',
+        'maintenanceAdmin',
+        'housekeepingAdmin',
+        'foodAdmin',
+        'travelAdmin',
+        'officeAdmin'
+      ]);
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

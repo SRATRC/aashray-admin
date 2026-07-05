@@ -14,7 +14,48 @@ let lastStreamActivity = 0;
 const SSE_WATCHDOG_TIMEOUT_MS = 40000;
 const SSE_WATCHDOG_CHECK_INTERVAL_MS = 10000;
 
+// Mirrors the backend's TICKET_SERVICE_ROLE_MAP (config/constants.js) —
+// must stay in sync. The backend enforces this regardless of what's shown
+// here; this is purely UX so a department admin isn't offered filter
+// options that would always come back empty (or a 403).
+const TICKET_ROLE_SERVICE_MAP = {
+  maintenanceAdmin: 'Maintenance',
+  housekeepingAdmin: 'Housekeeping',
+  foodAdmin: 'Food',
+  travelAdmin: 'Travel',
+  officeAdmin: 'Other'
+};
+
+/* =====================================================
+   RESTRICT SERVICE FILTER TO THE LOGGED-IN ADMIN'S DEPARTMENT
+   ===================================================== */
+
+function restrictServiceFilterByRole() {
+  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  if (roles.includes('superAdmin')) return; // sees every service, no restriction
+
+  const allowedServices = Object.entries(TICKET_ROLE_SERVICE_MAP)
+    .filter(([role]) => roles.includes(role))
+    .map(([, service]) => service);
+
+  const select = document.getElementById('serviceFilter');
+  Array.from(select.options).forEach((opt) => {
+    if (opt.value && !allowedServices.includes(opt.value)) {
+      opt.remove();
+    }
+  });
+
+  const allOption = select.querySelector('option[value=""]');
+  if (allOption) allOption.remove();
+
+  if (select.options.length > 0) {
+    select.value = select.options[0].value;
+  }
+  select.disabled = true;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  restrictServiceFilterByRole();
   fetchTickets();
   startTicketListRefresh();
 });
