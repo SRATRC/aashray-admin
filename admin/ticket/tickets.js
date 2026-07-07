@@ -1016,9 +1016,16 @@ async function openTicketStream(ticketId) {
           continue;
         }
 
-        // only append messages relevant to the ticket currently open
+        // only render messages relevant to the ticket currently open
         if (currentTicketId === ticketId) {
-          appendMessage(msg);
+          // The SSE frame flags attachments but can't carry them (the serve
+          // URL is audience-specific), so reload to backfill the image/video
+          // thumbnails; text-only messages just append in place.
+          if (msg.hasAttachments) {
+            loadTicketDetails();
+          } else {
+            appendMessage(msg);
+          }
         }
       }
     }
