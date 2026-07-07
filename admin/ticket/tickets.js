@@ -19,17 +19,40 @@ let streamEverConnected = false;
 const SSE_WATCHDOG_TIMEOUT_MS = 40000;
 const SSE_WATCHDOG_CHECK_INTERVAL_MS = 10000;
 
-// Mirrors the backend's TICKET_SERVICE_ROLE_MAP (config/constants.js) —
-// must stay in sync. The backend enforces this regardless of what's shown
-// here; this is purely UX so a department admin isn't offered filter
-// options that would always come back empty (or a 403).
-const TICKET_ROLE_SERVICE_MAP = {
-  maintenanceAdmin: 'Maintenance',
-  housekeepingAdmin: 'Housekeeping',
-  foodAdmin: 'Food',
-  travelAdmin: 'Travel',
-  officeAdmin: 'Other'
+// Mirror of the backend's TICKET_SERVICE_ROLE_MAP (config/constants.js) —
+// service -> allowed roles, in the exact order the admin filter renders.
+// Must stay in sync with the backend, which enforces this regardless of what's
+// shown here; this is purely a UX filter so a department admin isn't offered
+// filter options that would always come back empty (or a 403). Unlike the old
+// role->single-service map, a role can now map to MULTIPLE services (e.g.
+// officeAdmin covers both "Raj Sharan" and "Others"), so allowed services are
+// computed by scanning this map the same way getAllowedServices does on the
+// backend. IT ([]) is superAdmin-only.
+const TICKET_SERVICE_ROLE_MAP = {
+  Electrical: ['electricalAdmin'],
+  Housekeeping: ['housekeepingAdmin'],
+  Maintenance: ['maintenanceAdmin'],
+  'Raj Prasad': ['foodAdmin'],
+  'Raj Adhyayan': ['adhyayanAdmin'],
+  'Raj Sharan': ['officeAdmin'],
+  'Raj Pravas': ['travelAdmin'],
+  'Raj Utsav': ['utsavAdmin'],
+  WiFi: ['wifiAdmin'],
+  'Payment/Accounts': ['accountsAdmin'],
+  IT: [],
+  Others: ['officeAdmin']
 };
+
+// Computes the services a set of roles may access by scanning the map above —
+// mirrors the backend's getAllowedServices (minus the superAdmin short-circuit,
+// which callers handle). A service is allowed if any of its roles is held.
+function getAllowedServicesForRoles(roles) {
+  const allowed = [];
+  for (const [service, serviceRoles] of Object.entries(TICKET_SERVICE_ROLE_MAP)) {
+    if (serviceRoles.some((r) => roles.includes(r))) allowed.push(service);
+  }
+  return allowed;
+}
 
 function authHeaders(withJsonContentType) {
   const headers = { Authorization: `Bearer ${sessionStorage.getItem('token')}` };
@@ -46,9 +69,7 @@ function restrictServiceFilterByRole() {
   const roles = getRoles();
   if (roles.includes('superAdmin')) return; // sees every service, no restriction
 
-  const allowedServices = Object.entries(TICKET_ROLE_SERVICE_MAP)
-    .filter(([role]) => roles.includes(role))
-    .map(([, service]) => service);
+  const allowedServices = getAllowedServicesForRoles(roles);
 
   const select = document.getElementById('serviceFilter');
   Array.from(select.options).forEach((opt) => {

@@ -4,15 +4,20 @@
     <script src="/style/js/roleCheck.js"></script>
     <script>
       // Department roles are scoped server-side to their own service — this
-      // list must stay in sync with TICKET_SERVICE_ROLE_MAP in the backend's
-      // config/constants.js.
+      // list must stay in sync with the roles in TICKET_SERVICE_ROLE_MAP in the
+      // backend's config/constants.js (every role that maps to a department).
       checkRoleAccess([
         'superAdmin',
-        'maintenanceAdmin',
+        'electricalAdmin',
         'housekeepingAdmin',
+        'maintenanceAdmin',
         'foodAdmin',
+        'adhyayanAdmin',
+        'officeAdmin',
         'travelAdmin',
-        'officeAdmin'
+        'utsavAdmin',
+        'wifiAdmin',
+        'accountsAdmin'
       ]);
     </script>
     <meta charset="UTF-8" />
@@ -285,12 +290,18 @@
 
               <select id="serviceFilter" class="form-control">
                 <option value="">All Services</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="IT Support">IT Support</option>
+                <option value="Electrical">Electrical</option>
                 <option value="Housekeeping">Housekeeping</option>
-                <option value="Food">Food</option>
-                <option value="Travel">Travel</option>
-                <option value="Other">Other</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Raj Prasad">Raj Prasad</option>
+                <option value="Raj Adhyayan">Raj Adhyayan</option>
+                <option value="Raj Sharan">Raj Sharan</option>
+                <option value="Raj Pravas">Raj Pravas</option>
+                <option value="Raj Utsav">Raj Utsav</option>
+                <option value="WiFi">WiFi</option>
+                <option value="Payment/Accounts">Payment/Accounts</option>
+                <option value="IT">IT</option>
+                <option value="Others">Others</option>
               </select>
 
               <button class="btn" onclick="fetchTickets()">Apply</button>
