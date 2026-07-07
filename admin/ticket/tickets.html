@@ -254,6 +254,109 @@
         color: #777;
         font-style: italic;
       }
+
+      /* Media attachments */
+      .ticket-attachments {
+        margin: 8px 0;
+      }
+
+      .attachment-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #204060;
+        margin-bottom: 4px;
+      }
+
+      .attachment-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+
+      .attachment-thumb {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border: 1px solid #ccd;
+        border-radius: 6px;
+        cursor: pointer;
+        background: #f0f0f0;
+      }
+
+      .attachment-expired {
+        font-size: 12px;
+        font-style: italic;
+        color: #999;
+      }
+
+      /* Compose-time preview strip for images picked but not yet sent */
+      .reply-preview-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 6px 0;
+      }
+
+      .reply-preview-item {
+        position: relative;
+        width: 64px;
+        height: 64px;
+      }
+
+      .reply-preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border: 1px solid #ccd;
+        border-radius: 6px;
+      }
+
+      .reply-preview-remove {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 18px;
+        height: 18px;
+        line-height: 16px;
+        text-align: center;
+        background: #d9534f;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 13px;
+        cursor: pointer;
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Full-size media viewer */
+      .media-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .media-modal-overlay.open {
+        display: flex;
+      }
+
+      .media-modal-content {
+        max-width: 92%;
+        max-height: 92%;
+      }
+
+      .media-modal-media {
+        max-width: 90vw;
+        max-height: 90vh;
+        border-radius: 6px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      }
     </style>
   </head>
 
@@ -342,11 +445,27 @@
       <h3 id="ticketTitle"></h3>
       <div class="ticket-meta" id="ticketMeta"></div>
 
+      <!-- Attachments filed with the original request (message_id === null) -->
+      <div class="ticket-attachments" id="ticketAttachments"></div>
+
       <hr />
 
       <div class="messages" id="messageContainer"></div>
 
       <textarea id="adminMessage" placeholder="Type your reply..."></textarea>
+
+      <!-- Thumbnails of images picked for the current reply, before sending -->
+      <div class="reply-preview-strip" id="replyPreviewStrip"></div>
+      <!-- Admins attach images only (video is user-only). Hidden input driven
+           by the "Attach Image" button below. -->
+      <input
+        type="file"
+        id="replyImageInput"
+        accept="image/*"
+        multiple
+        style="display: none"
+        onchange="onReplyFilesPicked(this)"
+      />
 
       <div class="drawer-actions">
         <div class="status-update">
@@ -362,7 +481,14 @@
           <button id="updateStatusBtn" class="btn" onclick="updateStatus()">Update Status</button>
         </div>
         <div>
-          <button class="btn" onclick="sendReply()">Send</button>
+          <button
+            class="btn"
+            type="button"
+            onclick="document.getElementById('replyImageInput').click()"
+          >
+            Attach Image
+          </button>
+          <button id="sendReplyBtn" class="btn" onclick="sendReply()">Send</button>
           <button class="btn" onclick="closeDrawer()">Close</button>
         </div>
       </div>
@@ -379,6 +505,17 @@
           <pre class="debug-raw-json" id="debugRawJson"></pre>
         </div>
       </div>
+    </div>
+
+    <!-- Full-size media viewer (opened when a thumbnail is clicked) -->
+    <div class="media-modal-overlay" id="mediaModalOverlay" onclick="closeMediaModal()">
+      <!-- stopPropagation so clicking the media (e.g. video controls) doesn't
+           close the modal; clicking the backdrop still does. -->
+      <div
+        class="media-modal-content"
+        id="mediaModalContent"
+        onclick="event.stopPropagation()"
+      ></div>
     </div>
   </body>
 </html>

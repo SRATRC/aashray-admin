@@ -61,6 +61,121 @@ function authHeaders(withJsonContentType) {
 }
 
 /* =====================================================
+   MEDIA ATTACHMENTS (auth-fetched -> object URLs)
+   ===================================================== */
+
+// Attachment limits — mirror the backend's presign validation so we reject
+// obviously bad picks locally (the backend is still the authoritative gate).
+const MAX_REPLY_IMAGES = 5;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+// The serve endpoint requires a Bearer header, so a plain <img src> would 401
+// (browsers can't attach headers to element loads). Every object URL we mint
+// from an auth'd fetch is tracked here and revoked on drawer close / re-render
+// to avoid leaking blobs.
+let activeObjectUrls = [];
+
+function trackObjectUrl(url) {
+  activeObjectUrls.push(url);
+  return url;
+}
+
+function revokeObjectUrls() {
+  activeObjectUrls.forEach((u) => URL.revokeObjectURL(u));
+  activeObjectUrls = [];
+}
+
+// The backend returns each attachment's `url` as an absolute path from the
+// domain root (e.g. /api/v1/admin/tickets/<id>/attachments/<id>). CONFIG.basePath
+// already ends in /api/v1/admin, so concatenating the two would double the
+// prefix — resolve the path against the API origin instead.
+function serveMediaUrl(url) {
+  return new URL(url, CONFIG.baseUrl).href;
+}
+
+// Fetches a private attachment with auth, follows the backend's 302 to the
+// presigned S3 GET, and hands back a tracked object URL. Fails soft (logs) so
+// one broken attachment doesn't abort rendering the rest of the thread.
+async function loadAuthedMedia(url, onLoaded) {
+  try {
+    const r = await fetch(serveMediaUrl(url), { headers: authHeaders() });
+    if (!r.ok) throw new Error(`Media fetch failed: ${r.status}`);
+    const blob = await r.blob();
+    onLoaded(trackObjectUrl(URL.createObjectURL(blob)));
+  } catch (e) {
+    console.error('Failed to load attachment media', e);
+  }
+}
+
+// Renders a single attachment DTO ({ kind, contentType, url, expired }) as a
+// clickable thumbnail into `wrapper`. Expired media (cleaned up after 60 days)
+// shows a placeholder instead of fetching.
+function renderAttachment(att, wrapper) {
+  if (att.expired) {
+    const ph = document.createElement('span');
+    ph.className = 'attachment-expired';
+    ph.textContent = 'media removed after 60 days';
+    wrapper.appendChild(ph);
+    return;
+  }
+
+  if (att.kind === 'video') {
+    const vid = document.createElement('video');
+    vid.className = 'attachment-thumb';
+    vid.muted = true;
+    vid.preload = 'metadata';
+    wrapper.appendChild(vid);
+    loadAuthedMedia(att.url, (objectUrl) => {
+      vid.src = objectUrl;
+      vid.onclick = () => openMediaModal('video', objectUrl);
+    });
+    return;
+  }
+
+  // default: image
+  const img = document.createElement('img');
+  img.className = 'attachment-thumb';
+  img.alt = 'attachment';
+  wrapper.appendChild(img);
+  loadAuthedMedia(att.url, (objectUrl) => {
+    img.src = objectUrl;
+    img.onclick = () => openMediaModal('image', objectUrl);
+  });
+}
+
+/* =====================================================
+   FULL-SIZE MEDIA MODAL
+   ===================================================== */
+
+// Reuses the thumbnail's already-fetched object URL (owned by the
+// activeObjectUrls registry), so closing the modal must NOT revoke it.
+function openMediaModal(kind, objectUrl) {
+  const overlay = document.getElementById('mediaModalOverlay');
+  const content = document.getElementById('mediaModalContent');
+  if (!overlay || !content) return;
+  content.innerHTML = '';
+  const el =
+    kind === 'video' ? document.createElement('video') : document.createElement('img');
+  if (kind === 'video') {
+    el.controls = true;
+    el.autoplay = true;
+  }
+  el.src = objectUrl;
+  el.className = 'media-modal-media';
+  content.appendChild(el);
+  overlay.classList.add('open');
+}
+
+function closeMediaModal() {
+  const overlay = document.getElementById('mediaModalOverlay');
+  const content = document.getElementById('mediaModalContent');
+  if (overlay) overlay.classList.remove('open');
+  // Clearing the content stops any playing video; the object URL itself is
+  // owned by the thumbnail registry, so don't revoke it here.
+  if (content) content.innerHTML = '';
+}
+
+/* =====================================================
    RESTRICT SERVICE FILTER TO THE LOGGED-IN ADMIN'S DEPARTMENT
    ===================================================== */
 
@@ -206,6 +321,7 @@ async function openTicket(ticketId) {
   ticketId = decodeURIComponent(ticketId);
 
   teardownStream(); // stop whatever ticket's stream was previously open
+  clearReplyFiles(); // drop any images composed for the previously-open ticket
 
   currentTicketId = ticketId;
   streamEverConnected = false;
@@ -286,6 +402,12 @@ async function loadTicketDetails() {
    ===================================================== */
 
 function populateDrawer(ticket) {
+  // This is a full rebuild of the drawer's media — release the previous
+  // render's object URLs (and close the modal, whose media may reference one of
+  // them) before minting fresh ones below.
+  closeMediaModal();
+  revokeObjectUrls();
+
   document.getElementById('ticketTitle').innerText = `Ticket #${ticket.id} (${ticket.status})`;
 
   document.getElementById('ticketMeta').innerHTML = `
@@ -295,6 +417,24 @@ function populateDrawer(ticket) {
     <p><b>OS:</b> ${escapeHtml(ticket.os) || '-'}</p>
     <p><b>App Version:</b> ${escapeHtml(ticket.app_version) || '-'}</p>
   `;
+
+  // Ticket-level attachments (message_id === null) — filed with the original
+  // request at creation time.
+  const ticketAttachments = document.getElementById('ticketAttachments');
+  if (ticketAttachments) {
+    ticketAttachments.innerHTML = '';
+    const atts = ticket.attachments || [];
+    if (atts.length) {
+      const label = document.createElement('div');
+      label.className = 'attachment-label';
+      label.textContent = 'Attachments';
+      ticketAttachments.appendChild(label);
+      const strip = document.createElement('div');
+      strip.className = 'attachment-strip';
+      atts.forEach((att) => renderAttachment(att, strip));
+      ticketAttachments.appendChild(strip);
+    }
+  }
 
   const statusSelect = document.getElementById('statusUpdateSelect');
   statusSelect.value = ticket.status;
@@ -346,10 +486,26 @@ function renderMessage(msg, container, { skipDedupCheck = false } = {}) {
   if (msg.id !== undefined && msg.id !== null) {
     div.setAttribute('data-msg-id', msg.id);
   }
-  div.innerHTML = `
-    <p>${escapeHtml(msg.message)}</p>
-    <span>${escapeHtml(msg.sender_type)} &bull; ${new Date(msg.createdAt).toLocaleString()}</span>
-  `;
+
+  // The message text is optional when the message carries at least one
+  // attachment (attachment-only reply) — skip the empty bubble in that case.
+  div.innerHTML = msg.message ? `<p>${escapeHtml(msg.message)}</p>` : '';
+
+  // Message-level attachments (images the admin/user attached to this reply,
+  // or the user's videos which admins can view but not upload).
+  if (Array.isArray(msg.attachments) && msg.attachments.length) {
+    const strip = document.createElement('div');
+    strip.className = 'attachment-strip';
+    msg.attachments.forEach((att) => renderAttachment(att, strip));
+    div.appendChild(strip);
+  }
+
+  const meta = document.createElement('span');
+  meta.innerHTML = `${escapeHtml(msg.sender_type)} &bull; ${new Date(
+    msg.createdAt
+  ).toLocaleString()}`;
+  div.appendChild(meta);
+
   container.appendChild(div);
 }
 
@@ -433,29 +589,163 @@ function toggleDebugRaw() {
 }
 
 /* =====================================================
+   REPLY IMAGE ATTACHMENTS (compose -> presign -> PUT -> send)
+   ===================================================== */
+
+// Images the admin has picked for the current reply but not yet sent. Admins
+// attach images only — video is user-only (the backend 400s an admin video).
+let pendingReplyFiles = [];
+// Local (browser) object URLs backing the compose-time preview thumbnails —
+// separate from activeObjectUrls (which back fetched, server-side media) so the
+// two lifecycles don't interfere.
+let replyPreviewObjectUrls = [];
+
+// Handler for the hidden file input's change event. Validates each pick locally
+// (image, ≤5 MB, ≤5 total) before adding it to the pending batch.
+function onReplyFilesPicked(input) {
+  const files = Array.from(input.files || []);
+  for (const f of files) {
+    if (pendingReplyFiles.length >= MAX_REPLY_IMAGES) {
+      alert(`You can attach at most ${MAX_REPLY_IMAGES} images per message.`);
+      break;
+    }
+    if (!f.type || !f.type.startsWith('image/')) {
+      alert(`"${f.name}" is not an image. Admins can attach images only.`);
+      continue;
+    }
+    if (f.size > MAX_IMAGE_BYTES) {
+      alert(`"${f.name}" is larger than 5 MB.`);
+      continue;
+    }
+    pendingReplyFiles.push(f);
+  }
+  // Reset so picking the same file again still fires `change`.
+  input.value = '';
+  renderReplyPreviews();
+}
+
+function removeReplyFile(idx) {
+  pendingReplyFiles.splice(idx, 1);
+  renderReplyPreviews();
+}
+
+function renderReplyPreviews() {
+  const strip = document.getElementById('replyPreviewStrip');
+  if (!strip) return;
+
+  // Rebuild the strip from scratch — release the previous preview URLs first.
+  replyPreviewObjectUrls.forEach((u) => URL.revokeObjectURL(u));
+  replyPreviewObjectUrls = [];
+  strip.innerHTML = '';
+
+  pendingReplyFiles.forEach((f, idx) => {
+    const item = document.createElement('div');
+    item.className = 'reply-preview-item';
+
+    const img = document.createElement('img');
+    const localUrl = URL.createObjectURL(f);
+    replyPreviewObjectUrls.push(localUrl);
+    img.src = localUrl;
+
+    const rm = document.createElement('span');
+    rm.className = 'reply-preview-remove';
+    rm.textContent = '×'; // ×
+    rm.title = 'Remove';
+    rm.onclick = () => removeReplyFile(idx);
+
+    item.appendChild(img);
+    item.appendChild(rm);
+    strip.appendChild(item);
+  });
+}
+
+function clearReplyFiles() {
+  pendingReplyFiles = [];
+  replyPreviewObjectUrls.forEach((u) => URL.revokeObjectURL(u));
+  replyPreviewObjectUrls = [];
+  const strip = document.getElementById('replyPreviewStrip');
+  if (strip) strip.innerHTML = '';
+}
+
+// Presigns + PUTs each picked image directly to S3, returning the attachment
+// refs to send with the message. Order-matched: the presign response's Nth
+// { key, uploadUrl } corresponds to the Nth requested file.
+async function uploadReplyImages(files) {
+  const presignRes = await fetch(`${CONFIG.basePath}/tickets/attachments/presign`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({
+      files: files.map((f) => ({
+        filename: f.name,
+        contentType: f.type,
+        size: f.size,
+        kind: 'image'
+      }))
+    })
+  });
+  if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`);
+
+  const presigned = (await presignRes.json()).data || [];
+  if (presigned.length !== files.length) {
+    throw new Error('Presign returned an unexpected number of upload URLs');
+  }
+
+  const attachments = [];
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const { key, uploadUrl } = presigned[i];
+    // Content-Type MUST match what was signed, or S3 rejects the PUT.
+    const putRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: f,
+      headers: { 'Content-Type': f.type }
+    });
+    if (!putRes.ok) throw new Error(`Upload failed for "${f.name}": ${putRes.status}`);
+    attachments.push({ key, contentType: f.type, kind: 'image' });
+  }
+  return attachments;
+}
+
+/* =====================================================
    SEND ADMIN REPLY
    ===================================================== */
 
 async function sendReply() {
   const messageBox = document.getElementById('adminMessage');
   const message = messageBox.value.trim();
-  if (!message || !currentTicketId) return;
+  const hasFiles = pendingReplyFiles.length > 0;
+  // Message text is optional when at least one image is attached.
+  if ((!message && !hasFiles) || !currentTicketId) return;
+
+  const sendBtn = document.getElementById('sendReplyBtn');
+  if (sendBtn) sendBtn.disabled = true;
 
   try {
+    const body = {};
+    if (message) body.message = message;
+    if (hasFiles) {
+      // Upload first — the message must only reference successfully-uploaded
+      // keys (the backend HeadObject-verifies every key before persisting).
+      body.attachments = await uploadReplyImages(pendingReplyFiles);
+    }
+
     const res = await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/messages`, {
       method: 'POST',
       headers: authHeaders(true),
-      body: JSON.stringify({ message })
+      body: JSON.stringify(body)
     });
     // fetch doesn't reject on 4xx/5xx — without this, a failed send would clear
-    // the textarea and reload as if it succeeded, silently losing the reply.
+    // the composer and reload as if it succeeded, silently losing the reply.
     if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 
     messageBox.value = '';
+    clearReplyFiles();
     await loadTicketDetails();
   } catch (e) {
     console.error('Failed to send reply', e);
     alert('Failed to send reply. Please try again.');
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
   }
 }
 
@@ -500,6 +790,9 @@ function closeDrawer() {
   document.getElementById('ticketDrawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
 
+  closeMediaModal();
+  revokeObjectUrls(); // release fetched attachment blobs
+  clearReplyFiles(); // drop any un-sent composed images
   teardownStream();
   startTicketListRefresh(); // resume list polling
   currentTicketId = null;
