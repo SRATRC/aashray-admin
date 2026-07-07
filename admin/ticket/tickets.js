@@ -825,7 +825,7 @@ async function sendReply() {
   // re-check that the drawer hasn't moved on, so we never POST to the wrong
   // ticket (or `tickets/null/messages`) or wipe the now-current ticket's state.
   const ticketId = currentTicketId;
-  const files = pendingReplyFiles;
+  const files = pendingReplyFiles.slice();
   const messageBox = document.getElementById('adminMessage');
   const message = messageBox.value.trim();
   const hasFiles = files.length > 0;
