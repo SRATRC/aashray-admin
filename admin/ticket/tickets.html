@@ -177,6 +177,74 @@
         align-items: center;
       }
 
+      /* Drawer header: title + close (X) */
+      .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .drawer-header h3 {
+        margin: 0;
+        flex: 1;
+      }
+      .drawer-close-x {
+        background: none;
+        border: none;
+        font-size: 26px;
+        line-height: 1;
+        color: #999;
+        cursor: pointer;
+        padding: 0 4px;
+      }
+      .drawer-close-x:hover {
+        color: #333;
+      }
+
+      /* Compose / status action rows */
+      .status-label {
+        font-size: 12px;
+        color: #666;
+        margin-right: 4px;
+      }
+      .composer-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .btn.btn-primary {
+        background: #204060;
+        color: #fff;
+        border: none;
+      }
+      .btn.btn-ghost {
+        background: #f1f3f5;
+        color: #333;
+        border: 1px solid #e0e3e7;
+      }
+      .btn.btn-secondary {
+        background: #e9ecef;
+        color: #333;
+        border: none;
+      }
+      .btn:disabled,
+      .btn[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      #adminMessage:disabled {
+        background: #f5f5f5;
+        color: #999;
+      }
+      .closed-note-composer {
+        margin-top: 8px;
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 6px;
+        color: #777;
+        font-size: 12px;
+        text-align: center;
+      }
+
       /* Debug info panel */
       .debug-panel {
         margin-top: 16px;
@@ -459,7 +527,10 @@
     <!-- Drawer overlay + panel -->
     <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
     <div class="drawer" id="ticketDrawer">
-      <h3 id="ticketTitle"></h3>
+      <div class="drawer-header">
+        <h3 id="ticketTitle"></h3>
+        <button class="drawer-close-x" onclick="closeDrawer()" aria-label="Close">&times;</button>
+      </div>
       <div class="ticket-meta" id="ticketMeta"></div>
 
       <!-- Attachments filed with the original request (message_id === null) -->
@@ -484,8 +555,13 @@
         onchange="onReplyFilesPicked(this)"
       />
 
+      <div id="closedNote" class="closed-note-composer" style="display: none">
+        This ticket is closed — no further replies can be sent.
+      </div>
+
       <div class="drawer-actions">
         <div class="status-update">
+          <span class="status-label">Status</span>
           <select id="statusUpdateSelect" class="form-control">
             <option value="open">Open</option>
             <option value="in progress">In Progress</option>
@@ -495,18 +571,20 @@
                  correct value instead of rendering blank. -->
             <option value="closed" disabled>Closed</option>
           </select>
-          <button id="updateStatusBtn" class="btn" onclick="updateStatus()">Update Status</button>
+          <button id="updateStatusBtn" class="btn btn-secondary" onclick="updateStatus()">
+            Update
+          </button>
         </div>
-        <div>
+        <div class="composer-actions">
           <button
-            class="btn"
+            id="attachImageBtn"
+            class="btn btn-ghost"
             type="button"
             onclick="document.getElementById('replyImageInput').click()"
           >
-            Attach Image
+            &#128206; Attach
           </button>
-          <button id="sendReplyBtn" class="btn" onclick="sendReply()">Send</button>
-          <button class="btn" onclick="closeDrawer()">Close</button>
+          <button id="sendReplyBtn" class="btn btn-primary" onclick="sendReply()">Send</button>
         </div>
       </div>
 

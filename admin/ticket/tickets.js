@@ -386,7 +386,7 @@ async function openTicket(ticketId) {
   ticketId = decodeURIComponent(ticketId);
 
   teardownStream(); // stop whatever ticket's stream was previously open
-  clearReplyFiles(); // drop any images composed for the previously-open ticket
+  resetComposer(); // drop the draft text + images composed for the previous ticket
   closeMediaModal(); // close any full-size media left open from the prior ticket
 
   currentTicketId = ticketId;
@@ -519,6 +519,21 @@ function populateDrawer(ticket) {
   statusSelect.disabled = isClosed;
   const updateStatusBtn = document.getElementById('updateStatusBtn');
   if (updateStatusBtn) updateStatusBtn.disabled = isClosed;
+
+  // A closed ticket is terminal — the backend rejects both status changes and
+  // new messages on it — so lock the whole composer and show a note instead of
+  // letting the admin type/attach/send a reply that would just 400.
+  const composerBox = document.getElementById('adminMessage');
+  const composerSend = document.getElementById('sendReplyBtn');
+  const composerAttach = document.getElementById('attachImageBtn');
+  const closedNote = document.getElementById('closedNote');
+  if (composerBox) {
+    composerBox.disabled = isClosed;
+    composerBox.placeholder = isClosed ? 'This ticket is closed.' : 'Type your reply...';
+  }
+  if (composerSend) composerSend.disabled = isClosed;
+  if (composerAttach) composerAttach.disabled = isClosed;
+  if (closedNote) closedNote.style.display = isClosed ? 'block' : 'none';
 
   const container = document.getElementById('messageContainer');
 
@@ -739,6 +754,15 @@ function clearReplyFiles() {
   if (strip) strip.innerHTML = '';
 }
 
+// Full composer reset — typed text AND staged images. Used when switching to a
+// different ticket or closing the drawer, so a draft never bleeds from one
+// ticket into another. (clearReplyFiles alone left the textarea text behind.)
+function resetComposer() {
+  const box = document.getElementById('adminMessage');
+  if (box) box.value = '';
+  clearReplyFiles();
+}
+
 // Presigns + PUTs each picked image directly to S3, returning the attachment
 // refs to send with the message. Order-matched: the presign response's Nth
 // { key, uploadUrl } corresponds to the Nth requested file.
@@ -900,7 +924,7 @@ function closeDrawer() {
   // Invalidate any authed-media fetch still in flight so it self-revokes on
   // resolve instead of leaking an object URL after the drawer is gone.
   renderGeneration++;
-  clearReplyFiles(); // drop any un-sent composed images
+  resetComposer(); // drop any un-sent draft text + composed images
   teardownStream();
   startTicketListRefresh(); // resume list polling
   currentTicketId = null;
