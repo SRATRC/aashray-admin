@@ -75,6 +75,15 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 // to avoid leaking blobs.
 let activeObjectUrls = [];
 
+// Monotonic render "generation". Bumped on every full drawer rebuild
+// (populateDrawer) and on drawer close, so an authed-media fetch that was
+// started for an earlier render can tell — when it finally resolves — that its
+// target element has since been cleared/revoked, and self-revoke the object URL
+// it just minted instead of leaking it onto a detached element. Overlapping
+// re-renders (a 60s poll landing at the same time as an SSE reload) and closing
+// the drawer mid-fetch are exactly the cases this guards.
+let renderGeneration = 0;
+
 function trackObjectUrl(url) {
   activeObjectUrls.push(url);
   return url;
@@ -94,17 +103,48 @@ function serveMediaUrl(url) {
 }
 
 // Fetches a private attachment with auth, follows the backend's 302 to the
-// presigned S3 GET, and hands back a tracked object URL. Fails soft (logs) so
-// one broken attachment doesn't abort rendering the rest of the thread.
-async function loadAuthedMedia(url, onLoaded) {
+// presigned S3 GET, and hands back a tracked object URL (plus the underlying
+// blob, so the full-size modal can mint its own independent URL). Fails soft so
+// one broken attachment doesn't abort rendering the rest of the thread — on
+// failure it invokes onError so the caller can show a placeholder instead of a
+// silent blank thumbnail.
+async function loadAuthedMedia(url, onLoaded, onError) {
+  // Snapshot the render this fetch belongs to; compared after each await to
+  // detect a drawer rebuild/close that happened while we were in flight.
+  const generation = renderGeneration;
   try {
     const r = await fetch(serveMediaUrl(url), { headers: authHeaders() });
     if (!r.ok) throw new Error(`Media fetch failed: ${r.status}`);
     const blob = await r.blob();
-    onLoaded(trackObjectUrl(URL.createObjectURL(blob)));
+
+    const objectUrl = URL.createObjectURL(blob);
+    // The drawer was rebuilt (overlapping poll + SSE reload) or closed while
+    // this fetch was in flight — the element we'd attach to is detached and its
+    // siblings already revoked. Revoke the URL we just minted and bail so it
+    // doesn't leak onto a dead element.
+    if (generation !== renderGeneration) {
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    trackObjectUrl(objectUrl);
+    onLoaded(objectUrl, blob);
   } catch (e) {
     console.error('Failed to load attachment media', e);
+    // Only surface the failure if this render is still current — otherwise the
+    // slot has been superseded and there's nothing on screen to annotate.
+    if (generation === renderGeneration && onError) onError();
   }
+}
+
+// Swaps a still-loading thumbnail element for an inline error placeholder when
+// its media fetch fails, so the admin sees "failed to load" rather than a blank
+// broken box. A no-op if the element was already detached by a re-render.
+function replaceWithMediaError(el) {
+  if (!el.parentNode) return;
+  const ph = document.createElement('span');
+  ph.className = 'attachment-error';
+  ph.textContent = 'media failed to load';
+  el.replaceWith(ph);
 }
 
 // Renders a single attachment DTO ({ kind, contentType, url, expired }) as a
@@ -125,10 +165,14 @@ function renderAttachment(att, wrapper) {
     vid.muted = true;
     vid.preload = 'metadata';
     wrapper.appendChild(vid);
-    loadAuthedMedia(att.url, (objectUrl) => {
-      vid.src = objectUrl;
-      vid.onclick = () => openMediaModal('video', objectUrl);
-    });
+    loadAuthedMedia(
+      att.url,
+      (objectUrl, blob) => {
+        vid.src = objectUrl;
+        vid.onclick = () => openMediaModal('video', blob);
+      },
+      () => replaceWithMediaError(vid)
+    );
     return;
   }
 
@@ -137,30 +181,47 @@ function renderAttachment(att, wrapper) {
   img.className = 'attachment-thumb';
   img.alt = 'attachment';
   wrapper.appendChild(img);
-  loadAuthedMedia(att.url, (objectUrl) => {
-    img.src = objectUrl;
-    img.onclick = () => openMediaModal('image', objectUrl);
-  });
+  loadAuthedMedia(
+    att.url,
+    (objectUrl, blob) => {
+      img.src = objectUrl;
+      img.onclick = () => openMediaModal('image', blob);
+    },
+    () => replaceWithMediaError(img)
+  );
 }
 
 /* =====================================================
    FULL-SIZE MEDIA MODAL
    ===================================================== */
 
-// Reuses the thumbnail's already-fetched object URL (owned by the
-// activeObjectUrls registry), so closing the modal must NOT revoke it.
-function openMediaModal(kind, objectUrl) {
+// The full-size modal owns its OWN object URL, minted here from the blob and
+// tracked separately from the thumbnail registry (activeObjectUrls). This
+// decoupling is deliberate: a background re-render (poll / SSE / reconnect)
+// revokes + re-mints every thumbnail URL, and if the modal reused a thumbnail's
+// URL that re-render would blank the image/video the admin is actively viewing.
+// Owning its own URL means the modal survives re-renders and is revoked only on
+// close (or when a different attachment is opened).
+let modalObjectUrl = null;
+
+function openMediaModal(kind, blob) {
   const overlay = document.getElementById('mediaModalOverlay');
   const content = document.getElementById('mediaModalContent');
   if (!overlay || !content) return;
   content.innerHTML = '';
+  // Release the previous modal's URL before minting a fresh one.
+  if (modalObjectUrl) {
+    URL.revokeObjectURL(modalObjectUrl);
+    modalObjectUrl = null;
+  }
+  modalObjectUrl = URL.createObjectURL(blob);
   const el =
     kind === 'video' ? document.createElement('video') : document.createElement('img');
   if (kind === 'video') {
     el.controls = true;
     el.autoplay = true;
   }
-  el.src = objectUrl;
+  el.src = modalObjectUrl;
   el.className = 'media-modal-media';
   content.appendChild(el);
   overlay.classList.add('open');
@@ -170,9 +231,13 @@ function closeMediaModal() {
   const overlay = document.getElementById('mediaModalOverlay');
   const content = document.getElementById('mediaModalContent');
   if (overlay) overlay.classList.remove('open');
-  // Clearing the content stops any playing video; the object URL itself is
-  // owned by the thumbnail registry, so don't revoke it here.
+  // Clearing the content stops any playing video.
   if (content) content.innerHTML = '';
+  // This URL is owned by the modal (see openMediaModal), so revoke it here.
+  if (modalObjectUrl) {
+    URL.revokeObjectURL(modalObjectUrl);
+    modalObjectUrl = null;
+  }
 }
 
 /* =====================================================
@@ -322,6 +387,7 @@ async function openTicket(ticketId) {
 
   teardownStream(); // stop whatever ticket's stream was previously open
   clearReplyFiles(); // drop any images composed for the previously-open ticket
+  closeMediaModal(); // close any full-size media left open from the prior ticket
 
   currentTicketId = ticketId;
   streamEverConnected = false;
@@ -402,10 +468,16 @@ async function loadTicketDetails() {
    ===================================================== */
 
 function populateDrawer(ticket) {
-  // This is a full rebuild of the drawer's media — release the previous
-  // render's object URLs (and close the modal, whose media may reference one of
-  // them) before minting fresh ones below.
-  closeMediaModal();
+  // This is a full rebuild of the drawer's media. Bump the render generation
+  // first so any authed-media fetch still in flight from a PREVIOUS render
+  // self-revokes instead of attaching a stale object URL to a detached element,
+  // then release the previous render's object URLs before minting fresh ones.
+  // NOTE: we deliberately do NOT close the media modal here — a background poll,
+  // SSE status_update, or reconnect reload re-runs this on the SAME ticket, and
+  // closing the modal would yank away the full-size image/video the admin is
+  // viewing. The modal owns its own object URL, so it survives this revoke; it
+  // is closed only on explicit drawer close / ticket switch.
+  renderGeneration++;
   revokeObjectUrls();
 
   document.getElementById('ticketTitle').innerText = `Ticket #${ticket.id} (${ticket.status})`;
@@ -670,40 +742,56 @@ function clearReplyFiles() {
 // Presigns + PUTs each picked image directly to S3, returning the attachment
 // refs to send with the message. Order-matched: the presign response's Nth
 // { key, uploadUrl } corresponds to the Nth requested file.
+//
+// Idempotent across retries: once a file's PUT succeeds we stamp its S3 key
+// onto the File object (`_uploadedKey`). If a later file in the same batch
+// fails and the admin hits Send again, we only presign/PUT the files that
+// haven't uploaded yet and reuse the stamped keys for the rest — otherwise a
+// retry would re-presign/re-PUT the already-uploaded files under brand-new
+// keys, orphaning the originals in the bucket. The stamps live only as long as
+// the File objects do (cleared with the batch on a successful send, or when the
+// admin removes/replaces a pick).
 async function uploadReplyImages(files) {
-  const presignRes = await fetch(`${CONFIG.basePath}/tickets/attachments/presign`, {
-    method: 'POST',
-    headers: authHeaders(true),
-    body: JSON.stringify({
-      files: files.map((f) => ({
-        filename: f.name,
-        contentType: f.type,
-        size: f.size,
-        kind: 'image'
-      }))
-    })
-  });
-  if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`);
+  const pending = files.filter((f) => !f._uploadedKey);
 
-  const presigned = (await presignRes.json()).data || [];
-  if (presigned.length !== files.length) {
-    throw new Error('Presign returned an unexpected number of upload URLs');
-  }
-
-  const attachments = [];
-  for (let i = 0; i < files.length; i++) {
-    const f = files[i];
-    const { key, uploadUrl } = presigned[i];
-    // Content-Type MUST match what was signed, or S3 rejects the PUT.
-    const putRes = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: f,
-      headers: { 'Content-Type': f.type }
+  if (pending.length) {
+    const presignRes = await fetch(`${CONFIG.basePath}/tickets/attachments/presign`, {
+      method: 'POST',
+      headers: authHeaders(true),
+      body: JSON.stringify({
+        files: pending.map((f) => ({
+          filename: f.name,
+          contentType: f.type,
+          size: f.size,
+          kind: 'image'
+        }))
+      })
     });
-    if (!putRes.ok) throw new Error(`Upload failed for "${f.name}": ${putRes.status}`);
-    attachments.push({ key, contentType: f.type, kind: 'image' });
+    if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`);
+
+    const presigned = (await presignRes.json()).data || [];
+    if (presigned.length !== pending.length) {
+      throw new Error('Presign returned an unexpected number of upload URLs');
+    }
+
+    for (let i = 0; i < pending.length; i++) {
+      const f = pending[i];
+      const { key, uploadUrl } = presigned[i];
+      // Content-Type MUST match what was signed, or S3 rejects the PUT.
+      const putRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: f,
+        headers: { 'Content-Type': f.type }
+      });
+      if (!putRes.ok) throw new Error(`Upload failed for "${f.name}": ${putRes.status}`);
+      // Stamp the key so a retry after a sibling's failure reuses this upload.
+      f._uploadedKey = key;
+    }
   }
-  return attachments;
+
+  // Return refs in the original pick order — a mix of freshly-uploaded files
+  // and any that succeeded on a prior attempt.
+  return files.map((f) => ({ key: f._uploadedKey, contentType: f.type, kind: 'image' }));
 }
 
 /* =====================================================
@@ -711,11 +799,20 @@ async function uploadReplyImages(files) {
    ===================================================== */
 
 async function sendReply() {
+  // Snapshot the target ticket (and its composed file batch) BEFORE any await.
+  // currentTicketId is global and the drawer's backdrop can close it — or the
+  // admin can switch tickets — mid-upload, at which point the global would point
+  // at a different ticket (or null). Everything below (upload, POST URL, and
+  // clearing the composer) must use these snapshots, and after each await we
+  // re-check that the drawer hasn't moved on, so we never POST to the wrong
+  // ticket (or `tickets/null/messages`) or wipe the now-current ticket's state.
+  const ticketId = currentTicketId;
+  const files = pendingReplyFiles;
   const messageBox = document.getElementById('adminMessage');
   const message = messageBox.value.trim();
-  const hasFiles = pendingReplyFiles.length > 0;
+  const hasFiles = files.length > 0;
   // Message text is optional when at least one image is attached.
-  if ((!message && !hasFiles) || !currentTicketId) return;
+  if ((!message && !hasFiles) || !ticketId) return;
 
   const sendBtn = document.getElementById('sendReplyBtn');
   if (sendBtn) sendBtn.disabled = true;
@@ -726,10 +823,13 @@ async function sendReply() {
     if (hasFiles) {
       // Upload first — the message must only reference successfully-uploaded
       // keys (the backend HeadObject-verifies every key before persisting).
-      body.attachments = await uploadReplyImages(pendingReplyFiles);
+      body.attachments = await uploadReplyImages(files);
+      // The admin may have switched/closed the ticket during the upload — don't
+      // POST this reply to whatever ticket is now open.
+      if (currentTicketId !== ticketId) return;
     }
 
-    const res = await fetch(`${CONFIG.basePath}/tickets/${currentTicketId}/messages`, {
+    const res = await fetch(`${CONFIG.basePath}/tickets/${ticketId}/messages`, {
       method: 'POST',
       headers: authHeaders(true),
       body: JSON.stringify(body)
@@ -737,6 +837,11 @@ async function sendReply() {
     // fetch doesn't reject on 4xx/5xx — without this, a failed send would clear
     // the composer and reload as if it succeeded, silently losing the reply.
     if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+    // The POST landed on `ticketId`; if the drawer has since moved to a
+    // different ticket, don't clear that ticket's composer or reload its
+    // details on the back of this send.
+    if (currentTicketId !== ticketId) return;
 
     messageBox.value = '';
     clearReplyFiles();
@@ -792,6 +897,9 @@ function closeDrawer() {
 
   closeMediaModal();
   revokeObjectUrls(); // release fetched attachment blobs
+  // Invalidate any authed-media fetch still in flight so it self-revokes on
+  // resolve instead of leaking an object URL after the drawer is gone.
+  renderGeneration++;
   clearReplyFiles(); // drop any un-sent composed images
   teardownStream();
   startTicketListRefresh(); // resume list polling
