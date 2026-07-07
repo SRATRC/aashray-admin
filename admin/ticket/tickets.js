@@ -86,7 +86,6 @@ let renderGeneration = 0;
 
 function trackObjectUrl(url) {
   activeObjectUrls.push(url);
-  return url;
 }
 
 function revokeObjectUrls() {
@@ -159,36 +158,35 @@ function renderAttachment(att, wrapper) {
     return;
   }
 
-  if (att.kind === 'video') {
-    const vid = document.createElement('video');
-    vid.className = 'attachment-thumb';
-    vid.muted = true;
-    vid.preload = 'metadata';
-    wrapper.appendChild(vid);
-    loadAuthedMedia(
-      att.url,
-      (objectUrl, blob) => {
-        vid.src = objectUrl;
-        vid.onclick = () => openMediaModal('video', blob);
-      },
-      () => replaceWithMediaError(vid)
-    );
-    return;
+  const kind = att.kind === 'video' ? 'video' : 'image';
+  const el = document.createElement(kind);
+  el.className = 'attachment-thumb';
+  if (kind === 'video') {
+    el.muted = true;
+    el.preload = 'metadata';
+  } else {
+    el.alt = 'attachment';
   }
-
-  // default: image
-  const img = document.createElement('img');
-  img.className = 'attachment-thumb';
-  img.alt = 'attachment';
-  wrapper.appendChild(img);
+  wrapper.appendChild(el);
   loadAuthedMedia(
     att.url,
     (objectUrl, blob) => {
-      img.src = objectUrl;
-      img.onclick = () => openMediaModal('image', blob);
+      el.src = objectUrl;
+      el.onclick = () => openMediaModal(kind, blob);
     },
-    () => replaceWithMediaError(img)
+    () => replaceWithMediaError(el)
   );
+}
+
+// Builds a `.attachment-strip` element populated via renderAttachment for each
+// item in `atts`, or returns null when there's nothing to show. Shared by
+// populateDrawer (ticket-level attachments) and renderMessage (per-message).
+function buildAttachmentStrip(atts) {
+  if (!Array.isArray(atts) || !atts.length) return null;
+  const strip = document.createElement('div');
+  strip.className = 'attachment-strip';
+  atts.forEach((att) => renderAttachment(att, strip));
+  return strip;
 }
 
 /* =====================================================
@@ -495,15 +493,12 @@ function populateDrawer(ticket) {
   const ticketAttachments = document.getElementById('ticketAttachments');
   if (ticketAttachments) {
     ticketAttachments.innerHTML = '';
-    const atts = ticket.attachments || [];
-    if (atts.length) {
+    const strip = buildAttachmentStrip(ticket.attachments);
+    if (strip) {
       const label = document.createElement('div');
       label.className = 'attachment-label';
       label.textContent = 'Attachments';
       ticketAttachments.appendChild(label);
-      const strip = document.createElement('div');
-      strip.className = 'attachment-strip';
-      atts.forEach((att) => renderAttachment(att, strip));
       ticketAttachments.appendChild(strip);
     }
   }
@@ -580,12 +575,8 @@ function renderMessage(msg, container, { skipDedupCheck = false } = {}) {
 
   // Message-level attachments (images the admin/user attached to this reply,
   // or the user's videos which admins can view but not upload).
-  if (Array.isArray(msg.attachments) && msg.attachments.length) {
-    const strip = document.createElement('div');
-    strip.className = 'attachment-strip';
-    msg.attachments.forEach((att) => renderAttachment(att, strip));
-    div.appendChild(strip);
-  }
+  const strip = buildAttachmentStrip(msg.attachments);
+  if (strip) div.appendChild(strip);
 
   const meta = document.createElement('span');
   meta.innerHTML = `${escapeHtml(msg.sender_type)} &bull; ${new Date(
@@ -798,19 +789,22 @@ async function uploadReplyImages(files) {
       throw new Error('Presign returned an unexpected number of upload URLs');
     }
 
-    for (let i = 0; i < pending.length; i++) {
-      const f = pending[i];
-      const { key, uploadUrl } = presigned[i];
-      // Content-Type MUST match what was signed, or S3 rejects the PUT.
-      const putRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: f,
-        headers: { 'Content-Type': f.type }
-      });
-      if (!putRes.ok) throw new Error(`Upload failed for "${f.name}": ${putRes.status}`);
-      // Stamp the key so a retry after a sibling's failure reuses this upload.
-      f._uploadedKey = key;
-    }
+    // The PUTs are independent of each other — run them concurrently instead
+    // of one at a time.
+    await Promise.all(
+      pending.map(async (f, i) => {
+        const { key, uploadUrl } = presigned[i];
+        // Content-Type MUST match what was signed, or S3 rejects the PUT.
+        const putRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: f,
+          headers: { 'Content-Type': f.type }
+        });
+        if (!putRes.ok) throw new Error(`Upload failed for "${f.name}": ${putRes.status}`);
+        // Stamp the key so a retry after a sibling's failure reuses this upload.
+        f._uploadedKey = key;
+      })
+    );
   }
 
   // Return refs in the original pick order — a mix of freshly-uploaded files
