@@ -197,8 +197,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         travelReport.forEach((b) => {
           b.adhyayan_label = b.adhyayan
             ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}–${formatDate(b.adhyayan.end_date)})`
-            : '—';
-          b.trip_group_label = b.trip_group_id ? 'Round trip' : '—';
+            : '-';
+          b.trip_group_label = b.trip_group_id ? 'Round trip' : '-';
         });
 
         setupDownloadButton();
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const normalize = str =>
           (str || "")
             .toLowerCase()
-            .replace(/[–—]/g, '-') // normalize dash variants
+            .replace(/[\u2013\u2014]/g, '-') // normalize dash variants
             .trim()
             .replace(/\s+/g, ' ');
 
@@ -315,13 +315,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 <td>
   ${b.adhyayan
               ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}–${formatDate(b.adhyayan.end_date)})`
-              : '—'}
+              : '-'}
 </td>
 
 <td>
   ${b.trip_group_id
               ? '<span class="badge bg-info">Round trip</span>'
-              : '—'}
+              : '-'}
 </td>
 <td>
 
