@@ -191,7 +191,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       if (bookingsRes.ok) {
         travelReport = data.data || [];
-        console.log("First booking:", travelReport[0]);
+        // Precompute display-string fields so the Excel export (which reads the raw
+        // field named by each column's data-key) mirrors what the table renders,
+        // instead of exporting "[object Object]" for adhyayan or the raw trip id.
+        travelReport.forEach((b) => {
+          b.adhyayan_label = b.adhyayan
+            ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}–${formatDate(b.adhyayan.end_date)})`
+            : '—';
+          b.trip_group_label = b.trip_group_id ? 'Round trip' : '—';
+        });
 
         setupDownloadButton();
 
