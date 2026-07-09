@@ -1567,12 +1567,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       ${field('🎂', 'Date of Birth', item.dob ? `${item.dob}${getAge(item.dob)}` : '')}
       ${field('🏠', 'Res. Status', normStatus)}
 
-      <div class="drawer-section-title">Credits</div>
-      <div class="drawer-credits-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 12px;">
-        <span class="credit-pill credit-pill-room" style="font-size:12px; padding: 4px 10px;" title="Click to view Room credit history" onclick="openCreditHistoryModal('${item.cardno}', 'room')">Room: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
-        <span class="credit-pill credit-pill-food" style="font-size:12px; padding: 4px 10px;" title="Click to view Food credit history" onclick="openCreditHistoryModal('${item.cardno}', 'food')">Food: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
-        <span class="credit-pill credit-pill-travel" style="font-size:12px; padding: 4px 10px;" title="Click to view Travel credit history" onclick="openCreditHistoryModal('${item.cardno}', 'travel')">Travel: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
-        <span class="credit-pill credit-pill-utsav" style="font-size:12px; padding: 4px 10px;" title="Click to view Utsav credit history" onclick="openCreditHistoryModal('${item.cardno}', 'utsav')">Utsav: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
+      <div class="drawer-section-title">History</div>
+      <div class="drawer-credits-container" style="display: flex; gap: 4px; margin-top: 8px; margin-bottom: 12px; width: 100%; box-sizing: border-box;">
+        <span class="credit-pill credit-pill-room" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Room credit history" onclick="openCreditHistoryModal('${item.cardno}', 'room')">Room:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
+        <span class="credit-pill credit-pill-food" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Food credit history" onclick="openCreditHistoryModal('${item.cardno}', 'food')">Food:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
+        <span class="credit-pill credit-pill-travel" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Travel credit history" onclick="openCreditHistoryModal('${item.cardno}', 'travel')">Travel:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
+        <span class="credit-pill credit-pill-utsav" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Utsav credit history" onclick="openCreditHistoryModal('${item.cardno}', 'utsav')">Utsav:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
+        <span class="credit-pill credit-pill-adhyayan" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; cursor: pointer; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Adhyayan booking history" onclick="openCreditHistoryModal('${item.cardno}', 'adhyayan')">Adhyayan</span>
       </div>
 
       <div class="drawer-section-title">Contact</div>
@@ -3537,156 +3538,364 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = document.getElementById('creditHistoryTimelineList');
     const remainingVal = document.getElementById('creditHistoryRemainingVal');
     
+    const tabCreditsBtn = document.getElementById('tabCreditsBtn');
+    const tabBookingsBtn = document.getElementById('tabBookingsBtn');
+    const panelCreditsContent = document.getElementById('panelCreditsContent');
+    const panelBookingsContent = document.getElementById('panelBookingsContent');
+    const bookingList = document.getElementById('bookingHistoryList');
+    const printBtn = document.getElementById('printCreditHistoryLedgerBtn');
+    const searchInput = document.getElementById('modalHistorySearchInput');
+
     if (!modal) return;
     
-    title.textContent = `🛡️ ${category.toUpperCase()} Credit History (Card: ${cardno})`;
+    title.textContent = `🛡️ ${category.toUpperCase()} History (Card: ${cardno})`;
     modal.style.display = 'flex';
     modal.offsetHeight; // force reflow
     modal.classList.add('active');
     loading.style.display = 'block';
     content.style.display = 'none';
     list.innerHTML = '';
-    
-    try {
-      const response = await fetch(`${CONFIG.basePath}/accounts/fetchcreditstransactions?cardno=${cardno}&category=${category}`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+    bookingList.innerHTML = '';
+
+    if (searchInput) searchInput.value = '';
+
+    let txs = [];
+    let bkList = [];
+
+    // Handle tab switching
+    const selectTab = (tab) => {
+      if (tab === 'credits') {
+        tabCreditsBtn.classList.add('active');
+        tabCreditsBtn.style.color = '#4f46e5';
+        tabCreditsBtn.style.borderBottomColor = '#4f46e5';
+        
+        tabBookingsBtn.classList.remove('active');
+        tabBookingsBtn.style.color = '#64748b';
+        tabBookingsBtn.style.borderBottomColor = 'transparent';
+        
+        panelCreditsContent.style.display = 'block';
+        panelBookingsContent.style.display = 'none';
+        if (printBtn) printBtn.style.display = 'inline-flex';
+      } else {
+        tabBookingsBtn.classList.add('active');
+        tabBookingsBtn.style.color = '#4f46e5';
+        tabBookingsBtn.style.borderBottomColor = '#4f46e5';
+        
+        tabCreditsBtn.classList.remove('active');
+        tabCreditsBtn.style.color = '#64748b';
+        tabCreditsBtn.style.borderBottomColor = 'transparent';
+        
+        panelCreditsContent.style.display = 'none';
+        panelBookingsContent.style.display = 'block';
+        if (printBtn) printBtn.style.display = 'none';
+      }
+    };
+
+    // Configure tabs visibility based on category
+    if (category.toLowerCase() === 'adhyayan') {
+      tabCreditsBtn.style.display = 'none';
+      selectTab('bookings');
+    } else {
+      tabCreditsBtn.style.display = 'block';
+      selectTab('credits');
+    }
+
+    // Set up tab click listeners
+    tabCreditsBtn.onclick = () => selectTab('credits');
+    tabBookingsBtn.onclick = () => selectTab('bookings');
+
+    const getStatusBadgeStyles = (status) => {
+      const s = (status || 'pending').toLowerCase();
+      if (s.includes('confirm') || s.includes('complete') || s === 'active') {
+        return 'background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;';
+      }
+      if (s.includes('cancel') || s.includes('reject')) {
+        return 'background-color: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5;';
+      }
+      return 'background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a;';
+    };
+
+    const getBookingInfoHtml = (cat, b) => {
+      const c = cat.toLowerCase();
+      if (c === 'room') {
+        return `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+            <div><strong>Check-in:</strong> ${new Date(b.checkin).toLocaleDateString()}</div>
+            <div><strong>Check-out:</strong> ${new Date(b.checkout).toLocaleDateString()}</div>
+            <div><strong>Room No:</strong> ${b.roomno || 'Not Assigned'}</div>
+            <div><strong>Resident:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+          </div>
+        `;
+      } else if (c === 'travel') {
+        return `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+            <div><strong>Travel Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
+            <div><strong>Route:</strong> ${b.pickup_point} ➔ ${b.drop_point}</div>
+            <div><strong>Passengers:</strong> ${b.total_people || 1}</div>
+            <div><strong>Type:</strong> ${b.type || '—'}</div>
+          </div>
+        `;
+      } else if (c === 'utsav') {
+        return `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+            <div><strong>Utsav:</strong> ${b.UtsavDb?.name || '—'}</div>
+            <div><strong>Package:</strong> ${b.UtsavPackagesDb?.name || '—'}</div>
+            <div><strong>Arrival:</strong> ${b.arrival || '—'}</div>
+            <div><strong>Room:</strong> ${b.roomno || '—'}</div>
+            <div><strong>Car No:</strong> ${b.carno || '—'}</div>
+            <div><strong>Resident:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+          </div>
+        `;
+      } else if (c === 'food') {
+        const meals = [b.breakfast && 'Breakfast', b.lunch && 'Lunch', b.dinner && 'Dinner'].filter(Boolean).join(', ') || '—';
+        return `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+            <div><strong>Meal Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
+            <div><strong>Meals:</strong> ${meals}</div>
+            <div><strong>High Tea:</strong> ${b.hightea && b.hightea !== 'NONE' ? b.hightea : '—'}</div>
+            <div><strong>Spicy:</strong> ${b.spicy ? 'Yes' : 'No'}</div>
+          </div>
+        `;
+      } else if (c === 'adhyayan') {
+        return `
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div><strong>Shibir Name:</strong> ${b.ShibirDb?.name || '—'}</div>
+            <div><strong>Speaker:</strong> ${b.ShibirDb?.speaker || '—'}</div>
+            <div><strong>Shibir Dates:</strong> ${b.ShibirDb?.start_date ? new Date(b.ShibirDb.start_date).toLocaleDateString() : ''} to ${b.ShibirDb?.end_date ? new Date(b.ShibirDb.end_date).toLocaleDateString() : ''}</div>
+          </div>
+        `;
+      }
+      return `<div>Booking info unavailable</div>`;
+    };
+
+    const filterAndRenderModalLists = () => {
+      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+      // 1. Render Credits Timeline
+      if (category.toLowerCase() !== 'adhyayan') {
+        const filteredTxs = txs.filter(tx => {
+          const isCredit = tx.transaction_type === 'CREDITED';
+          const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
+          return (
+            (tx.bookingid || '').toLowerCase().includes(q) ||
+            (tx.razorpay_order_id || '').toLowerCase().includes(q) ||
+            (tx.transaction_type || '').toLowerCase().includes(q) ||
+            String(amt).includes(q) ||
+            (tx.date && new Date(tx.date).toLocaleString().toLowerCase().includes(q))
+          );
+        });
+
+        if (filteredTxs.length === 0) {
+          list.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No matching transactions found.</li>`;
+        } else {
+          list.innerHTML = filteredTxs.map(tx => {
+            const isCredit = tx.transaction_type === 'CREDITED';
+            const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
+            return `
+              <li class="timeline-item" style="list-style: none; position: relative; margin-bottom: 16px;">
+                <div class="timeline-dot ${isCredit ? 'credited' : 'debited'}" style="position: absolute; top: 14px; left: -20px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid; ${isCredit ? 'border-color: #10b981; background-color: #10b981;' : 'border-color: #ef4444; background-color: #ef4444;'} transform: translateX(-50%); z-index: 1;"></div>
+                <div class="timeline-content" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                  <div class="timeline-info" style="flex: 1; min-width: 0; text-align: left;">
+                    <div class="timeline-booking" style="font-weight: 700; color: #1e293b; font-size: 14px;">Booking ID: ${tx.bookingid ? `<span onclick="window.showBookingDetails('${category}', '${tx.bookingid}')" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view booking details">${tx.bookingid}</span>` : '—'}</div>
+                    <div class="timeline-date" style="font-size: 12px; color: #64748b; margin-top: 3px;">${new Date(tx.date).toLocaleString()}</div>
+                    <div class="timeline-desc" style="font-size: 12.5px; color: #475569; margin-top: 5px;">Order ID: ${tx.razorpay_order_id || '—'}</div>
+                  </div>
+                  <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}" style="font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; ${isCredit ? 'background-color: #ecfdf5; color: #047857;' : 'background-color: #fef2f2; color: #b91c1c;'}">
+                    ${amt >= 0 ? '+' : ''}${amt}
+                  </div>
+                </div>
+              </li>
+            `;
+          }).join('');
         }
+      }
+
+      // 2. Render Booking History
+      const filteredBks = bkList.filter(b => {
+        const checkinStr = b.checkin ? new Date(b.checkin).toLocaleDateString() : '';
+        const checkoutStr = b.checkout ? new Date(b.checkout).toLocaleDateString() : '';
+        const dateStr = b.date ? new Date(b.date).toLocaleDateString() : '';
+        const createdAtStr = b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '';
+        
+        return (
+          (b.bookingid || '').toLowerCase().includes(q) ||
+          (b.status || '').toLowerCase().includes(q) ||
+          (b.roomno || '').toLowerCase().includes(q) ||
+          (b.pickup_point || '').toLowerCase().includes(q) ||
+          (b.drop_point || '').toLowerCase().includes(q) ||
+          (b.type || '').toLowerCase().includes(q) ||
+          (b.carno || '').toLowerCase().includes(q) ||
+          (b.arrival || '').toLowerCase().includes(q) ||
+          (b.ShibirDb?.name || '').toLowerCase().includes(q) ||
+          (b.ShibirDb?.speaker || '').toLowerCase().includes(q) ||
+          checkinStr.includes(q) ||
+          checkoutStr.includes(q) ||
+          dateStr.includes(q) ||
+          createdAtStr.includes(q)
+        );
       });
-      const result = await response.json();
-      const txs = result.data || [];
-      
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      
-      if (txs.length === 0) {
-        list.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No credit/debit transactions found for card ${cardno}.</li>`;
-        remainingVal.textContent = '0';
-        remainingVal.style.color = '#64748b';
-        
-        // Disable print button
-        const printBtn = document.getElementById('printCreditHistoryLedgerBtn');
-        if (printBtn) {
-          printBtn.style.opacity = '0.5';
-          printBtn.style.pointerEvents = 'none';
-        }
-        return;
-      }
-      
-      // Enable print button
-      const printBtn = document.getElementById('printCreditHistoryLedgerBtn');
-      if (printBtn) {
-        printBtn.style.opacity = '';
-        printBtn.style.pointerEvents = '';
-      }
-      
-      let timelineItems = '';
-      let totalAmount = 0;
-      
-      txs.forEach(tx => {
-        const isCredit = tx.transaction_type === 'CREDITED';
-        const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
-        totalAmount += amt;
-        
-        timelineItems += `
-          <li class="timeline-item" style="list-style: none; position: relative; margin-bottom: 16px;">
-            <div class="timeline-dot ${isCredit ? 'credited' : 'debited'}" style="position: absolute; top: 14px; left: -20px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid; ${isCredit ? 'border-color: #10b981; background-color: #10b981;' : 'border-color: #ef4444; background-color: #ef4444;'} transform: translateX(-50%); z-index: 1;"></div>
-            <div class="timeline-content" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-              <div class="timeline-info" style="flex: 1; min-width: 0; text-align: left;">
-                <div class="timeline-booking" style="font-weight: 700; color: #1e293b; font-size: 14px;">Booking ID: ${tx.bookingid ? `<span onclick="window.showBookingDetails('${category}', '${tx.bookingid}')" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view booking details">${tx.bookingid}</span>` : '—'}</div>
-                <div class="timeline-date" style="font-size: 12px; color: #64748b; margin-top: 3px;">${new Date(tx.date).toLocaleString()}</div>
-                <div class="timeline-desc" style="font-size: 12.5px; color: #475569; margin-top: 5px;">Order ID: ${tx.razorpay_order_id || '—'}</div>
-              </div>
-              <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}" style="font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; ${isCredit ? 'background-color: #ecfdf5; color: #047857;' : 'background-color: #fef2f2; color: #b91c1c;'}">
-                ${amt >= 0 ? '+' : ''}${amt}
-              </div>
+
+      if (filteredBks.length === 0) {
+        bookingList.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No matching booking records found.</li>`;
+      } else {
+        bookingList.innerHTML = filteredBks.map(b => {
+          const bookingId = b.bookingid || b.id;
+          const hasStatus = !!b.status;
+          return `
+          <li style="list-style: none; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; color: #0f172a; font-size: 13.5px;">
+                Booking ID: ${bookingId ? `<span onclick="window.showBookingDetails('${category}', '${bookingId}')" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view details">${bookingId}</span>` : '—'}
+              </span>
+              ${hasStatus ? `<span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; ${getStatusBadgeStyles(b.status)}">${b.status}</span>` : ''}
+            </div>
+            <div style="font-size: 12.5px; color: #475569; padding: 4px 0;">
+              ${getBookingInfoHtml(category, b)}
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px dashed #f1f5f9; padding-top: 6px;">
+              <span>Booked By: ${b.bookedBy || b.cardno}</span>
+              <span>Created: ${new Date(b.createdAt || b.date).toLocaleDateString()}</span>
             </div>
           </li>
         `;
-      });
-      
-      list.innerHTML = timelineItems;
-      remainingVal.textContent = (totalAmount >= 0 ? '+' : '') + totalAmount;
-      remainingVal.style.color = totalAmount >= 0 ? '#16a34a' : '#dc2626';
-      
-      // Bind print ledger event
-      const printBtnHandler = () => {
-        const printWindow = window.open('', '_blank');
-        const printRows = txs.map(tx => {
+        }).join('');
+      }
+    };
+
+    if (searchInput) {
+      searchInput.oninput = filterAndRenderModalLists;
+    }
+
+    // Helper functions to fetch
+    const loadCredits = async () => {
+      if (category.toLowerCase() === 'adhyayan') return;
+      try {
+        const response = await fetch(`${CONFIG.basePath}/accounts/fetchcreditstransactions?cardno=${cardno}&category=${category}`, {
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        });
+        const result = await response.json();
+        txs = result.data || [];
+        
+        if (txs.length === 0) {
+          list.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No credit/debit transactions found for card ${cardno}.</li>`;
+          remainingVal.textContent = '0';
+          remainingVal.style.color = '#64748b';
+          if (printBtn) {
+            printBtn.style.opacity = '0.5';
+            printBtn.style.pointerEvents = 'none';
+          }
+          return;
+        }
+
+        if (printBtn) {
+          printBtn.style.opacity = '';
+          printBtn.style.pointerEvents = '';
+        }
+
+        let totalAmount = 0;
+        txs.forEach(tx => {
           const isCredit = tx.transaction_type === 'CREDITED';
           const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
-          return `
-            <tr>
-              <td>${tx.bookingid || '—'}</td>
-              <td>${tx.razorpay_order_id || '—'}</td>
-              <td style="font-weight: bold; color: ${amt >= 0 ? '#16a34a' : '#dc2626'}">${amt >= 0 ? '+' : ''}${amt}</td>
-              <td>${new Date(tx.date).toLocaleString()}</td>
-              <td>${isCredit ? 'CREDITED' : 'DEBITED'}</td>
-            </tr>
-          `;
-        }).join('');
+          totalAmount += amt;
+        });
+        
+        remainingVal.textContent = (totalAmount >= 0 ? '+' : '') + totalAmount;
+        remainingVal.style.color = totalAmount >= 0 ? '#16a34a' : '#dc2626';
 
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Ledger Statement - Card ${cardno}</title>
-              <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #1e293b; }
-                h2 { margin-bottom: 5px; color: #0f172a; }
-                .meta { color: #64748b; font-size: 14px; margin-bottom: 20px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 13.5px; }
-                th { background: #f8fafc; color: #475569; font-weight: 600; }
-                .total-row { font-weight: bold; background: #f8fafc; }
-              </style>
-            </head>
-            <body>
-              <h2>Ledger Statement</h2>
-              <div class="meta">
-                <div><strong>Card Number:</strong> ${cardno}</div>
-                <div><strong>Category:</strong> ${category.toUpperCase()}</div>
-                <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
-              </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Booking ID</th>
-                    <th>Order ID</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${printRows}
-                  <tr class="total-row">
-                    <td colspan="2">Net Ledger Balance</td>
-                    <td colspan="3" style="color: ${totalAmount >= 0 ? '#16a34a' : '#dc2626'}">${totalAmount >= 0 ? '+' : ''}${totalAmount}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <script>
-                window.onload = function() {
-                  window.print();
-                  setTimeout(function() { window.close(); }, 500);
-                };
-              </script>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-      };
-      
-      // Remove old listener and bind new one
-      const printBtnClone = printBtn.cloneNode(true);
-      printBtn.parentNode.replaceChild(printBtnClone, printBtn);
-      printBtnClone.addEventListener('click', printBtnHandler);
-      
+        // Bind print ledger event
+        if (printBtn) {
+          printBtn.onclick = () => {
+            const printWindow = window.open('', '_blank');
+            const printRows = txs.map(tx => {
+              const isCredit = tx.transaction_type === 'CREDITED';
+              const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
+              return `
+                <tr>
+                  <td>${tx.bookingid || '—'}</td>
+                  <td>${tx.razorpay_order_id || '—'}</td>
+                  <td style="font-weight: bold; color: ${amt >= 0 ? '#16a34a' : '#dc2626'}">${amt >= 0 ? '+' : ''}${amt}</td>
+                  <td>${new Date(tx.date).toLocaleString()}</td>
+                  <td>${isCredit ? 'CREDITED' : 'DEBITED'}</td>
+                </tr>
+              `;
+            }).join('');
+
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>Ledger Statement - Card ${cardno}</title>
+                  <style>
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #1e293b; }
+                    h2 { margin-bottom: 5px; color: #0f172a; }
+                    .meta { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 13.5px; }
+                    th { background: #f8fafc; color: #475569; font-weight: 600; }
+                    .total-row { font-weight: bold; background: #f8fafc; }
+                  </style>
+                </head>
+                <body>
+                  <h2>Ledger Statement</h2>
+                  <div class="meta">
+                    <div><strong>Card Number:</strong> ${cardno}</div>
+                    <div><strong>Category:</strong> ${category.toUpperCase()}</div>
+                    <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Booking ID</th>
+                        <th>Order ID</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${printRows}
+                      <tr class="total-row">
+                        <td colspan="2">Net Ledger Balance</td>
+                        <td colspan="3" style="color: ${totalAmount >= 0 ? '#16a34a' : '#dc2626'}">${totalAmount >= 0 ? '+' : ''}${totalAmount}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <script>
+                    window.onload = function() { window.print(); window.close(); }
+                  </script>
+                </body>
+              </html>
+            `);
+            printWindow.document.close();
+          };
+        }
+      } catch (err) {
+        console.error(err);
+        list.innerHTML = `<li style="text-align: center; color: #dc2626; padding: 20px; list-style: none;">❌ Error loading credits: ${err.message}</li>`;
+      }
+    };
+
+    const loadBookings = async () => {
+      try {
+        const response = await fetch(`${CONFIG.basePath}/bookings/history?cardno=${cardno}&category=${category}`, {
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        });
+        const result = await response.json();
+        bkList = result.data || [];
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // Parallel fetch for credits and bookings
+    try {
+      await Promise.all([loadCredits(), loadBookings()]);
+      filterAndRenderModalLists(); // Initial render
+      loading.style.display = 'none';
+      content.style.display = 'block';
     } catch (err) {
       console.error(err);
-      list.innerHTML = `<li style="text-align: center; color: #dc2626; padding: 10px; font-weight: 500; list-style: none;">❌ Error loading transaction details: ${err.message}</li>`;
-      remainingVal.textContent = 'Error';
-      remainingVal.style.color = '#dc2626';
+      loading.style.display = 'none';
+      content.style.display = 'block';
     }
   };
 
@@ -3810,13 +4019,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${b.carno ? `<div style="margin-bottom: 8px;"><strong>Car No:</strong> ${b.carno}</div>` : ''}
         `;
       } else if (category === 'food') {
+        const meals = [b.breakfast && 'Breakfast', b.lunch && 'Lunch', b.dinner && 'Dinner'].filter(Boolean).join(', ') || '—';
         html = `
-          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.id || '—'}</div>
           <div style="margin-bottom: 8px;"><strong>Cardholder:</strong> ${b.cardno}</div>
           <div style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
-          <div style="margin-bottom: 8px;"><strong>Guest Count:</strong> ${b.guestCount || 0}</div>
-          <div style="margin-bottom: 8px;"><strong>Meals Booked:</strong> Breakfast: ${b.breakfast || 0} | Lunch: ${b.lunch || 0} | Dinner: ${b.dinner || 0}</div>
-          <div style="margin-bottom: 8px;"><strong>Department:</strong> ${b.department}</div>
+          <div style="margin-bottom: 8px;"><strong>Meals:</strong> ${meals}</div>
+          <div style="margin-bottom: 8px;"><strong>High Tea:</strong> ${b.hightea && b.hightea !== 'NONE' ? b.hightea : '—'}</div>
+          <div style="margin-bottom: 8px;"><strong>Spicy:</strong> ${b.spicy ? 'Yes' : 'No'}</div>
+          ${b.bookedBy && b.bookedBy !== b.cardno ? `<div style="margin-bottom: 8px;"><strong>Booked By:</strong> ${b.bookedBy}</div>` : ''}
         `;
       } else {
         html = `

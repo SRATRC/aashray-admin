@@ -1775,23 +1775,45 @@
     <div id="creditHistoryModal" class="modal-overlay" style="display: none;">
       <div class="modal-card" style="max-width: 600px; text-align: left; padding: 24px;">
         <span class="modal-close-icon" onclick="closeCreditHistoryModal()">&times;</span>
-        <h3 id="creditHistoryTitle" style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">🛡️ Credit History</h3>
+        <h3 id="creditHistoryTitle" style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">🛡️ Credits & Bookings</h3>
         
+        <!-- Tabs Header -->
+        <div class="modal-tabs-header" id="creditHistoryTabsHeader" style="display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; gap: 16px;">
+          <button type="button" id="tabCreditsBtn" class="modal-tab-btn active" style="background: none; border: none; padding: 8px 12px 10px; font-size: 14px; font-weight: 600; color: #4f46e5; border-bottom: 2px solid #4f46e5; cursor: pointer; outline: none; margin-bottom: -2px; transition: all 0.2s;">💳 Credits History</button>
+          <button type="button" id="tabBookingsBtn" class="modal-tab-btn" style="background: none; border: none; padding: 8px 12px 10px; font-size: 14px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer; outline: none; margin-bottom: -2px; transition: all 0.2s;">📅 Booking History</button>
+        </div>
+        
+        <!-- Modal Search Bar -->
+        <div id="modalHistorySearchContainer" style="margin-bottom: 12px; position: relative;">
+          <input type="text" id="modalHistorySearchInput" placeholder="Search by Booking ID, Order ID, Route, or status..." style="width: 100%; height: 38px; padding: 0 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13.5px; box-sizing: border-box; outline: none; transition: border-color 0.2s;" />
+        </div>
+
         <div id="creditHistoryLoading" style="text-align: center; padding: 30px; display: none;">
-          <span style="color: #4f46e5; font-weight: 500; font-size: 14.5px;">⏳ Loading transactions...</span>
+          <span style="color: #4f46e5; font-weight: 500; font-size: 14.5px;">⏳ Loading...</span>
         </div>
         
         <div id="creditHistoryContent" style="display: none;">
-          <!-- Timeline container -->
-          <div class="timeline-container" style="max-height: 400px; overflow-y: auto; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <ul id="creditHistoryTimelineList" class="timeline-list">
-              <!-- Populated dynamically -->
-            </ul>
+          <!-- Credits Timeline Panel -->
+          <div id="panelCreditsContent">
+            <div class="timeline-container" style="max-height: 400px; overflow-y: auto; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <ul id="creditHistoryTimelineList" class="timeline-list">
+                <!-- Populated dynamically -->
+              </ul>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-weight: bold; font-size: 14.5px; color: #0f172a;">
+              <span>Remaining Balance</span>
+              <span id="creditHistoryRemainingVal" style="color: #16a34a;">0</span>
+            </div>
           </div>
-          
-          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-weight: bold; font-size: 14.5px; color: #0f172a;">
-            <span>Remaining Balance</span>
-            <span id="creditHistoryRemainingVal" style="color: #16a34a;">0</span>
+
+          <!-- Bookings History Panel -->
+          <div id="panelBookingsContent" style="display: none;">
+            <div class="timeline-container" style="max-height: 400px; overflow-y: auto; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <ul id="bookingHistoryList" style="padding-left: 0; margin: 0;">
+                <!-- Populated dynamically -->
+              </ul>
+            </div>
           </div>
           
           <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
