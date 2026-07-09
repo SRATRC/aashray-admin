@@ -1153,6 +1153,8 @@ document.addEventListener('DOMContentLoaded', () => {
     clearModalError('editRolesForm');
     document.getElementById('editRolesTargetUserId').value = userid;
     document.getElementById('editRolesUsernameDisplay').innerText = username;
+    const editRolesSearch = document.getElementById('editRolesSearch');
+    if (editRolesSearch) editRolesSearch.value = '';
     rolesCheckboxContainer.innerHTML = '';
 
     // Populate checkboxes
@@ -1272,6 +1274,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // --- Create Admin Draft Functions ---
+  const saveCreateAdminDraft = () => {
+    const username = document.getElementById('createUsername')?.value || '';
+    const password = document.getElementById('createPassword')?.value || '';
+    const confirmPassword = document.getElementById('confirmCreatePassword')?.value || '';
+    const cardNo = document.getElementById('createCardNo')?.value || '';
+    
+    // Get checked roles
+    const checkedRoles = [];
+    const checkboxes = createRolesCheckboxContainer.querySelectorAll('input[type="checkbox"]:checked');
+    checkboxes.forEach(cb => checkedRoles.push(cb.value));
+
+    // Save only if at least one field is not empty
+    if (username.trim() || password || confirmPassword || cardNo.trim() || checkedRoles.length > 0) {
+      localStorage.setItem('sudoAdmin_createDraft', JSON.stringify({
+        username,
+        password,
+        confirmPassword,
+        cardNo,
+        roles: checkedRoles
+      }));
+    } else {
+      localStorage.removeItem('sudoAdmin_createDraft');
+    }
+  };
+
+  const clearCreateAdminDraft = () => {
+    localStorage.removeItem('sudoAdmin_createDraft');
+  };
+
+  const restoreCreateAdminDraft = () => {
+    const draftStr = localStorage.getItem('sudoAdmin_createDraft');
+    if (!draftStr) return;
+    try {
+      const draft = JSON.parse(draftStr);
+      document.getElementById('createUsername').value = draft.username || '';
+      document.getElementById('createPassword').value = draft.password || '';
+      document.getElementById('confirmCreatePassword').value = draft.confirmPassword || '';
+      document.getElementById('createCardNo').value = draft.cardNo || '';
+      
+      // Check roles checkboxes
+      const checkboxes = createRolesCheckboxContainer.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = (draft.roles || []).includes(cb.value);
+      });
+      
+      // Hide banner
+      const banner = document.getElementById('createAdminDraftBanner');
+      if (banner) banner.style.display = 'none';
+
+      // Re-trigger validation for password strength and card number if they are filled
+      const createPasswordInput = document.getElementById('createPassword');
+      if (createPasswordInput && createPasswordInput.value) {
+        createPasswordInput.dispatchEvent(new Event('input'));
+      }
+      const createCardInput = document.getElementById('createCardNo');
+      if (createCardInput && createCardInput.value) {
+        if (typeof validateCardNo === 'function') {
+          validateCardNo(createCardInput.value.trim());
+        }
+      }
+    } catch (e) {
+      console.error('Failed to restore draft:', e);
+    }
+  };
+
+  const discardCreateAdminDraft = () => {
+    clearCreateAdminDraft();
+    const banner = document.getElementById('createAdminDraftBanner');
+    if (banner) banner.style.display = 'none';
+  };
+
   // --- Create Admin Modal Functions ---
   const openCreateAdminModal = () => {
     clearModalError('createAdminForm');
@@ -1279,6 +1353,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('createPassword').value = '';
     document.getElementById('confirmCreatePassword').value = '';
     document.getElementById('createCardNo').value = '';
+    const createRolesSearch = document.getElementById('createRolesSearch');
+    if (createRolesSearch) createRolesSearch.value = '';
     createRolesCheckboxContainer.innerHTML = '';
 
     const checklist = document.getElementById('createPasswordChecklist');
@@ -1342,6 +1418,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       createRolesCheckboxContainer.appendChild(itemContainer);
     });
+
+    // Check if there is an unsaved draft in localStorage
+    const banner = document.getElementById('createAdminDraftBanner');
+    if (banner) {
+      if (localStorage.getItem('sudoAdmin_createDraft')) {
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
 
     createAdminModal.style.display = 'flex';
 
@@ -1407,6 +1493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (response.ok) {
+        clearCreateAdminDraft();
         submitBtn.innerHTML = '✅ Admin Created!';
         submitBtn.style.backgroundColor = '#10b981';
         submitBtn.style.borderColor = '#10b981';
@@ -2348,6 +2435,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const openBulkAssignRolesModal = () => {
     clearModalError('bulkAssignRolesForm');
     document.getElementById('bulkRolesCountDisplay').innerText = selectedAdminUsernames.length;
+    const bulkRolesSearch = document.getElementById('bulkRolesSearch');
+    if (bulkRolesSearch) bulkRolesSearch.value = '';
     bulkRolesCheckboxContainer.innerHTML = '';
 
     // Populate roles checkboxes
@@ -2665,6 +2754,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+  }
+
+  // Searchable Roles Checklist Filter Event Listeners
+  const editRolesSearch = document.getElementById('editRolesSearch');
+  if (editRolesSearch) {
+    editRolesSearch.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const items = rolesCheckboxContainer.querySelectorAll('.role-checkbox-item');
+      items.forEach(item => {
+        const roleText = item.querySelector('.badge-role')?.textContent?.toLowerCase() || '';
+        const descText = item.querySelector('span:last-child')?.textContent?.toLowerCase() || '';
+        if (roleText.includes(q) || descText.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  const createRolesSearch = document.getElementById('createRolesSearch');
+  if (createRolesSearch) {
+    createRolesSearch.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const items = createRolesCheckboxContainer.querySelectorAll('.role-checkbox-item');
+      items.forEach(item => {
+        const roleText = item.querySelector('.badge-role')?.textContent?.toLowerCase() || '';
+        const descText = item.querySelector('span:last-child')?.textContent?.toLowerCase() || '';
+        if (roleText.includes(q) || descText.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  const bulkRolesSearch = document.getElementById('bulkRolesSearch');
+  if (bulkRolesSearch) {
+    bulkRolesSearch.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const items = bulkRolesCheckboxContainer.querySelectorAll('.role-checkbox-item');
+      items.forEach(item => {
+        const roleText = item.querySelector('.badge-role')?.textContent?.toLowerCase() || '';
+        const descText = item.querySelector('span:last-child')?.textContent?.toLowerCase() || '';
+        if (roleText.includes(q) || descText.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Create Admin Modal Draft Listeners
+  const restoreCreateAdminDraftBtn = document.getElementById('restoreCreateAdminDraftBtn');
+  if (restoreCreateAdminDraftBtn) {
+    restoreCreateAdminDraftBtn.addEventListener('click', restoreCreateAdminDraft);
+  }
+
+  const discardCreateAdminDraftBtn = document.getElementById('discardCreateAdminDraftBtn');
+  if (discardCreateAdminDraftBtn) {
+    discardCreateAdminDraftBtn.addEventListener('click', discardCreateAdminDraft);
+  }
+
+  const createAdminForm = document.getElementById('createAdminForm');
+  if (createAdminForm) {
+    createAdminForm.addEventListener('input', saveCreateAdminDraft);
+    createAdminForm.addEventListener('change', saveCreateAdminDraft);
   }
 
   // Load dashboard data on DOM ready

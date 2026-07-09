@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       txs.forEach(tx => {
         const isCredit = tx.transaction_type === 'CREDITED';
-        const amt = isCredit ? tx.credited_amount : -1 * tx.discount_used;
+        const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
         totalAmount += amt;
 
         timelineItems += `
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const printWindow = window.open('', '_blank');
           const printRows = txs.map(tx => {
             const isCredit = tx.transaction_type === 'CREDITED';
-            const amt = isCredit ? tx.credited_amount : -1 * tx.discount_used;
+            const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
             return `
               <tr>
                 <td>${tx.bookingid || '—'}</td>

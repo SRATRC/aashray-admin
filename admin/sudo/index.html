@@ -1372,6 +1372,7 @@
           <input type="hidden" id="editRolesTargetUserId" />
           <div class="form-group">
             <label style="font-weight: 600; margin-bottom: 10px; display: block;">Select Roles:</label>
+            <input type="text" id="editRolesSearch" class="form-control" placeholder="🔍 Search roles..." style="margin-bottom: 8px; font-size: 13px; height: 34px;" autocomplete="off" />
             <div id="rolesCheckboxContainer" style="display: grid; grid-template-columns: 1fr; gap: 10px; max-height: 240px; overflow-y: auto; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc;">
               <!-- Populated dynamically with checkboxes -->
             </div>
@@ -1392,6 +1393,13 @@
         <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
           Fill in details below to register a new administrator.
         </p>
+        <div id="createAdminDraftBanner" style="display:none; background-color:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:12px 16px; border-radius:8px; font-size:13px; font-weight:500; margin-bottom:16px; align-items:center; justify-content:space-between; gap:12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          <span>📝 You have an unsaved draft.</span>
+          <div style="display:flex; gap:8px; flex-shrink:0;">
+            <button type="button" id="restoreCreateAdminDraftBtn" style="background-color:#2563eb; border:1px solid #2563eb; color:#fff; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition: all 0.15s ease;">Restore</button>
+            <button type="button" id="discardCreateAdminDraftBtn" style="background-color:#fff; border:1px solid #cbd5e1; color:#475569; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition: all 0.15s ease;">Discard</button>
+          </div>
+        </div>
         <form id="createAdminForm" onsubmit="submitCreateAdmin(event)">
           <div class="form-group">
             <label for="createUsername">Username:</label>
@@ -1425,6 +1433,7 @@
           </div>
           <div class="form-group">
             <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Roles:</label>
+            <input type="text" id="createRolesSearch" class="form-control" placeholder="🔍 Search roles..." style="margin-bottom: 8px; font-size: 13px; height: 34px;" autocomplete="off" />
             <div id="createRolesCheckboxContainer" style="display: grid; grid-template-columns: 1fr; gap: 10px; max-height: 180px; overflow-y: auto; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc;">
               <!-- Populated dynamically with checkboxes -->
             </div>
@@ -1510,6 +1519,7 @@
         <form id="bulkAssignRolesForm" onsubmit="submitBulkAssignRoles(event)">
           <div class="form-group">
             <label style="font-weight: 600; margin-bottom: 10px; display: block;">Select Roles to Add:</label>
+            <input type="text" id="bulkRolesSearch" class="form-control" placeholder="🔍 Search roles..." style="margin-bottom: 8px; font-size: 13px; height: 34px;" autocomplete="off" />
             <div id="bulkRolesCheckboxContainer" style="display: grid; grid-template-columns: 1fr; gap: 10px; max-height: 240px; overflow-y: auto; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc;">
               <!-- Populated dynamically with checkboxes -->
             </div>

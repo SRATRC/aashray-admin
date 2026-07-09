@@ -276,19 +276,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (wrapper) wrapper.classList.remove('loading');
   };
 
-  // --- Fetch Data (Search-only, do not load all cards initially) ---
-  const fetchData = async (query) => {
-    if (!query) {
-      allData = [];
-      currentPage = 1;
-      filterAndRender();
-      const strip = document.getElementById('statsStrip');
-      if (strip) strip.style.display = 'none';
-      const banner = document.getElementById('selectAllBanner');
-      if (banner) banner.classList.remove('visible');
-      return;
-    }
+  const populateStateFilterOptions = () => {
+    const stateSelect = document.getElementById('filterState');
+    if (!stateSelect) return;
+    
+    // Store current selection
+    const currentVal = stateSelect.value;
+    
+    // Extract unique states
+    const states = new Set();
+    allData.forEach(item => {
+      if (item.state && item.state.trim()) {
+        states.add(item.state.trim());
+      }
+    });
+    
+    // Sort states
+    const sortedStates = Array.from(states).sort();
+    
+    // Rebuild options
+    stateSelect.innerHTML = '<option value="all">All States</option>';
+    sortedStates.forEach(state => {
+      const selected = state === currentVal ? 'selected' : '';
+      stateSelect.innerHTML += `<option value="${state}" ${selected}>${state}</option>`;
+    });
+  };
 
+  // --- Fetch Data ---
+  const fetchData = async (query = '') => {
     showSearchLoading();
 
     const options = {
@@ -300,7 +315,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-      const url = `${CONFIG.basePath}/card/search/${encodeURIComponent(query)}`;
+      const url = query.trim()
+        ? `${CONFIG.basePath}/card/search/${encodeURIComponent(query.trim())}`
+        : `${CONFIG.basePath}/card/getAll`;
       const response = await fetch(url, options);
 
       if (!response.ok) {
@@ -309,6 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const result = await response.json();
       allData = result.data || [];
+      populateStateFilterOptions();
       currentPage = 1;
       filterAndRender();
       _postRenderHooks(query);
@@ -336,6 +354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof syncUrlState === 'function') syncUrlState();
     if (typeof updateSelectAllBanner === 'function') updateSelectAllBanner();
     if (typeof applyColumnVisibility === 'function') applyColumnVisibility();
+    if (typeof updateBirthdayBadge === 'function') updateBirthdayBadge();
   };
 
 
@@ -361,6 +380,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         const itemStatus = (item.res_status || '').trim().toUpperCase();
         const activeStatusNorm = activeStatus.trim().toUpperCase();
         return itemStatus === activeStatusNorm;
+      });
+    }
+
+    // --- Advanced Filters ---
+    const filterIdStatus = document.getElementById('filterIdStatus')?.value || 'all';
+    if (filterIdStatus !== 'all') {
+      data = data.filter(item => {
+        const hasAadhar = !!(item.idType?.toLowerCase() === 'aadhar' && item.idNo?.trim());
+        const hasPan = !!(item.idType?.toLowerCase() === 'pan' && item.idNo?.trim());
+        if (filterIdStatus === 'missingAadhar') return !hasAadhar;
+        if (filterIdStatus === 'missingPan') return !hasPan;
+        if (filterIdStatus === 'missingBoth') return !hasAadhar && !hasPan;
+        if (filterIdStatus === 'hasAadhar') return hasAadhar;
+        if (filterIdStatus === 'hasPan') return hasPan;
+        return true;
+      });
+    }
+
+    const filterContactStatus = document.getElementById('filterContactStatus')?.value || 'all';
+    if (filterContactStatus !== 'all') {
+      data = data.filter(item => {
+        const hasMobile = !!(item.mobno && String(item.mobno).trim());
+        const hasEmail = !!(item.email && String(item.email).trim());
+        if (filterContactStatus === 'missingMobile') return !hasMobile;
+        if (filterContactStatus === 'missingEmail') return !hasEmail;
+        if (filterContactStatus === 'missingBoth') return !hasMobile && !hasEmail;
+        if (filterContactStatus === 'hasMobile') return hasMobile;
+        if (filterContactStatus === 'hasEmail') return hasEmail;
+        return true;
+      });
+    }
+
+    const filterGender = document.getElementById('filterGender')?.value || 'all';
+    if (filterGender !== 'all') {
+      data = data.filter(item => {
+        const gender = (item.gender || '').trim().toUpperCase();
+        return gender === filterGender.toUpperCase();
+      });
+    }
+
+    const filterState = document.getElementById('filterState')?.value || 'all';
+    if (filterState !== 'all') {
+      data = data.filter(item => {
+        const state = (item.state || '').trim().toLowerCase();
+        return state === filterState.toLowerCase();
       });
     }
 
@@ -395,20 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const filterAndRender = () => {
     const query = searchInput.value.trim();
 
-    // If query is empty, do NOT show table or pagination
-    if (!query) {
-      if (dataListTable) dataListTable.style.display = 'none';
-      const mobileGrid = document.getElementById('mobile-cards-grid');
-      if (mobileGrid) mobileGrid.innerHTML = '';
-      if (emptyStateContainer) emptyStateContainer.innerHTML = '';
-      
-      const badge = document.getElementById('resultsCountBadge');
-      if (badge) badge.style.display = 'none';
-      
-      document.getElementById('paginationContainerBottom').style.display = 'none';
-      updateBulkActionBar([]);
-      return;
-    }
+
 
     const data = getFilteredData();
     const totalItems = data.length;
@@ -976,18 +1027,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  // --- Status Filter helper ---
+  window.setResidenceStatusFilter = (status) => {
+    activeStatus = status;
+    const statusGroup = document.getElementById('resStatusFilter');
+    if (statusGroup) {
+      statusGroup.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.status === activeStatus);
+      });
+    }
+
+    // Highlight active stat card
+    const cardsList = ['statCardTotal', 'statCardMumukshu', 'statCardPR', 'statCardSeva', 'statCardGuest'];
+    cardsList.forEach(id => {
+      const card = document.getElementById(id);
+      if (card) {
+        const isCurrent = card.dataset.status === activeStatus;
+        card.style.borderWidth = isCurrent ? '2px' : '1px';
+        card.style.borderColor = isCurrent ? '#4f46e5' : '#e2e8f0'; // Indigo border for active
+        card.style.boxShadow = isCurrent ? '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : 'none';
+      }
+    });
+
+    filterAndRender();
+  };
+
   // --- Status Filter tabs ---
   const statusGroup = document.getElementById('resStatusFilter');
   if (statusGroup) {
     statusGroup.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        statusGroup.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeStatus = btn.dataset.status;
-        filterAndRender();
+        setResidenceStatusFilter(btn.dataset.status);
       });
     });
   }
+
+  // Bind click handlers to stat cards
+  const statCardsIds = ['statCardTotal', 'statCardMumukshu', 'statCardPR', 'statCardSeva', 'statCardGuest'];
+  statCardsIds.forEach(id => {
+    const card = document.getElementById(id);
+    if (card) {
+      card.addEventListener('click', () => {
+        setResidenceStatusFilter(card.dataset.status);
+      });
+    }
+  });
 
   // --- Excel Export ---
   const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
@@ -1002,10 +1086,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       exportBtn.setAttribute('title', 'Only Super Admin can export Excel');
     } else {
       exportBtn.addEventListener('click', () => {
-        exportToExcel();
+        window.openExportOptionsModal();
       });
     }
   }
+
+  window.openExportOptionsModal = () => {
+    let data = getFilteredData();
+    if (data.length === 0) {
+      showErrorMessage('No cards available to export.');
+      return;
+    }
+    const modal = document.getElementById('exportOptionsModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.offsetHeight; // force reflow
+      modal.classList.add('active');
+    }
+  };
+
+  window.closeExportOptionsModal = () => {
+    const modal = document.getElementById('exportOptionsModal');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 200);
+    }
+  };
 
   const exportToExcel = () => {
     let data = getFilteredData();
@@ -1020,30 +1128,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       isSelectedOnly = true;
     }
 
-    const exportRows = data.map(item => ({
-      'Name': item.issuedto || '',
-      'Card Number': item.cardno || '',
-      'Mobile Number': item.mobno || '',
-      'Gender': item.gender || '',
-      'Date of Birth': item.dob || '',
-      'Email Address': item.email || '',
-      'ID Type': item.idType || '',
-      'ID Number': item.idNo || '',
-      'Country': item.country || '',
-      'State': item.state || '',
-      'City': item.city || '',
-      'Address': item.address || '',
-      'Pin Code': item.pin || '',
-      'Residence Status': item.res_status || ''
-    }));
+    // Determine selected columns to export
+    const activeCols = [];
+    document.querySelectorAll('#exportOptionsList input[type="checkbox"]').forEach(chk => {
+      if (chk.checked) activeCols.push(chk.dataset.col);
+    });
+
+    if (activeCols.length === 0) {
+      showErrorMessage('Please select at least one column to export.');
+      return;
+    }
+
+    const exportRows = data.map(item => {
+      const row = {};
+      if (activeCols.includes('Name')) row['Name'] = item.issuedto || '';
+      if (activeCols.includes('Card Number')) row['Card Number'] = item.cardno || '';
+      if (activeCols.includes('Mobile Number')) row['Mobile Number'] = item.mobno || '';
+      if (activeCols.includes('Gender')) row['Gender'] = item.gender || '';
+      if (activeCols.includes('Date of Birth')) row['Date of Birth'] = item.dob || '';
+      if (activeCols.includes('Email Address')) row['Email Address'] = item.email || '';
+      if (activeCols.includes('ID Document')) {
+        row['ID Type'] = item.idType || '';
+        row['ID Number'] = item.idNo || '';
+      }
+      if (activeCols.includes('Location')) {
+        row['Country'] = item.country || '';
+        row['State'] = item.state || '';
+        row['City'] = item.city || '';
+        row['Address'] = item.address || '';
+        row['Pin Code'] = item.pin || '';
+      }
+      if (activeCols.includes('Residence Status')) row['Residence Status'] = item.res_status || '';
+      return row;
+    });
 
     const oldText = exportBtn ? exportBtn.innerHTML : '';
     const progressToast = showToast(`⏳ Preparing export of ${exportRows.length} card${exportRows.length === 1 ? '' : 's'}...`, 'loading');
 
     try {
       const filename = isSelectedOnly 
-        ? `cards_selected_${selectedCards.size}` 
-        : `Card_Management_Report_${activeStatus}`;
+        ? `cards_selected_${selectedCards.size}.xlsx` 
+        : `Card_Management_Report_${activeStatus}.xlsx`;
       
       setTimeout(() => {
         downloadExcelFromJSON(exportRows, filename);
@@ -1143,6 +1268,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Save to recent searches immediately so it's available on focus
       saveRecentSearch(q);
       await fetchData(q);
+    } else {
+      await fetchData();
     }
   };
 
@@ -1227,43 +1354,105 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // ─── Feature 3: Stats Strip ───────────────────────────────────────────────
   const renderStatsStrip = (data) => {
-    const strip = document.getElementById('statsStrip');
-    if (!strip) return;
-
-    if (!data || data.length === 0) {
-      strip.style.display = 'none';
-      return;
+    const counts = { ALL: data ? data.length : 0, MUMUKSHU: 0, PR: 0, 'SEVA KUTIR': 0, GUEST: 0 };
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        const s = (item.res_status || '').trim().toUpperCase();
+        if (counts[s] !== undefined) counts[s]++;
+      });
     }
 
-    const counts = { ALL: data.length, MUMUKSHU: 0, PR: 0, 'SEVA KUTIR': 0, GUEST: 0 };
-    data.forEach(item => {
-      const s = (item.res_status || '').trim().toUpperCase();
-      if (counts[s] !== undefined) counts[s]++;
+    // Update top stat cards values
+    const statValTotal = document.getElementById('statValTotal');
+    const statValMumukshu = document.getElementById('statValMumukshu');
+    const statValPR = document.getElementById('statValPR');
+    const statValSeva = document.getElementById('statValSeva');
+    const statValGuest = document.getElementById('statValGuest');
+    
+    if (statValTotal) statValTotal.textContent = counts.ALL;
+    if (statValMumukshu) statValMumukshu.textContent = counts.MUMUKSHU;
+    if (statValPR) statValPR.textContent = counts.PR;
+    if (statValSeva) statValSeva.textContent = counts['SEVA KUTIR'];
+    if (statValGuest) statValGuest.textContent = counts.GUEST;
+  };
+
+  // ─── Birthdays Today Feature ───
+  const getBirthdaysToday = (data) => {
+    if (!data) return [];
+    const today = new Date();
+    const currentMonth = today.getMonth(); // 0-11
+    const currentDate = today.getDate(); // 1-31
+    
+    return data.filter(item => {
+      if (!item.dob) return false;
+      const bdate = new Date(item.dob);
+      if (isNaN(bdate.getTime())) return false;
+      return bdate.getMonth() === currentMonth && bdate.getDate() === currentDate;
     });
+  };
 
-    strip.innerHTML = `
-      <span class="stat-chip stat-chip-all"  data-status="ALL">All <strong>${counts.ALL}</strong></span>
-      <span class="stat-chip stat-chip-mum"  data-status="MUMUKSHU">Mumukshu <strong>${counts.MUMUKSHU}</strong></span>
-      <span class="stat-chip stat-chip-pr"   data-status="PR">PR <strong>${counts.PR}</strong></span>
-      <span class="stat-chip stat-chip-seva" data-status="SEVA KUTIR">Seva Kutir <strong>${counts['SEVA KUTIR']}</strong></span>
-      <span class="stat-chip stat-chip-guest" data-status="GUEST">Guest <strong>${counts.GUEST}</strong></span>
-    `;
-    strip.style.display = 'flex';
+  const updateBirthdayBadge = () => {
+    const btn = document.getElementById('birthdayBtn');
+    const badge = document.getElementById('birthdayCountBadge');
+    if (!btn || !badge) return;
+    
+    const bdays = getBirthdaysToday(allData);
+    if (bdays.length > 0) {
+      badge.textContent = `${bdays.length} Birthday${bdays.length === 1 ? '' : 's'} Today`;
+      btn.style.display = 'inline-flex';
+      btn.style.borderColor = '#db2777'; // pink border
+      btn.style.color = '#db2777';
+      btn.style.backgroundColor = '#fdf2f8';
+    } else {
+      btn.style.display = 'none';
+    }
+  };
 
-    strip.querySelectorAll('.stat-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        activeStatus = chip.dataset.status;
-        const statusGroup = document.getElementById('resStatusFilter');
-        if (statusGroup) {
-          statusGroup.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.status === activeStatus);
-          });
-        }
-        filterAndRender();
+  window.openBirthdayModal = () => {
+    const modal = document.getElementById('birthdayModal');
+    const container = document.getElementById('birthdayListContainer');
+    if (!modal || !container) return;
+    
+    const bdays = getBirthdaysToday(allData);
+    container.innerHTML = '';
+    
+    if (bdays.length === 0) {
+      container.innerHTML = `<div style="text-align: center; color: #64748b; padding: 20px; font-weight: 500;">No birthdays today.</div>`;
+    } else {
+      bdays.forEach(item => {
+        const mobStr = item.mobno ? String(item.mobno) : '';
+        const waLink = mobStr ? `<a href="https://wa.me/91${mobStr}" target="_blank" title="Send WhatsApp greeting" style="text-decoration: none; font-size: 13px; color: #25d366; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;">💬 WhatsApp</a>` : '';
+        
+        container.innerHTML += `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 12px 6px; gap: 12px;">
+            <div style="text-align: left;">
+              <div style="font-weight: 700; color: #0f172a; font-size: 13.5px;">${item.issuedto}</div>
+              <div style="font-size: 12px; color: #64748b; margin-top: 3px;">Card: <strong>${item.cardno}</strong> | ${item.res_status || 'Guest'}</div>
+              <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">Born: ${item.dob}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+              <span style="font-size: 12px; font-weight: bold; color: #db2777; background-color: #fdf2f8; padding: 3px 8px; border-radius: 6px; border: 1px dashed #f472b6; white-space: nowrap;">🎉 Turning ${new Date().getFullYear() - new Date(item.dob).getFullYear()}</span>
+              ${waLink}
+            </div>
+          </div>
+        `;
       });
-    });
+    }
+    
+    modal.style.display = 'flex';
+    modal.offsetHeight; // force reflow
+    modal.classList.add('active');
+  };
+
+  window.closeBirthdayModal = () => {
+    const modal = document.getElementById('birthdayModal');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 200);
+    }
   };
 
   // ─── Feature 4: Copy-to-Clipboard Utility ────────────────────────────────
@@ -1331,6 +1520,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const drawerEditBtn  = document.getElementById('drawerEditBtn');
   const drawerResetBtn = document.getElementById('drawerResetPwdBtn');
 
+  const getAge = (dob) => {
+    if (!dob) return '';
+    const birthDate = new Date(dob);
+    if (isNaN(birthDate.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age >= 0 ? ` (Age: ${age})` : '';
+  };
+
   const openQuickDrawer = (item) => {
     drawerCurrentItem = item;
 
@@ -1362,15 +1564,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       ${field('🪪', 'Card No', item.cardno)}
       ${field('👤', 'Name', item.issuedto)}
       ${field('⚧', 'Gender', item.gender)}
-      ${field('🎂', 'Date of Birth', item.dob)}
+      ${field('🎂', 'Date of Birth', item.dob ? `${item.dob}${getAge(item.dob)}` : '')}
       ${field('🏠', 'Res. Status', normStatus)}
 
       <div class="drawer-section-title">Credits</div>
       <div class="drawer-credits-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 12px;">
-        <span class="credit-pill credit-pill-room" style="font-size:12px; padding: 4px 10px;">Room: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
-        <span class="credit-pill credit-pill-food" style="font-size:12px; padding: 4px 10px;">Food: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
-        <span class="credit-pill credit-pill-travel" style="font-size:12px; padding: 4px 10px;">Travel: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
-        <span class="credit-pill credit-pill-utsav" style="font-size:12px; padding: 4px 10px;">Utsav: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
+        <span class="credit-pill credit-pill-room" style="font-size:12px; padding: 4px 10px;" title="Click to view Room credit history" onclick="openCreditHistoryModal('${item.cardno}', 'room')">Room: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
+        <span class="credit-pill credit-pill-food" style="font-size:12px; padding: 4px 10px;" title="Click to view Food credit history" onclick="openCreditHistoryModal('${item.cardno}', 'food')">Food: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
+        <span class="credit-pill credit-pill-travel" style="font-size:12px; padding: 4px 10px;" title="Click to view Travel credit history" onclick="openCreditHistoryModal('${item.cardno}', 'travel')">Travel: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
+        <span class="credit-pill credit-pill-utsav" style="font-size:12px; padding: 4px 10px;" title="Click to view Utsav credit history" onclick="openCreditHistoryModal('${item.cardno}', 'utsav')">Utsav: <strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
       </div>
 
       <div class="drawer-section-title">Contact</div>
@@ -1406,8 +1608,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeQuickDrawer);
   if (drawerOverlay)  drawerOverlay.addEventListener('click', closeQuickDrawer);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && quickDrawer && quickDrawer.classList.contains('open')) {
-      closeQuickDrawer();
+    if (e.key === 'Escape') {
+      const creditHistoryModal = document.getElementById('creditHistoryModal');
+      if (creditHistoryModal && creditHistoryModal.style.display !== 'none') {
+        window.closeCreditHistoryModal();
+      } else if (quickDrawer && quickDrawer.classList.contains('open')) {
+        closeQuickDrawer();
+      }
     }
   });
 
@@ -3302,10 +3509,373 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // --- Credit History Modal Functions ---
+  window.closeCreditHistoryModal = () => {
+    const modal = document.getElementById('creditHistoryModal');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 200);
+    }
+  };
+
+  const creditHistoryModal = document.getElementById('creditHistoryModal');
+  if (creditHistoryModal) {
+    creditHistoryModal.addEventListener('click', (e) => {
+      if (e.target === creditHistoryModal) {
+        window.closeCreditHistoryModal();
+      }
+    });
+  }
+
+  window.openCreditHistoryModal = async (cardno, category) => {
+    const modal = document.getElementById('creditHistoryModal');
+    const title = document.getElementById('creditHistoryTitle');
+    const loading = document.getElementById('creditHistoryLoading');
+    const content = document.getElementById('creditHistoryContent');
+    const list = document.getElementById('creditHistoryTimelineList');
+    const remainingVal = document.getElementById('creditHistoryRemainingVal');
+    
+    if (!modal) return;
+    
+    title.textContent = `🛡️ ${category.toUpperCase()} Credit History (Card: ${cardno})`;
+    modal.style.display = 'flex';
+    modal.offsetHeight; // force reflow
+    modal.classList.add('active');
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    list.innerHTML = '';
+    
+    try {
+      const response = await fetch(`${CONFIG.basePath}/accounts/fetchcreditstransactions?cardno=${cardno}&category=${category}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+      const result = await response.json();
+      const txs = result.data || [];
+      
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      
+      if (txs.length === 0) {
+        list.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No credit/debit transactions found for card ${cardno}.</li>`;
+        remainingVal.textContent = '0';
+        remainingVal.style.color = '#64748b';
+        
+        // Disable print button
+        const printBtn = document.getElementById('printCreditHistoryLedgerBtn');
+        if (printBtn) {
+          printBtn.style.opacity = '0.5';
+          printBtn.style.pointerEvents = 'none';
+        }
+        return;
+      }
+      
+      // Enable print button
+      const printBtn = document.getElementById('printCreditHistoryLedgerBtn');
+      if (printBtn) {
+        printBtn.style.opacity = '';
+        printBtn.style.pointerEvents = '';
+      }
+      
+      let timelineItems = '';
+      let totalAmount = 0;
+      
+      txs.forEach(tx => {
+        const isCredit = tx.transaction_type === 'CREDITED';
+        const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
+        totalAmount += amt;
+        
+        timelineItems += `
+          <li class="timeline-item" style="list-style: none; position: relative; margin-bottom: 16px;">
+            <div class="timeline-dot ${isCredit ? 'credited' : 'debited'}" style="position: absolute; top: 14px; left: -20px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid; ${isCredit ? 'border-color: #10b981; background-color: #10b981;' : 'border-color: #ef4444; background-color: #ef4444;'} transform: translateX(-50%); z-index: 1;"></div>
+            <div class="timeline-content" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+              <div class="timeline-info" style="flex: 1; min-width: 0; text-align: left;">
+                <div class="timeline-booking" style="font-weight: 700; color: #1e293b; font-size: 14px;">Booking ID: ${tx.bookingid ? `<span onclick="window.showBookingDetails('${category}', '${tx.bookingid}')" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view booking details">${tx.bookingid}</span>` : '—'}</div>
+                <div class="timeline-date" style="font-size: 12px; color: #64748b; margin-top: 3px;">${new Date(tx.date).toLocaleString()}</div>
+                <div class="timeline-desc" style="font-size: 12.5px; color: #475569; margin-top: 5px;">Order ID: ${tx.razorpay_order_id || '—'}</div>
+              </div>
+              <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}" style="font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; ${isCredit ? 'background-color: #ecfdf5; color: #047857;' : 'background-color: #fef2f2; color: #b91c1c;'}">
+                ${amt >= 0 ? '+' : ''}${amt}
+              </div>
+            </div>
+          </li>
+        `;
+      });
+      
+      list.innerHTML = timelineItems;
+      remainingVal.textContent = (totalAmount >= 0 ? '+' : '') + totalAmount;
+      remainingVal.style.color = totalAmount >= 0 ? '#16a34a' : '#dc2626';
+      
+      // Bind print ledger event
+      const printBtnHandler = () => {
+        const printWindow = window.open('', '_blank');
+        const printRows = txs.map(tx => {
+          const isCredit = tx.transaction_type === 'CREDITED';
+          const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
+          return `
+            <tr>
+              <td>${tx.bookingid || '—'}</td>
+              <td>${tx.razorpay_order_id || '—'}</td>
+              <td style="font-weight: bold; color: ${amt >= 0 ? '#16a34a' : '#dc2626'}">${amt >= 0 ? '+' : ''}${amt}</td>
+              <td>${new Date(tx.date).toLocaleString()}</td>
+              <td>${isCredit ? 'CREDITED' : 'DEBITED'}</td>
+            </tr>
+          `;
+        }).join('');
+
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Ledger Statement - Card ${cardno}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #1e293b; }
+                h2 { margin-bottom: 5px; color: #0f172a; }
+                .meta { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 13.5px; }
+                th { background: #f8fafc; color: #475569; font-weight: 600; }
+                .total-row { font-weight: bold; background: #f8fafc; }
+              </style>
+            </head>
+            <body>
+              <h2>Ledger Statement</h2>
+              <div class="meta">
+                <div><strong>Card Number:</strong> ${cardno}</div>
+                <div><strong>Category:</strong> ${category.toUpperCase()}</div>
+                <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Booking ID</th>
+                    <th>Order ID</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${printRows}
+                  <tr class="total-row">
+                    <td colspan="2">Net Ledger Balance</td>
+                    <td colspan="3" style="color: ${totalAmount >= 0 ? '#16a34a' : '#dc2626'}">${totalAmount >= 0 ? '+' : ''}${totalAmount}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <script>
+                window.onload = function() {
+                  window.print();
+                  setTimeout(function() { window.close(); }, 500);
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      };
+      
+      // Remove old listener and bind new one
+      const printBtnClone = printBtn.cloneNode(true);
+      printBtn.parentNode.replaceChild(printBtnClone, printBtn);
+      printBtnClone.addEventListener('click', printBtnHandler);
+      
+    } catch (err) {
+      console.error(err);
+      list.innerHTML = `<li style="text-align: center; color: #dc2626; padding: 10px; font-weight: 500; list-style: none;">❌ Error loading transaction details: ${err.message}</li>`;
+      remainingVal.textContent = 'Error';
+      remainingVal.style.color = '#dc2626';
+    }
+  };
+
+  // --- Advanced Filters Panel Toggle & Binding ---
+  const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+  const advancedFiltersPanel = document.getElementById('advancedFiltersPanel');
+  if (toggleFiltersBtn && advancedFiltersPanel) {
+    toggleFiltersBtn.addEventListener('click', () => {
+      const isHidden = advancedFiltersPanel.style.display === 'none';
+      if (isHidden) {
+        advancedFiltersPanel.style.display = 'block';
+        toggleFiltersBtn.style.backgroundColor = '#f1f5f9';
+        toggleFiltersBtn.style.borderColor = '#94a3b8';
+      } else {
+        advancedFiltersPanel.style.display = 'none';
+        toggleFiltersBtn.style.backgroundColor = '#fff';
+        toggleFiltersBtn.style.borderColor = '#cbd5e1';
+      }
+    });
+  }
+
+  const advancedFiltersList = ['filterIdStatus', 'filterContactStatus', 'filterGender', 'filterState'];
+  advancedFiltersList.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => {
+        currentPage = 1;
+        filterAndRender();
+      });
+    }
+  });
+
+  const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+  if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener('click', () => {
+      advancedFiltersList.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'all';
+      });
+      currentPage = 1;
+      filterAndRender();
+    });
+  }
+
+  // --- Export Columns Selection Event Bindings ---
+  const confirmExcelExportBtn = document.getElementById('confirmExcelExportBtn');
+  if (confirmExcelExportBtn) {
+    confirmExcelExportBtn.addEventListener('click', () => {
+      exportToExcel();
+      closeExportOptionsModal();
+    });
+  }
+
+  const exportSelectAllColsBtn = document.getElementById('exportSelectAllColsBtn');
+  if (exportSelectAllColsBtn) {
+    exportSelectAllColsBtn.addEventListener('click', () => {
+      const inputs = document.querySelectorAll('#exportOptionsList input[type="checkbox"]');
+      const allChecked = Array.from(inputs).every(i => i.checked);
+      inputs.forEach(i => i.checked = !allChecked);
+    });
+  }
+
+  // --- Booking Details Modal Functions ---
+  window.showBookingDetails = async (category, bookingid) => {
+    const modal = document.getElementById('bookingDetailsModal');
+    const loading = document.getElementById('bookingDetailsLoading');
+    const content = document.getElementById('bookingDetailsContent');
+    const body = document.getElementById('bookingDetailsBody');
+    
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    modal.offsetHeight;
+    modal.classList.add('active');
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    
+    try {
+      const response = await fetch(`${CONFIG.basePath}/bookings/details/${category}/${bookingid}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Booking details not found');
+      
+      const result = await response.json();
+      const b = result.data;
+      
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      
+      let html = '';
+      if (category === 'room' || category === 'flat') {
+        html = `
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
+          <div style="margin-bottom: 8px;"><strong>Resident:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Check-in Date:</strong> ${new Date(b.checkin).toLocaleDateString()}</div>
+          <div style="margin-bottom: 8px;"><strong>Check-out Date:</strong> ${new Date(b.checkout).toLocaleDateString()}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #4f46e5;">${b.status}</span></div>
+          ${b.roomno ? `<div style="margin-bottom: 8px;"><strong>Room/Flat No:</strong> ${b.roomno}</div>` : ''}
+          ${b.comments ? `<div><strong>Comments:</strong> ${b.comments}</div>` : ''}
+        `;
+      } else if (category === 'travel') {
+        html = `
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
+          <div style="margin-bottom: 8px;"><strong>Passenger Card:</strong> ${b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
+          <div style="margin-bottom: 8px;"><strong>Pickup Point:</strong> ${b.pickup_point}</div>
+          <div style="margin-bottom: 8px;"><strong>Drop Point:</strong> ${b.drop_point}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #10b981;">${b.status}</span></div>
+          <div style="margin-bottom: 8px;"><strong>Total People:</strong> ${b.total_people || 1}</div>
+          ${b.comments ? `<div><strong>Comments:</strong> ${b.comments}</div>` : ''}
+        `;
+      } else if (category === 'utsav') {
+        html = `
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
+          <div style="margin-bottom: 8px;"><strong>Resident Name:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Arrival:</strong> ${b.arrival || '—'}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #0284c7;">${b.status}</span></div>
+          ${b.roomno ? `<div style="margin-bottom: 8px;"><strong>Allocated Room:</strong> ${b.roomno}</div>` : ''}
+          ${b.carno ? `<div style="margin-bottom: 8px;"><strong>Car No:</strong> ${b.carno}</div>` : ''}
+        `;
+      } else if (category === 'food') {
+        html = `
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
+          <div style="margin-bottom: 8px;"><strong>Cardholder:</strong> ${b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
+          <div style="margin-bottom: 8px;"><strong>Guest Count:</strong> ${b.guestCount || 0}</div>
+          <div style="margin-bottom: 8px;"><strong>Meals Booked:</strong> Breakfast: ${b.breakfast || 0} | Lunch: ${b.lunch || 0} | Dinner: ${b.dinner || 0}</div>
+          <div style="margin-bottom: 8px;"><strong>Department:</strong> ${b.department}</div>
+        `;
+      } else {
+        html = `
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> ${b.status || '—'}</div>
+        `;
+      }
+      body.innerHTML = html;
+      
+    } catch (err) {
+      console.error(err);
+      body.innerHTML = `<div style="text-align: center; color: #dc2626; font-weight: bold; padding: 10px;">❌ Booking not found: ${bookingid}</div>`;
+      loading.style.display = 'none';
+      content.style.display = 'block';
+    }
+  };
+
+  window.closeBookingDetailsModal = () => {
+    const modal = document.getElementById('bookingDetailsModal');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 200);
+    }
+  };
+
+  // --- Keyboard & Outside clicks for Birthday, Export & Booking Modals ---
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeBirthdayModal();
+      closeExportOptionsModal();
+      closeBookingDetailsModal();
+    }
+  });
+
+  const bModal = document.getElementById('birthdayModal');
+  if (bModal) {
+    bModal.addEventListener('click', (e) => {
+      if (e.target === bModal) closeBirthdayModal();
+    });
+  }
+
+  const eModal = document.getElementById('exportOptionsModal');
+  if (eModal) {
+    eModal.addEventListener('click', (e) => {
+      if (e.target === eModal) closeExportOptionsModal();
+    });
+  }
+
+  const detailModal = document.getElementById('bookingDetailsModal');
+  if (detailModal) {
+    detailModal.addEventListener('click', (e) => {
+      if (e.target === detailModal) closeBookingDetailsModal();
+    });
+  }
+
   // Initialize: restore URL state first, then render
   restoreUrlState().then(() => {
-    if (!searchInput || !searchInput.value.trim()) {
-      filterAndRender();
-    }
+    setResidenceStatusFilter(activeStatus);
   });
 });

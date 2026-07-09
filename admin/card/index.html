@@ -67,11 +67,21 @@
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         border: 1px solid transparent;
         user-select: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .credit-pill:hover {
+        transform: translateY(-1.5px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
       }
       .credit-pill-room { background-color: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+      .credit-pill-room:hover { background-color: #d1fae5; }
       .credit-pill-food { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
+      .credit-pill-food:hover { background-color: #fef3c7; }
       .credit-pill-travel { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+      .credit-pill-travel:hover { background-color: #dbeafe; }
       .credit-pill-utsav { background-color: #f8fafc; color: #475569; border-color: #cbd5e1; }
+      .credit-pill-utsav:hover { background-color: #f1f5f9; }
 
       /* ── Copy button ── */
       .copy-btn {
@@ -1084,6 +1094,121 @@
       .empty-state-btn:hover {
         background-color: #4338ca;
       }
+
+      /* Timeline details in modal */
+      .timeline-container {
+        padding: 18px 24px;
+        border-radius: 8px;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        margin: 8px 0;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+      }
+      .timeline-list {
+        position: relative;
+        padding: 10px 0 10px 20px;
+        margin: 0;
+        list-style: none;
+      }
+      .timeline-list::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 6px;
+        width: 2px;
+        background: #e2e8f0;
+      }
+      .timeline-item {
+        position: relative;
+        margin-bottom: 16px;
+      }
+      .timeline-item:last-child {
+        margin-bottom: 0;
+      }
+      .timeline-dot {
+        position: absolute;
+        top: 14px;
+        left: -20px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #cbd5e1;
+        z-index: 1;
+        transform: translateX(-50%);
+      }
+      .timeline-dot.credited {
+        border-color: #10b981;
+        background-color: #10b981;
+      }
+      .timeline-dot.debited {
+        border-color: #ef4444;
+        background-color: #ef4444;
+      }
+      .timeline-content {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .timeline-info {
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+      }
+      .timeline-booking {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 14px;
+      }
+      .timeline-date {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 3px;
+      }
+      .timeline-desc {
+        font-size: 12.5px;
+        color: #475569;
+        margin-top: 5px;
+      }
+      .timeline-amount-badge {
+        font-size: 14px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
+      .timeline-amount-badge.credited {
+        background-color: #ecfdf5;
+        color: #047857;
+      }
+      .timeline-amount-badge.debited {
+        background-color: #fef2f2;
+        color: #b91c1c;
+      }
+      .stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        cursor: pointer;
+      }
+      .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-color: #cbd5e1;
+      }
     </style>
   </head>
   <body>
@@ -1108,15 +1233,50 @@
               <!-- Inline Alert Container -->
               <div id="alert" class="alert" role="alert"></div>
 
-
-
-              <!-- Stats Strip (shown after search results load) -->
-              <div class="stats-strip" id="statsStrip"></div>
+              <!-- Statistics Overview Row -->
+              <div class="stats-overview-container" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+                <div class="stat-card" id="statCardTotal" data-status="ALL">
+                  <div class="stat-icon-wrapper" style="background-color: #eff6ff; color: #1d4ed8; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">💳</div>
+                  <div class="stat-details" style="display: flex; flex-direction: column;">
+                    <span class="stat-label" style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Total Cards</span>
+                    <span class="stat-value" id="statValTotal" style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">0</span>
+                  </div>
+                </div>
+                <div class="stat-card" id="statCardMumukshu" data-status="MUMUKSHU">
+                  <div class="stat-icon-wrapper" style="background-color: #faf5ff; color: #6b21a8; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">🧘</div>
+                  <div class="stat-details" style="display: flex; flex-direction: column;">
+                    <span class="stat-label" style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Mumukshu</span>
+                    <span class="stat-value" id="statValMumukshu" style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">0</span>
+                  </div>
+                </div>
+                <div class="stat-card" id="statCardPR" data-status="PR">
+                  <div class="stat-icon-wrapper" style="background-color: #ecfdf5; color: #047857; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">🏠</div>
+                  <div class="stat-details" style="display: flex; flex-direction: column;">
+                    <span class="stat-label" style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">PR</span>
+                    <span class="stat-value" id="statValPR" style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">0</span>
+                  </div>
+                </div>
+                <div class="stat-card" id="statCardSeva" data-status="SEVA KUTIR">
+                  <div class="stat-icon-wrapper" style="background-color: #f0f9ff; color: #0369a1; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">🛠️</div>
+                  <div class="stat-details" style="display: flex; flex-direction: column;">
+                    <span class="stat-label" style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Seva Kutir</span>
+                    <span class="stat-value" id="statValSeva" style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">0</span>
+                  </div>
+                </div>
+                <div class="stat-card" id="statCardGuest" data-status="GUEST">
+                  <div class="stat-icon-wrapper" style="background-color: #f8fafc; color: #475569; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">👥</div>
+                  <div class="stat-details" style="display: flex; flex-direction: column;">
+                    <span class="stat-label" style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Guest</span>
+                    <span class="stat-value" id="statValGuest" style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">0</span>
+                  </div>
+                </div>
+              </div>
 
               <!-- Search and Export Toolbar -->
-              <div class="toolbar-container" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; width: 100%; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 10px; box-sizing: border-box;">
-                <div class="search-and-count" style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                  <div class="search-input-wrapper" style="margin: 0; flex: 1; max-width: 320px;">
+              <div class="toolbar-container" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; width: 100%; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 16px; border-radius: 10px; box-sizing: border-box;">
+                <!-- Row 1: Search, Badge, Filters -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; flex-wrap: wrap;">
+                  <div class="search-input-wrapper" style="margin: 0; flex: 1; max-width: 450px; position: relative;">
                     <span class="search-spinner" id="searchSpinner"></span>
                     <input
                       type="text"
@@ -1124,26 +1284,38 @@
                       class="form-control"
                       placeholder="Search by name, card no, or mobile... (Press /)"
                       autocomplete="off"
+                      style="width: 100%;"
                     />
                     <span id="clearSearchBtn">&times;</span>
                     <div class="recent-searches-dropdown" id="recentSearchesDropdown"></div>
                   </div>
-                  <span id="resultsCountBadge" style="display: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background-color: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap; height: 38px; line-height: 26px; box-sizing: border-box;">● 0 Cards Found</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="resultsCountBadge" style="display: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background-color: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap; height: 38px; line-height: 26px; box-sizing: border-box;">● 0 Cards Found</span>
+                    <button type="button" id="toggleFiltersBtn" class="btn btn-secondary" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; font-size: 13.5px; border: 1px solid #cbd5e1; background-color: #fff; color: #475569; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); outline: none;">
+                      <span style="font-size: 14px;">⚙️</span> Filters
+                    </button>
+                  </div>
                 </div>
-                <div id="exportBtnContainer" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                
+                <!-- Row 2: Action Buttons -->
+                <div id="exportBtnContainer" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; width: 100%; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
                   <button
                     type="button"
                     id="addNewCardBtn"
+                    style="margin: 0; height: 38px;"
                   >
                     ➕ Add New Card
                   </button>
                   <button
+                    type="button"
                     onclick="window.location.href='creditsReport.html'"
                     class="btn-report-link"
+                    style="margin: 0; height: 38px;"
                   >
                     📊 Mumukshu Credit Report
                   </button>
                   <button id="keyboardShortcutsBtn" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 16px; cursor: pointer; color: #64748b; height: 38px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); background-color: #fff; transition: all 0.2s ease;" title="Keyboard Shortcuts">⌨️</button>
+                  <button id="birthdayBtn" type="button" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #64748b; height: 38px; display: none; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); background-color: #fff; transition: all 0.2s ease; font-weight: 500;" title="Birthdays Today" onclick="window.openBirthdayModal()">🎂 <span id="birthdayCountBadge">0</span></button>
                   
                   <div class="column-visibility-wrapper" style="position: relative; display: inline-block;">
                     <button id="columnVisibilityBtn" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #64748b; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); background-color: #fff; transition: all 0.2s ease; font-weight: 500;" title="Toggle Column Visibility">👁️ Columns</button>
@@ -1156,7 +1328,64 @@
                     </div>
                   </div>
 
-                  <button id="exportExcelBtn" class="btn-export-csv">📤 Export Excel</button>
+                  <button id="exportExcelBtn" type="button" class="btn btn-secondary" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; font-size: 13.5px; border: 1px solid #047857; background-color: #059669; color: #fff; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); outline: none;">
+                    <span style="font-size: 14px;">📥</span> Export Excel
+                  </button>
+                </div>
+              </div>
+
+              <!-- Collapsible Advanced Filters Panel -->
+              <div id="advancedFiltersPanel" style="display: none; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                  
+                  <!-- Filter 1: ID Document Auditing -->
+                  <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">ID Document Status</label>
+                    <select id="filterIdStatus" class="form-control" style="font-size: 13px; height: 36px; padding: 0 8px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; outline: none; background-color: #fff;">
+                      <option value="all">All Documents</option>
+                      <option value="missingAadhar">Missing Aadhar ID</option>
+                      <option value="missingPan">Missing PAN ID</option>
+                      <option value="missingBoth">Missing Aadhar & PAN</option>
+                      <option value="hasAadhar">Has Aadhar ID</option>
+                      <option value="hasPan">Has PAN ID</option>
+                    </select>
+                  </div>
+
+                  <!-- Filter 2: Contact Info Auditing -->
+                  <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">Contact Info Status</label>
+                    <select id="filterContactStatus" class="form-control" style="font-size: 13px; height: 36px; padding: 0 8px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; outline: none; background-color: #fff;">
+                      <option value="all">All Contact Info</option>
+                      <option value="missingMobile">Missing Mobile No</option>
+                      <option value="missingEmail">Missing Email Address</option>
+                      <option value="missingBoth">Missing Mobile & Email</option>
+                      <option value="hasMobile">Has Mobile No</option>
+                      <option value="hasEmail">Has Email Address</option>
+                    </select>
+                  </div>
+
+                  <!-- Filter 3: Gender -->
+                  <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">Gender</label>
+                    <select id="filterGender" class="form-control" style="font-size: 13px; height: 36px; padding: 0 8px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; outline: none; background-color: #fff;">
+                      <option value="all">All Genders</option>
+                      <option value="M">Male (M)</option>
+                      <option value="F">Female (F)</option>
+                    </select>
+                  </div>
+
+                  <!-- Filter 4: Location / State -->
+                  <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">State / Region</label>
+                    <select id="filterState" class="form-control" style="font-size: 13px; height: 36px; padding: 0 8px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; outline: none; background-color: #fff;">
+                      <option value="all">All States</option>
+                    </select>
+                  </div>
+
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                  <button type="button" id="resetFiltersBtn" class="btn btn-secondary" style="margin: 0; font-size: 12px; padding: 6px 12px; height: 32px; border-radius: 6px;">Reset Filters</button>
                 </div>
               </div>
 
@@ -1540,6 +1769,120 @@
       <div class="form-panel-footer">
         <button type="button" class="btn btn-secondary" id="formPanelCancelBtn" style="margin: 0; flex: 1;">Cancel</button>
         <button type="submit" form="panelCardForm" class="btn btn-primary" id="formPanelSubmitBtn" style="margin: 0; flex: 1;">Submit</button>
+      </div>
+    </div>
+    <!-- Credit History Modal -->
+    <div id="creditHistoryModal" class="modal-overlay" style="display: none;">
+      <div class="modal-card" style="max-width: 600px; text-align: left; padding: 24px;">
+        <span class="modal-close-icon" onclick="closeCreditHistoryModal()">&times;</span>
+        <h3 id="creditHistoryTitle" style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">🛡️ Credit History</h3>
+        
+        <div id="creditHistoryLoading" style="text-align: center; padding: 30px; display: none;">
+          <span style="color: #4f46e5; font-weight: 500; font-size: 14.5px;">⏳ Loading transactions...</span>
+        </div>
+        
+        <div id="creditHistoryContent" style="display: none;">
+          <!-- Timeline container -->
+          <div class="timeline-container" style="max-height: 400px; overflow-y: auto; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <ul id="creditHistoryTimelineList" class="timeline-list">
+              <!-- Populated dynamically -->
+            </ul>
+          </div>
+          
+          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-weight: bold; font-size: 14.5px; color: #0f172a;">
+            <span>Remaining Balance</span>
+            <span id="creditHistoryRemainingVal" style="color: #16a34a;">0</span>
+          </div>
+          
+          <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="printCreditHistoryLedgerBtn" class="btn btn-secondary" style="margin: 0; padding: 8px 16px;">🖨️ Print Ledger</button>
+            <button type="button" onclick="closeCreditHistoryModal()" class="btn btn-primary" style="margin: 0; padding: 8px 16px;">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Birthday Modal -->
+    <div id="birthdayModal" class="modal-overlay" style="display: none;">
+      <div class="modal-card" style="max-width: 500px; text-align: left; padding: 24px;">
+        <span class="modal-close-icon" onclick="closeBirthdayModal()">&times;</span>
+        <h3 style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #db2777; display: flex; align-items: center; gap: 8px;">🎂 Birthdays Today!</h3>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">The following residents have their birthdays today. You can copy their details or send them a greeting.</p>
+        
+        <div style="max-height: 300px; overflow-y: auto; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;" id="birthdayListContainer">
+          <!-- Populated dynamically -->
+        </div>
+        
+        <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
+          <button type="button" onclick="closeBirthdayModal()" class="btn btn-primary" style="margin: 0; padding: 8px 16px;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Options Modal -->
+    <div id="exportOptionsModal" class="modal-overlay" style="display: none;">
+      <div class="modal-card" style="max-width: 450px; text-align: left; padding: 24px;">
+        <span class="modal-close-icon" onclick="closeExportOptionsModal()">&times;</span>
+        <h3 style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">📤 Export Columns</h3>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Choose the columns you want to include in the exported Excel spreadsheet.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;" id="exportOptionsList">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Name" checked /> Name
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Card Number" checked /> Card Number
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Mobile Number" checked /> Mobile Number
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Gender" checked /> Gender
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Date of Birth" checked /> Date of Birth
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Email Address" checked /> Email Address
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="ID Document" checked /> ID Type & No
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Location" checked /> Location Details
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; margin: 0;">
+            <input type="checkbox" data-col="Residence Status" checked /> Residence Status
+          </label>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          <button type="button" id="exportSelectAllColsBtn" style="background: none; border: none; color: #4f46e5; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0;">Select All / None</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" onclick="closeExportOptionsModal()" class="btn btn-secondary" style="margin: 0; padding: 6px 12px; font-size: 12.5px;">Cancel</button>
+            <button type="button" id="confirmExcelExportBtn" class="btn btn-primary" style="margin: 0; padding: 6px 12px; font-size: 12.5px;">Export</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Booking Details Modal -->
+    <div id="bookingDetailsModal" class="modal-overlay" style="display: none; z-index: 10001;">
+      <div class="modal-card" style="max-width: 480px; text-align: left; padding: 24px;">
+        <span class="modal-close-icon" onclick="closeBookingDetailsModal()">&times;</span>
+        <h3 style="margin-top: 0; margin-bottom: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">📋 Booking Details</h3>
+        
+        <div id="bookingDetailsLoading" style="text-align: center; padding: 20px;">
+          <span style="color: #4f46e5; font-weight: 500;">⏳ Fetching details...</span>
+        </div>
+        
+        <div id="bookingDetailsContent" style="display: none;">
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; font-size: 13.5px; line-height: 1.5;" id="bookingDetailsBody">
+            <!-- Populated dynamically -->
+          </div>
+          
+          <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
+            <button type="button" onclick="closeBookingDetailsModal()" class="btn btn-primary" style="margin: 0; padding: 8px 16px;">Close</button>
+          </div>
+        </div>
       </div>
     </div>
   </body>
