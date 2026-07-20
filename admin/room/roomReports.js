@@ -48,15 +48,13 @@ function getCancelAction(booking) {
 
 function getEditAction(booking) {
   let editUrl = "";
-  if (booking.nights > 0) {
-    switch (booking.status) {
-      case "checkedout":
-      case "cancelled":
-      case "admin cancelled":
-        break;
-      default:
-        editUrl = `<a href='#' onclick="storeFiltersAndGo('${booking.bookingid}')"><span>&#x270E;</span></a>`;
-    }
+  switch (booking.status) {
+    case "checkedout":
+    case "cancelled":
+    case "admin cancelled":
+      break;
+    default:
+      editUrl = `<a href='#' onclick="storeFiltersAndGo('${booking.bookingid}')" style="margin-right: 6px; text-decoration: none;"><span>✎</span></a>`;
   }
   editUrl += (booking.roomno || "Not Assigned");
   return editUrl;
