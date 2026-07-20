@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Form - Aashray</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+
+    <!-- clockpicker plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/jquery-clockpicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.css" />
+
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      body {
+        background-color: #f0f2f5;
+        padding: 2rem 1rem;
+        font-family: 'Inter', -apple-system, sans-serif;
+      }
+      .form-container {
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .form-header {
+        background: #fff;
+        border-top: 10px solid #204060;
+        border-radius: 8px;
+        padding: 2.25rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+      }
+      .form-header h1 {
+        margin: 0 0 0.75rem 0;
+        color: #204060;
+        font-size: 2rem;
+        font-weight: 800;
+        word-wrap: break-word;
+      }
+      .form-header p {
+        margin: 0;
+        color: #495057;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+      }
+      .form-body {
+        background: #fff;
+        border-radius: 8px;
+        padding: 2.25rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        margin-bottom: 1.25rem;
+      }
+      .field-group {
+        margin-bottom: 2rem;
+      }
+      .field-group label {
+        display: block;
+        font-weight: 700;
+        color: #204060;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+      }
+      .field-group .required {
+        color: #dc3545;
+        margin-left: 0.2rem;
+      }
+      
+      /* Input styles */
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        background-color: #fafafa;
+        transition: border-color 0.2s, background-color 0.2s;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      input[type="date"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4c86b0;
+        background-color: #fff;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(76, 134, 176, 0.1);
+      }
+      textarea {
+        resize: vertical;
+      }
+
+      /* Options layout */
+      .option-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.6rem;
+      }
+      .option-item input[type="radio"],
+      .option-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #204060;
+      }
+      .option-item label {
+        margin: 0;
+        font-weight: 400;
+        color: #495057;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+
+      /* Star rating design */
+      .star-rating {
+        display: inline-flex;
+        gap: 0.4rem;
+        font-size: 2.2rem;
+        cursor: pointer;
+      }
+      .star-rating .star {
+        color: #dee2e6;
+        transition: color 0.15s, transform 0.1s;
+      }
+      .star-rating .star:hover {
+        transform: scale(1.15);
+      }
+      .star-rating .star.selected,
+      .star-rating .star.hovered {
+        color: #ffc107;
+      }
+
+      /* Matrix Grid design */
+      .grid-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+      .grid-table th {
+        background: #f8f9fa;
+        color: #204060;
+        font-weight: 700;
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+      .grid-table td {
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+      .grid-table td:first-child {
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        background: #fbfbfb;
+      }
+      .grid-table input[type="radio"],
+      .grid-table input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #204060;
+      }
+
+      /* Clockpicker overrides */
+      .clockpicker-popover {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid #dee2e6;
+      }
+
+      /* Success Screen */
+      .success-screen {
+        background: #fff;
+        border-radius: 8px;
+        padding: 3rem 2.25rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+      }
+      .success-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+      }
+      .success-screen h2 {
+        color: #204060;
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+        font-weight: 800;
+      }
+      .success-screen p {
+        color: #6c757d;
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      /* Alert blocks */
+      [id^="formAlert_"] {
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        display: none;
+        font-weight: 500;
+      }
+      .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+      .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+      .submit-btn {
+        background-color: #204060;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.75rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        box-shadow: 0 4px 6px rgba(32, 64, 96, 0.15);
+      }
+      .submit-btn:hover {
+        background-color: #173048;
+      }
+      .submit-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .auth-section {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+      .loading-state, .error-state {
+        text-align: center;
+        padding: 4rem 2rem;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #204060;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem auto;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .error-state i {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 1rem;
+      }
+      .error-state h2 {
+        margin-bottom: 0.5rem;
+      }
+
+      @media (max-width: 600px) {
+        body { padding: 1rem 0.5rem; }
+        .form-header { padding: 1.5rem; }
+        .form-body { padding: 1.5rem; }
+        .form-header h1 { font-size: 1.5rem; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="previewBanner" style="display:none; position:fixed; top:0; left:0; right:0; background:#ffc107; color:#212529; text-align:center; padding:0.6rem; font-weight:700; font-size:0.95rem; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.15);">
+      <i class="fas fa-eye"></i> Form Preview Mode — Responses will not be submitted
+    </div>
+
+    <div class="form-container" id="formContainer">
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>Loading form...</p>
+      </div>
+    </div>
+
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const formId = urlParams.get('id');
+
+      let formData = null;
+
+      async function loadForm() {
+        if (urlParams.get('preview') === 'true') {
+          try {
+            const rawData = sessionStorage.getItem('preview_form_data');
+            if (!rawData) {
+              showErrorState('No preview data found. Please open preview from the Form Builder.');
+              return;
+            }
+            formData = JSON.parse(rawData);
+            document.title = `[Preview] ${formData.title} - Aashray`;
+            renderForm(formData);
+          } catch (err) {
+            showErrorState('Failed to load preview form data.');
+          }
+          return;
+        }
+
+        if (!formId) {
+          showErrorState('No form ID specified in the URL.');
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/forms/${formId}`);
+          const data = await res.json();
+
+          if (!data.success) {
+            showErrorState(data.message || 'Form not found or inactive.');
+            return;
+          }
+
+          formData = data.data;
+
+          // Limit to 1 response client-side check (only if not editing)
+          if (formData.limitOneResponse && !formData.allowEdit && !urlParams.get('responseId') && localStorage.getItem(`form_submitted_${formId}`) === 'true') {
+            showAlreadySubmittedState();
+            return;
+          }
+
+          document.title = `${formData.title} - Aashray`;
+          renderForm(formData);
+
+          // If editing response, load previous responses
+          const responseId = urlParams.get('responseId');
+          if (responseId && formData.allowEdit) {
+            await loadAndPopulateResponse(responseId);
+          }
+        } catch (err) {
+          showErrorState('Unable to load form. Please try again later.');
+        }
+      }
+
+      // Secure DOM-based HTML Sanitizer for B, I, U, A elements
+      function renderRichText(text) {
+        if (!text) return '';
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${text}</div>`, 'text/html');
+        const allowedTags = ['B', 'I', 'U', 'A', 'BR', 'STRONG', 'EM', 'SPAN', 'P'];
+        
+        function sanitizeNode(node) {
+          const children = Array.from(node.childNodes);
+          children.forEach(child => {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              if (!allowedTags.includes(child.nodeName)) {
+                const textNode = doc.createTextNode(child.textContent);
+                node.replaceChild(textNode, child);
+              } else {
+                if (child.nodeName === 'A') {
+                  const href = child.getAttribute('href');
+                  child.removeAttribute('onclick');
+                  child.removeAttribute('onerror');
+                  child.setAttribute('target', '_blank');
+                  child.setAttribute('rel', 'noopener noreferrer');
+                }
+                sanitizeNode(child);
+              }
+            }
+          });
+        }
+        
+        sanitizeNode(doc.body.firstChild);
+        return doc.body.firstChild.innerHTML;
+      }
+
+      function renderForm(form) {
+        const container = document.getElementById('formContainer');
+
+        if (urlParams.get('preview') === 'true') {
+          document.getElementById('previewBanner').style.display = 'block';
+          container.style.marginTop = '4rem';
+        }
+
+        // Separate fields into page sections
+        const pages = [];
+        let currentPage = {
+          title: form.title,
+          description: form.description,
+          fields: []
+        };
+
+        const isAuth = !form.isPublic;
+
+        form.fields.forEach(field => {
+          if (field.type === 'section') {
+            pages.push(currentPage);
+            currentPage = {
+              title: field.label,
+              description: field.description || '',
+              fields: []
+            };
+          } else {
+            currentPage.fields.push(field);
+          }
+        });
+        pages.push(currentPage);
+
+        // Render progress bar container
+        let progressHtml = '';
+        if (form.showProgressBar) {
+          progressHtml = `
+            <div id="progressContainer" style="margin-top: 1.5rem; padding: 1rem 0; border-top: 1px solid #dee2e6;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#6c757d; margin-bottom:0.4rem;">
+                <span>Progress</span>
+                <span id="progressText">Page 1 of ${pages.length}</span>
+              </div>
+              <div style="width:100%; height:8px; background:#e9ecef; border-radius:50px; overflow:hidden;">
+                <div id="progressBar" style="width:${(1 / pages.length) * 100}%; height:100%; background:linear-gradient(135deg, #204060 0%, #4c86b0 100%); transition:width 0.3s ease;"></div>
+              </div>
+            </div>
+          `;
+        }
+
+        let pagesHtml = '';
+        pages.forEach((page, pi) => {
+          let fieldsHtml = '';
+          
+          if (pi === 0 && isAuth) {
+            fieldsHtml += `
+              <div class="auth-section">
+                <label for="input_cardno">Card Number *</label>
+                <input type="text" id="input_cardno" placeholder="Enter your card number" required />
+              </div>
+            `;
+          }
+
+          page.fields.forEach(f => {
+            fieldsHtml += renderField(f);
+          });
+
+          const displayStyle = pi === 0 ? 'block' : 'none';
+
+          // Navigation buttons block
+          let navButtonsHtml = '';
+          if (pi > 0) {
+            navButtonsHtml += `<button type="button" class="submit-btn btn-back" onclick="goToPage(${pi - 1})" style="background-color:#6c757d; margin-right:0.5rem; width:auto; padding:0.6rem 1.5rem;"><i class="fas fa-arrow-left"></i> Back</button>`;
+          }
+          if (pi < pages.length - 1) {
+            navButtonsHtml += `<button type="button" class="submit-btn btn-next" onclick="validateAndGoToPage(${pi}, ${pi + 1})" style="width:auto; padding:0.6rem 1.5rem;">Next <i class="fas fa-arrow-right"></i></button>`;
+          } else {
+            navButtonsHtml += `<button type="submit" class="submit-btn" id="submitBtn" style="width:auto; padding:0.6rem 1.5rem;"><i class="fas fa-check"></i> Submit Response</button>`;
+          }
+
+          pagesHtml += `
+            <div class="form-page" id="formPage_${pi}" style="display: ${displayStyle}">
+              <div class="form-header">
+                <h1>${renderRichText(page.title)}</h1>
+                ${page.description ? `<p>${renderRichText(page.description)}</p>` : ''}
+              </div>
+              <div class="form-body">
+                <div id="formAlert_${pi}"></div>
+                ${pi === pages.length - 1 ? `<form id="dynamicForm" onsubmit="submitForm(event)">` : `<div>`}
+                  ${fieldsHtml}
+                  <div style="margin-top:2rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>${navButtonsHtml}</div>
+                  </div>
+                ${pi === pages.length - 1 ? `</form>` : `</div>`}
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = `
+          <div id="pagesContainer">${pagesHtml}</div>
+          ${progressHtml}
+        `;
+
+        window.totalPagesCount = pages.length;
+        window.currentPageIdx = 0;
+
+        $('.clockpicker input').clockpicker({
+          autoclose: true,
+          placement: 'bottom',
+          align: 'left',
+          'default': 'now'
+        });
+
+        initStarRatings();
+        evaluateLogic();
+      }
+
+      function goToPage(pageIdx) {
+        $(`.form-page`).hide();
+        $(`#formPage_${pageIdx}`).show();
+        window.currentPageIdx = pageIdx;
+        
+        if (document.getElementById('progressBar')) {
+          const pct = ((pageIdx + 1) / window.totalPagesCount) * 100;
+          document.getElementById('progressBar').style.width = `${pct}%`;
+          document.getElementById('progressText').textContent = `Page ${pageIdx + 1} of ${window.totalPagesCount}`;
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function validateAndGoToPage(from, to) {
+        const pageContainer = document.getElementById(`formPage_${from}`);
+        
+        if (from === 0 && document.getElementById('input_cardno')) {
+          const card = document.getElementById('input_cardno').value.trim();
+          if (!card) {
+            showFormAlertOnPage(from, 'Card Number is required', 'danger');
+            return;
+          }
+        }
+
+        const visibleGroups = $(pageContainer).find('.field-group:visible');
+        let isValid = true;
+        let errMsg = '';
+        
+        visibleGroups.each(function() {
+          const fid = $(this).data('field-id');
+          const field = formData.fields.find(f => f.id === fid);
+          if (field && field.required) {
+            let answerVal = null;
+            if (field.type === 'checkbox') {
+              const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+              answerVal = Array.from(checked).map(c => c.value);
+            } else if (field.type === 'radio') {
+              const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+              answerVal = selected ? selected.value : '';
+            } else if (field.type === 'grid_radio') {
+              field.rows.forEach((r, ri) => {
+                const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+                if (!checked) {
+                  isValid = false;
+                  errMsg = `Please select an option for each row of "${field.label}"`;
+                }
+              });
+            } else if (field.type === 'grid_checkbox') {
+              field.rows.forEach((r, ri) => {
+                const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+                if (checked.length === 0) {
+                  isValid = false;
+                  errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
+                }
+              });
+            } else {
+              const el = document.getElementById(`input_${field.id}`);
+              answerVal = el ? el.value.trim() : '';
+            }
+
+            if (field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
+              if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+                isValid = false;
+                errMsg = `"${field.label}" is required`;
+              }
+            }
+
+            if (!isValid) {
+              showFormAlertOnPage(from, errMsg, 'danger');
+              return false;
+            }
+          }
+        });
+
+        if (!isValid) return;
+        goToPage(to);
+      }
+
+      function showFormAlertOnPage(pageIdx, msg, type) {
+        const alert = document.getElementById(`formAlert_${pageIdx}`);
+        if (!alert) return;
+        alert.className = `alert-${type}`;
+        alert.textContent = msg;
+        alert.style.display = 'block';
+        window.scrollTo({ top: alert.offsetTop - 50, behavior: 'smooth' });
+      }
+
+      function renderField(field) {
+        const requiredMark = field.required ? '<span class="required">*</span>' : '';
+        const requiredAttr = field.required ? 'required' : '';
+        const inputId = `input_${field.id}`;
+        let inputHtml = '';
+
+        if (field.type === 'text') {
+          inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" ${requiredAttr} />`;
+        } else if (field.type === 'textarea') {
+          inputHtml = `<textarea id="${inputId}" rows="4" placeholder="Your answer" ${requiredAttr}></textarea>`;
+        } else if (field.type === 'number') {
+          inputHtml = `<input type="number" id="${inputId}" placeholder="Your answer" ${requiredAttr} />`;
+        } else if (field.type === 'date') {
+          inputHtml = `<input type="date" id="${inputId}" ${requiredAttr} />`;
+        } else if (field.type === 'time') {
+          inputHtml = `
+            <div class="clockpicker">
+              <input type="text" id="${inputId}" placeholder="00:00" autocomplete="off" ${requiredAttr} />
+            </div>
+          `;
+        } else if (field.type === 'rating') {
+          inputHtml = `
+            <div class="star-rating" data-id="${field.id}">
+              <span class="star" data-val="1">★</span>
+              <span class="star" data-val="2">★</span>
+              <span class="star" data-val="3">★</span>
+              <span class="star" data-val="4">★</span>
+              <span class="star" data-val="5">★</span>
+              <input type="hidden" id="${inputId}" class="input-rating-val" ${requiredAttr} />
+            </div>
+          `;
+        } else if (field.type === 'select') {
+          const options = field.options || [];
+          inputHtml = `
+            <select id="${inputId}" ${requiredAttr}>
+              <option value="">-- Choose Option --</option>
+              ${options.map(opt => `<option value="${escapeAttr(opt)}">${escapeHtml(opt)}</option>`).join('')}
+            </select>
+          `;
+        } else if (field.type === 'radio') {
+          const options = field.options || [];
+          inputHtml = options.map((opt, oi) => `
+            <div class="option-item">
+              <input type="radio" name="${field.id}" id="${inputId}_${oi}" value="${escapeAttr(opt)}" ${requiredAttr} />
+              <label for="${inputId}_${oi}">${escapeHtml(opt)}</label>
+            </div>
+          `).join('');
+        } else if (field.type === 'checkbox') {
+          const options = field.options || [];
+          inputHtml = options.map((opt, oi) => `
+            <div class="option-item">
+              <input type="checkbox" name="${field.id}" id="${inputId}_${oi}" value="${escapeAttr(opt)}" />
+              <label for="${inputId}_${oi}">${escapeHtml(opt)}</label>
+            </div>
+          `).join('');
+        } else if (field.type === 'grid_radio' || field.type === 'grid_checkbox') {
+          const rows = field.rows || [];
+          const cols = field.columns || [];
+          const isRadio = field.type === 'grid_radio';
+
+          let tableHtml = `
+            <div style="overflow-x: auto;">
+              <table class="grid-table">
+                <thead>
+                  <tr>
+                    <th>Row</th>
+                    ${cols.map(c => `<th>${escapeHtml(c)}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          rows.forEach((r, ri) => {
+            tableHtml += `
+              <tr>
+                <td>${escapeHtml(r)}</td>
+                ${cols.map((c, ci) => `
+                  <td>
+                    <input type="${isRadio ? 'radio' : 'checkbox'}" 
+                      name="response_${field.id}_${ri}" 
+                      value="${escapeAttr(c)}" 
+                      class="grid-input"
+                      data-field-id="${field.id}"
+                      data-row-index="${ri}" />
+                  </td>
+                `).join('')}
+              </tr>
+            `;
+          });
+
+          tableHtml += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          inputHtml = tableHtml;
+        }
+
+        return `
+          <div class="field-group" data-field-id="${field.id}">
+            <label for="${inputId}" style="margin-bottom:0.25rem;">${renderRichText(field.label)} ${requiredMark}</label>
+            ${field.description ? `<p style="font-size:0.8rem; color:#6c757d; margin-top:-0.15rem; margin-bottom:0.5rem; font-weight:400; line-height:1.4;">${renderRichText(field.description)}</p>` : ''}
+            ${inputHtml}
+          </div>
+        `;
+      }
+
+      function initStarRatings() {
+        $('.star-rating .star').on('click', function() {
+          const val = $(this).data('val');
+          const parent = $(this).parent();
+          parent.find('.input-rating-val').val(val).trigger('change');
+          
+          parent.find('.star').removeClass('selected');
+          $(this).addClass('selected').prevAll().addClass('selected');
+        });
+
+        $('.star-rating .star').on('mouseenter', function() {
+          $(this).addClass('hovered').prevAll().addClass('hovered');
+        }).on('mouseleave', function() {
+          $(this).parent().find('.star').removeClass('hovered');
+        });
+      }
+
+      function evaluateLogic() {
+        if (!formData || !formData.fields) return;
+
+        formData.fields.forEach(field => {
+          if (field.logic) {
+            const dependsOn = field.logic.dependsOn;
+            const targetVal = field.logic.value;
+            const depField = formData.fields.find(f => f.id === dependsOn);
+
+            if (depField) {
+              const currentVal = getFieldValue(depField);
+              let show = false;
+
+              if (Array.isArray(currentVal)) {
+                show = currentVal.includes(targetVal);
+              } else {
+                show = String(currentVal) === String(targetVal);
+              }
+
+              const group = $(`.field-group[data-field-id="${field.id}"]`);
+              if (show) {
+                if (!group.is(':visible')) {
+                  group.slideDown(250);
+                }
+              } else {
+                if (group.is(':visible')) {
+                  group.slideUp(250, function() {
+                    clearFieldValue(field);
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function getFieldValue(field) {
+        const inputId = `input_${field.id}`;
+        if (field.type === 'checkbox') {
+          const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+          return Array.from(checked).map(c => c.value);
+        } else if (field.type === 'radio') {
+          const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+          return selected ? selected.value : '';
+        } else {
+          const el = document.getElementById(inputId);
+          return el ? el.value : '';
+        }
+      }
+
+      function clearFieldValue(field) {
+        const inputId = `input_${field.id}`;
+        if (field.type === 'checkbox' || field.type === 'radio') {
+          $(`input[name="${field.id}"]`).prop('checked', false).trigger('change');
+        } else if (field.type === 'rating') {
+          $(`#${inputId}`).val('').trigger('change');
+          $(`.star-rating[data-id="${field.id}"] .star`).removeClass('selected');
+        } else if (field.type === 'grid_radio' || field.type === 'grid_checkbox') {
+          $(`input[name^="response_${field.id}_"]`).prop('checked', false);
+        } else {
+          $(`#${inputId}`).val('').trigger('change');
+        }
+      }
+
+      $(document).on('change input', 'input, select, textarea', function() {
+        evaluateLogic();
+      });
+
+      async function submitForm(e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        const responses = {};
+        const fields = formData.fields;
+
+        // Perform final page validation
+        const lastPageIdx = window.totalPagesCount - 1;
+        const pageContainer = document.getElementById(`formPage_${lastPageIdx}`);
+        const visibleGroups = $(pageContainer).find('.field-group:visible');
+        let isValid = true;
+        let errMsg = '';
+
+        visibleGroups.each(function() {
+          const fid = $(this).data('field-id');
+          const field = fields.find(f => f.id === fid);
+          if (field && field.required) {
+            let answerVal = null;
+            if (field.type === 'checkbox') {
+              const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+              answerVal = Array.from(checked).map(c => c.value);
+            } else if (field.type === 'radio') {
+              const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+              answerVal = selected ? selected.value : '';
+            } else if (field.type === 'grid_radio') {
+              field.rows.forEach((r, ri) => {
+                const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+                if (!checked) {
+                  isValid = false;
+                  errMsg = `Please select an option for each row of "${field.label}"`;
+                }
+              });
+            } else if (field.type === 'grid_checkbox') {
+              field.rows.forEach((r, ri) => {
+                const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+                if (checked.length === 0) {
+                  isValid = false;
+                  errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
+                }
+              });
+            } else {
+              const el = document.getElementById(`input_${field.id}`);
+              answerVal = el ? el.value.trim() : '';
+            }
+
+            if (field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
+              if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+                isValid = false;
+                errMsg = `"${field.label}" is required`;
+              }
+            }
+
+            if (!isValid) {
+              showFormAlertOnPage(lastPageIdx, errMsg, 'danger');
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Response';
+              return false;
+            }
+          }
+        });
+
+        if (!isValid) return;
+
+        // Collect responses across ALL pages
+        fields.forEach(field => {
+          if (field.type === 'section') return;
+
+          const isVisible = $(`.field-group[data-field-id="${field.id}"]`).is(':visible');
+          if (!isVisible) return; // Do not submit hidden fields
+
+          if (field.type === 'checkbox') {
+            const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+            responses[field.id] = Array.from(checked).map(c => c.value);
+          } else if (field.type === 'radio') {
+            const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+            responses[field.id] = selected ? selected.value : '';
+          } else if (field.type === 'grid_radio') {
+            const rowAnswers = {};
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+              rowAnswers[r] = checked ? checked.value : '';
+            });
+            responses[field.id] = rowAnswers;
+          } else if (field.type === 'grid_checkbox') {
+            const rowAnswers = {};
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+              rowAnswers[r] = Array.from(checked).map(c => c.value);
+            });
+            responses[field.id] = rowAnswers;
+          } else {
+            const el = document.getElementById(`input_${field.id}`);
+            responses[field.id] = el ? el.value.trim() : '';
+          }
+        });
+
+        const body = { responses };
+
+        if (urlParams.get('preview') === 'true') {
+          showFormAlertOnPage(lastPageIdx, 'Validation Passed! This is a preview, so no response was recorded.', 'success');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Response';
+          return;
+        }
+
+        if (!formData.isPublic) {
+          const cardno = document.getElementById('input_cardno')?.value?.trim();
+          if (!cardno) {
+            showFormAlertOnPage(lastPageIdx, 'Card Number is required', 'danger');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+            return;
+          }
+          body.cardno = cardno;
+        }
+
+        try {
+          const responseId = urlParams.get('responseId');
+          const isEdit = responseId && formData.allowEdit;
+
+          const url = isEdit
+            ? `${CONFIG.baseUrl}/forms/${formId}/responses/${responseId}`
+            : `${CONFIG.baseUrl}/forms/${formId}/submit`;
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            if (!isEdit && formData.limitOneResponse) {
+              localStorage.setItem(`form_submitted_${formId}`, 'true');
+            }
+            showSuccessScreen(data.data?.id || responseId);
+          } else {
+            showFormAlertOnPage(lastPageIdx, data.message || 'Failed to submit response', 'danger');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+        } catch (err) {
+          showFormAlertOnPage(lastPageIdx, 'Network error. Please try again.', 'danger');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Response';
+        }
+      }
+
+      function showSuccessScreen(respId) {
+        const container = document.getElementById('formContainer');
+        const isEdit = urlParams.get('responseId') ? true : false;
+        
+        let actionsHtml = '';
+        
+        // Edit Response button
+        if (formData.allowEdit && respId) {
+          actionsHtml += `
+            <a href="view.html?id=${formId}&responseId=${respId}" class="submit-btn" style="text-decoration:none; display:inline-block; max-width:220px; text-align:center; margin: 0 0.5rem 0.5rem 0.5rem;">
+              <i class="fas fa-edit"></i> Edit Response
+            </a>
+          `;
+        }
+
+        // Submit Another Response link
+        const alreadySubmittedLimit = formData.limitOneResponse && !formData.allowEdit;
+        if (formData.showSubmitAnother && !alreadySubmittedLimit && !isEdit) {
+          actionsHtml += `
+            <a href="view.html?id=${formId}" class="submit-btn" style="text-decoration:none; display:inline-block; max-width:240px; text-align:center; background-color:#6c757d; margin: 0 0.5rem 0.5rem 0.5rem;">
+              <i class="fas fa-redo"></i> Submit another response
+            </a>
+          `;
+        }
+
+        const msgText = formData.confirmationMessage || 'Thank you for filling out the form. Your response has been recorded.';
+
+        container.innerHTML = `
+          <div class="success-screen">
+            <div class="success-icon" style="color:#28a745;">✓</div>
+            <h2>${isEdit ? 'Response Updated!' : 'Response Submitted!'}</h2>
+            <p>${renderRichText(msgText)}</p>
+            <div style="margin-top:2rem; display:flex; justify-content:center; flex-wrap:wrap;">
+              ${actionsHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      function showAlreadySubmittedState() {
+        const container = document.getElementById('formContainer');
+        container.innerHTML = `
+          <div class="success-screen">
+            <div class="success-icon" style="color:#ffc107;">⚠️</div>
+            <h2>Already Submitted</h2>
+            <p>You have already submitted a response to this form. Each user is limited to one response.</p>
+          </div>
+        `;
+      }
+
+      async function loadAndPopulateResponse(responseId) {
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/forms/${formId}/responses/${responseId}`);
+          const data = await res.json();
+
+          if (!data.success) {
+            showFormAlertOnPage(0, 'Failed to load your previous response for editing.', 'danger');
+            return;
+          }
+
+          populateFormFields(data.data);
+        } catch (err) {
+          showFormAlertOnPage(0, 'Failed to load your previous response due to a network error.', 'danger');
+        }
+      }
+
+      function populateFormFields(responseObj) {
+        const answers = responseObj.responses || {};
+        if (responseObj.cardno && document.getElementById('input_cardno')) {
+          document.getElementById('input_cardno').value = responseObj.cardno;
+          document.getElementById('input_cardno').readOnly = true;
+          document.getElementById('input_cardno').style.backgroundColor = '#e9ecef';
+        }
+
+        formData.fields.forEach(field => {
+          const ans = answers[field.id];
+          if (ans === undefined || ans === null) return;
+
+          const inputId = `input_${field.id}`;
+
+          if (field.type === 'checkbox') {
+            const vals = Array.isArray(ans) ? ans : [ans];
+            vals.forEach(v => {
+              $(`input[name="${field.id}"][value="${v}"]`).prop('checked', true);
+            });
+          } else if (field.type === 'radio') {
+            $(`input[name="${field.id}"][value="${ans}"]`).prop('checked', true);
+          } else if (field.type === 'rating') {
+            const val = parseInt(ans);
+            const parent = $(`.star-rating[data-id="${field.id}"]`);
+            parent.find('.input-rating-val').val(val);
+            parent.find('.star').each(function() {
+              if ($(this).data('val') <= val) {
+                $(this).addClass('selected');
+              }
+            });
+          } else if (field.type === 'grid_radio') {
+            const gridAns = ans || {};
+            field.rows.forEach((r, ri) => {
+              const rowVal = gridAns[r];
+              if (rowVal) {
+                $(`input[name="response_${field.id}_${ri}"][value="${rowVal}"]`).prop('checked', true);
+              }
+            });
+          } else if (field.type === 'grid_checkbox') {
+            const gridAns = ans || {};
+            field.rows.forEach((r, ri) => {
+              const rowVals = gridAns[r] || [];
+              rowVals.forEach(v => {
+                $(`input[name="response_${field.id}_${ri}"][value="${v}"]`).prop('checked', true);
+              });
+            });
+          } else {
+            const el = document.getElementById(inputId);
+            if (el) el.value = ans;
+          }
+        });
+
+        evaluateLogic();
+      }
+
+      function showErrorState(message) {
+        const container = document.getElementById('formContainer');
+        container.innerHTML = `
+          <div class="error-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>An Error Occurred</h2>
+            <p>${escapeHtml(message)}</p>
+          </div>
+        `;
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // Start fetching on load
+      loadForm();
+    </script>
+  </body>
+</html>

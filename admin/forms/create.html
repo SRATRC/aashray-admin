@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Form - Aashray Admin</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/roleCheck.js"></script>
+    <script>
+      checkRoleAccess([
+        'superAdmin', 'accountsAdmin', 'roomAdmin', 'cardAdmin',
+        'officeAdmin', 'foodAdmin', 'gateAdmin', 'adhyayanAdmin',
+        'travelAdmin', 'maintenanceAdmin', 'housekeepingAdmin',
+        'electricalAdmin', 'utsavAdmin', 'avtAdmin', 'wifiAdmin'
+      ]);
+    </script>
+
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+
+    <style>
+      .form-builder-container {
+        max-width: 850px;
+        margin: 0 auto;
+      }
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .top-bar h1 {
+        color: #204060;
+        font-size: 1.8rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .settings-section {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 1.75rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      }
+      .settings-section h3 {
+        margin-bottom: 1.25rem;
+        color: #204060;
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+      }
+      .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+      }
+      .settings-grid .full-width {
+        grid-column: 1 / -1;
+      }
+
+      /* Field cards */
+      .fields-section h3 {
+        color: #204060;
+        margin-bottom: 1.25rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .field-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-left: 5px solid #204060; /* Left indicator border */
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      }
+      .field-card:hover {
+        box-shadow: 0 8px 16px rgba(32, 64, 96, 0.08);
+        transform: translateY(-2px);
+      }
+      .field-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+      .field-number {
+        background: #204060;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .field-actions {
+        display: flex;
+        gap: 0.4rem;
+      }
+      .field-actions button {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        color: #4c86b0;
+      }
+      .field-actions button:hover {
+        background: #e8f4fd;
+        border-color: #4c86b0;
+      }
+      .field-actions .btn-remove {
+        color: #dc3545;
+        border-color: #f5c6cb;
+      }
+      .field-actions .btn-remove:hover {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+      }
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .field-row .full-width {
+        grid-column: 1 / -1;
+      }
+      .field-row label {
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+        font-weight: 600;
+        color: #495057;
+      }
+      .field-row input,
+      .field-row select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        background-color: #fafafa;
+        transition: border-color 0.2s, background-color 0.2s;
+      }
+      .field-row input:focus,
+      .field-row select:focus {
+        border-color: #4c86b0;
+        background-color: #fff;
+        outline: none;
+      }
+
+      /* Options list */
+      .options-container {
+        margin-top: 0.75rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px dashed #ced4da;
+      }
+      .options-container label {
+        font-size: 0.85rem;
+        color: #204060;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      .option-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .option-row input {
+        flex: 1;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .option-row button {
+        background: #fdf2f2;
+        border: 1px solid #f5c6cb;
+        color: #dc3545;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+      }
+      .option-row button:hover {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+      }
+      .add-option-btn {
+        background: white;
+        border: 1px dashed #4c86b0;
+        color: #4c86b0;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .add-option-btn:hover {
+        background: #e8f4fd;
+        border-color: #204060;
+        color: #204060;
+      }
+      .required-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .required-toggle input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #204060;
+        cursor: pointer;
+      }
+
+      #addFieldBtn {
+        width: 100%;
+        padding: 1rem;
+        margin-top: 1rem;
+        background: #f8f9fa;
+        border: 2px dashed #4c86b0;
+        color: #4c86b0;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      #addFieldBtn:hover {
+        background: #e8f4fd;
+        border-color: #204060;
+        color: #204060;
+      }
+
+      .submit-bar {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #dee2e6;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+      }
+      .btn-secondary:hover {
+        background-color: #5a6268;
+      }
+
+      #alert {
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: none;
+        font-weight: 500;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      #alert.alert-success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+      #alert.alert-danger { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+      /* Logic config panel styling */
+      .logic-container {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f1f3f5;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+      .logic-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #204060;
+        cursor: pointer;
+      }
+      
+      @media (max-width: 600px) {
+        .settings-grid, .field-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Forms</a> |
+          <a id="homelink" href="../index.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating formatting toolbar -->
+    <div id="formattingToolbar" style="display:none; position:absolute; background:white; border:1px solid #dee2e6; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:0.25rem; gap:0.25rem; z-index:10000; align-items:center;">
+      <button type="button" onclick="applyFormat('b')" title="Bold" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-weight:bold; font-size:0.9rem; color:#495057;">B</button>
+      <button type="button" onclick="applyFormat('i')" title="Italic" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-style:italic; font-size:0.9rem; color:#495057;">I</button>
+      <button type="button" onclick="applyFormat('u')" title="Underline" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; text-decoration:underline; font-size:0.9rem; color:#495057;">U</button>
+      <button type="button" onclick="applyFormat('link')" title="Insert Link" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-size:0.85rem; color:#495057;"><i class="fas fa-link"></i></button>
+      <div style="width:1px; height:18px; background:#dee2e6; margin:0 0.2rem;"></div>
+      <button type="button" onclick="applyFormat('clear')" title="Clear Formatting" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-size:0.85rem; color:#dc3545;"><i class="fas fa-eraser"></i></button>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="form-builder-container">
+              <div class="top-bar">
+                <h1 id="pageTitle"><i class="fas fa-tools"></i> Create New Form</h1>
+                <button class="btn btn-info" onclick="previewForm()" type="button"><i class="fas fa-eye"></i> Preview Form</button>
+              </div>
+
+              <div id="alert"></div>
+
+              <!-- Form Settings -->
+              <div class="settings-section">
+                <h3><i class="fas fa-cog"></i> Form Settings</h3>
+                <div class="settings-grid">
+                  <div class="full-width">
+                    <label for="formTitle">Form Title *</label>
+                    <input type="text" id="formTitle" class="form-control" placeholder="e.g. Food Preference Survey" />
+                  </div>
+                  <div class="full-width">
+                    <label for="formDescription">Description</label>
+                    <textarea id="formDescription" class="form-control" rows="2" placeholder="Brief description of this form..."></textarea>
+                  </div>
+                  <div>
+                    <label for="formDept">Department *</label>
+                    <select id="formDept" class="form-control">
+                      <option value="">-- Select Department --</option>
+                      <option value="accounts">Accounts</option>
+                      <option value="office">Office</option>
+                      <option value="food">Food</option>
+                      <option value="adhyayan">Adhyayan</option>
+                      <option value="room">Room</option>
+                      <option value="travel">Travel</option>
+                      <option value="avt">AVT</option>
+                      <option value="wifi">WiFi</option>
+                      <option value="utsav">Utsav</option>
+                      <option value="smilestone">Smilestone</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="formType">Access Type</label>
+                    <select id="formType" class="form-control">
+                      <option value="true">Public (anyone can fill)</option>
+                      <option value="false">Authenticated (requires Card No.)</option>
+                    </select>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="limitOneResponse" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
+                      <label for="limitOneResponse" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Limit to 1 response</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="allowEdit" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
+                      <label for="allowEdit" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Allow response editing</label>
+                    </div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="showProgressBar" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" checked />
+                      <label for="showProgressBar" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Show progress bar by default</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="showSubmitAnother" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" checked />
+                      <label for="showSubmitAnother" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Show link to submit another response</label>
+                    </div>
+                  </div>
+                  <div class="full-width">
+                    <label for="confirmationMessage">Confirmation Message</label>
+                    <input type="text" id="confirmationMessage" class="form-control" placeholder="Thank you, your response has been recorded." value="Thank you, your response has been recorded." />
+                  </div>
+                  <div class="full-width">
+                    <label for="formSlug">Short URL Slug (optional)</label>
+                    <div style="display:flex; align-items:center; gap:0.25rem;">
+                      <span style="color:#6c757d; font-size:0.95rem; font-weight:600; padding: 0.5rem 0 0.5rem 0.25rem;">/go/</span>
+                      <input type="text" id="formSlug" class="form-control" placeholder="e.g. registration-form" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fields Section -->
+              <div class="fields-section">
+                <h3><i class="fas fa-list-ol"></i> Form Fields</h3>
+                <div id="fieldsContainer"></div>
+                <div style="display:flex; gap:1rem; margin-top:1rem;">
+                  <button id="addFieldBtn" type="button" onclick="addField()" style="flex:1;"><i class="fas fa-plus-circle"></i> Add Question</button>
+                  <button id="addSectionBtn" type="button" onclick="addField({type: 'section'})" style="flex:1; border:2px dashed #6f42c1; color:#6f42c1; background:#fcfbfe; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem;"><i class="fas fa-folder-plus"></i> Add Section Break</button>
+                </div>
+              </div>
+
+              <div class="submit-bar">
+                <a href="index.html" class="btn btn-secondary">Cancel</a>
+                <button class="btn" onclick="saveForm()"><i class="fas fa-save"></i> Save Form</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const token = sessionStorage.getItem('token');
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get('id');
+      let fieldCounter = 0;
+      let activeFormatInput = null;
+
+      const FIELD_TYPES = [
+        { value: 'text', label: 'Short Answer' },
+        { value: 'textarea', label: 'Paragraph' },
+        { value: 'number', label: 'Number' },
+        { value: 'date', label: 'Date' },
+        { value: 'time', label: 'Time' },
+        { value: 'rating', label: 'Star Rating (1-5)' },
+        { value: 'select', label: 'Dropdown' },
+        { value: 'radio', label: 'Multiple Choice (Radio)' },
+        { value: 'checkbox', label: 'Checkboxes' },
+        { value: 'grid_radio', label: 'Multiple Choice Grid' },
+        { value: 'grid_checkbox', label: 'Checkbox Grid' },
+        { value: 'section', label: 'Section Divider' }
+      ];
+
+      const OPTION_TYPES = ['select', 'radio', 'checkbox'];
+
+      // Show formatting toolbar above active input
+      $(document).on('focus', 'input[type="text"], textarea', function() {
+        if ($(this).hasClass('option-value') || $(this).hasClass('grid-row-value') || $(this).hasClass('grid-col-value') || $(this).attr('id') === 'formSlug') return;
+        
+        activeFormatInput = this;
+        const rect = this.getBoundingClientRect();
+        const toolbar = document.getElementById('formattingToolbar');
+        
+        toolbar.style.display = 'flex';
+        toolbar.style.top = `${window.scrollY + rect.top - 40}px`;
+        toolbar.style.left = `${window.scrollX + rect.left}px`;
+      });
+
+      $(document).on('blur', 'input[type="text"], textarea', function() {
+        setTimeout(() => {
+          if (activeFormatInput === this) {
+            document.getElementById('formattingToolbar').style.display = 'none';
+          }
+        }, 200);
+      });
+
+      function applyFormat(tag) {
+        if (!activeFormatInput) return;
+        const inputEl = activeFormatInput;
+        const start = inputEl.selectionStart;
+        const end = inputEl.selectionEnd;
+        const text = inputEl.value;
+        if (start === undefined || end === undefined) return;
+        
+        const selected = text.substring(start, end);
+        let replacement = '';
+        if (tag === 'link') {
+          const url = prompt('Enter URL:', 'https://');
+          if (!url) return;
+          replacement = `<a href="${url}" target="_blank">${selected || 'link'}</a>`;
+        } else if (tag === 'clear') {
+          replacement = selected.replace(/<[^>]*>/g, '');
+        } else {
+          replacement = `<${tag}>${selected}</${tag}>`;
+        }
+        
+        inputEl.value = text.substring(0, start) + replacement + text.substring(end);
+        inputEl.focus();
+        inputEl.setSelectionRange(start, start + replacement.length);
+        inputEl.dispatchEvent(new Event('input'));
+      }
+
+      function addField(fieldData) {
+        fieldCounter++;
+        const idx = fieldCounter;
+        const container = document.getElementById('fieldsContainer');
+
+        const fieldId = fieldData?.id || `field_${idx}`;
+        const fieldLabel = fieldData?.label || '';
+        const fieldType = fieldData?.type || 'text';
+        const fieldRequired = fieldData?.required || false;
+        const fieldOptions = fieldData?.options || [];
+        const fieldLogic = fieldData?.logic || null;
+        const fieldDesc = fieldData?.description || '';
+        const fieldRows = fieldData?.rows || [];
+        const fieldCols = fieldData?.columns || [];
+
+        const card = document.createElement('div');
+        card.className = 'field-card';
+        card.id = `fieldCard_${idx}`;
+        card.dataset.idx = idx;
+
+        updateCardAccent(card, fieldType);
+
+        card.innerHTML = `
+          <div class="field-card-header">
+            <span class="field-number">${idx}</span>
+            <div class="field-actions">
+              <button onclick="moveField(${idx}, -1)" title="Move up"><i class="fas fa-arrow-up"></i></button>
+              <button onclick="moveField(${idx}, 1)" title="Move down"><i class="fas fa-arrow-down"></i></button>
+              <button class="btn-remove" onclick="removeField(${idx})" title="Remove field"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="label-title">Field Label *</label>
+              <input type="text" class="field-label" value="${escapeAttr(fieldLabel)}" placeholder="e.g. Full Name" />
+            </div>
+            <div>
+              <label>Input Type</label>
+              <select class="field-type" onchange="onTypeChange(${idx})">
+                ${FIELD_TYPES.map(t => `<option value="${t.value}" ${t.value === fieldType ? 'selected' : ''}>${t.label}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="full-width">
+              <label class="label-desc">Description / Help Text (optional)</label>
+              <input type="text" class="field-description" value="${escapeAttr(fieldDesc)}" placeholder="e.g. Enter phone number without country code" />
+            </div>
+          </div>
+          <div class="field-row required-toggle-wrapper">
+            <div class="required-toggle">
+              <input type="checkbox" class="field-required" id="req_${idx}" ${fieldRequired ? 'checked' : ''} />
+              <label for="req_${idx}" style="margin:0; font-weight:400;">Required field</label>
+            </div>
+          </div>
+          
+          <!-- Choice options -->
+          <div class="options-container" id="optionsContainer_${idx}" style="display: ${OPTION_TYPES.includes(fieldType) ? 'block' : 'none'}">
+            <label>Options</label>
+            <div id="optionsList_${idx}">
+              ${fieldOptions.length > 0
+                ? fieldOptions.map((opt, oi) => createOptionRowHtml(idx, opt)).join('')
+                : createOptionRowHtml(idx, '') + createOptionRowHtml(idx, '')
+              }
+            </div>
+            <button type="button" class="add-option-btn" onclick="addOption(${idx})"><i class="fas fa-plus"></i> Add Option</button>
+          </div>
+
+          <!-- Matrix Grid editor -->
+          <div class="options-container" id="gridContainer_${idx}" style="display: ${['grid_radio', 'grid_checkbox'].includes(fieldType) ? 'block' : 'none'}; border-color: #ced4da;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div>
+                <label style="color:#204060; font-weight:600; font-size:0.85rem;">Rows</label>
+                <div id="gridRowsList_${idx}">
+                  ${fieldRows.length > 0
+                    ? fieldRows.map(r => createGridRowHtml(idx, 'row', r)).join('')
+                    : createGridRowHtml(idx, 'row', 'Row 1') + createGridRowHtml(idx, 'row', 'Row 2')
+                  }
+                </div>
+                <button type="button" class="add-option-btn" onclick="addGridItem(${idx}, 'row')"><i class="fas fa-plus"></i> Add Row</button>
+              </div>
+              <div>
+                <label style="color:#204060; font-weight:600; font-size:0.85rem;">Columns</label>
+                <div id="gridColsList_${idx}">
+                  ${fieldCols.length > 0
+                    ? fieldCols.map(c => createGridRowHtml(idx, 'col', c)).join('')
+                    : createGridRowHtml(idx, 'col', 'Column 1') + createGridRowHtml(idx, 'col', 'Column 2')
+                  }
+                </div>
+                <button type="button" class="add-option-btn" onclick="addGridItem(${idx}, 'col')"><i class="fas fa-plus"></i> Add Column</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logic panel -->
+          <div class="logic-container">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <input type="checkbox" class="field-logic-enable" id="logic_enable_${idx}" onchange="toggleLogicSection(${idx})" ${fieldLogic ? 'checked' : ''} />
+              <label for="logic_enable_${idx}" style="margin:0; font-weight:600; font-size:0.85rem; color:#204060;">Show this field based on logic</label>
+            </div>
+            <div id="logicRules_${idx}" style="display: ${fieldLogic ? 'block' : 'none'}; margin-top:0.5rem; font-size:0.85rem;">
+              <span>Show only if </span>
+              <select class="logic-depends-on" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:180px;">
+                <!-- Dynamically populated -->
+              </select>
+              <span> equals </span>
+              <input type="text" class="logic-value" value="${escapeAttr(fieldLogic?.value || '')}" placeholder="Value" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:150px;" />
+            </div>
+          </div>
+          <input type="hidden" class="field-id" value="${escapeAttr(fieldId)}" />
+        `;
+
+        container.appendChild(card);
+
+        // Attach dynamic logic mapping on label change
+        card.querySelector('.field-label').addEventListener('input', updateLogicDropdowns);
+
+        if (fieldLogic) {
+          const select = card.querySelector('.logic-depends-on');
+          select.dataset.pendingValue = fieldLogic.dependsOn;
+        }
+
+        // Apply visual layout rules based on initial type (handles sections)
+        onTypeChange(idx);
+
+        updateLogicDropdowns();
+
+        // Restore pending logic values
+        if (fieldLogic) {
+          const select = card.querySelector('.logic-depends-on');
+          if (select && select.dataset.pendingValue) {
+            select.value = select.dataset.pendingValue;
+            delete select.dataset.pendingValue;
+          }
+        }
+      }
+
+      function updateCardAccent(card, type) {
+        const colors = {
+          text: '#204060',
+          textarea: '#4c86b0',
+          number: '#ffc107',
+          date: '#28a745',
+          time: '#17a2b8',
+          rating: '#ffc107',
+          select: '#6f42c1',
+          radio: '#fd7e14',
+          checkbox: '#e83e8c',
+          grid_radio: '#20c997',
+          grid_checkbox: '#e83e8c',
+          section: '#6f42c1'
+        };
+        card.style.borderLeftColor = colors[type] || '#204060';
+        if (type === 'section') {
+          card.style.borderLeftWidth = '8px';
+          card.style.backgroundColor = '#fbf9ff';
+        } else {
+          card.style.borderLeftWidth = '5px';
+          card.style.backgroundColor = '#fff';
+        }
+      }
+
+      function createOptionRowHtml(fieldIdx, value) {
+        return `
+          <div class="option-row">
+            <input type="text" class="option-value" value="${escapeAttr(value)}" placeholder="Option text" />
+            <button type="button" onclick="this.parentElement.remove()" title="Delete option"><i class="fas fa-times"></i></button>
+          </div>
+        `;
+      }
+
+      function createGridRowHtml(fieldIdx, type, value) {
+        return `
+          <div class="option-row" style="margin-bottom:0.4rem;">
+            <input type="text" class="grid-${type}-value" value="${escapeAttr(value)}" placeholder="${type === 'row' ? 'Row text' : 'Column text'}" style="padding:0.35rem 0.5rem; font-size:0.8rem;" />
+            <button type="button" onclick="this.parentElement.remove()" title="Delete" style="width:26px; height:26px;"><i class="fas fa-times"></i></button>
+          </div>
+        `;
+      }
+
+      function addOption(fieldIdx) {
+        const list = document.getElementById(`optionsList_${fieldIdx}`);
+        list.insertAdjacentHTML('beforeend', createOptionRowHtml(fieldIdx, ''));
+      }
+
+      function addGridItem(fieldIdx, type) {
+        const list = document.getElementById(`grid${type === 'row' ? 'Rows' : 'Cols'}List_${fieldIdx}`);
+        const count = list.children.length + 1;
+        list.insertAdjacentHTML('beforeend', createGridRowHtml(fieldIdx, type, `${type === 'row' ? 'Row' : 'Column'} ${count}`));
+      }
+
+      function onTypeChange(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        const type = card.querySelector('.field-type').value;
+        
+        const optContainer = document.getElementById(`optionsContainer_${idx}`);
+        const gridContainer = document.getElementById(`gridContainer_${idx}`);
+        const reqToggle = card.querySelector('.required-toggle-wrapper');
+        const logicContainer = card.querySelector('.logic-container');
+        const labelTitle = card.querySelector('.label-title');
+        const labelDesc = card.querySelector('.label-desc');
+
+        optContainer.style.display = OPTION_TYPES.includes(type) ? 'block' : 'none';
+        gridContainer.style.display = ['grid_radio', 'grid_checkbox'].includes(type) ? 'block' : 'none';
+        
+        if (type === 'section') {
+          reqToggle.style.display = 'none';
+          logicContainer.style.display = 'none';
+          labelTitle.textContent = 'Section Title *';
+          labelDesc.textContent = 'Section Description (optional)';
+        } else {
+          reqToggle.style.display = 'block';
+          logicContainer.style.display = 'block';
+          labelTitle.textContent = 'Field Label *';
+          labelDesc.textContent = 'Description / Help Text (optional)';
+        }
+
+        updateCardAccent(card, type);
+      }
+
+      function removeField(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        if (card) card.remove();
+        renumberFields();
+        updateLogicDropdowns();
+      }
+
+      function moveField(idx, direction) {
+        const container = document.getElementById('fieldsContainer');
+        const cards = Array.from(container.querySelectorAll('.field-card'));
+        const currentIndex = cards.findIndex(c => c.id === `fieldCard_${idx}`);
+        const targetIndex = currentIndex + direction;
+
+        if (targetIndex < 0 || targetIndex >= cards.length) return;
+
+        const currentCard = cards[currentIndex];
+        const targetCard = cards[targetIndex];
+
+        if (direction === -1) {
+          container.insertBefore(currentCard, targetCard);
+        } else {
+          container.insertBefore(targetCard, currentCard);
+        }
+
+        renumberFields();
+        updateLogicDropdowns();
+      }
+
+      function renumberFields() {
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        cards.forEach((card, i) => {
+          card.querySelector('.field-number').textContent = i + 1;
+        });
+      }
+
+      function toggleLogicSection(idx) {
+        const checkbox = document.getElementById(`logic_enable_${idx}`);
+        const rules = document.getElementById(`logicRules_${idx}`);
+        rules.style.display = checkbox.checked ? 'block' : 'none';
+        if (!checkbox.checked) {
+          rules.querySelector('.logic-depends-on').value = '';
+          rules.querySelector('.logic-value').value = '';
+        }
+      }
+
+      function updateLogicDropdowns() {
+        const cards = Array.from(document.querySelectorAll('#fieldsContainer .field-card'));
+        cards.forEach((card, i) => {
+          const idx = card.dataset.idx;
+          const select = card.querySelector('.logic-depends-on');
+          if (!select) return;
+
+          const currentValue = select.value || select.dataset.pendingValue;
+
+          let optionsHtml = '<option value="">-- Choose Field --</option>';
+          for (let j = 0; j < i; j++) {
+            const prevCard = cards[j];
+            const prevLabel = prevCard.querySelector('.field-label').value.trim() || `Field ${j + 1}`;
+            const prevId = prevCard.querySelector('.field-id').value.trim() || `field_${prevCard.dataset.idx}`;
+            optionsHtml += `<option value="${escapeAttr(prevId)}">${escapeHtml(prevLabel)}</option>`;
+          }
+
+          select.innerHTML = optionsHtml;
+          if (currentValue) {
+            select.value = currentValue;
+          }
+        });
+      }
+
+      function collectFields() {
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        const fields = [];
+
+        cards.forEach((card, i) => {
+          const label = card.querySelector('.field-label').value.trim();
+          const type = card.querySelector('.field-type').value;
+          const required = card.querySelector('.field-required').checked;
+          let fieldId = card.querySelector('.field-id').value.trim();
+
+          if (!label) return; // Skip empty labels
+
+          // Auto-generate id from label if not set
+          if (!fieldId || fieldId.startsWith('field_')) {
+            fieldId = label.toLowerCase().replace(/<[^>]*>/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+          }
+
+          const description = card.querySelector('.field-description').value.trim();
+
+          const field = { id: fieldId, label, type, required: type === 'section' ? false : required, description: description || null };
+
+          if (OPTION_TYPES.includes(type)) {
+            const optionInputs = card.querySelectorAll('.option-value');
+            field.options = Array.from(optionInputs)
+              .map(inp => inp.value.trim())
+              .filter(v => v.length > 0);
+          }
+
+          if (['grid_radio', 'grid_checkbox'].includes(type)) {
+            const rowInputs = card.querySelectorAll('.grid-row-value');
+            const colInputs = card.querySelectorAll('.grid-col-value');
+            field.rows = Array.from(rowInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
+            field.columns = Array.from(colInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
+          }
+
+          if (type !== 'section') {
+            const logicEnable = card.querySelector('.field-logic-enable').checked;
+            const dependsOn = card.querySelector('.logic-depends-on').value;
+            const logicVal = card.querySelector('.logic-value').value.trim();
+
+            if (logicEnable && dependsOn && logicVal) {
+              field.logic = {
+                dependsOn,
+                value: logicVal
+              };
+            }
+          }
+
+          fields.push(field);
+        });
+
+        return fields;
+      }
+
+      async function saveForm() {
+        const title = document.getElementById('formTitle').value.trim();
+        const description = document.getElementById('formDescription').value.trim();
+        const dept_name = document.getElementById('formDept').value.trim();
+        const isPublic = document.getElementById('formType').value === 'true';
+        const limitOneResponse = document.getElementById('limitOneResponse').checked;
+        const allowEdit = document.getElementById('allowEdit').checked;
+        const showProgressBar = document.getElementById('showProgressBar').checked;
+        const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
+        const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        const slug = document.getElementById('formSlug').value.trim();
+        const fields = collectFields();
+
+        if (!title) { showError('Form title is required'); return; }
+        if (!dept_name) { showError('Department is required'); return; }
+        if (fields.length === 0) { showError('At least one field is required'); return; }
+
+        // Validate that option/grid fields have items
+        for (const f of fields) {
+          if (OPTION_TYPES.includes(f.type) && (!f.options || f.options.length === 0)) {
+            showError(`Field "${f.label}" needs at least one option`);
+            return;
+          }
+          if (['grid_radio', 'grid_checkbox'].includes(f.type) && (!f.rows || f.rows.length === 0 || !f.columns || f.columns.length === 0)) {
+            showError(`Grid field "${f.label}" needs at least one row and one column`);
+            return;
+          }
+        }
+
+        const body = { 
+          title, description, dept_name, fields, isPublic, slug, 
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage 
+        };
+
+        try {
+          const url = editId
+            ? `${CONFIG.basePath}/forms/${editId}`
+            : `${CONFIG.basePath}/forms`;
+          const method = editId ? 'PUT' : 'POST';
+
+          const res = await fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(body)
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            showSuccess(editId ? 'Form updated successfully!' : 'Form created successfully!');
+            setTimeout(() => {
+              window.location.href = 'index.html';
+            }, 1000);
+          } else {
+            showError(data.message || 'Failed to save form');
+          }
+        } catch (err) {
+          showError('Error saving form: ' + err.message);
+        }
+      }
+
+      // Load existing form data if editing
+      async function loadForm(id) {
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+
+          if (!data.success) {
+            showError(data.message || 'Failed to load form');
+            return;
+          }
+
+          const form = data.data;
+          document.getElementById('pageTitle').textContent = '✏️ Edit Form';
+          document.getElementById('formTitle').value = form.title || '';
+          document.getElementById('formDescription').value = form.description || '';
+          document.getElementById('formDept').value = form.dept_name || '';
+          document.getElementById('formType').value = form.isPublic ? 'true' : 'false';
+          document.getElementById('limitOneResponse').checked = form.limitOneResponse || false;
+          document.getElementById('allowEdit').checked = form.allowEdit || false;
+          document.getElementById('showProgressBar').checked = form.showProgressBar !== undefined ? form.showProgressBar : true;
+          document.getElementById('showSubmitAnother').checked = form.showSubmitAnother !== undefined ? form.showSubmitAnother : true;
+          document.getElementById('confirmationMessage').value = form.confirmationMessage || 'Thank you, your response has been recorded.';
+          document.getElementById('formSlug').value = form.slug || '';
+
+          // Load fields
+          if (form.fields && Array.isArray(form.fields)) {
+            // Remove initial default empty field
+            document.getElementById('fieldsContainer').innerHTML = '';
+            form.fields.forEach(f => addField(f));
+          }
+        } catch (err) {
+          showError('Error loading form: ' + err.message);
+        }
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function showSuccess(msg) {
+        const alert = document.getElementById('alert');
+        alert.className = 'alert-success';
+        alert.textContent = msg;
+        alert.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function showError(msg) {
+        const alert = document.getElementById('alert');
+        alert.className = 'alert-danger';
+        alert.textContent = msg;
+        alert.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function previewForm() {
+        const title = document.getElementById('formTitle').value.trim() || 'Untitled Form';
+        const description = document.getElementById('formDescription').value.trim();
+        const dept_name = document.getElementById('formDept').value.trim();
+        const isPublic = document.getElementById('formType').value === 'true';
+        const limitOneResponse = document.getElementById('limitOneResponse').checked;
+        const allowEdit = document.getElementById('allowEdit').checked;
+        const showProgressBar = document.getElementById('showProgressBar').checked;
+        const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
+        const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        const slug = document.getElementById('formSlug').value.trim();
+        const fields = collectFields();
+
+        const previewData = { 
+          title, description, dept_name, fields, isPublic, slug, 
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage 
+        };
+        sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
+        window.open('view.html?preview=true', '_blank');
+      }
+
+      // Initialize
+      if (editId) {
+        loadForm(editId);
+      } else {
+        // Start with 1 empty field
+        addField();
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Responses - Aashray Admin</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/roleCheck.js"></script>
+    <script>
+      checkRoleAccess([
+        'superAdmin', 'accountsAdmin', 'roomAdmin', 'cardAdmin',
+        'officeAdmin', 'foodAdmin', 'gateAdmin', 'adhyayanAdmin',
+        'travelAdmin', 'maintenanceAdmin', 'housekeepingAdmin',
+        'electricalAdmin', 'utsavAdmin', 'avtAdmin', 'wifiAdmin'
+      ]);
+    </script>
+    <script src="../../style/js/exportToExcel.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Include Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .top-bar h1 {
+        color: #204060;
+        font-size: 1.6rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .top-bar-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .form-meta {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 2.5rem;
+        flex-wrap: wrap;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+      }
+      .form-meta-item {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-meta-item span:first-child {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 0.25rem;
+      }
+      .form-meta-item span:last-child {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #204060;
+      }
+      .response-count-badge {
+        background: #204060;
+        color: white;
+        padding: 0.25rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: #6c757d;
+      }
+      .empty-state i {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+      }
+      .empty-state h3 {
+        margin-bottom: 0.5rem;
+        color: #204060;
+        font-weight: 700;
+      }
+      .btn-success {
+        background-color: #28a745;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 600;
+      }
+      .btn-success:hover {
+        background-color: #218838;
+      }
+      #alert {
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: none;
+        font-weight: 500;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      #alert.alert-success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+      #alert.alert-danger { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+      /* Table styling */
+      .table {
+        background: white;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+      }
+      .table th {
+        background-color: #204060;
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+      }
+      .table td {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+        color: #495057;
+      }
+      .table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .table tbody tr:hover {
+        background-color: #f8f9fa !important;
+      }
+      td:hover {
+        white-space: normal;
+        overflow: visible;
+      }
+
+      /* Tabs styling */
+      .tabs-nav {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 0.75rem;
+      }
+      .tab-btn {
+        transition: all 0.2s ease;
+        border-radius: 6px;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        cursor: pointer;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .tab-btn.active {
+        background-color: #204060 !important;
+        box-shadow: 0 4px 6px rgba(32, 64, 96, 0.15);
+      }
+      .tab-btn:not(.active) {
+        background-color: #6c757d !important;
+        opacity: 0.85;
+      }
+      .tab-btn:not(.active):hover {
+        opacity: 1;
+      }
+      
+      /* Analytics grid & card styles */
+      .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+      }
+      .analytics-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 350px;
+        transition: transform 0.2s;
+      }
+      .analytics-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      }
+      .analytics-card h4 {
+        color: #204060;
+        margin-bottom: 1.25rem;
+        width: 100%;
+        text-align: left;
+        font-size: 1rem;
+        font-weight: 700;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .analytics-card canvas {
+        max-width: 250px;
+        max-height: 250px;
+        width: 100%;
+        height: auto;
+      }
+      .text-responses-list {
+        width: 100%;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 0.5rem;
+        background: #fafafa;
+      }
+      .text-response-item {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 0.85rem;
+        color: #495057;
+        line-height: 1.4;
+      }
+      .text-response-item:last-child {
+        border-bottom: none;
+      }
+      .avg-rating-badge {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #ffc107;
+        margin-bottom: 0.25rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Forms</a> |
+          <a id="homelink" href="../index.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="top-bar">
+              <h1 id="pageTitle"><i class="fas fa-chart-bar"></i> Form Responses</h1>
+              <div class="top-bar-actions">
+                <button class="btn btn-success" onclick="exportTable()"><i class="fas fa-file-excel"></i> Export to Excel</button>
+              </div>
+            </div>
+
+            <div id="alert"></div>
+
+            <div class="form-meta" id="formMeta" style="display:none">
+              <div class="form-meta-item">
+                <span>Form Title</span>
+                <span id="metaTitle">-</span>
+              </div>
+              <div class="form-meta-item">
+                <span>Total Responses</span>
+                <span id="metaCount" class="response-count-badge">0</span>
+              </div>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="tabs-nav">
+              <button class="tab-btn active" id="tabBtnTable" onclick="switchTab('table')"><i class="fas fa-table"></i> Table View</button>
+              <button class="tab-btn" id="tabBtnAnalytics" onclick="switchTab('analytics')"><i class="fas fa-chart-pie"></i> Analytics Summary</button>
+            </div>
+
+            <!-- Tab Content Sections -->
+            <div id="tableViewSection" class="tab-section">
+              <div class="table-responsive">
+                <table class="table" id="responsesTable">
+                  <thead id="responsesHead">
+                    <tr><th>Loading...</th></tr>
+                  </thead>
+                  <tbody id="responsesBody">
+                    <tr><td style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading responses...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="analyticsViewSection" class="tab-section" style="display: none;">
+              <div class="analytics-grid" id="analyticsGrid">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const token = sessionStorage.getItem('token');
+      const urlParams = new URLSearchParams(window.location.search);
+      const formId = urlParams.get('id');
+
+      if (!formId) {
+        document.getElementById('responsesBody').innerHTML = '<tr><td>No form ID specified.</td></tr>';
+      }
+
+      async function loadResponses() {
+        if (!formId) return;
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${formId}/responses`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+
+          if (!data.success) {
+            showError(data.message || 'Failed to load responses');
+            return;
+          }
+
+          const { form, responses } = data.data;
+          cachedForm = form;
+          cachedResponses = responses;
+          renderMeta(form, responses.length);
+          renderTable(form.fields, responses);
+        } catch (err) {
+          showError('Error loading responses: ' + err.message);
+        }
+      }
+
+      function renderMeta(form, count) {
+        document.getElementById('formMeta').style.display = 'flex';
+        document.getElementById('metaTitle').textContent = form.title;
+        document.getElementById('metaCount').textContent = count;
+        document.getElementById('pageTitle').textContent = `📊 ${form.title} — Responses`;
+      }
+
+      function renderTable(fields, responses) {
+        const thead = document.getElementById('responsesHead');
+        const tbody = document.getElementById('responsesBody');
+
+        if (!responses || responses.length === 0) {
+          thead.innerHTML = '<tr><th>No responses yet</th></tr>';
+          tbody.innerHTML = `
+            <tr>
+              <td>
+                <div class="empty-state">
+                  <i class="fas fa-comment-slash"></i>
+                  <h3>No responses received</h3>
+                  <p>Share the public link of this form to start collecting responses.</p>
+                </div>
+              </td>
+            </tr>`;
+          return;
+        }
+
+        // Build header: # | Respondent | each field label | Submitted At
+        let headerHtml = '<tr><th>#</th><th>Respondent</th>';
+        fields.forEach(f => {
+          headerHtml += `<th>${escapeHtml(f.label)}</th>`;
+        });
+        headerHtml += '<th>Submitted At</th></tr>';
+        thead.innerHTML = headerHtml;
+
+        // Build rows
+        let rowsHtml = '';
+        responses.forEach((resp, idx) => {
+          const respondent = resp.respondent
+            ? `${escapeHtml(resp.respondent.issuedto)} (${resp.cardno})`
+            : (resp.cardno || 'Anonymous');
+
+          rowsHtml += `<tr><td>${idx + 1}</td><td>${respondent}</td>`;
+
+          fields.forEach(f => {
+            let answer = resp.responses ? resp.responses[f.id] : '';
+            if (Array.isArray(answer)) {
+              answer = answer.join(', ');
+            }
+            rowsHtml += `<td>${escapeHtml(String(answer ?? ''))}</td>`;
+          });
+
+          rowsHtml += `<td>${new Date(resp.submittedAt).toLocaleString()}</td></tr>`;
+        });
+
+        tbody.innerHTML = rowsHtml;
+      }
+
+      let cachedForm = null;
+      let cachedResponses = null;
+      let activeTab = 'table';
+      let activeCharts = [];
+
+      function switchTab(tab) {
+        activeTab = tab;
+        if (tab === 'table') {
+          document.getElementById('tabBtnTable').classList.add('active');
+          document.getElementById('tabBtnAnalytics').classList.remove('active');
+          document.getElementById('tableViewSection').style.display = 'block';
+          document.getElementById('analyticsViewSection').style.display = 'none';
+        } else {
+          document.getElementById('tabBtnTable').classList.remove('active');
+          document.getElementById('tabBtnAnalytics').classList.add('active');
+          document.getElementById('tableViewSection').style.display = 'none';
+          document.getElementById('analyticsViewSection').style.display = 'block';
+          renderAnalytics();
+        }
+      }
+
+      function getFieldIcon(type) {
+        const icons = {
+          text: '<i class="fas fa-align-left" style="color:#204060;"></i>',
+          textarea: '<i class="fas fa-align-justify" style="color:#4c86b0;"></i>',
+          number: '<i class="fas fa-calculator" style="color:#ffc107;"></i>',
+          date: '<i class="fas fa-calendar-alt" style="color:#28a745;"></i>',
+          time: '<i class="fas fa-clock" style="color:#17a2b8;"></i>',
+          rating: '<i class="fas fa-star" style="color:#ffc107;"></i>',
+          select: '<i class="fas fa-caret-square-down" style="color:#6f42c1;"></i>',
+          radio: '<i class="fas fa-dot-circle" style="color:#fd7e14;"></i>',
+          checkbox: '<i class="fas fa-check-square" style="color:#e83e8c;"></i>'
+        };
+        return icons[type] || '<i class="fas fa-question-circle"></i>';
+      }
+
+      function renderAnalytics() {
+        const grid = document.getElementById('analyticsGrid');
+        
+        // Destroy existing charts to prevent memory leak
+        activeCharts.forEach(c => c.destroy());
+        activeCharts = [];
+
+        if (!cachedForm || !cachedResponses || cachedResponses.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <i class="fas fa-comment-slash"></i>
+              <h3>No analytics available</h3>
+              <p>No responses have been submitted yet.</p>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = '';
+
+        cachedForm.fields.forEach(field => {
+          const card = document.createElement('div');
+          card.className = 'analytics-card';
+          card.innerHTML = `<h4>${getFieldIcon(field.type)} ${escapeHtml(field.label)}</h4>`;
+
+          const answers = cachedResponses
+            .map(r => r.responses ? r.responses[field.id] : null)
+            .filter(val => val !== null && val !== undefined && val !== '');
+
+          if (['select', 'radio', 'checkbox'].includes(field.type)) {
+            // Aggregate values
+            const counts = {};
+            if (field.options) {
+              field.options.forEach(opt => counts[opt] = 0);
+            }
+
+            answers.forEach(val => {
+              if (Array.isArray(val)) {
+                val.forEach(v => counts[v] = (counts[v] || 0) + 1);
+              } else {
+                counts[val] = (counts[val] || 0) + 1;
+              }
+            });
+
+            const labels = Object.keys(counts);
+            const data = Object.values(counts);
+
+            if (labels.length === 0 || data.reduce((a, b) => a + b, 0) === 0) {
+              card.insertAdjacentHTML('beforeend', '<p style="color:#6c757d; font-size:0.9rem; margin-top:2rem;">No responses for this field.</p>');
+            } else {
+              const canvas = document.createElement('canvas');
+              card.appendChild(canvas);
+
+              const chart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                  labels: labels,
+                  datasets: [{
+                    data: data,
+                    backgroundColor: [
+                      '#4c86b0', '#ffc107', '#28a745', '#dc3545', '#17a2b8',
+                      '#6f42c1', '#fd7e14', '#e83e8c', '#20c997', '#6c757d'
+                    ]
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+                  }
+                }
+              });
+              activeCharts.push(chart);
+            }
+
+          } else if (field.type === 'rating') {
+            const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            let sum = 0;
+            let count = 0;
+
+            answers.forEach(val => {
+              const num = parseInt(val);
+              if (num >= 1 && num <= 5) {
+                counts[num]++;
+                sum += num;
+                count++;
+              }
+            });
+
+            const avg = count > 0 ? (sum / count).toFixed(1) : '0.0';
+
+            card.insertAdjacentHTML('beforeend', `
+              <div class="avg-rating-badge">★ ${avg}</div>
+              <div style="font-size: 0.8rem; color:#6c757d; margin-bottom:1rem;">Average of ${count} ratings</div>
+            `);
+
+            const canvas = document.createElement('canvas');
+            card.appendChild(canvas);
+
+            const chart = new Chart(canvas, {
+              type: 'bar',
+              data: {
+                labels: ['1 ★', '2 ★', '3 ★', '4 ★', '5 ★'],
+                datasets: [{
+                  data: [counts[1], counts[2], counts[3], counts[4], counts[5]],
+                  backgroundColor: '#ffc107',
+                  borderWidth: 0
+                }]
+              },
+              options: {
+                responsive: true,
+                scales: {
+                  y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                plugins: { legend: { display: false } }
+              }
+            });
+            activeCharts.push(chart);
+
+          } else {
+            // Text list
+            if (answers.length === 0) {
+              card.insertAdjacentHTML('beforeend', '<p style="color:#6c757d; font-size:0.9rem; margin-top:2rem;">No responses for this field.</p>');
+            } else {
+              const listDiv = document.createElement('div');
+              listDiv.className = 'text-responses-list';
+              answers.forEach(ans => {
+                const item = document.createElement('div');
+                item.className = 'text-response-item';
+                item.textContent = ans;
+                listDiv.appendChild(item);
+              });
+              card.appendChild(listDiv);
+            }
+          }
+
+          grid.appendChild(card);
+        });
+      }
+
+      function exportTable() {
+        if (!cachedForm || !cachedResponses || cachedResponses.length === 0) {
+          alert('No data available to download.');
+          return;
+        }
+
+        const dataArray = cachedResponses.map((resp, idx) => {
+          const row = { '#': idx + 1 };
+          row['Respondent'] = resp.respondent
+            ? `${resp.respondent.issuedto} (${resp.cardno})`
+            : (resp.cardno || 'Anonymous');
+
+          cachedForm.fields.forEach(f => {
+            let answer = resp.responses ? resp.responses[f.id] : '';
+            if (Array.isArray(answer)) answer = answer.join(', ');
+            row[f.label] = answer ?? '';
+          });
+
+          row['Submitted At'] = new Date(resp.submittedAt).toLocaleString();
+          return row;
+        });
+
+        const fileName = `${cachedForm.title.replace(/[^a-zA-Z0-9]/g, '_')}_responses.xlsx`;
+        downloadExcelFromJSON(dataArray, fileName, 'Responses');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function showError(msg) {
+        const alert = document.getElementById('alert');
+        alert.className = 'alert-danger';
+        alert.textContent = msg;
+        alert.style.display = 'block';
+      }
+
+      // Load on page load
+      loadResponses();
+    </script>
+  </body>
+</html>
