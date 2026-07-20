@@ -174,10 +174,18 @@ async function submitBlock() {
   if (!isPermanent && end_date <= start_date) { alert('End date must be after start date.'); return; }
 
   try {
-    const body = { roomno: currentRoomNo, start_date, reason, blockAllBeds };
+    const isBulk = Array.isArray(currentRoomNo);
+    const endpoint = isBulk ? `${CONFIG.basePath}/stay/room_block/bulk` : `${CONFIG.basePath}/stay/room_block`;
+
+    const body = { start_date, reason, blockAllBeds };
+    if (isBulk) {
+      body.roomnos = currentRoomNo;
+    } else {
+      body.roomno = currentRoomNo;
+    }
     if (!isPermanent) body.end_date = end_date;
 
-    const res = await fetch(`${CONFIG.basePath}/stay/room_block`, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
