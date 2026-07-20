@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const addRowBtn = document.getElementById('addRowBtn');
 
   let rowCounter = 0;
+  let activeLookups = 0;
 
   init();
 
@@ -81,10 +82,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const centerInput = tr.querySelector('input[data-field="center"]');
     const resStatusInput = tr.querySelector('input[data-field="res_status"]');
 
+    const clearFields = () => {
+      cardInput.value = '';
+      nameInput.value = '';
+      genderInput.value = '';
+      centerInput.value = '';
+      resStatusInput.value = '';
+    };
+
     mobInput.addEventListener('blur', async () => {
       const mob = mobInput.value.trim();
-      if (!mob || mob.length < 10) return;
+      if (!mob || mob.length < 10) {
+        clearFields();
+        return;
+      }
 
+      activeLookups++;
       try {
         const res = await fetch(`${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(mob)}`, {
           headers: {
@@ -102,15 +115,13 @@ document.addEventListener('DOMContentLoaded', function () {
           resStatusInput.value = c.res_status || '';
         } else {
           alert(`Mobile No lookup failed: ${json.message || 'Card not found'}`);
-          // Clear inputs
-          cardInput.value = '';
-          nameInput.value = '';
-          genderInput.value = '';
-          centerInput.value = '';
-          resStatusInput.value = '';
+          clearFields();
         }
       } catch (e) {
         console.error('Lookup failed for mobile', mob, e);
+        clearFields();
+      } finally {
+        activeLookups--;
       }
     });
   }
@@ -140,6 +151,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function onSubmit(e) {
     e.preventDefault();
+
+    // Wait if there are any in-flight lookups
+    while (activeLookups > 0) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     const checkin_date = document.getElementById('checkin_date').value;
     const checkout_date = document.getElementById('checkout_date').value;
