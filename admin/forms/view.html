@@ -18,6 +18,9 @@
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
     <style>
+      :root {
+        --theme-color: #204060;
+      }
       body {
         background-color: #f0f2f5;
         padding: 2rem 1rem;
@@ -29,7 +32,7 @@
       }
       .form-header {
         background: #fff;
-        border-top: 10px solid #204060;
+        border-top: 10px solid var(--theme-color);
         border-radius: 8px;
         padding: 2.25rem;
         margin-bottom: 1.25rem;
@@ -37,7 +40,7 @@
       }
       .form-header h1 {
         margin: 0 0 0.75rem 0;
-        color: #204060;
+        color: var(--theme-color);
         font-size: 2rem;
         font-weight: 800;
         word-wrap: break-word;
@@ -62,7 +65,7 @@
       .field-group label {
         display: block;
         font-weight: 700;
-        color: #204060;
+        color: var(--theme-color);
         margin-bottom: 0.5rem;
         font-size: 0.95rem;
       }
@@ -112,7 +115,7 @@
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #204060;
+        accent-color: var(--theme-color);
       }
       .option-item label {
         margin: 0;
@@ -150,7 +153,7 @@
       }
       .grid-table th {
         background: #f8f9fa;
-        color: #204060;
+        color: var(--theme-color);
         font-weight: 700;
         padding: 0.75rem;
         text-align: center;
@@ -172,7 +175,7 @@
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #204060;
+        accent-color: var(--theme-color);
       }
 
       /* Clockpicker overrides */
@@ -195,7 +198,7 @@
         margin-bottom: 1.5rem;
       }
       .success-screen h2 {
-        color: #204060;
+        color: var(--theme-color);
         margin-top: 0;
         margin-bottom: 0.75rem;
         font-weight: 800;
@@ -219,7 +222,7 @@
       .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
       .submit-btn {
-        background-color: #204060;
+        background-color: var(--theme-color);
         color: white;
         border: none;
         padding: 0.75rem 1.75rem;
@@ -235,7 +238,7 @@
         box-shadow: 0 4px 6px rgba(32, 64, 96, 0.15);
       }
       .submit-btn:hover {
-        background-color: #173048;
+        opacity: 0.9;
       }
       .submit-btn:disabled {
         background-color: #6c757d;
@@ -257,7 +260,7 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        border-left-color: #204060;
+        border-left-color: var(--theme-color);
         animation: spin 1s linear infinite;
         margin: 0 auto 1.5rem auto;
       }
@@ -339,6 +342,11 @@
             showAlreadySubmittedState();
             return;
           }
+          
+          if (formData.isClosed && urlParams.get('preview') !== 'true') {
+            renderClosedScreen(formData);
+            return;
+          }
 
           document.title = `${formData.title} - Aashray`;
           renderForm(formData);
@@ -385,8 +393,27 @@
         return doc.body.firstChild.innerHTML;
       }
 
+      function renderClosedScreen(form) {
+        const container = document.getElementById('formContainer');
+        const msg = form.closeMessage || 'This form is no longer accepting responses.';
+        
+        container.innerHTML = `
+          <div class="success-screen" style="border-top: 10px solid #dc3545; max-width:600px; margin:2rem auto; background:#fff; border-radius:8px; padding:3rem 2rem; box-shadow:0 4px 6px rgba(0,0,0,0.03); text-align:center;">
+            <div class="success-icon" style="color: #dc3545; font-size:4rem; margin-bottom:1.5rem;"><i class="fas fa-exclamation-circle"></i></div>
+            <h2 style="color:#204060; margin:0 0 1rem 0; font-weight:800;">Form Closed</h2>
+            <p style="margin: 0; color: #495057; font-size: 1.1rem; line-height: 1.6;">${renderRichText(msg)}</p>
+            <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+              <span style="font-size: 0.85rem; color: #6c757d;">This form has expired or reached its submission limit.</span>
+            </div>
+          </div>
+        `;
+      }
+
       function renderForm(form) {
         const container = document.getElementById('formContainer');
+
+        const themeColor = form.themeColor || '#204060';
+        document.documentElement.style.setProperty('--theme-color', themeColor);
 
         if (urlParams.get('preview') === 'true') {
           document.getElementById('previewBanner').style.display = 'block';
@@ -396,9 +423,11 @@
         // Separate fields into page sections
         const pages = [];
         let currentPage = {
+          id: 'page_0',
           title: form.title,
           description: form.description,
-          fields: []
+          fields: [],
+          nextAction: form.section1Action || 'next'
         };
 
         const isAuth = !form.isPublic;
@@ -407,15 +436,22 @@
           if (field.type === 'section') {
             pages.push(currentPage);
             currentPage = {
+              id: field.id,
               title: field.label,
               description: field.description || '',
-              fields: []
+              fields: [],
+              nextAction: field.nextAction || 'next'
             };
           } else {
             currentPage.fields.push(field);
           }
         });
         pages.push(currentPage);
+
+        window.pageIndices = {};
+        pages.forEach((p, idx) => {
+          window.pageIndices[p.id] = idx;
+        });
 
         // Render progress bar container
         let progressHtml = '';
@@ -427,7 +463,7 @@
                 <span id="progressText">Page 1 of ${pages.length}</span>
               </div>
               <div style="width:100%; height:8px; background:#e9ecef; border-radius:50px; overflow:hidden;">
-                <div id="progressBar" style="width:${(1 / pages.length) * 100}%; height:100%; background:linear-gradient(135deg, #204060 0%, #4c86b0 100%); transition:width 0.3s ease;"></div>
+                <div id="progressBar" style="width:${(1 / pages.length) * 100}%; height:100%; background:linear-gradient(135deg, var(--theme-color) 0%, #4c86b0 100%); transition:width 0.3s ease;"></div>
               </div>
             </div>
           `;
@@ -452,15 +488,21 @@
 
           const displayStyle = pi === 0 ? 'block' : 'none';
 
-          // Navigation buttons block
+          // Navigation buttons block based on early submission
           let navButtonsHtml = '';
           if (pi > 0) {
             navButtonsHtml += `<button type="button" class="submit-btn btn-back" onclick="goToPage(${pi - 1})" style="background-color:#6c757d; margin-right:0.5rem; width:auto; padding:0.6rem 1.5rem;"><i class="fas fa-arrow-left"></i> Back</button>`;
           }
-          if (pi < pages.length - 1) {
-            navButtonsHtml += `<button type="button" class="submit-btn btn-next" onclick="validateAndGoToPage(${pi}, ${pi + 1})" style="width:auto; padding:0.6rem 1.5rem;">Next <i class="fas fa-arrow-right"></i></button>`;
-          } else {
+
+          const action = page.nextAction;
+          if (action === 'submit' || pi === pages.length - 1) {
             navButtonsHtml += `<button type="submit" class="submit-btn" id="submitBtn" style="width:auto; padding:0.6rem 1.5rem;"><i class="fas fa-check"></i> Submit Response</button>`;
+          } else {
+            let targetPageIdx = pi + 1;
+            if (action !== 'next' && window.pageIndices[action] !== undefined) {
+              targetPageIdx = window.pageIndices[action];
+            }
+            navButtonsHtml += `<button type="button" class="submit-btn btn-next" onclick="validateAndGoToPage(${pi}, ${targetPageIdx})" style="width:auto; padding:0.6rem 1.5rem;">Next <i class="fas fa-arrow-right"></i></button>`;
           }
 
           pagesHtml += `
@@ -471,12 +513,12 @@
               </div>
               <div class="form-body">
                 <div id="formAlert_${pi}"></div>
-                ${pi === pages.length - 1 ? `<form id="dynamicForm" onsubmit="submitForm(event)">` : `<div>`}
+                <form class="page-form" onsubmit="submitForm(event)">
                   ${fieldsHtml}
                   <div style="margin-top:2rem; display:flex; justify-content:space-between; align-items:center;">
                     <div>${navButtonsHtml}</div>
                   </div>
-                ${pi === pages.length - 1 ? `</form>` : `</div>`}
+                </form>
               </div>
             </div>
           `;
@@ -514,6 +556,178 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
+      function validateFieldInput(field, value, checkedCount) {
+        if (!field.validation) {
+          return { isValid: true };
+        }
+
+        const val = field.validation;
+        const rule = val.rule || val.type;
+        if (!rule) {
+          return { isValid: true };
+        }
+
+        const errorMsg = val.errorMsg || 'Invalid value';
+        const isEmpty = (value === '' || value === null || value === undefined);
+
+        if (!field.required && isEmpty && !['checkbox_limit', 'select_at_least', 'select_at_most', 'select_exactly'].includes(rule)) {
+          return { isValid: true };
+        }
+
+        // --- 1. NUMBER RULES ---
+        if (['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal', 'between', 'not_between', 'is_number', 'whole_number', 'number_check', 'range'].includes(rule)) {
+          const num = parseFloat(value);
+          if (isNaN(num) || value.trim() === '') {
+            return { isValid: false, errorMsg: errorMsg || 'Must be a valid number' };
+          }
+
+          const targetVal = val.value ? parseFloat(val.value) : undefined;
+
+          switch (rule) {
+            case 'greater_than':
+              if (targetVal !== undefined && !(num > targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'greater_than_or_equal':
+              if (targetVal !== undefined && !(num >= targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'less_than':
+              if (targetVal !== undefined && !(num < targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'less_than_or_equal':
+              if (targetVal !== undefined && !(num <= targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'equal':
+              if (targetVal !== undefined && num !== targetVal) return { isValid: false, errorMsg };
+              break;
+            case 'not_equal':
+              if (targetVal !== undefined && num === targetVal) return { isValid: false, errorMsg };
+              break;
+            case 'between':
+              const minBetween = val.min ? parseFloat(val.min) : undefined;
+              const maxBetween = val.max ? parseFloat(val.max) : undefined;
+              if (minBetween !== undefined && maxBetween !== undefined) {
+                if (num < minBetween || num > maxBetween) return { isValid: false, errorMsg };
+              }
+              break;
+            case 'not_between':
+              const minNotBetween = val.min ? parseFloat(val.min) : undefined;
+              const maxNotBetween = val.max ? parseFloat(val.max) : undefined;
+              if (minNotBetween !== undefined && maxNotBetween !== undefined) {
+                if (num >= minNotBetween && num <= maxNotBetween) return { isValid: false, errorMsg };
+              }
+              break;
+            case 'is_number':
+            case 'number_check':
+              break;
+            case 'whole_number':
+              if (!Number.isInteger(num)) return { isValid: false, errorMsg };
+              break;
+            case 'range':
+              if (val.min && num < parseFloat(val.min)) return { isValid: false, errorMsg };
+              if (val.max && num > parseFloat(val.max)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 2. TEXT RULES ---
+        else if (['contains', 'does_not_contain', 'email', 'url'].includes(rule) && val.category === 'text') {
+          const strVal = String(value);
+          switch (rule) {
+            case 'contains':
+              if (val.value && !strVal.includes(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'does_not_contain':
+              if (val.value && strVal.includes(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'email':
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(strVal)) return { isValid: false, errorMsg };
+              break;
+            case 'url':
+              const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+              if (!urlRegex.test(strVal)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 3. LENGTH RULES ---
+        else if (['max_char_count', 'min_char_count', 'length'].includes(rule)) {
+          const len = value.length;
+          switch (rule) {
+            case 'max_char_count':
+              if (val.value && len > parseInt(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'min_char_count':
+              if (val.value && len < parseInt(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'length':
+              if (val.min && len < parseInt(val.min)) return { isValid: false, errorMsg };
+              if (val.max && len > parseInt(val.max)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 4. REGULAR EXPRESSION RULES ---
+        else if (['contains', 'does_not_contain', 'matches', 'does_not_match', 'regex'].includes(rule)) {
+          const strVal = String(value);
+          const pattern = val.value || val.pattern;
+          if (pattern) {
+            try {
+              let finalPattern = pattern;
+              if (rule === 'matches' || rule === 'does_not_match') {
+                if (!finalPattern.startsWith('^')) finalPattern = '^' + finalPattern;
+                if (!finalPattern.endsWith('$')) finalPattern = finalPattern + '$';
+              }
+              const rx = new RegExp(finalPattern);
+              const isMatch = rx.test(strVal);
+
+              if ((rule === 'contains' || rule === 'matches' || rule === 'regex') && !isMatch) {
+                return { isValid: false, errorMsg };
+              }
+              if ((rule === 'does_not_contain' || rule === 'does_not_match') && isMatch) {
+                return { isValid: false, errorMsg };
+              }
+            } catch (e) {
+              console.error("Invalid regex pattern validation:", e);
+            }
+          }
+        }
+
+        // --- 5. CHECKBOX CHOICE LIMIT RULES ---
+        else if (['select_at_least', 'select_at_most', 'select_exactly', 'checkbox_limit'].includes(rule)) {
+          const count = parseInt(checkedCount || 0);
+          if (!field.required && count === 0) return { isValid: true };
+
+          const targetNum = val.value ? parseInt(val.value) : undefined;
+
+          switch (rule) {
+            case 'select_at_least':
+              if (targetNum !== undefined && count < targetNum) return { isValid: false, errorMsg };
+              break;
+            case 'select_at_most':
+              if (targetNum !== undefined && count > targetNum) return { isValid: false, errorMsg };
+              break;
+            case 'select_exactly':
+              if (targetNum !== undefined && count !== targetNum) return { isValid: false, errorMsg };
+              break;
+            case 'checkbox_limit':
+              if (val.min && count < parseInt(val.min)) return { isValid: false, errorMsg };
+              if (val.max && count > parseInt(val.max)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 6. DATE RANGE RULES ---
+        else if (rule === 'date_range') {
+          const dateVal = new Date(value);
+          if (isNaN(dateVal.getTime())) return { isValid: false, errorMsg: 'Must be a valid date' };
+          if (val.min && dateVal < new Date(val.min)) return { isValid: false, errorMsg };
+          if (val.max && dateVal > new Date(val.max)) return { isValid: false, errorMsg };
+        }
+
+        return { isValid: true };
+      }
+
       function validateAndGoToPage(from, to) {
         const pageContainer = document.getElementById(`formPage_${from}`);
         
@@ -532,46 +746,71 @@
         visibleGroups.each(function() {
           const fid = $(this).data('field-id');
           const field = formData.fields.find(f => f.id === fid);
-          if (field && field.required) {
-            let answerVal = null;
-            if (field.type === 'checkbox') {
-              const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
-              answerVal = Array.from(checked).map(c => c.value);
-            } else if (field.type === 'radio') {
-              const selected = document.querySelector(`input[name="${field.id}"]:checked`);
-              answerVal = selected ? selected.value : '';
-            } else if (field.type === 'grid_radio') {
-              field.rows.forEach((r, ri) => {
-                const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
-                if (!checked) {
-                  isValid = false;
-                  errMsg = `Please select an option for each row of "${field.label}"`;
-                }
-              });
-            } else if (field.type === 'grid_checkbox') {
-              field.rows.forEach((r, ri) => {
-                const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
-                if (checked.length === 0) {
-                  isValid = false;
-                  errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
-                }
-              });
-            } else {
-              const el = document.getElementById(`input_${field.id}`);
-              answerVal = el ? el.value.trim() : '';
-            }
+          if (!field) return;
 
-            if (field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
-              if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+          let answerVal = null;
+          let checkedCount = 0;
+          if (field.type === 'checkbox') {
+            const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+            answerVal = Array.from(checked).map(c => c.value);
+            checkedCount = checked.length;
+          } else if (field.type === 'radio') {
+            const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+            answerVal = selected ? selected.value : '';
+          } else if (field.type === 'grid_radio') {
+            const selectedCols = [];
+            let hasSelectionError = false;
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+              if (field.required && !checked) {
                 isValid = false;
-                errMsg = `"${field.label}" is required`;
+                errMsg = `Please select an option for each row of "${field.label}"`;
+                hasSelectionError = true;
+              }
+              if (checked) {
+                selectedCols.push(checked.value);
+              }
+            });
+
+            if (!hasSelectionError && field.limitOnePerColumn) {
+              const uniqueCols = new Set(selectedCols);
+              if (uniqueCols.size < selectedCols.length) {
+                isValid = false;
+                errMsg = `Please select a unique option per column in "${field.label}". Limit to one response per column.`;
               }
             }
+          } else if (field.type === 'grid_checkbox') {
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+              if (field.required && checked.length === 0) {
+                isValid = false;
+                errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
+              }
+            });
+          } else {
+            const el = document.getElementById(`input_${field.id}`);
+            answerVal = el ? el.value.trim() : '';
+          }
 
-            if (!isValid) {
-              showFormAlertOnPage(from, errMsg, 'danger');
-              return false;
+          if (field.required && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
+            if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+              isValid = false;
+              errMsg = `"${field.label}" is required`;
             }
+          }
+
+          // Custom validation rules check
+          if (isValid && field.validation && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
+            const valCheck = validateFieldInput(field, answerVal, checkedCount);
+            if (!valCheck.isValid) {
+              isValid = false;
+              errMsg = valCheck.errorMsg;
+            }
+          }
+
+          if (!isValid) {
+            showFormAlertOnPage(from, errMsg, 'danger');
+            return false;
           }
         });
 
@@ -783,16 +1022,18 @@
       async function submitForm(e) {
         e.preventDefault();
 
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
+        const currentPageIdx = window.currentPageIdx;
+        const submitBtn = document.querySelector(`#formPage_${currentPageIdx} #submitBtn`) || document.getElementById('submitBtn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting...';
+        }
 
         const responses = {};
         const fields = formData.fields;
 
-        // Perform final page validation
-        const lastPageIdx = window.totalPagesCount - 1;
-        const pageContainer = document.getElementById(`formPage_${lastPageIdx}`);
+        // Perform final page validation on the current active page
+        const pageContainer = document.getElementById(`formPage_${currentPageIdx}`);
         const visibleGroups = $(pageContainer).find('.field-group:visible');
         let isValid = true;
         let errMsg = '';
@@ -800,48 +1041,75 @@
         visibleGroups.each(function() {
           const fid = $(this).data('field-id');
           const field = fields.find(f => f.id === fid);
-          if (field && field.required) {
-            let answerVal = null;
-            if (field.type === 'checkbox') {
-              const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
-              answerVal = Array.from(checked).map(c => c.value);
-            } else if (field.type === 'radio') {
-              const selected = document.querySelector(`input[name="${field.id}"]:checked`);
-              answerVal = selected ? selected.value : '';
-            } else if (field.type === 'grid_radio') {
-              field.rows.forEach((r, ri) => {
-                const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
-                if (!checked) {
-                  isValid = false;
-                  errMsg = `Please select an option for each row of "${field.label}"`;
-                }
-              });
-            } else if (field.type === 'grid_checkbox') {
-              field.rows.forEach((r, ri) => {
-                const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
-                if (checked.length === 0) {
-                  isValid = false;
-                  errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
-                }
-              });
-            } else {
-              const el = document.getElementById(`input_${field.id}`);
-              answerVal = el ? el.value.trim() : '';
-            }
+          if (!field) return;
 
-            if (field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
-              if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+          let answerVal = null;
+          let checkedCount = 0;
+          if (field.type === 'checkbox') {
+            const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+            answerVal = Array.from(checked).map(c => c.value);
+            checkedCount = checked.length;
+          } else if (field.type === 'radio') {
+            const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+            answerVal = selected ? selected.value : '';
+          } else if (field.type === 'grid_radio') {
+            const selectedCols = [];
+            let hasSelectionError = false;
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+              if (field.required && !checked) {
                 isValid = false;
-                errMsg = `"${field.label}" is required`;
+                errMsg = `Please select an option for each row of "${field.label}"`;
+                hasSelectionError = true;
+              }
+              if (checked) {
+                selectedCols.push(checked.value);
+              }
+            });
+
+            if (!hasSelectionError && field.limitOnePerColumn) {
+              const uniqueCols = new Set(selectedCols);
+              if (uniqueCols.size < selectedCols.length) {
+                isValid = false;
+                errMsg = `Please select a unique option per column in "${field.label}". Limit to one response per column.`;
               }
             }
+          } else if (field.type === 'grid_checkbox') {
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+              if (field.required && checked.length === 0) {
+                isValid = false;
+                errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
+              }
+            });
+          } else {
+            const el = document.getElementById(`input_${field.id}`);
+            answerVal = el ? el.value.trim() : '';
+          }
 
-            if (!isValid) {
-              showFormAlertOnPage(lastPageIdx, errMsg, 'danger');
+          if (field.required && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
+            if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+              isValid = false;
+              errMsg = `"${field.label}" is required`;
+            }
+          }
+
+          // Custom validation rules check
+          if (isValid && field.validation && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
+            const valCheck = validateFieldInput(field, answerVal, checkedCount);
+            if (!valCheck.isValid) {
+              isValid = false;
+              errMsg = valCheck.errorMsg;
+            }
+          }
+
+          if (!isValid) {
+            showFormAlertOnPage(currentPageIdx, errMsg, 'danger');
+            if (submitBtn) {
               submitBtn.disabled = false;
               submitBtn.textContent = 'Submit Response';
-              return false;
             }
+            return false;
           }
         });
 
@@ -883,18 +1151,22 @@
         const body = { responses };
 
         if (urlParams.get('preview') === 'true') {
-          showFormAlertOnPage(lastPageIdx, 'Validation Passed! This is a preview, so no response was recorded.', 'success');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit Response';
+          showFormAlertOnPage(currentPageIdx, 'Validation Passed! This is a preview, so no response was recorded.', 'success');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
           return;
         }
 
         if (!formData.isPublic) {
           const cardno = document.getElementById('input_cardno')?.value?.trim();
           if (!cardno) {
-            showFormAlertOnPage(lastPageIdx, 'Card Number is required', 'danger');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Response';
+            showFormAlertOnPage(currentPageIdx, 'Card Number is required', 'danger');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Response';
+            }
             return;
           }
           body.cardno = cardno;
@@ -922,14 +1194,18 @@
             }
             showSuccessScreen(data.data?.id || responseId);
           } else {
-            showFormAlertOnPage(lastPageIdx, data.message || 'Failed to submit response', 'danger');
+            showFormAlertOnPage(currentPageIdx, data.message || 'Failed to submit response', 'danger');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Response';
+            }
+          }
+        } catch (err) {
+          showFormAlertOnPage(currentPageIdx, 'Network error. Please try again.', 'danger');
+          if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Submit Response';
           }
-        } catch (err) {
-          showFormAlertOnPage(lastPageIdx, 'Network error. Please try again.', 'danger');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit Response';
         }
       }
 

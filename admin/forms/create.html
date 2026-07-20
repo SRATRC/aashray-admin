@@ -256,13 +256,15 @@
         cursor: pointer;
       }
 
-      #addFieldBtn {
-        width: 100%;
+      .action-buttons-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .action-buttons-row button {
+        flex: 1;
         padding: 1rem;
-        margin-top: 1rem;
         background: #f8f9fa;
-        border: 2px dashed #4c86b0;
-        color: #4c86b0;
         border-radius: 8px;
         cursor: pointer;
         font-size: 1rem;
@@ -272,11 +274,26 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        box-sizing: border-box;
+      }
+      #addFieldBtn {
+        border: 2px dashed #4c86b0;
+        color: #4c86b0;
       }
       #addFieldBtn:hover {
         background: #e8f4fd;
         border-color: #204060;
         color: #204060;
+      }
+      #addSectionBtn {
+        border: 2px dashed #6f42c1;
+        color: #6f42c1;
+        background: #fcfbfe;
+      }
+      #addSectionBtn:hover {
+        background: #f3ebff;
+        border-color: #52278f;
+        color: #52278f;
       }
 
       .submit-bar {
@@ -420,6 +437,33 @@
                     <input type="text" id="confirmationMessage" class="form-control" placeholder="Thank you, your response has been recorded." value="Thank you, your response has been recorded." />
                   </div>
                   <div class="full-width">
+                    <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:#204060;">Theme Accent Color</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;" id="themeColorPicker">
+                      <div class="theme-swatch active" data-color="#204060" style="background:#204060; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 2px #204060; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#6f42c1" style="background:#6f42c1; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#28a745" style="background:#28a745; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#e83e8c" style="background:#e83e8c; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#fd7e14" style="background:#fd7e14; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#20c997" style="background:#20c997; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <input type="hidden" id="themeColor" value="#204060" />
+                    </div>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; grid-column: span 2; margin-top:0.5rem;">
+                    <div>
+                      <label for="expiresAt" style="font-weight:600; color:#204060;">Form Expiration Date & Time (optional)</label>
+                      <input type="datetime-local" id="expiresAt" class="form-control" />
+                    </div>
+                    <div>
+                      <label for="maxResponses" style="font-weight:600; color:#204060;">Maximum Submissions Limit (optional)</label>
+                      <input type="number" id="maxResponses" class="form-control" placeholder="e.g. 100" min="1" />
+                    </div>
+                  </div>
+                  <div class="full-width">
+                    <label for="closeMessage" style="font-weight:600; color:#204060;">Form Closed Message (optional)</label>
+                    <textarea id="closeMessage" class="form-control" placeholder="e.g. This form is no longer accepting responses." rows="2" style="resize:vertical;"></textarea>
+                  </div>
+
+                  <div class="full-width">
                     <label for="formSlug">Short URL Slug (optional)</label>
                     <div style="display:flex; align-items:center; gap:0.25rem;">
                       <span style="color:#6c757d; font-size:0.95rem; font-weight:600; padding: 0.5rem 0 0.5rem 0.25rem;">/go/</span>
@@ -433,9 +477,9 @@
               <div class="fields-section">
                 <h3><i class="fas fa-list-ol"></i> Form Fields</h3>
                 <div id="fieldsContainer"></div>
-                <div style="display:flex; gap:1rem; margin-top:1rem;">
-                  <button id="addFieldBtn" type="button" onclick="addField()" style="flex:1;"><i class="fas fa-plus-circle"></i> Add Question</button>
-                  <button id="addSectionBtn" type="button" onclick="addField({type: 'section'})" style="flex:1; border:2px dashed #6f42c1; color:#6f42c1; background:#fcfbfe; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem;"><i class="fas fa-folder-plus"></i> Add Section Break</button>
+                <div class="action-buttons-row">
+                  <button id="addFieldBtn" type="button" onclick="addField()"><i class="fas fa-plus-circle"></i> Add Question</button>
+                  <button id="addSectionBtn" type="button" onclick="addField({type: 'section'})"><i class="fas fa-folder-plus"></i> Add Section Break</button>
                 </div>
               </div>
 
@@ -492,6 +536,12 @@
             document.getElementById('formattingToolbar').style.display = 'none';
           }
         }, 200);
+      });
+
+      $(document).on('click', '.theme-swatch', function() {
+        $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
+        $(this).addClass('active').css('box-shadow', `0 0 0 2px ${$(this).data('color')}`);
+        $('#themeColor').val($(this).data('color'));
       });
 
       function applyFormat(tag) {
@@ -551,6 +601,15 @@
               <button class="btn-remove" onclick="removeField(${idx})" title="Remove field"><i class="fas fa-trash-alt"></i></button>
             </div>
           </div>
+          <div class="section-action-row" style="display: ${fieldType === 'section' ? 'block' : 'none'}; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #ced4da;">
+            <div class="full-width" style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="section-action-label" style="font-weight:700; color:#6f42c1; font-size:0.9rem;">After Section X:</span>
+              <select class="section-next-action form-control" style="width: auto; max-width: 300px; padding: 0.3rem 0.5rem; font-size: 0.85rem; background-color:#fcfbfe; border-color:#d6c4eb; color:#6f42c1; font-weight:600; cursor:pointer;">
+                <option value="next">Continue to next section</option>
+                <option value="submit">Submit form</option>
+              </select>
+            </div>
+          </div>
           <div class="field-row">
             <div>
               <label class="label-title">Field Label *</label>
@@ -573,6 +632,43 @@
             <div class="required-toggle">
               <input type="checkbox" class="field-required" id="req_${idx}" ${fieldRequired ? 'checked' : ''} />
               <label for="req_${idx}" style="margin:0; font-weight:400;">Required field</label>
+            </div>
+          </div>
+          
+          <!-- Validation Rules Container -->
+          <div class="validation-trigger-wrapper" style="margin-top: 0.75rem; border-top: 1px dashed #eee; padding-top: 0.75rem; display: ${['text', 'textarea', 'checkbox', 'number', 'date'].includes(fieldType) ? 'block' : 'none'}">
+            <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="toggleValidationPanel(${idx})">
+              <span style="font-size:0.85rem; font-weight:600; color:#4c86b0;"><i class="fas fa-tasks"></i> Validation Rules (Optional)</span>
+              <i class="fas fa-chevron-down val-arrow_${idx}" style="font-size:0.8rem; color:#4c86b0; transition: transform 0.2s;"></i>
+            </div>
+            <div class="validation-rules-panel" id="validationRulesPanel_${idx}" style="display: none; margin-top:0.75rem; background:#fdfdfd; border: 1px solid #e9ecef; border-radius: 6px; padding: 0.75rem;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                <div>
+                  <label class="val-category-label" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Category</label>
+                  <select class="validation-category form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" onchange="onValidationCategoryChange(${idx})">
+                    <option value="">-- No Validation --</option>
+                  </select>
+                </div>
+                <div class="val-rule-wrapper" style="display:none;">
+                  <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Rule</label>
+                  <select class="validation-rule form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" onchange="onValidationRuleChange(${idx})">
+                  </select>
+                </div>
+              </div>
+              <div class="validation-params-wrapper" id="validationParams_${idx}" style="display:none; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.5rem;">
+                <div>
+                  <label class="val-param-label-1" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Value</label>
+                  <input type="text" class="validation-param-1 form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+                </div>
+                <div>
+                  <label class="val-param-label-2" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Max</label>
+                  <input type="text" class="validation-param-2 form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+                </div>
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Custom Error Warning</label>
+                <input type="text" class="validation-error-msg form-control" placeholder="Input is invalid" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+              </div>
             </div>
           </div>
           
@@ -612,6 +708,10 @@
                 <button type="button" class="add-option-btn" onclick="addGridItem(${idx}, 'col')"><i class="fas fa-plus"></i> Add Column</button>
               </div>
             </div>
+            <div style="margin-top:0.75rem; border-top:1px dashed #eee; padding-top:0.75rem; display: ${fieldType === 'grid_radio' ? 'flex' : 'none'}; align-items:center; gap:0.5rem;" class="grid-limit-column-wrapper">
+              <input type="checkbox" class="grid-limit-column" id="limit_col_${idx}" ${fieldData?.limitOnePerColumn ? 'checked' : ''} />
+              <label for="limit_col_${idx}" style="margin:0; font-weight:600; font-size:0.85rem; color:#204060;">Limit to one response per column</label>
+            </div>
           </div>
 
           <!-- Logic panel -->
@@ -635,17 +735,29 @@
         container.appendChild(card);
 
         // Attach dynamic logic mapping on label change
-        card.querySelector('.field-label').addEventListener('input', updateLogicDropdowns);
+        card.querySelector('.field-label').addEventListener('input', () => {
+          updateLogicDropdowns();
+          updateSectionActionDropdowns();
+        });
 
         if (fieldLogic) {
           const select = card.querySelector('.logic-depends-on');
           select.dataset.pendingValue = fieldLogic.dependsOn;
         }
 
+        if (fieldType === 'section') {
+          const select = card.querySelector('.section-next-action');
+          if (select && fieldData?.nextAction) {
+            select.dataset.pendingValue = fieldData.nextAction;
+          }
+        }
+
         // Apply visual layout rules based on initial type (handles sections)
         onTypeChange(idx);
 
         updateLogicDropdowns();
+        updateSectionActionDropdowns();
+        populateValidationRuleOptions(idx, fieldType, fieldData);
 
         // Restore pending logic values
         if (fieldLogic) {
@@ -655,6 +767,16 @@
             delete select.dataset.pendingValue;
           }
         }
+        
+        // Restore pending section actions
+        if (fieldType === 'section') {
+          const select = card.querySelector('.section-next-action');
+          if (select && select.dataset.pendingValue) {
+            select.value = select.dataset.pendingValue;
+            delete select.dataset.pendingValue;
+          }
+        }
+        renumberFields();
       }
 
       function updateCardAccent(card, type) {
@@ -719,6 +841,7 @@
         const gridContainer = document.getElementById(`gridContainer_${idx}`);
         const reqToggle = card.querySelector('.required-toggle-wrapper');
         const logicContainer = card.querySelector('.logic-container');
+        const actionRow = card.querySelector('.section-action-row');
         const labelTitle = card.querySelector('.label-title');
         const labelDesc = card.querySelector('.label-desc');
 
@@ -728,51 +851,79 @@
         if (type === 'section') {
           reqToggle.style.display = 'none';
           logicContainer.style.display = 'none';
+          actionRow.style.display = 'block';
           labelTitle.textContent = 'Section Title *';
           labelDesc.textContent = 'Section Description (optional)';
         } else {
           reqToggle.style.display = 'block';
           logicContainer.style.display = 'block';
+          actionRow.style.display = 'none';
           labelTitle.textContent = 'Field Label *';
           labelDesc.textContent = 'Description / Help Text (optional)';
         }
 
+        const limitColWrapper = card.querySelector('.grid-limit-column-wrapper');
+        if (limitColWrapper) {
+          limitColWrapper.style.display = type === 'grid_radio' ? 'flex' : 'none';
+        }
+
         updateCardAccent(card, type);
+        updateSectionActionDropdowns();
+        populateValidationRuleOptions(idx, type, null);
       }
 
       function removeField(idx) {
-        const card = document.getElementById(`fieldCard_${idx}`);
-        if (card) card.remove();
-        renumberFields();
-        updateLogicDropdowns();
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          if (card) {
+            card.remove();
+          }
+          renumberFields();
+          updateLogicDropdowns();
+          updateSectionActionDropdowns();
+        } catch (e) {
+          console.error("Error removing field:", e);
+        }
       }
 
       function moveField(idx, direction) {
-        const container = document.getElementById('fieldsContainer');
-        const cards = Array.from(container.querySelectorAll('.field-card'));
-        const currentIndex = cards.findIndex(c => c.id === `fieldCard_${idx}`);
-        const targetIndex = currentIndex + direction;
+        try {
+          const container = document.getElementById('fieldsContainer');
+          const cards = Array.from(container.querySelectorAll('.field-card'));
+          const currentIndex = cards.findIndex(c => c.id === `fieldCard_${idx}`);
+          const targetIndex = currentIndex + direction;
 
-        if (targetIndex < 0 || targetIndex >= cards.length) return;
+          if (targetIndex < 0 || targetIndex >= cards.length) return;
 
-        const currentCard = cards[currentIndex];
-        const targetCard = cards[targetIndex];
+          const currentCard = cards[currentIndex];
+          const targetCard = cards[targetIndex];
 
-        if (direction === -1) {
-          container.insertBefore(currentCard, targetCard);
-        } else {
-          container.insertBefore(targetCard, currentCard);
+          if (direction === -1) {
+            container.insertBefore(currentCard, targetCard);
+          } else {
+            container.insertBefore(targetCard, currentCard);
+          }
+
+          renumberFields();
+          updateLogicDropdowns();
+          updateSectionActionDropdowns();
+        } catch (e) {
+          console.error("Error moving field:", e);
         }
-
-        renumberFields();
-        updateLogicDropdowns();
       }
 
       function renumberFields() {
-        const cards = document.querySelectorAll('#fieldsContainer .field-card');
-        cards.forEach((card, i) => {
-          card.querySelector('.field-number').textContent = i + 1;
-        });
+        try {
+          const cards = document.querySelectorAll('#fieldsContainer .field-card');
+          cards.forEach((card, i) => {
+            const numEl = card.querySelector('.field-number');
+            if (numEl) {
+              numEl.textContent = i + 1;
+            }
+          });
+        } catch (e) {
+          console.error("Error renumbering fields:", e);
+        }
       }
 
       function toggleLogicSection(idx) {
@@ -786,27 +937,313 @@
       }
 
       function updateLogicDropdowns() {
-        const cards = Array.from(document.querySelectorAll('#fieldsContainer .field-card'));
-        cards.forEach((card, i) => {
-          const idx = card.dataset.idx;
-          const select = card.querySelector('.logic-depends-on');
-          if (!select) return;
+        try {
+          const cards = Array.from(document.querySelectorAll('#fieldsContainer .field-card'));
+          cards.forEach((card, i) => {
+            const idx = card.dataset.idx;
+            const select = card.querySelector('.logic-depends-on');
+            if (!select) return;
 
-          const currentValue = select.value || select.dataset.pendingValue;
+            const currentValue = select.value || select.dataset.pendingValue;
 
-          let optionsHtml = '<option value="">-- Choose Field --</option>';
-          for (let j = 0; j < i; j++) {
-            const prevCard = cards[j];
-            const prevLabel = prevCard.querySelector('.field-label').value.trim() || `Field ${j + 1}`;
-            const prevId = prevCard.querySelector('.field-id').value.trim() || `field_${prevCard.dataset.idx}`;
-            optionsHtml += `<option value="${escapeAttr(prevId)}">${escapeHtml(prevLabel)}</option>`;
+            let optionsHtml = '<option value="">-- Choose Field --</option>';
+            for (let j = 0; j < i; j++) {
+              const prevCard = cards[j];
+              if (!prevCard) continue;
+              const labelEl = prevCard.querySelector('.field-label');
+              const idEl = prevCard.querySelector('.field-id');
+              const prevLabel = (labelEl ? labelEl.value.trim() : '') || `Field ${j + 1}`;
+              const prevId = (idEl ? idEl.value.trim() : '') || `field_${prevCard.dataset.idx}`;
+              optionsHtml += `<option value="${escapeAttr(prevId)}">${escapeHtml(prevLabel)}</option>`;
+            }
+
+            select.innerHTML = optionsHtml;
+            if (currentValue) {
+              select.value = currentValue;
+            }
+          });
+        } catch (e) {
+          console.error("Error updating logic dropdowns:", e);
+        }
+      }
+
+      function updateSectionActionDropdowns() {
+        try {
+          const cards = Array.from(document.querySelectorAll('#fieldsContainer .field-card'));
+          const sections = [];
+          
+          sections.push({ id: 'page_0', label: 'Section 1 (Form Header)' });
+          
+          let sectionCounter = 2;
+          cards.forEach(card => {
+            const type = card.querySelector('.field-type').value;
+            if (type === 'section') {
+              const label = card.querySelector('.field-label').value.trim() || `Untitled Section`;
+              const idEl = card.querySelector('.field-id');
+              const fieldId = idEl ? idEl.value.trim() : `field_${card.dataset.idx}`;
+              sections.push({ 
+                id: fieldId, 
+                label: `Section ${sectionCounter} (${label})` 
+              });
+              sectionCounter++;
+            }
+          });
+
+          // Update Section 1 dropdown logic (we don't have a top dropdown anymore)
+          // The first section card represents "After Section 1"
+          let currentSectionIndex = 1;
+          cards.forEach((card, ci) => {
+            const type = card.querySelector('.field-type').value;
+            if (type === 'section') {
+              const labelSpan = card.querySelector('.section-action-label');
+              const select = card.querySelector('.section-next-action');
+              if (labelSpan) {
+                labelSpan.textContent = `After Section ${currentSectionIndex}:`;
+              }
+              
+              if (select) {
+                const currentValue = select.value || select.dataset.pendingValue || 'next';
+                const currentSectionId = card.querySelector('.field-id').value.trim() || `field_${card.dataset.idx}`;
+                
+                let html = `
+                  <option value="next">Continue to next section</option>
+                  <option value="submit">Submit form</option>
+                `;
+                
+                sections.forEach(sec => {
+                  if (sec.id !== currentSectionId) {
+                    html += `<option value="${escapeAttr(sec.id)}">Go to ${escapeHtml(sec.label)}</option>`;
+                  }
+                });
+
+                select.innerHTML = html;
+                select.value = currentValue;
+              }
+              currentSectionIndex++;
+            }
+          });
+        } catch (e) {
+          console.error("Error updating section action dropdowns:", e);
+        }
+      }
+
+      function toggleValidationPanel(idx) {
+        const panel = document.getElementById(`validationRulesPanel_${idx}`);
+        const arrow = document.querySelector(`.val-arrow_${idx}`);
+        if (panel.style.display === 'none') {
+          panel.style.display = 'block';
+          arrow.style.transform = 'rotate(180deg)';
+        } else {
+          panel.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+        }
+      }
+
+      function onValidationCategoryChange(idx) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          const category = card.querySelector('.validation-category').value;
+          const ruleSelect = card.querySelector('.validation-rule');
+          const ruleWrapper = card.querySelector('.val-rule-wrapper');
+          const paramsWrapper = document.getElementById(`validationParams_${idx}`);
+
+          if (!category) {
+            ruleWrapper.style.display = 'none';
+            paramsWrapper.style.display = 'none';
+            ruleSelect.innerHTML = '';
+            return;
           }
 
-          select.innerHTML = optionsHtml;
-          if (currentValue) {
-            select.value = currentValue;
+          ruleWrapper.style.display = 'block';
+
+          let rulesHtml = '';
+          if (category === 'number') {
+            rulesHtml += `
+              <option value="greater_than">Greater than</option>
+              <option value="greater_than_or_equal">Greater than or equal to</option>
+              <option value="less_than">Less than</option>
+              <option value="less_than_or_equal">Less than or equal to</option>
+              <option value="equal">Equal to</option>
+              <option value="not_equal">Not equal to</option>
+              <option value="between">Between</option>
+              <option value="not_between">Not between</option>
+              <option value="is_number">Is number</option>
+              <option value="whole_number">Whole number</option>
+            `;
+          } else if (category === 'number_range') {
+            rulesHtml += `
+              <option value="range">Number Range Limit</option>
+            `;
+          } else if (category === 'date_range') {
+            rulesHtml += `
+              <option value="date_range">Date Limit Range</option>
+            `;
+          } else if (category === 'text') {
+            rulesHtml += `
+              <option value="contains">Contains</option>
+              <option value="does_not_contain">Doesn't contain</option>
+              <option value="email">Email</option>
+              <option value="url">URL</option>
+            `;
+          } else if (category === 'length') {
+            rulesHtml += `
+              <option value="max_char_count">Maximum character count</option>
+              <option value="min_char_count">Minimum character count</option>
+            `;
+          } else if (category === 'regex') {
+            rulesHtml += `
+              <option value="contains">Contains</option>
+              <option value="does_not_contain">Doesn't contain</option>
+              <option value="matches">Matches</option>
+              <option value="does_not_match">Doesn't match</option>
+            `;
+          } else if (category === 'checkbox') {
+            rulesHtml += `
+              <option value="select_at_least">Select at least</option>
+              <option value="select_at_most">Select at most</option>
+              <option value="select_exactly">Select exactly</option>
+            `;
           }
-        });
+
+          ruleSelect.innerHTML = rulesHtml;
+          onValidationRuleChange(idx);
+        } catch (e) {
+          console.error("Error on category change:", e);
+        }
+      }
+
+      function onValidationRuleChange(idx) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          const category = card.querySelector('.validation-category').value;
+          const rule = card.querySelector('.validation-rule').value;
+          const paramsWrapper = document.getElementById(`validationParams_${idx}`);
+          const lbl1 = card.querySelector('.val-param-label-1');
+          const lbl2 = card.querySelector('.val-param-label-2');
+          const param1 = card.querySelector('.validation-param-1');
+          const param2 = card.querySelector('.validation-param-2');
+
+          paramsWrapper.style.display = 'grid';
+          lbl1.style.display = 'block';
+          lbl2.style.display = 'block';
+          param1.style.display = 'block';
+          param2.style.display = 'block';
+          
+          param1.type = 'text';
+          param2.type = 'text';
+
+          if (['is_number', 'whole_number', 'email', 'url'].includes(rule)) {
+            paramsWrapper.style.display = 'none';
+          } else if (rule === 'between' || rule === 'not_between') {
+            lbl1.textContent = 'Minimum';
+            lbl2.textContent = 'Maximum';
+            param1.type = 'number';
+            param2.type = 'number';
+          } else if (rule === 'range') {
+            lbl1.textContent = 'Minimum Value';
+            lbl2.textContent = 'Maximum Value';
+            param1.type = 'number';
+            param2.type = 'number';
+          } else if (rule === 'date_range') {
+            lbl1.textContent = 'Earliest Date';
+            lbl2.textContent = 'Latest Date';
+            param1.type = 'date';
+            param2.type = 'date';
+          } else if (['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal'].includes(rule)) {
+            lbl1.textContent = 'Value';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+            param1.type = 'number';
+          } else if (category === 'text') {
+            lbl1.textContent = 'Text';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+          } else if (category === 'length') {
+            lbl1.textContent = 'Number';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+            param1.type = 'number';
+          } else if (category === 'regex') {
+            lbl1.textContent = 'Pattern';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+          } else if (category === 'checkbox') {
+            lbl1.textContent = 'Number';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+            param1.type = 'number';
+          }
+        } catch (e) {
+          console.error("Error setting validation param inputs:", e);
+        }
+      }
+
+      function populateValidationRuleOptions(idx, currentType, fieldData) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          const categorySelect = card.querySelector('.validation-category');
+          const ruleSelect = card.querySelector('.validation-rule');
+          const ruleWrapper = card.querySelector('.val-rule-wrapper');
+          const paramsWrapper = document.getElementById(`validationParams_${idx}`);
+          const triggerWrapper = card.querySelector('.validation-trigger-wrapper');
+
+          const validTypes = ['text', 'textarea', 'checkbox', 'number', 'date'];
+          if (!validTypes.includes(currentType)) {
+            triggerWrapper.style.display = 'none';
+            return;
+          }
+
+          triggerWrapper.style.display = 'block';
+
+          let catHtml = '<option value="">-- No Validation --</option>';
+          if (currentType === 'text') {
+            catHtml += `
+              <option value="number">Number</option>
+              <option value="text">Text</option>
+              <option value="length">Length</option>
+              <option value="regex">Regular expression</option>
+            `;
+          } else if (currentType === 'textarea') {
+            catHtml += `
+              <option value="length">Length</option>
+              <option value="regex">Regular expression</option>
+            `;
+          } else if (currentType === 'checkbox') {
+            catHtml += `
+              <option value="checkbox">Selection Limit</option>
+            `;
+          } else if (currentType === 'number') {
+            catHtml += `
+              <option value="number_range">Number Range</option>
+            `;
+          } else if (currentType === 'date') {
+            catHtml += `
+              <option value="date_range">Date Range</option>
+            `;
+          }
+
+          categorySelect.innerHTML = catHtml;
+          ruleSelect.innerHTML = '';
+          ruleWrapper.style.display = 'none';
+          paramsWrapper.style.display = 'none';
+          card.querySelector('.validation-error-msg').value = '';
+
+          if (fieldData?.validation) {
+            const val = fieldData.validation;
+            categorySelect.value = val.category || '';
+            onValidationCategoryChange(idx);
+            
+            ruleSelect.value = val.rule || '';
+            card.querySelector('.validation-error-msg').value = val.errorMsg || '';
+            onValidationRuleChange(idx);
+            
+            if (val.value !== undefined) card.querySelector('.validation-param-1').value = val.value;
+            if (val.min !== undefined) card.querySelector('.validation-param-1').value = val.min;
+            if (val.max !== undefined) card.querySelector('.validation-param-2').value = val.max;
+          }
+        } catch (e) {
+          console.error("Error populating validation options:", e);
+        }
       }
 
       function collectFields() {
@@ -842,6 +1279,16 @@
             const colInputs = card.querySelectorAll('.grid-col-value');
             field.rows = Array.from(rowInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
             field.columns = Array.from(colInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
+            
+            if (type === 'grid_radio') {
+              const limitColBox = card.querySelector('.grid-limit-column');
+              field.limitOnePerColumn = limitColBox ? limitColBox.checked : false;
+            }
+          }
+
+          if (type === 'section') {
+            const nextActionSelect = card.querySelector('.section-next-action');
+            field.nextAction = nextActionSelect ? nextActionSelect.value : 'next';
           }
 
           if (type !== 'section') {
@@ -854,6 +1301,28 @@
                 dependsOn,
                 value: logicVal
               };
+            }
+
+            // Collect Validation rules if configured
+            const valCatSelect = card.querySelector('.validation-category');
+            const valRuleSelect = card.querySelector('.validation-rule');
+            if (valCatSelect && valCatSelect.value && valRuleSelect && valRuleSelect.value) {
+              const category = valCatSelect.value;
+              const rule = valRuleSelect.value;
+              const errorMsg = card.querySelector('.validation-error-msg').value.trim() || 'Input value is invalid';
+              const param1 = card.querySelector('.validation-param-1').value.trim();
+              const param2 = card.querySelector('.validation-param-2').value.trim();
+
+              const validation = { category, rule, errorMsg };
+
+              if (['between', 'not_between', 'range', 'date_range'].includes(rule)) {
+                if (param1) validation.min = param1;
+                if (param2) validation.max = param2;
+              } else {
+                if (param1) validation.value = param1;
+              }
+
+              field.validation = validation;
             }
           }
 
@@ -873,6 +1342,17 @@
         const showProgressBar = document.getElementById('showProgressBar').checked;
         const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
         const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        let section1Action = 'next';
+        const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+        if (firstSectionCard) {
+          section1Action = firstSectionCard.value;
+        }
+        const themeColor = document.getElementById('themeColor').value;
+        
+        const expiresAt = document.getElementById('expiresAt').value || null;
+        const maxResponses = document.getElementById('maxResponses').value || null;
+        const closeMessage = document.getElementById('closeMessage').value.trim() || null;
+
         const slug = document.getElementById('formSlug').value.trim();
         const fields = collectFields();
 
@@ -894,7 +1374,8 @@
 
         const body = { 
           title, description, dept_name, fields, isPublic, slug, 
-          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage 
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+          expiresAt, closeMessage, maxResponses
         };
 
         try {
@@ -951,6 +1432,15 @@
           document.getElementById('showProgressBar').checked = form.showProgressBar !== undefined ? form.showProgressBar : true;
           document.getElementById('showSubmitAnother').checked = form.showSubmitAnother !== undefined ? form.showSubmitAnother : true;
           document.getElementById('confirmationMessage').value = form.confirmationMessage || 'Thank you, your response has been recorded.';
+          const themeColorVal = form.themeColor || '#204060';
+          document.getElementById('themeColor').value = themeColorVal;
+          $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
+          $(`.theme-swatch[data-color="${themeColorVal}"]`).addClass('active').css('box-shadow', `0 0 0 2px ${themeColorVal}`);
+          
+          document.getElementById('expiresAt').value = form.expiresAt ? new Date(form.expiresAt).toISOString().substring(0, 16) : '';
+          document.getElementById('maxResponses').value = form.maxResponses || '';
+          document.getElementById('closeMessage').value = form.closeMessage || '';
+          
           document.getElementById('formSlug').value = form.slug || '';
 
           // Load fields
@@ -1002,12 +1492,24 @@
         const showProgressBar = document.getElementById('showProgressBar').checked;
         const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
         const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        
+        let section1Action = 'next';
+        const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+        if (firstSectionCard) {
+          section1Action = firstSectionCard.value;
+        }
+
+        const themeColor = document.getElementById('themeColor').value;
+        const expiresAt = document.getElementById('expiresAt').value || null;
+        const maxResponses = document.getElementById('maxResponses').value || null;
+        const closeMessage = document.getElementById('closeMessage').value.trim() || null;
         const slug = document.getElementById('formSlug').value.trim();
         const fields = collectFields();
 
         const previewData = { 
           title, description, dept_name, fields, isPublic, slug, 
-          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage 
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+          expiresAt, closeMessage, maxResponses
         };
         sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
         window.open('view.html?preview=true', '_blank');

@@ -302,6 +302,7 @@
             <td>
               <div class="actions-cell">
                 <button class="btn btn-sm btn-info" onclick="copyLink(${form.id}, '${form.slug || ''}')" title="Copy public link"><i class="fas fa-copy"></i> Link</button>
+                <button class="btn btn-sm" onclick="cloneForm(${form.id})" title="Clone form" style="background-color: #6f42c1; color: white; display: inline-flex; align-items: center; gap: 0.3rem;"><i class="fas fa-clone"></i> Clone</button>
                 <a href="responses.html?id=${form.id}" class="btn btn-sm btn-success" title="View responses"><i class="fas fa-chart-line"></i> Analytics</a>
                 <a href="create.html?id=${form.id}" class="btn btn-sm btn-warning" title="Edit form"><i class="fas fa-edit"></i> Edit</a>
                 <button class="btn btn-sm btn-danger" onclick="deleteForm(${form.id})" title="Delete form"><i class="fas fa-trash-alt"></i> Delete</button>
@@ -320,6 +321,32 @@
         }).catch(() => {
           prompt('Copy this link:', link);
         });
+      }
+
+      async function cloneForm(formId) {
+        if (!confirm('Are you sure you want to duplicate this form?')) {
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${formId}/clone`, {
+            method: 'POST',
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            showSuccess('Form cloned successfully!');
+            loadForms();
+          } else {
+            showError(data.message || 'Failed to clone form');
+          }
+        } catch (err) {
+          showError('Error cloning form: ' + err.message);
+        }
       }
 
       async function deleteForm(formId) {

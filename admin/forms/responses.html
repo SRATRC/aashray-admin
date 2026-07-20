@@ -77,7 +77,7 @@
       }
       .response-count-badge {
         background: #204060;
-        color: white;
+        color: white !important;
         padding: 0.25rem 1rem;
         border-radius: 50px;
         font-size: 0.9rem;
@@ -396,9 +396,20 @@
         // Build rows
         let rowsHtml = '';
         responses.forEach((resp, idx) => {
-          const respondent = resp.respondent
-            ? `${escapeHtml(resp.respondent.issuedto)} (${resp.cardno})`
-            : (resp.cardno || 'Anonymous');
+          let respondent = 'Anonymous';
+          if (resp.respondent) {
+            const name = resp.respondent.issuedto ? escapeHtml(resp.respondent.issuedto) : '';
+            const center = resp.respondent.center ? escapeHtml(resp.respondent.center) : '';
+            const resStatus = resp.respondent.res_status ? escapeHtml(resp.respondent.res_status) : '';
+            const cardno = resp.respondent.cardno ? escapeHtml(resp.respondent.cardno) : (resp.cardno ? escapeHtml(resp.cardno) : '');
+            
+            const parts = [];
+            if (center) parts.push(center);
+            if (resStatus) parts.push(resStatus);
+            if (cardno) parts.push(cardno);
+            
+            respondent = parts.length > 0 ? `${name} (${parts.join(', ')})` : name;
+          }
 
           rowsHtml += `<tr><td>${idx + 1}</td><td>${respondent}</td>`;
 
@@ -599,9 +610,21 @@
 
         const dataArray = cachedResponses.map((resp, idx) => {
           const row = { '#': idx + 1 };
-          row['Respondent'] = resp.respondent
-            ? `${resp.respondent.issuedto} (${resp.cardno})`
-            : (resp.cardno || 'Anonymous');
+          let respondent = 'Anonymous';
+          if (resp.respondent) {
+            const name = resp.respondent.issuedto || '';
+            const center = resp.respondent.center || '';
+            const resStatus = resp.respondent.res_status || '';
+            const cardno = resp.respondent.cardno || resp.cardno || '';
+            
+            const parts = [];
+            if (center) parts.push(center);
+            if (resStatus) parts.push(resStatus);
+            if (cardno) parts.push(cardno);
+            
+            respondent = parts.length > 0 ? `${name} (${parts.join(', ')})` : name;
+          }
+          row['Respondent'] = respondent;
 
           cachedForm.fields.forEach(f => {
             let answer = resp.responses ? resp.responses[f.id] : '';
