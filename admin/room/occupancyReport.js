@@ -98,8 +98,8 @@ function renderTable() {
     // 1. Room Type Filter
     const typeMatches = (() => {
       if (filterValue === 'all') return true;
-      if (filterValue === 'ac') return booking.roomtype.toLowerCase() === 'ac';
-      if (filterValue === 'nac') return booking.roomtype.toLowerCase() === 'nac' || booking.roomtype.toLowerCase() === 'non-ac';
+      if (filterValue === 'ac') return (booking.roomtype || '').toLowerCase() === 'ac';
+      if (filterValue === 'nac') return (booking.roomtype || '').toLowerCase() === 'nac' || (booking.roomtype || '').toLowerCase() === 'non-ac';
       return true;
     })();
 
@@ -135,7 +135,7 @@ function renderTable() {
     
     // Determine color badge style for room type
     let badgeHtml = '';
-    const rType = booking.roomtype.toLowerCase();
+    const rType = (booking.roomtype || '').toLowerCase();
     if (rType === 'ac') {
       badgeHtml = `<span style="background-color: #1565c0; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-block;">AC Room</span>`;
     } else {
@@ -186,7 +186,10 @@ function renderTable() {
     tableBody.appendChild(row);
   });
 
-  enhanceTable('occupancyTable', 'tableSearch');
+  if (!window._occupancyTableEnhanced) {
+    enhanceTable('occupancyTable', 'tableSearch');
+    window._occupancyTableEnhanced = true;
+  }
 }
 
 const setupDownloadButton = (dataToExport) => {

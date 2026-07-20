@@ -9,6 +9,15 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+const getBaseRoomNo = (roomno) => {
+  if (!roomno) return '';
+  const str = String(roomno).trim();
+  if (/[a-zA-Z]$/.test(str)) {
+    return str.slice(0, -1);
+  }
+  return str;
+};
+
 function renderBlocks(blocks) {
   if (!blocks || blocks.length === 0) {
     return '<span style="color:#888;font-size:0.85em;">available</span>';
@@ -69,7 +78,7 @@ function openBlockModal(roomno, forceAllBeds = false, isBulk = false) {
   if (isBulk) {
     displayRoomNo = `${roomno.length} Selected Beds`;
   } else {
-    displayRoomNo = forceAllBeds ? `Room ${roomno.slice(0, -1)}` : `Bed ${roomno}`;
+    displayRoomNo = forceAllBeds ? `Room ${getBaseRoomNo(roomno)}` : `Bed ${roomno}`;
   }
   document.getElementById('modalRoomNo').textContent = displayRoomNo;
 
@@ -358,7 +367,7 @@ function renderTable() {
   // Group rooms by base room number
   const groups = {};
   allRooms.forEach((room) => {
-    const baseRoomNo = room.roomno.slice(0, -1);
+    const baseRoomNo = getBaseRoomNo(room.roomno);
     if (!groups[baseRoomNo]) {
       groups[baseRoomNo] = {
         baseRoomNo,
