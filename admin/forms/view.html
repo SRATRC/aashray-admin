@@ -327,7 +327,7 @@
         }
 
         try {
-          const res = await fetch(`${CONFIG.baseUrl}/forms/${formId}`);
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}`);
           const data = await res.json();
 
           if (!data.success) {
@@ -474,12 +474,32 @@
           let fieldsHtml = '';
           
           if (pi === 0 && isAuth) {
-            fieldsHtml += `
-              <div class="auth-section">
-                <label for="input_cardno">Card Number *</label>
-                <input type="text" id="input_cardno" placeholder="Enter your card number" required />
-              </div>
-            `;
+            const isMobAuth = form.authType === 'mobno';
+            if (isMobAuth && form.requireOtp) {
+              fieldsHtml += `
+                <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
+                  <label for="input_mobno" style="font-weight: 700; color: var(--theme-color);">Mobile Number *</label>
+                  <div style="display:flex; gap:0.5rem; align-items:stretch;">
+                    <input type="tel" id="input_mobno" placeholder="Enter your registered mobile number" required style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                    <button type="button" id="sendOtpBtn" class="submit-btn" style="width: auto; padding: 0 1rem; font-size: 0.85rem; display:none; background-color: var(--theme-color);">Send OTP</button>
+                  </div>
+                  <div id="otpInputSection" style="display:none; margin-top: 1rem; border-top: 1px dashed #ced4da; padding-top: 1rem;">
+                    <label for="input_otp" style="font-weight: 700; color: var(--theme-color);">Verification OTP *</label>
+                    <div style="display:flex; gap:0.5rem; align-items:stretch;">
+                      <input type="text" id="input_otp" placeholder="Enter 6-digit OTP" maxLength="6" style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                      <button type="button" id="verifyOtpBtn" class="submit-btn" style="width: auto; padding: 0 1rem; font-size: 0.85rem; background-color: #28a745;">Verify</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            } else {
+              fieldsHtml += `
+                <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
+                  <label for="${isMobAuth ? 'input_mobno' : 'input_cardno'}" style="font-weight: 700; color: var(--theme-color);">${isMobAuth ? 'Mobile Number *' : 'Card Number *'}</label>
+                  <input type="${isMobAuth ? 'tel' : 'text'}" id="${isMobAuth ? 'input_mobno' : 'input_cardno'}" placeholder="${isMobAuth ? 'Enter your registered mobile number' : 'Enter your card number'}" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                </div>
+              `;
+            }
           }
 
           page.fields.forEach(f => {
@@ -496,7 +516,7 @@
 
           const action = page.nextAction;
           if (action === 'submit' || pi === pages.length - 1) {
-            navButtonsHtml += `<button type="submit" class="submit-btn" id="submitBtn" style="width:auto; padding:0.6rem 1.5rem;"><i class="fas fa-check"></i> Submit Response</button>`;
+            navButtonsHtml += `<button type="submit" class="submit-btn" id="submitBtn" style="width:auto; padding:0.6rem 1.5rem;">Submit Response</button>`;
           } else {
             let targetPageIdx = pi + 1;
             if (action !== 'next' && window.pageIndices[action] !== undefined) {
@@ -575,7 +595,7 @@
         }
 
         // --- 1. NUMBER RULES ---
-        if (['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal', 'between', 'not_between', 'is_number', 'whole_number', 'number_check', 'range'].includes(rule)) {
+        if (['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal', 'between', 'not_between', 'is_number', 'whole_number', 'number_check', 'range', 'ten_digit'].includes(rule)) {
           const num = parseFloat(value);
           if (isNaN(num) || value.trim() === '') {
             return { isValid: false, errorMsg: errorMsg || 'Must be a valid number' };
@@ -621,6 +641,10 @@
               break;
             case 'whole_number':
               if (!Number.isInteger(num)) return { isValid: false, errorMsg };
+              break;
+            case 'ten_digit':
+              const cleanNum = value.trim().replace(/\D/g, '');
+              if (cleanNum.length !== 10) return { isValid: false, errorMsg: errorMsg || 'Must be a 10-digit number' };
               break;
             case 'range':
               if (val.min && num < parseFloat(val.min)) return { isValid: false, errorMsg };
@@ -728,93 +752,322 @@
         return { isValid: true };
       }
 
+      function showInlineError(fid, msg) {
+        const errorEl = document.getElementById(`error_${fid}`);
+        if (errorEl) {
+          $(errorEl).find('span').text(msg);
+          $(errorEl).show();
+        }
+      }
+
+      function clearInlineError(fid) {
+        const errorEl = document.getElementById(`error_${fid}`);
+        if (errorEl) {
+          $(errorEl).hide();
+        }
+      }
+
+      function checkFieldValidation(group) {
+        const fid = $(group).data('field-id');
+        const field = formData.fields.find(f => f.id === fid);
+        if (!field) return { isValid: true };
+
+        const inputs = $(group).find('input[type="text"], input[type="number"], input[type="date"], input[type="tel"], select, textarea');
+
+        let answerVal = null;
+        let checkedCount = 0;
+        if (field.type === 'checkbox') {
+          const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+          answerVal = Array.from(checked).map(c => c.value);
+          checkedCount = checked.length;
+        } else if (field.type === 'radio') {
+          const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+          answerVal = selected ? selected.value : '';
+        } else if (field.type === 'grid_radio') {
+          const selectedCols = [];
+          let hasSelectionError = false;
+          let errMsg = '';
+          field.rows.forEach((r, ri) => {
+            const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+            if (field.required && !checked) {
+              hasSelectionError = true;
+              errMsg = `Please select an option for each row`;
+            }
+            if (checked) {
+              selectedCols.push(checked.value);
+            }
+          });
+
+          if (!hasSelectionError && field.limitOnePerColumn) {
+            const uniqueCols = new Set(selectedCols);
+            if (uniqueCols.size < selectedCols.length) {
+              hasSelectionError = true;
+              errMsg = `Please select a unique option per column (limit to one per column)`;
+            }
+          }
+          if (hasSelectionError) {
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          } else {
+            clearInlineError(field.id);
+            return { isValid: true };
+          }
+        } else if (field.type === 'grid_checkbox') {
+          let hasSelectionError = false;
+          let errMsg = '';
+          field.rows.forEach((r, ri) => {
+            const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+            if (field.required && checked.length === 0) {
+              hasSelectionError = true;
+              errMsg = `Please select at least one checkbox for each row`;
+            }
+          });
+          if (hasSelectionError) {
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          } else {
+            clearInlineError(field.id);
+            return { isValid: true };
+          }
+        } else {
+          const el = document.getElementById(`input_${field.id}`);
+          answerVal = el ? el.value.trim() : '';
+        }
+
+        // 1. Required Check
+        if (field.required) {
+          if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+            const msg = `This field is required`;
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+        } else {
+          // If not required and empty, skip rule validation
+          const isEmpty = (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0));
+          if (isEmpty) {
+            clearInlineError(field.id);
+            inputs.css('border-color', '#ced4da');
+            return { isValid: true };
+          }
+        }
+
+        // 2. Custom Rule Check
+        if (field.validation) {
+          const valCheck = validateFieldInput(field, answerVal, checkedCount);
+          if (!valCheck.isValid) {
+            showInlineError(field.id, valCheck.errorMsg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: valCheck.errorMsg };
+          }
+        }
+
+        // Date constraints check
+        if (field.type === 'date' && answerVal) {
+          const dateConstraints = field.dateConstraints;
+          if (dateConstraints) {
+            const chosenDate = new Date(answerVal);
+            const getLocalDateString = (d) => {
+              const year = d.getFullYear();
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            const chosenStr = getLocalDateString(chosenDate);
+            const today = new Date();
+            const todayStr = getLocalDateString(today);
+
+            let minDateStr = null;
+            if (dateConstraints.minType === 'today') {
+              minDateStr = todayStr;
+            } else if (dateConstraints.minType === 'tomorrow') {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              minDateStr = getLocalDateString(tomorrow);
+            } else if (dateConstraints.minType === 'fixed' && dateConstraints.minFixed) {
+              minDateStr = dateConstraints.minFixed;
+            }
+
+            if (minDateStr && chosenStr < minDateStr) {
+              const msg = `Date must be on or after ${minDateStr}`;
+              showInlineError(field.id, msg);
+              inputs.css('border-color', '#dc3545');
+              return { isValid: false, errorMsg: msg };
+            }
+
+            let maxDateStr = null;
+            if (dateConstraints.maxType === 'today') {
+              maxDateStr = todayStr;
+            } else if (dateConstraints.maxType === 'fixed' && dateConstraints.maxFixed) {
+              maxDateStr = dateConstraints.maxFixed;
+            }
+
+            if (maxDateStr && chosenStr > maxDateStr) {
+              const msg = `Date must be on or before ${maxDateStr}`;
+              showInlineError(field.id, msg);
+              inputs.css('border-color', '#dc3545');
+              return { isValid: false, errorMsg: msg };
+            }
+
+            if (dateConstraints.cutoffHour !== null && dateConstraints.cutoffHour !== undefined) {
+              const now = new Date();
+              const nowStr = getLocalDateString(now);
+              const cutoffDay = new Date(chosenStr);
+              cutoffDay.setDate(cutoffDay.getDate() - 1);
+              const cutoffDayStr = getLocalDateString(cutoffDay);
+
+              const currentHour = now.getHours();
+              if (nowStr > cutoffDayStr || (nowStr === cutoffDayStr && currentHour >= dateConstraints.cutoffHour)) {
+                const msg = `Booking/Selection for ${chosenStr} has closed (Cutoff was ${dateConstraints.cutoffHour}:00 of previous day)`;
+                showInlineError(field.id, msg);
+                inputs.css('border-color', '#dc3545');
+                return { isValid: false, errorMsg: msg };
+              }
+            }
+          }
+        }
+
+        // Valid
+        clearInlineError(field.id);
+        inputs.css('border-color', '#ced4da');
+        return { isValid: true };
+      }
+
+      let isOtpVerified = urlParams.get('responseId') ? true : false;
+      let lastCheckedAuthVal = '';
+      let lookupTimeout = null;
+
+      function checkAuthInputValidation(inputEl) {
+        const id = $(inputEl).attr('id');
+        const val = inputEl.value.trim();
+        const isMob = id === 'input_mobno';
+        const errorId = isMob ? 'mobno' : 'cardno';
+        const infoId = `info_${errorId}`;
+        
+        if (!val) {
+          showInlineError(errorId, `${isMob ? 'Mobile Number' : 'Card Number'} is required`);
+          $(`#${infoId}`).remove();
+          $(inputEl).css('border-color', '#dc3545');
+          if (formData.requireOtp && isMob) {
+            $('#sendOtpBtn').hide();
+            $('#otpInputSection').hide();
+            isOtpVerified = false;
+          }
+          return false;
+        }
+
+        if (isMob) {
+          const clean = val.replace(/\D/g, '');
+          if (clean.length !== 10) {
+            showInlineError(errorId, `Invalid format. Please enter a 10-digit number.`);
+            $(`#${infoId}`).remove();
+            $(inputEl).css('border-color', '#dc3545');
+            if (formData.requireOtp) {
+              $('#sendOtpBtn').hide();
+              $('#otpInputSection').hide();
+              isOtpVerified = false;
+            }
+            return false;
+          }
+        }
+
+        clearInlineError(errorId);
+        $(inputEl).css('border-color', '#ced4da');
+        if (formData.requireOtp && isMob && val !== lastCheckedAuthVal) {
+          $('#sendOtpBtn').hide();
+          $('#otpInputSection').hide();
+          isOtpVerified = false;
+        }
+
+        // Debounced identity resolution
+        clearTimeout(lookupTimeout);
+        lookupTimeout = setTimeout(async () => {
+          if (val === lastCheckedAuthVal) return;
+          lastCheckedAuthVal = val;
+          
+          $(`#${infoId}`).remove();
+          
+          try {
+            // Renders loading label
+            $(inputEl).after(`
+              <div id="${infoId}" style="color: #6c757d; font-size: 0.85rem; margin-top: 0.35rem;">
+                <i class="fas fa-spinner fa-spin"></i> Checking registration...
+              </div>
+            `);
+            
+            const type = isMob ? 'mobno' : 'cardno';
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=${type}&value=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            
+            $(`#${infoId}`).remove();
+            
+            if (data.success) {
+              $(inputEl).css('border-color', '#28a745');
+              $(inputEl).after(`
+                <div id="${infoId}" style="color: #28a745; font-size: 0.88rem; margin-top: 0.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
+                  <i class="fas fa-check-circle"></i> Registered to: ${data.data.name} (${data.data.center || 'No Center'})
+                </div>
+              `);
+              
+              if (formData.requireOtp && isMob) {
+                $('#sendOtpBtn').show();
+              }
+            } else {
+              showInlineError(errorId, data.message || 'Not registered');
+              $(inputEl).css('border-color', '#dc3545');
+              if (formData.requireOtp && isMob) {
+                $('#sendOtpBtn').hide();
+                $('#otpInputSection').hide();
+                isOtpVerified = false;
+              }
+            }
+          } catch (err) {
+            console.error('Error checking registration:', err);
+            $(`#${infoId}`).remove();
+          }
+        }, 400);
+
+        return true;
+      }
+
       function validateAndGoToPage(from, to) {
         const pageContainer = document.getElementById(`formPage_${from}`);
         
-        if (from === 0 && document.getElementById('input_cardno')) {
-          const card = document.getElementById('input_cardno').value.trim();
-          if (!card) {
-            showFormAlertOnPage(from, 'Card Number is required', 'danger');
-            return;
+        let isValid = true;
+        let firstInvalidMsg = '';
+
+        if (from === 0 && !formData.isPublic) {
+          const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+          if (authInput) {
+            const isAuthValid = checkAuthInputValidation(authInput);
+            if (!isAuthValid) {
+              isValid = false;
+              firstInvalidMsg = document.getElementById('input_mobno') ? 'Mobile Number is required' : 'Card Number is required';
+            } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
+              isValid = false;
+              firstInvalidMsg = 'Please verify your mobile number using OTP first';
+            }
           }
         }
 
         const visibleGroups = $(pageContainer).find('.field-group:visible');
-        let isValid = true;
-        let errMsg = '';
-        
         visibleGroups.each(function() {
-          const fid = $(this).data('field-id');
-          const field = formData.fields.find(f => f.id === fid);
-          if (!field) return;
-
-          let answerVal = null;
-          let checkedCount = 0;
-          if (field.type === 'checkbox') {
-            const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
-            answerVal = Array.from(checked).map(c => c.value);
-            checkedCount = checked.length;
-          } else if (field.type === 'radio') {
-            const selected = document.querySelector(`input[name="${field.id}"]:checked`);
-            answerVal = selected ? selected.value : '';
-          } else if (field.type === 'grid_radio') {
-            const selectedCols = [];
-            let hasSelectionError = false;
-            field.rows.forEach((r, ri) => {
-              const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
-              if (field.required && !checked) {
-                isValid = false;
-                errMsg = `Please select an option for each row of "${field.label}"`;
-                hasSelectionError = true;
-              }
-              if (checked) {
-                selectedCols.push(checked.value);
-              }
-            });
-
-            if (!hasSelectionError && field.limitOnePerColumn) {
-              const uniqueCols = new Set(selectedCols);
-              if (uniqueCols.size < selectedCols.length) {
-                isValid = false;
-                errMsg = `Please select a unique option per column in "${field.label}". Limit to one response per column.`;
-              }
-            }
-          } else if (field.type === 'grid_checkbox') {
-            field.rows.forEach((r, ri) => {
-              const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
-              if (field.required && checked.length === 0) {
-                isValid = false;
-                errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
-              }
-            });
-          } else {
-            const el = document.getElementById(`input_${field.id}`);
-            answerVal = el ? el.value.trim() : '';
-          }
-
-          if (field.required && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
-            if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
-              isValid = false;
-              errMsg = `"${field.label}" is required`;
-            }
-          }
-
-          // Custom validation rules check
-          if (isValid && field.validation && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
-            const valCheck = validateFieldInput(field, answerVal, checkedCount);
-            if (!valCheck.isValid) {
-              isValid = false;
-              errMsg = valCheck.errorMsg;
-            }
-          }
-
-          if (!isValid) {
-            showFormAlertOnPage(from, errMsg, 'danger');
-            return false;
+          const check = checkFieldValidation(this);
+          if (!check.isValid) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = check.errorMsg;
           }
         });
 
-        if (!isValid) return;
+        if (!isValid) {
+          showFormAlertOnPage(from, firstInvalidMsg || 'Please correct the errors in the form', 'danger');
+          return;
+        }
+
+        // Clear general alert if valid
+        const alert = document.getElementById(`formAlert_${from}`);
+        if (alert) alert.style.display = 'none';
+
         goToPage(to);
       }
 
@@ -840,7 +1093,34 @@
         } else if (field.type === 'number') {
           inputHtml = `<input type="number" id="${inputId}" placeholder="Your answer" ${requiredAttr} />`;
         } else if (field.type === 'date') {
-          inputHtml = `<input type="date" id="${inputId}" ${requiredAttr} />`;
+          let minAttr = '';
+          let maxAttr = '';
+          if (field.dateConstraints) {
+            const today = new Date();
+            const getLocalDateString = (d) => {
+              const year = d.getFullYear();
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            const todayStr = getLocalDateString(today);
+            if (field.dateConstraints.minType === 'today') {
+              minAttr = `min="${todayStr}"`;
+            } else if (field.dateConstraints.minType === 'tomorrow') {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              minAttr = `min="${getLocalDateString(tomorrow)}"`;
+            } else if (field.dateConstraints.minType === 'fixed' && field.dateConstraints.minFixed) {
+              minAttr = `min="${field.dateConstraints.minFixed}"`;
+            }
+            
+            if (field.dateConstraints.maxType === 'today') {
+              maxAttr = `max="${todayStr}"`;
+            } else if (field.dateConstraints.maxType === 'fixed' && field.dateConstraints.maxFixed) {
+              maxAttr = `max="${field.dateConstraints.maxFixed}"`;
+            }
+          }
+          inputHtml = `<input type="date" id="${inputId}" ${minAttr} ${maxAttr} ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
         } else if (field.type === 'time') {
           inputHtml = `
             <div class="clockpicker">
@@ -930,6 +1210,7 @@
             <label for="${inputId}" style="margin-bottom:0.25rem;">${renderRichText(field.label)} ${requiredMark}</label>
             ${field.description ? `<p style="font-size:0.8rem; color:#6c757d; margin-top:-0.15rem; margin-bottom:0.5rem; font-weight:400; line-height:1.4;">${renderRichText(field.description)}</p>` : ''}
             ${inputHtml}
+            <div class="inline-error-msg" id="error_${field.id}" style="color: #dc3545; font-size: 0.82rem; margin-top: 0.35rem; display: none; font-weight: 500;"><i class="fas fa-exclamation-circle"></i> <span></span></div>
           </div>
         `;
       }
@@ -955,32 +1236,69 @@
         if (!formData || !formData.fields) return;
 
         formData.fields.forEach(field => {
-          if (field.logic) {
+          let hasLogic = false;
+          let show = true;
+
+          // Support conditions array format
+          if (field.conditions && Array.isArray(field.conditions) && field.conditions.length > 0) {
+            hasLogic = true;
+            show = field.conditions.every(cond => {
+              const depField = formData.fields.find(f => f.id === cond.fieldId);
+              if (!depField) return true;
+              
+              const currentVal = getFieldValue(depField);
+              const targetVal = cond.value;
+              const op = cond.operator || 'equals';
+
+              if (op === 'equals') {
+                if (Array.isArray(currentVal)) return currentVal.includes(targetVal);
+                return String(currentVal) === String(targetVal);
+              } else if (op === 'not_equals') {
+                if (Array.isArray(currentVal)) return !currentVal.includes(targetVal);
+                return String(currentVal) !== String(targetVal);
+              } else if (op === 'contains') {
+                const currentStr = Array.isArray(currentVal) ? currentVal.join(',') : String(currentVal);
+                return currentStr.toLowerCase().includes(targetVal.toLowerCase());
+              }
+              return true;
+            });
+          } 
+          // Backward compatibility for old single condition logic format
+          else if (field.logic) {
+            hasLogic = true;
             const dependsOn = field.logic.dependsOn;
             const targetVal = field.logic.value;
+            const op = field.logic.operator || 'equals';
             const depField = formData.fields.find(f => f.id === dependsOn);
 
             if (depField) {
               const currentVal = getFieldValue(depField);
-              let show = false;
-
-              if (Array.isArray(currentVal)) {
-                show = currentVal.includes(targetVal);
-              } else {
-                show = String(currentVal) === String(targetVal);
+              if (op === 'equals') {
+                if (Array.isArray(currentVal)) show = currentVal.includes(targetVal);
+                else show = String(currentVal) === String(targetVal);
+              } else if (op === 'not_equals') {
+                if (Array.isArray(currentVal)) show = !currentVal.includes(targetVal);
+                else show = String(currentVal) !== String(targetVal);
+              } else if (op === 'contains') {
+                const currentStr = Array.isArray(currentVal) ? currentVal.join(',') : String(currentVal);
+                show = currentStr.toLowerCase().includes(targetVal.toLowerCase());
               }
+            } else {
+              show = true;
+            }
+          }
 
-              const group = $(`.field-group[data-field-id="${field.id}"]`);
-              if (show) {
-                if (!group.is(':visible')) {
-                  group.slideDown(250);
-                }
-              } else {
-                if (group.is(':visible')) {
-                  group.slideUp(250, function() {
-                    clearFieldValue(field);
-                  });
-                }
+          if (hasLogic) {
+            const group = $(`.field-group[data-field-id="${field.id}"]`);
+            if (show) {
+              if (!group.is(':visible')) {
+                group.slideDown(250);
+              }
+            } else {
+              if (group.is(':visible')) {
+                group.slideUp(250, function() {
+                  clearFieldValue(field);
+                });
               }
             }
           }
@@ -1015,8 +1333,91 @@
         }
       }
 
-      $(document).on('change input', 'input, select, textarea', function() {
+      $(document).on('change input blur', 'input, select, textarea', function() {
+        // Find the parent field group
+        const group = $(this).closest('.field-group');
+        if (group.length > 0) {
+          checkFieldValidation(group[0]);
+        }
+        
+        // Also check if it's the auth section input
+        if ($(this).attr('id') === 'input_cardno' || $(this).attr('id') === 'input_mobno') {
+          checkAuthInputValidation(this);
+        }
+        
         evaluateLogic();
+      });
+
+      $(document).on('click', '#sendOtpBtn', async function() {
+        const mobno = document.getElementById('input_mobno').value.trim();
+        const sendBtn = this;
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending...';
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobno })
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('OTP sent successfully to your WhatsApp!');
+            $('#otpInputSection').slideDown();
+            sendBtn.textContent = 'Resend OTP';
+          } else {
+            alert(data.message || 'Failed to send OTP. Please try again.');
+            sendBtn.textContent = 'Send OTP';
+          }
+        } catch (e) {
+          console.error(e);
+          alert('Error sending OTP. Please check your network connection.');
+          sendBtn.textContent = 'Send OTP';
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
+
+      $(document).on('click', '#verifyOtpBtn', async function() {
+        const mobno = document.getElementById('input_mobno').value.trim();
+        const otp = document.getElementById('input_otp').value.trim();
+        const verifyBtn = this;
+
+        if (!otp || otp.length !== 6) {
+          alert('Please enter a valid 6-digit OTP');
+          return;
+        }
+
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = 'Verifying...';
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobno, otp })
+          });
+          const data = await res.json();
+          if (data.success) {
+            isOtpVerified = true;
+            alert('OTP verified successfully!');
+            $('#input_mobno').prop('readonly', true).css('background-color', '#e9ecef');
+            $('#input_otp').prop('readonly', true).css('background-color', '#e9ecef');
+            $('#sendOtpBtn').hide();
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verified ✓';
+            verifyBtn.style.backgroundColor = '#28a745';
+          } else {
+            alert(data.message || 'Invalid OTP. Please try again.');
+            verifyBtn.textContent = 'Verify';
+            verifyBtn.disabled = false;
+          }
+        } catch (e) {
+          console.error(e);
+          alert('Error verifying OTP.');
+          verifyBtn.textContent = 'Verify';
+          verifyBtn.disabled = false;
+        }
       });
 
       async function submitForm(e) {
@@ -1034,86 +1435,44 @@
 
         // Perform final page validation on the current active page
         const pageContainer = document.getElementById(`formPage_${currentPageIdx}`);
-        const visibleGroups = $(pageContainer).find('.field-group:visible');
         let isValid = true;
-        let errMsg = '';
+        let firstInvalidMsg = '';
 
+        if (currentPageIdx === 0 && !formData.isPublic) {
+          const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+          if (authInput) {
+            const isAuthValid = checkAuthInputValidation(authInput);
+            if (!isAuthValid) {
+              isValid = false;
+              firstInvalidMsg = document.getElementById('input_mobno') ? 'Mobile Number is required' : 'Card Number is required';
+            } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
+              isValid = false;
+              firstInvalidMsg = 'Please verify your mobile number using OTP first';
+            }
+          }
+        }
+
+        const visibleGroups = $(pageContainer).find('.field-group:visible');
         visibleGroups.each(function() {
-          const fid = $(this).data('field-id');
-          const field = fields.find(f => f.id === fid);
-          if (!field) return;
-
-          let answerVal = null;
-          let checkedCount = 0;
-          if (field.type === 'checkbox') {
-            const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
-            answerVal = Array.from(checked).map(c => c.value);
-            checkedCount = checked.length;
-          } else if (field.type === 'radio') {
-            const selected = document.querySelector(`input[name="${field.id}"]:checked`);
-            answerVal = selected ? selected.value : '';
-          } else if (field.type === 'grid_radio') {
-            const selectedCols = [];
-            let hasSelectionError = false;
-            field.rows.forEach((r, ri) => {
-              const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
-              if (field.required && !checked) {
-                isValid = false;
-                errMsg = `Please select an option for each row of "${field.label}"`;
-                hasSelectionError = true;
-              }
-              if (checked) {
-                selectedCols.push(checked.value);
-              }
-            });
-
-            if (!hasSelectionError && field.limitOnePerColumn) {
-              const uniqueCols = new Set(selectedCols);
-              if (uniqueCols.size < selectedCols.length) {
-                isValid = false;
-                errMsg = `Please select a unique option per column in "${field.label}". Limit to one response per column.`;
-              }
-            }
-          } else if (field.type === 'grid_checkbox') {
-            field.rows.forEach((r, ri) => {
-              const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
-              if (field.required && checked.length === 0) {
-                isValid = false;
-                errMsg = `Please select at least one checkbox for each row of "${field.label}"`;
-              }
-            });
-          } else {
-            const el = document.getElementById(`input_${field.id}`);
-            answerVal = el ? el.value.trim() : '';
-          }
-
-          if (field.required && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
-            if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
-              isValid = false;
-              errMsg = `"${field.label}" is required`;
-            }
-          }
-
-          // Custom validation rules check
-          if (isValid && field.validation && field.type !== 'grid_radio' && field.type !== 'grid_checkbox') {
-            const valCheck = validateFieldInput(field, answerVal, checkedCount);
-            if (!valCheck.isValid) {
-              isValid = false;
-              errMsg = valCheck.errorMsg;
-            }
-          }
-
-          if (!isValid) {
-            showFormAlertOnPage(currentPageIdx, errMsg, 'danger');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Submit Response';
-            }
-            return false;
+          const check = checkFieldValidation(this);
+          if (!check.isValid) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = check.errorMsg;
           }
         });
 
-        if (!isValid) return;
+        if (!isValid) {
+          showFormAlertOnPage(currentPageIdx, firstInvalidMsg || 'Please correct the errors in the form', 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+          return;
+        }
+
+        // Clear general alert if valid
+        const alert = document.getElementById(`formAlert_${currentPageIdx}`);
+        if (alert) alert.style.display = 'none';
 
         // Collect responses across ALL pages
         fields.forEach(field => {
@@ -1160,16 +1519,29 @@
         }
 
         if (!formData.isPublic) {
-          const cardno = document.getElementById('input_cardno')?.value?.trim();
-          if (!cardno) {
-            showFormAlertOnPage(currentPageIdx, 'Card Number is required', 'danger');
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Submit Response';
+          if (formData.authType === 'mobno') {
+            const mobno = document.getElementById('input_mobno')?.value?.trim();
+            if (!mobno) {
+              showFormAlertOnPage(currentPageIdx, 'Mobile Number is required', 'danger');
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Response';
+              }
+              return;
             }
-            return;
+            body.mobno = mobno;
+          } else {
+            const cardno = document.getElementById('input_cardno')?.value?.trim();
+            if (!cardno) {
+              showFormAlertOnPage(currentPageIdx, 'Card Number is required', 'danger');
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Response';
+              }
+              return;
+            }
+            body.cardno = cardno;
           }
-          body.cardno = cardno;
         }
 
         try {
@@ -1177,8 +1549,8 @@
           const isEdit = responseId && formData.allowEdit;
 
           const url = isEdit
-            ? `${CONFIG.baseUrl}/forms/${formId}/responses/${responseId}`
-            : `${CONFIG.baseUrl}/forms/${formId}/submit`;
+            ? `${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${responseId}`
+            : `${CONFIG.baseUrl}/admin/forms/public/${formId}/submit`;
 
           const res = await fetch(url, {
             method: 'POST',
@@ -1218,7 +1590,7 @@
         // Edit Response button
         if (formData.allowEdit && respId) {
           actionsHtml += `
-            <a href="view.html?id=${formId}&responseId=${respId}" class="submit-btn" style="text-decoration:none; display:inline-block; max-width:220px; text-align:center; margin: 0 0.5rem 0.5rem 0.5rem;">
+            <a href="view.html?id=${formId}&responseId=${respId}" class="submit-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; width:240px; text-align:center; margin:0.5rem; box-sizing:border-box;">
               <i class="fas fa-edit"></i> Edit Response
             </a>
           `;
@@ -1226,9 +1598,9 @@
 
         // Submit Another Response link
         const alreadySubmittedLimit = formData.limitOneResponse && !formData.allowEdit;
-        if (formData.showSubmitAnother && !alreadySubmittedLimit && !isEdit) {
+        if (formData.showSubmitAnother && !alreadySubmittedLimit) {
           actionsHtml += `
-            <a href="view.html?id=${formId}" class="submit-btn" style="text-decoration:none; display:inline-block; max-width:240px; text-align:center; background-color:#6c757d; margin: 0 0.5rem 0.5rem 0.5rem;">
+            <a href="view.html?id=${formId}" class="submit-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; width:240px; text-align:center; background-color:#6c757d; margin:0.5rem; box-sizing:border-box;">
               <i class="fas fa-redo"></i> Submit another response
             </a>
           `;
@@ -1241,7 +1613,7 @@
             <div class="success-icon" style="color:#28a745;">✓</div>
             <h2>${isEdit ? 'Response Updated!' : 'Response Submitted!'}</h2>
             <p>${renderRichText(msgText)}</p>
-            <div style="margin-top:2rem; display:flex; justify-content:center; flex-wrap:wrap;">
+            <div style="margin-top:2rem; display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem;">
               ${actionsHtml}
             </div>
           </div>
@@ -1261,7 +1633,7 @@
 
       async function loadAndPopulateResponse(responseId) {
         try {
-          const res = await fetch(`${CONFIG.baseUrl}/forms/${formId}/responses/${responseId}`);
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${responseId}`);
           const data = await res.json();
 
           if (!data.success) {
@@ -1277,10 +1649,26 @@
 
       function populateFormFields(responseObj) {
         const answers = responseObj.responses || {};
-        if (responseObj.cardno && document.getElementById('input_cardno')) {
-          document.getElementById('input_cardno').value = responseObj.cardno;
+        if (responseObj.respondent?.mobno && document.getElementById('input_mobno')) {
+          const mob = responseObj.respondent.mobno;
+          document.getElementById('input_mobno').value = mob;
+          document.getElementById('input_mobno').readOnly = true;
+          document.getElementById('input_mobno').style.backgroundColor = '#e9ecef';
+          $('#input_mobno').after(`
+            <div id="info_mobno" style="color: #28a745; font-size: 0.88rem; margin-top: 0.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
+              <i class="fas fa-check-circle"></i> Registered to: ${responseObj.respondent.issuedto || 'Registered User'} (${responseObj.respondent.center || 'No Center'})
+            </div>
+          `);
+        } else if (responseObj.cardno && document.getElementById('input_cardno')) {
+          const card = responseObj.cardno;
+          document.getElementById('input_cardno').value = card;
           document.getElementById('input_cardno').readOnly = true;
           document.getElementById('input_cardno').style.backgroundColor = '#e9ecef';
+          $('#input_cardno').after(`
+            <div id="info_cardno" style="color: #28a745; font-size: 0.88rem; margin-top: 0.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
+              <i class="fas fa-check-circle"></i> Registered to: ${responseObj.respondent?.issuedto || 'Registered User'} (${responseObj.respondent?.center || 'No Center'})
+            </div>
+          `);
         }
 
         formData.fields.forEach(field => {

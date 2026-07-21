@@ -408,9 +408,15 @@
                   <div>
                     <label for="formType">Access Type</label>
                     <select id="formType" class="form-control">
-                      <option value="true">Public (anyone can fill)</option>
-                      <option value="false">Authenticated (requires Card No.)</option>
+                      <option value="public">Public (anyone can fill)</option>
+                      <option value="cardno">Authenticated (requires Card No.)</option>
+                      <option value="mobno">Authenticated (requires Mobile No.)</option>
                     </select>
+                    <!-- OTP Verification option: only visible when authType = mobno -->
+                    <div id="requireOtpRow" style="display:none; align-items:center; gap:0.5rem; margin-top:0.5rem;">
+                      <input type="checkbox" id="requireOtp" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
+                      <label for="requireOtp" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Require OTP Verification</label>
+                    </div>
                   </div>
                   <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -580,10 +586,17 @@
         const fieldType = fieldData?.type || 'text';
         const fieldRequired = fieldData?.required || false;
         const fieldOptions = fieldData?.options || [];
-        const fieldLogic = fieldData?.logic || null;
+        const fieldLogic = fieldData?.logic || (fieldData?.conditions && fieldData.conditions[0] ? { dependsOn: fieldData.conditions[0].fieldId, operator: fieldData.conditions[0].operator, value: fieldData.conditions[0].value } : null);
         const fieldDesc = fieldData?.description || '';
         const fieldRows = fieldData?.rows || [];
         const fieldCols = fieldData?.columns || [];
+
+        const dateConstraints = fieldData?.dateConstraints || {};
+        const minType = dateConstraints.minType || '';
+        const minFixed = dateConstraints.minFixed || '';
+        const maxType = dateConstraints.maxType || '';
+        const maxFixed = dateConstraints.maxFixed || '';
+        const cutoffHourVal = dateConstraints.cutoffHour !== undefined && dateConstraints.cutoffHour !== null ? dateConstraints.cutoffHour : '';
 
         const card = document.createElement('div');
         card.className = 'field-card';
@@ -659,6 +672,16 @@
                 <div>
                   <label class="val-param-label-1" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Value</label>
                   <input type="text" class="validation-param-1 form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+                  <div class="regex-presets-container" id="regexPresets_${idx}" style="display:none; margin-top: 0.35rem;">
+                    <small style="color:#6c757d; font-size:0.72rem; line-height: 1.4; display:block;">
+                      Presets: 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^[a-zA-Z ]+$', 'Only letters and spaces allowed')" style="color:#4c86b0; text-decoration:underline;">Letters only</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^\\\\d{6}$', 'Must be a 6-digit PIN code')" style="color:#4c86b0; text-decoration:underline;">6-digit PIN</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^[A-Z]{5}\\\\d{4}[A-Z]{1}$', 'Must be a valid PAN card number')" style="color:#4c86b0; text-decoration:underline;">PAN Card</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^\\\\d{12}$', 'Must be a 12-digit Aadhaar number')" style="color:#4c86b0; text-decoration:underline;">Aadhaar</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$', 'Must be a valid email address')" style="color:#4c86b0; text-decoration:underline;">Email</a>
+                    </small>
+                  </div>
                 </div>
                 <div>
                   <label class="val-param-label-2" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Max</label>
@@ -671,8 +694,45 @@
               </div>
             </div>
           </div>
-          
-          <!-- Choice options -->
+
+          <!-- Date Constraints (only for date-type fields) -->
+          <div class="date-constraints-wrapper" style="margin-top:0.75rem; border-top:1px dashed #eee; padding-top:0.75rem; display:${fieldType === 'date' ? 'block' : 'none'}">
+            <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('i').classList.toggle('fa-chevron-down'); this.querySelector('i').classList.toggle('fa-chevron-up');">
+              <span style="font-size:0.85rem; font-weight:600; color:#28a745;"><i class="fas fa-calendar-check"></i> Date Constraints (Optional)</span>
+              <i class="fas fa-chevron-down" style="font-size:0.8rem; color:#28a745; transition: transform 0.2s;"></i>
+            </div>
+            <div style="display:none; margin-top:0.75rem; background:#f8fff8; border:1px solid #c3e6cb; border-radius:6px; padding:0.75rem;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                <div>
+                  <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Earliest Allowed Date</label>
+                  <select class="date-min-type form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height:auto;" onchange="toggleDateFixedInputs(this)">
+                    <option value="" ${minType === '' ? 'selected' : ''}>No minimum</option>
+                    <option value="today" ${minType === 'today' ? 'selected' : ''}>Today (or later)</option>
+                    <option value="tomorrow" ${minType === 'tomorrow' ? 'selected' : ''}>Tomorrow (or later)</option>
+                    <option value="fixed" ${minType === 'fixed' ? 'selected' : ''}>Fixed date...</option>
+                  </select>
+                  <input type="date" class="date-min-fixed" value="${escapeAttr(minFixed)}" style="display:${minType === 'fixed' ? 'block' : 'none'}; margin-top:0.3rem; padding:0.25rem 0.5rem; font-size:0.8rem; border:1px solid #ced4da; border-radius:4px; width:100%; box-sizing:border-box;" />
+                </div>
+                <div>
+                  <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Latest Allowed Date</label>
+                  <select class="date-max-type form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height:auto;" onchange="toggleDateFixedInputs(this)">
+                    <option value="" ${maxType === '' ? 'selected' : ''}>No maximum</option>
+                    <option value="today" ${maxType === 'today' ? 'selected' : ''}>Today (or earlier)</option>
+                    <option value="fixed" ${maxType === 'fixed' ? 'selected' : ''}>Fixed date...</option>
+                  </select>
+                  <input type="date" class="date-max-fixed" value="${escapeAttr(maxFixed)}" style="display:${maxType === 'fixed' ? 'block' : 'none'}; margin-top:0.3rem; padding:0.25rem 0.5rem; font-size:0.8rem; border:1px solid #ced4da; border-radius:4px; width:100%; box-sizing:border-box;" />
+                </div>
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Cutoff Hour (24h format, previous day cutoff for selected date)</label>
+                <select class="date-cutoff-hour form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height:auto;">
+                  <option value="" ${cutoffHourVal === '' ? 'selected' : ''}>No cutoff</option>
+                  ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${cutoffHourVal === i ? 'selected' : ''}>${i}:00 (${i < 12 ? i || 12 : i - 12} ${i < 12 ? 'AM' : 'PM'})</option>`).join('')}
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div class="options-container" id="optionsContainer_${idx}" style="display: ${OPTION_TYPES.includes(fieldType) ? 'block' : 'none'}">
             <label>Options</label>
             <div id="optionsList_${idx}">
@@ -725,7 +785,11 @@
               <select class="logic-depends-on" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:180px;">
                 <!-- Dynamically populated -->
               </select>
-              <span> equals </span>
+              <select class="logic-operator" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:120px;">
+                <option value="equals" ${fieldLogic?.operator === 'equals' ? 'selected' : ''}>equals</option>
+                <option value="not_equals" ${fieldLogic?.operator === 'not_equals' ? 'selected' : ''}>not equals</option>
+                <option value="contains" ${fieldLogic?.operator === 'contains' ? 'selected' : ''}>contains</option>
+              </select>
               <input type="text" class="logic-value" value="${escapeAttr(fieldLogic?.value || '')}" placeholder="Value" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:150px;" />
             </div>
           </div>
@@ -847,6 +911,16 @@
 
         optContainer.style.display = OPTION_TYPES.includes(type) ? 'block' : 'none';
         gridContainer.style.display = ['grid_radio', 'grid_checkbox'].includes(type) ? 'block' : 'none';
+        
+        const dateConstraintsWrapper = card.querySelector('.date-constraints-wrapper');
+        if (dateConstraintsWrapper) {
+          dateConstraintsWrapper.style.display = type === 'date' ? 'block' : 'none';
+        }
+
+        const valTriggerWrapper = card.querySelector('.validation-trigger-wrapper');
+        if (valTriggerWrapper) {
+          valTriggerWrapper.style.display = ['text', 'textarea', 'checkbox', 'number', 'date'].includes(type) ? 'block' : 'none';
+        }
         
         if (type === 'section') {
           reqToggle.style.display = 'none';
@@ -1027,6 +1101,16 @@
         }
       }
 
+      function toggleDateFixedInputs(selectEl) {
+        const nextInput = selectEl.nextElementSibling;
+        if (selectEl.value === 'fixed') {
+          nextInput.style.display = 'block';
+        } else {
+          nextInput.style.display = 'none';
+          nextInput.value = '';
+        }
+      }
+
       function toggleValidationPanel(idx) {
         const panel = document.getElementById(`validationRulesPanel_${idx}`);
         const arrow = document.querySelector(`.val-arrow_${idx}`);
@@ -1069,6 +1153,7 @@
               <option value="not_between">Not between</option>
               <option value="is_number">Is number</option>
               <option value="whole_number">Whole number</option>
+              <option value="ten_digit">10-digit number</option>
             `;
           } else if (category === 'number_range') {
             rulesHtml += `
@@ -1112,6 +1197,18 @@
         }
       }
 
+      function setRegexPreset(idx, pattern, errorMsg) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          if (card) {
+            card.querySelector('.validation-param-1').value = pattern;
+            card.querySelector('.validation-error-msg').value = errorMsg;
+          }
+        } catch (e) {
+          console.error("Error setting regex preset:", e);
+        }
+      }
+
       function onValidationRuleChange(idx) {
         try {
           const card = document.getElementById(`fieldCard_${idx}`);
@@ -1132,7 +1229,13 @@
           param1.type = 'text';
           param2.type = 'text';
 
-          if (['is_number', 'whole_number', 'email', 'url'].includes(rule)) {
+          // Show or hide regex presets helper
+          const presetsEl = document.getElementById(`regexPresets_${idx}`);
+          if (presetsEl) {
+            presetsEl.style.display = (category === 'regex') ? 'block' : 'none';
+          }
+
+          if (['is_number', 'whole_number', 'email', 'url', 'ten_digit'].includes(rule)) {
             paramsWrapper.style.display = 'none';
           } else if (rule === 'between' || rule === 'not_between') {
             lbl1.textContent = 'Minimum';
@@ -1195,32 +1298,17 @@
 
           triggerWrapper.style.display = 'block';
 
-          let catHtml = '<option value="">-- No Validation --</option>';
-          if (currentType === 'text') {
-            catHtml += `
-              <option value="number">Number</option>
-              <option value="text">Text</option>
-              <option value="length">Length</option>
-              <option value="regex">Regular expression</option>
-            `;
-          } else if (currentType === 'textarea') {
-            catHtml += `
-              <option value="length">Length</option>
-              <option value="regex">Regular expression</option>
-            `;
-          } else if (currentType === 'checkbox') {
-            catHtml += `
-              <option value="checkbox">Selection Limit</option>
-            `;
-          } else if (currentType === 'number') {
-            catHtml += `
-              <option value="number_range">Number Range</option>
-            `;
-          } else if (currentType === 'date') {
-            catHtml += `
-              <option value="date_range">Date Range</option>
-            `;
-          }
+          // Show all validation categories for all validateable fields
+          let catHtml = `
+            <option value="">-- No Validation --</option>
+            <option value="number">Number</option>
+            <option value="text">Text</option>
+            <option value="length">Length</option>
+            <option value="regex">Regular expression</option>
+            <option value="checkbox">Selection Limit</option>
+            <option value="number_range">Number Range</option>
+            <option value="date_range">Date Range</option>
+          `;
 
           categorySelect.innerHTML = catHtml;
           ruleSelect.innerHTML = '';
@@ -1294,13 +1382,20 @@
           if (type !== 'section') {
             const logicEnable = card.querySelector('.field-logic-enable').checked;
             const dependsOn = card.querySelector('.logic-depends-on').value;
+            const operator = card.querySelector('.logic-operator').value;
             const logicVal = card.querySelector('.logic-value').value.trim();
 
             if (logicEnable && dependsOn && logicVal) {
               field.logic = {
                 dependsOn,
+                operator,
                 value: logicVal
               };
+              field.conditions = [{
+                fieldId: dependsOn,
+                operator: operator,
+                value: logicVal
+              }];
             }
 
             // Collect Validation rules if configured
@@ -1324,6 +1419,23 @@
 
               field.validation = validation;
             }
+
+            // Collect Date constraints if configured
+            if (type === 'date') {
+              const minType = card.querySelector('.date-min-type').value;
+              const minFixed = card.querySelector('.date-min-fixed').value;
+              const maxType = card.querySelector('.date-max-type').value;
+              const maxFixed = card.querySelector('.date-max-fixed').value;
+              const cutoffHour = card.querySelector('.date-cutoff-hour').value;
+              
+              field.dateConstraints = {
+                minType: minType || null,
+                minFixed: minFixed || null,
+                maxType: maxType || null,
+                maxFixed: maxFixed || null,
+                cutoffHour: cutoffHour !== "" ? parseInt(cutoffHour, 10) : null
+              };
+            }
           }
 
           fields.push(field);
@@ -1336,7 +1448,11 @@
         const title = document.getElementById('formTitle').value.trim();
         const description = document.getElementById('formDescription').value.trim();
         const dept_name = document.getElementById('formDept').value.trim();
-        const isPublic = document.getElementById('formType').value === 'true';
+        
+        const accessVal = document.getElementById('formType').value;
+        const isPublic = accessVal === 'public';
+        const authType = accessVal === 'public' ? 'cardno' : accessVal;
+
         const limitOneResponse = document.getElementById('limitOneResponse').checked;
         const allowEdit = document.getElementById('allowEdit').checked;
         const showProgressBar = document.getElementById('showProgressBar').checked;
@@ -1372,10 +1488,12 @@
           }
         }
 
+        const requireOtp = document.getElementById('requireOtp').checked;
+
         const body = { 
-          title, description, dept_name, fields, isPublic, slug, 
+          title, description, dept_name, fields, isPublic, authType, slug, 
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses
+          expiresAt, closeMessage, maxResponses, requireOtp
         };
 
         try {
@@ -1426,7 +1544,13 @@
           document.getElementById('formTitle').value = form.title || '';
           document.getElementById('formDescription').value = form.description || '';
           document.getElementById('formDept').value = form.dept_name || '';
-          document.getElementById('formType').value = form.isPublic ? 'true' : 'false';
+
+          let accessVal = 'public';
+          if (!form.isPublic) {
+            accessVal = form.authType === 'mobno' ? 'mobno' : 'cardno';
+          }
+          document.getElementById('formType').value = accessVal;
+
           document.getElementById('limitOneResponse').checked = form.limitOneResponse || false;
           document.getElementById('allowEdit').checked = form.allowEdit || false;
           document.getElementById('showProgressBar').checked = form.showProgressBar !== undefined ? form.showProgressBar : true;
@@ -1442,6 +1566,9 @@
           document.getElementById('closeMessage').value = form.closeMessage || '';
           
           document.getElementById('formSlug').value = form.slug || '';
+          document.getElementById('requireOtp').checked = form.requireOtp || false;
+          const accessValNow = document.getElementById('formType').value;
+          document.getElementById('requireOtpRow').style.display = accessValNow === 'mobno' ? 'flex' : 'none';
 
           // Load fields
           if (form.fields && Array.isArray(form.fields)) {
@@ -1486,7 +1613,11 @@
         const title = document.getElementById('formTitle').value.trim() || 'Untitled Form';
         const description = document.getElementById('formDescription').value.trim();
         const dept_name = document.getElementById('formDept').value.trim();
-        const isPublic = document.getElementById('formType').value === 'true';
+        
+        const accessVal = document.getElementById('formType').value;
+        const isPublic = accessVal === 'public';
+        const authType = accessVal === 'public' ? 'cardno' : accessVal;
+
         const limitOneResponse = document.getElementById('limitOneResponse').checked;
         const allowEdit = document.getElementById('allowEdit').checked;
         const showProgressBar = document.getElementById('showProgressBar').checked;
@@ -1506,14 +1637,28 @@
         const slug = document.getElementById('formSlug').value.trim();
         const fields = collectFields();
 
+        const requireOtp = document.getElementById('requireOtp').checked;
+
         const previewData = { 
-          title, description, dept_name, fields, isPublic, slug, 
+          title, description, dept_name, fields, isPublic, authType, slug, 
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses
+          expiresAt, closeMessage, maxResponses, requireOtp
         };
         sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
         window.open('view.html?preview=true', '_blank');
       }
+
+      // Listen for formType changes to toggle OTP option
+      $(document).on('change', '#formType', function() {
+        const val = this.value;
+        const row = document.getElementById('requireOtpRow');
+        if (val === 'mobno') {
+          row.style.display = 'flex';
+        } else {
+          row.style.display = 'none';
+          document.getElementById('requireOtp').checked = false;
+        }
+      });
 
       // Initialize
       if (editId) {

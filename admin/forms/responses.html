@@ -303,6 +303,32 @@
 
             <!-- Tab Content Sections -->
             <div id="tableViewSection" class="tab-section">
+              <!-- Filters Card -->
+              <div class="filters-card" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                <div style="flex: 1; min-width: 250px;">
+                  <label for="searchQuery" style="display: block; font-size: 0.85rem; font-weight: 700; color: #495057; margin-bottom: 0.35rem;">Search Responses</label>
+                  <div style="position: relative;">
+                    <input type="text" id="searchQuery" placeholder="Search by name, card, mobile, center, or answers..." style="width: 100%; padding: 0.55rem 0.75rem 0.55rem 2rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;" />
+                    <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #adb5bd; font-size: 0.85rem;"></i>
+                  </div>
+                </div>
+                <div style="width: 180px; min-width: 150px;">
+                  <label for="filterCentre" style="display: block; font-size: 0.85rem; font-weight: 700; color: #495057; margin-bottom: 0.35rem;">Filter by Centre</label>
+                  <select id="filterCentre" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem; background-color: white;">
+                    <option value="">All Centres</option>
+                  </select>
+                </div>
+                <div style="width: 180px; min-width: 150px;">
+                  <label for="filterResStatus" style="display: block; font-size: 0.85rem; font-weight: 700; color: #495057; margin-bottom: 0.35rem;">Filter by Resident Status</label>
+                  <select id="filterResStatus" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem; background-color: white;">
+                    <option value="">All Statuses</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: flex-end; padding-top: 1.25rem;">
+                  <button type="button" class="btn btn-secondary" onclick="resetFilters()" style="background-color: #6c757d; color: white; border: none; padding: 0.55rem 1rem; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; height: 38px;"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+              </div>
+
               <div class="table-responsive">
                 <table class="table" id="responsesTable">
                   <thead id="responsesHead">
@@ -353,6 +379,7 @@
           cachedForm = form;
           cachedResponses = responses;
           renderMeta(form, responses.length);
+          populateFilterOptions(responses);
           renderTable(form.fields, responses);
         } catch (err) {
           showError('Error loading responses: ' + err.message);
@@ -385,8 +412,8 @@
           return;
         }
 
-        // Build header: # | Respondent | each field label | Submitted At
-        let headerHtml = '<tr><th>#</th><th>Respondent</th>';
+        // Build header: # | Name | Centre | Res Status | Mob No | Card No | each field label | Submitted At
+        let headerHtml = '<tr><th>#</th><th>Name</th><th>Centre</th><th>Res Status</th><th>Mob No</th><th>Card No</th>';
         fields.forEach(f => {
           headerHtml += `<th>${escapeHtml(f.label)}</th>`;
         });
@@ -396,22 +423,23 @@
         // Build rows
         let rowsHtml = '';
         responses.forEach((resp, idx) => {
-          let respondent = 'Anonymous';
+          let name = 'Anonymous';
+          let center = '';
+          let resStatus = '';
+          let mobno = '';
+          let cardno = '';
+
           if (resp.respondent) {
-            const name = resp.respondent.issuedto ? escapeHtml(resp.respondent.issuedto) : '';
-            const center = resp.respondent.center ? escapeHtml(resp.respondent.center) : '';
-            const resStatus = resp.respondent.res_status ? escapeHtml(resp.respondent.res_status) : '';
-            const cardno = resp.respondent.cardno ? escapeHtml(resp.respondent.cardno) : (resp.cardno ? escapeHtml(resp.cardno) : '');
-            
-            const parts = [];
-            if (center) parts.push(center);
-            if (resStatus) parts.push(resStatus);
-            if (cardno) parts.push(cardno);
-            
-            respondent = parts.length > 0 ? `${name} (${parts.join(', ')})` : name;
+            name = resp.respondent.issuedto ? escapeHtml(resp.respondent.issuedto) : '';
+            center = resp.respondent.center ? escapeHtml(resp.respondent.center) : '';
+            resStatus = resp.respondent.res_status ? escapeHtml(resp.respondent.res_status) : '';
+            mobno = resp.respondent.mobno ? escapeHtml(String(resp.respondent.mobno)) : '';
+            cardno = resp.respondent.cardno ? escapeHtml(resp.respondent.cardno) : (resp.cardno ? escapeHtml(resp.cardno) : '');
+          } else if (resp.cardno) {
+            cardno = escapeHtml(resp.cardno);
           }
 
-          rowsHtml += `<tr><td>${idx + 1}</td><td>${respondent}</td>`;
+          rowsHtml += `<tr><td>${idx + 1}</td><td>${name}</td><td>${center}</td><td>${resStatus}</td><td>${mobno}</td><td>${cardno}</td>`;
 
           fields.forEach(f => {
             let answer = resp.responses ? resp.responses[f.id] : '';
@@ -427,8 +455,98 @@
         tbody.innerHTML = rowsHtml;
       }
 
+      function populateFilterOptions(responses) {
+        const centres = new Set();
+        const statuses = new Set();
+
+        responses.forEach(resp => {
+          if (resp.respondent) {
+            if (resp.respondent.center) centres.add(resp.respondent.center);
+            if (resp.respondent.res_status) statuses.add(resp.respondent.res_status);
+          }
+        });
+
+        const filterCentre = document.getElementById('filterCentre');
+        const filterResStatus = document.getElementById('filterResStatus');
+
+        filterCentre.innerHTML = '<option value="">All Centres</option>';
+        filterResStatus.innerHTML = '<option value="">All Statuses</option>';
+
+        Array.from(centres).sort().forEach(c => {
+          filterCentre.innerHTML += `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`;
+        });
+
+        Array.from(statuses).sort().forEach(s => {
+          filterResStatus.innerHTML += `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`;
+        });
+      }
+
+      function applyFilters() {
+        if (!cachedForm || !cachedResponses) return;
+
+        const query = document.getElementById('searchQuery').value.trim().toLowerCase();
+        const center = document.getElementById('filterCentre').value;
+        const status = document.getElementById('filterResStatus').value;
+
+        const filtered = cachedResponses.filter(resp => {
+          const name = (resp.respondent?.issuedto || 'Anonymous').toLowerCase();
+          const card = (resp.respondent?.cardno || resp.cardno || '').toLowerCase();
+          const mob = (resp.respondent?.mobno || '').toString().toLowerCase();
+          const respCenter = (resp.respondent?.center || '').toLowerCase();
+          const respStatus = (resp.respondent?.res_status || '').toLowerCase();
+
+          // 1. Center filter
+          if (center && resp.respondent?.center !== center) return false;
+
+          // 2. Status filter
+          if (status && resp.respondent?.res_status !== status) return false;
+
+          // 3. General search query
+          if (query) {
+            if (name.includes(query) || card.includes(query) || mob.includes(query) || respCenter.includes(query) || respStatus.includes(query)) {
+              return true;
+            }
+
+            if (resp.responses) {
+              const answers = Object.values(resp.responses);
+              for (const ans of answers) {
+                if (ans) {
+                  const ansStr = Array.isArray(ans) ? ans.join(' ').toLowerCase() : String(ans).toLowerCase();
+                  if (ansStr.includes(query)) return true;
+                }
+              }
+            }
+
+            return false;
+          }
+
+          return true;
+        });
+
+        filteredResponses = filtered;
+        renderTable(cachedForm.fields, filtered);
+      }
+
+      function resetFilters() {
+        document.getElementById('searchQuery').value = '';
+        document.getElementById('filterCentre').value = '';
+        document.getElementById('filterResStatus').value = '';
+        applyFilters();
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      $(document).ready(function() {
+        $(document).on('input keyup', '#searchQuery', applyFilters);
+        $(document).on('change', '#filterCentre, #filterResStatus', applyFilters);
+      });
+
       let cachedForm = null;
       let cachedResponses = null;
+      let filteredResponses = null;
       let activeTab = 'table';
       let activeCharts = [];
 
@@ -603,28 +721,35 @@
       }
 
       function exportTable() {
-        if (!cachedForm || !cachedResponses || cachedResponses.length === 0) {
+        const exportData = filteredResponses ?? cachedResponses;
+        if (!cachedForm || !exportData || exportData.length === 0) {
           alert('No data available to download.');
           return;
         }
 
-        const dataArray = cachedResponses.map((resp, idx) => {
+        const dataArray = exportData.map((resp, idx) => {
           const row = { '#': idx + 1 };
-          let respondent = 'Anonymous';
+          let name = 'Anonymous';
+          let center = '';
+          let resStatus = '';
+          let mobno = '';
+          let cardno = '';
+
           if (resp.respondent) {
-            const name = resp.respondent.issuedto || '';
-            const center = resp.respondent.center || '';
-            const resStatus = resp.respondent.res_status || '';
-            const cardno = resp.respondent.cardno || resp.cardno || '';
-            
-            const parts = [];
-            if (center) parts.push(center);
-            if (resStatus) parts.push(resStatus);
-            if (cardno) parts.push(cardno);
-            
-            respondent = parts.length > 0 ? `${name} (${parts.join(', ')})` : name;
+            name = resp.respondent.issuedto || '';
+            center = resp.respondent.center || '';
+            resStatus = resp.respondent.res_status || '';
+            mobno = resp.respondent.mobno || '';
+            cardno = resp.respondent.cardno || resp.cardno || '';
+          } else if (resp.cardno) {
+            cardno = resp.cardno;
           }
-          row['Respondent'] = respondent;
+
+          row['Name'] = name;
+          row['Centre'] = center;
+          row['Res Status'] = resStatus;
+          row['Mob No'] = mobno;
+          row['Card No'] = cardno;
 
           cachedForm.fields.forEach(f => {
             let answer = resp.responses ? resp.responses[f.id] : '';
