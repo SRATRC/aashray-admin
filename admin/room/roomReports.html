@@ -212,6 +212,42 @@
   </div>
 </div>
 
+<!-- Modal for Room Booking Room Number Update -->
+<div id="updateRoomBookingModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">Update Assigned Room</div>
+    <form id="updateRoomForm">
+      <div class="form-group">
+        <label for="modal_update_bookingid_display">Booking ID:</label>
+        <input type="text" id="modal_update_bookingid_display" class="form-control" readonly disabled />
+        <input type="hidden" id="modal_update_bookingid" />
+      </div>
+
+      <div class="form-group">
+        <label for="modal_update_roomNumber">New Room No:</label>
+        <select id="modal_update_roomNumber" class="form-control" required></select>
+      </div>
+
+      <!-- Option for assigning a new room to the conflicting booking -->
+      <div id="conflict_resolution_section" style="display: none; border: 1px solid #ffcccc; background-color: #fff5f5; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+        <p style="color: #cc0000; font-weight: bold; margin-top: 0;" id="conflict_message"></p>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label><input type="checkbox" id="resolve_conflict_checkbox" /> Also assign a new room to the conflicting booking</label>
+        </div>
+        <div class="form-group" id="conflicting_room_select_group" style="display: none; margin-top: 10px; margin-bottom: 0;">
+          <label for="modal_update_conflicting_roomNumber" id="conflicting_room_label">New Room No for Conflicting Guest:</label>
+          <select id="modal_update_conflicting_roomNumber" class="form-control"></select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="closeUpdateRoomModal" class="btn btn-secondary">Close</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
   <!-- Init features -->
   <script type="module">
     document.addEventListener('DOMContentLoaded', () => {

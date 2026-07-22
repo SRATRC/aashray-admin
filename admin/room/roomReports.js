@@ -54,16 +54,10 @@ function getEditAction(booking) {
     case "admin cancelled":
       break;
     default:
-      editUrl = `<a href='#' onclick="storeFiltersAndGo('${booking.bookingid}')" style="margin-right: 6px; text-decoration: none;"><span>✎</span></a>`;
+      editUrl = `<a href='javascript:void(0);' onclick="openUpdateRoomBookingModal('${booking.bookingid}')" style="margin-right: 6px; text-decoration: none;"><span>✎</span></a>`;
   }
   editUrl += (booking.roomno || "Not Assigned");
   return editUrl;
-}
-
-function storeFiltersAndGo(bookingid) {
-  const filters = collectFilters();
-  sessionStorage.setItem('roomReportFilters', JSON.stringify(filters));
-  window.location.href = `updateRoomBooking.html?bookingid=${bookingid}`;
 }
 
 function getFlatAction(booking) {
@@ -196,6 +190,10 @@ async function fetchReport() {
     return;
   }
 
+  // ✅ Save filters to sessionStorage whenever report is fetched
+  const filters = collectFilters();
+  sessionStorage.setItem('roomReportFilters', JSON.stringify(filters));
+
   const checkedValues = [...document.querySelectorAll('input[type="checkbox"]:checked')]
     .map(checkbox => checkbox.value);
 
@@ -232,7 +230,7 @@ async function fetchReport() {
     reportsTableBody.innerHTML = '';
 
     if (roomreports.length === 0) {
-      showErrorMessage("No bookings found for the selected date range.");
+      reportsTableBody.innerHTML = '<tr><td colspan="16" style="text-align: center; padding: 20px; color: #888;">No bookings found for the selected date range.</td></tr>';
       return;
     }
 
@@ -439,5 +437,195 @@ document.getElementById('roomStatusForm').addEventListener('submit', async funct
   } catch (err) {
     console.error("Update failed:", err);
     showErrorMessage("Error while updating booking.");
+  }
+});
+
+let conflictingBooking = null;
+
+window.openUpdateRoomBookingModal = async function(bookingid) {
+  resetAlert();
+  document.getElementById('modal_update_bookingid').value = bookingid;
+  document.getElementById('modal_update_bookingid_display').value = bookingid;
+
+  // Reset conflict resolution section
+  document.getElementById('conflict_resolution_section').style.display = 'none';
+  document.getElementById('resolve_conflict_checkbox').checked = false;
+  document.getElementById('conflicting_room_select_group').style.display = 'none';
+  document.getElementById('conflict_message').textContent = '';
+  document.getElementById('modal_update_conflicting_roomNumber').innerHTML = '';
+  conflictingBooking = null;
+
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/stay/available_rooms/${bookingid}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showErrorMessage(data.message);
+      return;
+    }
+
+    const rooms = data.data;
+    const roomSelector = document.getElementById('modal_update_roomNumber');
+    roomSelector.innerHTML = '<option value="">-- Select Room --</option>';
+
+    rooms.forEach((room) => {
+      const option = document.createElement('option');
+      option.value = room.roomno;
+      option.textContent = room.roomno;
+      roomSelector.appendChild(option);
+    });
+
+    document.getElementById('updateRoomBookingModal').style.display = 'block';
+
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    showErrorMessage("An error occurred while fetching available rooms.");
+  }
+};
+
+document.getElementById('modal_update_roomNumber').addEventListener('change', async function() {
+  const roomno = this.value;
+  const bookingid = document.getElementById('modal_update_bookingid').value;
+
+  // Reset conflict resolution section
+  const conflictSec = document.getElementById('conflict_resolution_section');
+  conflictSec.style.display = 'none';
+  document.getElementById('resolve_conflict_checkbox').checked = false;
+  document.getElementById('conflicting_room_select_group').style.display = 'none';
+  document.getElementById('conflict_message').textContent = '';
+  document.getElementById('modal_update_conflicting_roomNumber').innerHTML = '';
+  conflictingBooking = null;
+
+  if (!roomno || roomno === 'NA') return;
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/stay/check_room_conflict`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ bookingid, roomno })
+    });
+
+    const data = await response.json();
+    if (response.ok && data.hasConflict) {
+      const c = data.conflict;
+      conflictingBooking = c;
+      const cMsg = `Room ${roomno} overlaps a booking assigned to ${c.guestName} (Booking ID: ${c.bookingid}) from ${formatDate(c.checkin)} to ${formatDate(c.checkout)}.`;
+      
+      // Prompt/alert: "This room is overlapping a booking to which it is assigned. Do you want to continue?"
+      if (confirm(`${cMsg}\n\nDo you want to continue?`)) {
+        // If they click yes, show option in the modal to assign new room to the conflicting booking
+        conflictSec.style.display = 'block';
+        document.getElementById('conflict_message').textContent = cMsg;
+
+        // Fetch available rooms for the conflicting booking
+        const roomsRes = await fetch(`${CONFIG.basePath}/stay/available_rooms/${c.bookingid}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          }
+        });
+        const roomsData = await roomsRes.json();
+        if (roomsRes.ok) {
+          const conflictingSelector = document.getElementById('modal_update_conflicting_roomNumber');
+          conflictingSelector.innerHTML = '<option value="">-- Select New Room for Conflicting Guest --</option>';
+          roomsData.data.forEach((room) => {
+            const option = document.createElement('option');
+            option.value = room.roomno;
+            option.textContent = room.roomno;
+            conflictingSelector.appendChild(option);
+          });
+        }
+      } else {
+        // Reset room selection
+        this.value = '';
+      }
+    }
+  } catch (err) {
+    console.error('Conflict check failed:', err);
+  }
+});
+
+// Toggle conflicting room select visibility based on resolve checkbox
+document.getElementById('resolve_conflict_checkbox').addEventListener('change', function() {
+  const selectGroup = document.getElementById('conflicting_room_select_group');
+  const conflictingSelector = document.getElementById('modal_update_conflicting_roomNumber');
+  if (this.checked) {
+    selectGroup.style.display = 'block';
+    conflictingSelector.required = true;
+  } else {
+    selectGroup.style.display = 'none';
+    conflictingSelector.required = false;
+    conflictingSelector.value = '';
+  }
+});
+
+document.getElementById('closeUpdateRoomModal').addEventListener('click', () => {
+  document.getElementById('updateRoomBookingModal').style.display = 'none';
+});
+
+document.getElementById('updateRoomForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const bookingid = document.getElementById('modal_update_bookingid').value;
+  const roomno = document.getElementById('modal_update_roomNumber').value;
+  const resolveConflict = document.getElementById('resolve_conflict_checkbox').checked;
+  const conflictingNewRoomNo = document.getElementById('modal_update_conflicting_roomNumber').value;
+
+  if (!bookingid || !roomno) {
+    alert('Please select a room.');
+    return;
+  }
+
+  const payload = {
+    bookingid,
+    roomno
+  };
+
+  if (resolveConflict) {
+    if (!conflictingNewRoomNo) {
+      alert('Please select a new room for the conflicting guest.');
+      return;
+    }
+    payload.conflictingBookingId = conflictingBooking ? conflictingBooking.bookingid : null;
+    payload.conflictingNewRoomNo = conflictingNewRoomNo;
+  }
+
+  try {
+    const response = await fetch(`${CONFIG.basePath}/stay/update_room_booking`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      document.getElementById('updateRoomBookingModal').style.display = 'none';
+      alert(result.message || 'Room updated successfully.');
+      const filters = collectFilters();
+      sessionStorage.setItem('roomReportFilters', JSON.stringify(filters));
+      window.location.reload();
+    } else {
+      alert(`Error: ${result.message}`);
+    }
+  } catch (err) {
+    console.error('Update room booking failed:', err);
+    alert('An error occurred while updating the room booking.');
   }
 });
