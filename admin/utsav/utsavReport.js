@@ -199,6 +199,13 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
 >
   🏠 Room Occupancy
 </a>
+
+<a
+  href="participantHistoryReport.html?utsav_id=${item.id}"
+  class="btn btn-sm btn-primary"
+>
+  📊 1-Yr History Dashboard
+</a>
     </div>
 
   </td>
