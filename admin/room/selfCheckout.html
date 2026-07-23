@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Self Check-Out Kiosk | Ashram Stay</title>
+  <link rel="stylesheet" href="../../style/css/style.css" />
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background-color: #f4f6f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .kiosk-header {
+      background-color: #dc3545;
+      color: #ffffff;
+      padding: 16px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: relative;
+    }
+    .kiosk-header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .kiosk-header p {
+      margin: 4px 0 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    .nav-back {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+    .kiosk-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    .scanner-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    #reader {
+      width: 100%;
+      max-width: 450px;
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px dashed #dc3545;
+      min-height: 250px;
+      background: #222;
+    }
+    .manual-input-box {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .manual-input-box input {
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      flex: 1;
+      max-width: 320px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .manual-input-box button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .overlay-result {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .result-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 30px 25px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: popIn 0.3s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .status-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px auto;
+      font-size: 36px;
+      color: #fff;
+    }
+    .icon-success { background-color: #28a745; }
+    .icon-error { background-color: #dc3545; }
+    .result-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .result-guest {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .room-badge {
+      display: inline-block;
+      background-color: #f8d7da;
+      color: #842029;
+      font-size: 1.5rem;
+      font-weight: 800;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: 1px solid #f5c2c7;
+      margin-bottom: 15px;
+    }
+    .progress-bar-container {
+      height: 6px;
+      background-color: #e9ecef;
+      border-radius: 3px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #dc3545;
+      width: 100%;
+      transition: width 5s linear;
+    }
+    .btn-cam-switch {
+      background: #6c757d;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="kiosk-header">
+    <a href="index.html" class="nav-back">← Back</a>
+    <h1>Self Check-Out Kiosk</h1>
+    <p>Scan your QR code or Card to Check Out</p>
+  </div>
+
+  <div class="kiosk-container">
+    <div class="scanner-card">
+      <button type="button" id="switchCamBtn" class="btn-cam-switch">Switch Camera</button>
+      <div id="reader"></div>
+
+      <div class="manual-input-box">
+        <input type="text" id="manualCardNo" placeholder="Enter Card No (e.g. 000123)" />
+        <button type="button" id="submitManualBtn">Check Out</button>
+      </div>
+      <p style="color: #6c757d; font-size: 0.85rem; margin-top: 12px;">USB Barcode / QR Scanner is active automatically.</p>
+    </div>
+  </div>
+
+  <!-- Overlay Modal for Check-Out Result -->
+  <div id="resultOverlay" class="overlay-result">
+    <div class="result-card">
+      <div id="resultIcon" class="status-icon icon-success">✓</div>
+      <div id="resultTitle" class="result-title" style="color: #28a745;">Check-Out Successful!</div>
+      <div id="resultGuestName" class="result-guest">--</div>
+      
+      <div id="roomBadgeContainer">
+        <div style="font-size: 0.85rem; color: #6c757d; text-transform: uppercase;">Checked Out Room / Flat</div>
+        <div id="resultRoomNo" class="room-badge">--</div>
+      </div>
+
+      <div id="resultMessage" style="color: #6c757d; font-size: 0.95rem; margin-top: 12px;">Thank you for staying at Ashram Stay!</div>
+
+      <div class="progress-bar-container">
+        <div id="progressFill" class="progress-bar-fill"></div>
+      </div>
+      <div style="font-size: 0.8rem; color: #999; margin-top: 6px;">Resetting scanner in <span id="countdown">5</span>s...</div>
+    </div>
+  </div>
+
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/common.js"></script>
+  <script src="selfCheckout.js"></script>
+</body>
+</html>
