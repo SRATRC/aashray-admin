@@ -365,7 +365,7 @@ function openGenericModal(bookingid, type) {
   const statusSelect = document.getElementById('modal_status');
   const allowedStatuses = [];
 
-  if (booking.status === 'waiting') {
+  if (booking.status === 'waiting' || booking.status === 'awaiting confirmation') {
     allowedStatuses.push('pending', 'admin cancelled');
   } else if (booking.status === 'pending') {
     allowedStatuses.push('pending checkin', 'admin cancelled');
@@ -374,7 +374,7 @@ function openGenericModal(bookingid, type) {
   statusSelect.innerHTML = '<option value="">-- Select --</option>';
 
   const statusLabels = {
-    'pending': 'Pending (Proceed to Payment)',
+    'pending': 'Approve (Proceed to Payment)',
     'pending checkin': 'Pending Check-in (Payment Done)',
     'admin cancelled': 'Cancelled by Admin'
   };
@@ -386,7 +386,18 @@ function openGenericModal(bookingid, type) {
     statusSelect.appendChild(opt);
   });
 
-  document.getElementById('modal_roomno_group').style.display = type === 'room' && booking.status === 'waiting' ? 'block' : 'none';
+  const reasonGroup = document.getElementById('modal_extra_stay_reason_group');
+  const reasonText = document.getElementById('modal_extra_stay_reason_text');
+  if (reasonGroup && reasonText) {
+    if (booking.extra_stay_reason) {
+      reasonText.textContent = booking.extra_stay_reason;
+      reasonGroup.style.display = 'block';
+    } else {
+      reasonGroup.style.display = 'none';
+    }
+  }
+
+  document.getElementById('modal_roomno_group').style.display = type === 'room' && (booking.status === 'waiting' || booking.status === 'awaiting confirmation') ? 'block' : 'none';
   document.getElementById('roomUpdateModal').style.display = 'block';
 }
 

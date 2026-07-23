@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Limit Exemptions | Admin</title>
+  <link rel="stylesheet" href="../../style/css/style.css" />
+  <style>
+    .exemptions-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .exemptions-table th, .exemptions-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    .exemptions-table th {
+      background-color: #f4f4f4;
+    }
+    .badge-perm {
+      background-color: #28a745;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .badge-temp {
+      background-color: #17a2b8;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a> |
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a> |
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Booking Limit Exemptions (Bypass)</h1>
+            <p>Grant unlimited booking nights to specific cards (e.g. for medical stays or extended seva).</p>
+          </div>
+
+          <div id="alert" class="alert" style="display:none;"></div>
+
+          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #e0e0e0; margin-bottom: 25px;">
+            <h3>Add New Exemption</h3>
+            <form id="addExemptionForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+              <div class="form-group" style="margin: 0;">
+                <label for="cardno">Card Number:</label>
+                <input type="text" id="cardno" class="form-control" required placeholder="e.g. 0001234567" />
+              </div>
+
+              <div class="form-group" style="margin: 0;">
+                <label for="is_permanent">Exemption Type:</label>
+                <select id="is_permanent" class="form-control">
+                  <option value="true">Permanent (Unlimited)</option>
+                  <option value="false">Temporary (Date Range)</option>
+                </select>
+              </div>
+
+              <div class="form-group temp-date-group" style="margin: 0; display: none;">
+                <label for="valid_from">Valid From:</label>
+                <input type="date" id="valid_from" class="form-control" />
+              </div>
+
+              <div class="form-group temp-date-group" style="margin: 0; display: none;">
+                <label for="valid_to">Valid To:</label>
+                <input type="date" id="valid_to" class="form-control" />
+              </div>
+
+              <div class="form-group" style="margin: 0;">
+                <label for="reason">Reason / Note:</label>
+                <input type="text" id="reason" class="form-control" placeholder="e.g. Medical treatment" />
+              </div>
+
+              <div class="form-group" style="margin: 0;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Add Exemption</button>
+              </div>
+            </form>
+          </div>
+
+          <h3>Active & Configured Exemptions</h3>
+          <div id="tableContainer">
+            <table class="exemptions-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Card No</th>
+                  <th>Guest Name</th>
+                  <th>Type</th>
+                  <th>Valid Period</th>
+                  <th>Reason</th>
+                  <th>Granted By</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="exemptionsBody">
+                <tr><td colspan="8" style="text-align: center;">Loading exemptions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/common.js"></script>
+  <script src="bookingExemptions.js"></script>
+</body>
+</html>
