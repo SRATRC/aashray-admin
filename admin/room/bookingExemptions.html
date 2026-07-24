@@ -4,34 +4,163 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Booking Limit Exemptions | Admin</title>
-  <link rel="stylesheet" href="../../style/css/style.css" />
+
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/common.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']);
+  </script>
+  <script src="bookingExemptions.js" defer></script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
   <style>
+    .card-box {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #204060;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: end;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      border-color: #204060;
+      box-shadow: 0 0 0 3px rgba(32, 64, 96, 0.15);
+    }
+    .btn-submit {
+      background-color: #204060;
+      color: #ffffff;
+      font-weight: 600;
+      padding: 11px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+    .btn-submit:hover {
+      background-color: #162d44;
+    }
+    .table-container {
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+    }
     .exemptions-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-    }
-    .exemptions-table th, .exemptions-table td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
     }
     .exemptions-table th {
-      background-color: #f4f4f4;
+      background-color: #204060;
+      color: #ffffff;
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .exemptions-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+    .exemptions-table tr:hover {
+      background-color: #f8fafc;
     }
     .badge-perm {
-      background-color: #28a745;
-      color: #fff;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 0.85em;
+      background-color: #16a34a;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
     }
     .badge-temp {
-      background-color: #17a2b8;
-      color: #fff;
-      padding: 3px 8px;
+      background-color: #0284c7;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .btn-danger-sm {
+      background-color: #dc2626;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
       border-radius: 4px;
-      font-size: 0.85em;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-danger-sm:hover {
+      background-color: #b91c1c;
+    }
+    .btn-edit-sm {
+      background-color: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 4px;
+    }
+    .btn-edit-sm:hover {
+      background-color: #0369a1;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
@@ -57,15 +186,15 @@
 
           <div id="alert" class="alert" style="display:none;"></div>
 
-          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #e0e0e0; margin-bottom: 25px;">
-            <h3>Add New Exemption</h3>
-            <form id="addExemptionForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
-              <div class="form-group" style="margin: 0;">
-                <label for="cardno">Card Number:</label>
-                <input type="text" id="cardno" class="form-control" required placeholder="e.g. 0001234567" />
+          <div class="card-box">
+            <div class="card-title">Add New Exemption</div>
+            <form id="addExemptionForm" class="form-grid">
+              <div class="form-group">
+                <label for="mobno">Mobile Number:</label>
+                <input type="text" id="mobno" class="form-control" required placeholder="e.g. 9876543210" maxlength="10" />
               </div>
 
-              <div class="form-group" style="margin: 0;">
+              <div class="form-group">
                 <label for="is_permanent">Exemption Type:</label>
                 <select id="is_permanent" class="form-control">
                   <option value="true">Permanent (Unlimited)</option>
@@ -73,29 +202,42 @@
                 </select>
               </div>
 
-              <div class="form-group temp-date-group" style="margin: 0; display: none;">
+              <div class="form-group temp-date-group" style="display: none;">
                 <label for="valid_from">Valid From:</label>
                 <input type="date" id="valid_from" class="form-control" />
               </div>
 
-              <div class="form-group temp-date-group" style="margin: 0; display: none;">
+              <div class="form-group temp-date-group" style="display: none;">
                 <label for="valid_to">Valid To:</label>
                 <input type="date" id="valid_to" class="form-control" />
               </div>
 
-              <div class="form-group" style="margin: 0;">
+              <div class="form-group">
                 <label for="reason">Reason / Note:</label>
                 <input type="text" id="reason" class="form-control" placeholder="e.g. Medical treatment" />
               </div>
 
-              <div class="form-group" style="margin: 0;">
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Add Exemption</button>
+              <div class="form-group">
+                <button type="submit" class="btn-submit">Add Exemption</button>
               </div>
+
+              <div id="cardDetailsBox" style="display: none; grid-column: 1 / -1; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; padding: 12px; margin-top: 4px;">
+                <div style="font-weight: 600; color: #0369a1; margin-bottom: 6px; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                  <span>✓ Verified Card Details:</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.88rem; color: #0f172a;">
+                  <div><span style="color: #64748b;">Card No:</span> <strong id="infoCardNo">-</strong></div>
+                  <div><span style="color: #64748b;">Name:</span> <strong id="infoName">-</strong></div>
+                  <div><span style="color: #64748b;">Centre:</span> <strong id="infoCenter">-</strong></div>
+                  <div><span style="color: #64748b;">Res Status:</span> <strong id="infoResStatus">-</strong></div>
+                </div>
+              </div>
+              <div id="cardError" style="display: none; grid-column: 1 / -1; color: #dc2626; font-size: 0.85rem; margin-top: 4px; font-weight: 500;"></div>
             </form>
           </div>
 
-          <h3>Active & Configured Exemptions</h3>
-          <div id="tableContainer">
+          <h3 style="margin-bottom: 12px; color: #204060;">Active & Configured Exemptions</h3>
+          <div class="table-container">
             <table class="exemptions-table">
               <thead>
                 <tr>
@@ -120,8 +262,46 @@
     </div>
   </div>
 
-  <script src="../../style/js/config.js"></script>
-  <script src="../../style/js/common.js"></script>
-  <script src="bookingExemptions.js"></script>
+  <!-- Edit Exemption Modal -->
+  <div id="editModalOverlay" class="modal-overlay">
+    <div class="modal-card">
+      <h3 style="margin-bottom: 16px; color: #204060;">Edit Exemption</h3>
+      <form id="editExemptionForm">
+        <input type="hidden" id="edit_id" />
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Card No / Guest:</label>
+          <input type="text" id="edit_info" class="form-control" disabled style="background: #f1f5f9; color: #475569;" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="edit_is_permanent">Exemption Type:</label>
+          <select id="edit_is_permanent" class="form-control">
+            <option value="true">Permanent (Unlimited)</option>
+            <option value="false">Temporary (Date Range)</option>
+          </select>
+        </div>
+
+        <div class="form-group edit-temp-date-group" style="margin-bottom: 12px; display: none;">
+          <label for="edit_valid_from">Valid From:</label>
+          <input type="date" id="edit_valid_from" class="form-control" />
+        </div>
+
+        <div class="form-group edit-temp-date-group" style="margin-bottom: 12px; display: none;">
+          <label for="edit_valid_to">Valid To:</label>
+          <input type="date" id="edit_valid_to" class="form-control" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="edit_reason">Reason / Note:</label>
+          <input type="text" id="edit_reason" class="form-control" placeholder="Reason" />
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn-danger-sm" style="background: #64748b; padding: 10px 16px; font-size: 0.9rem;" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-submit" style="width: auto; padding: 10px 20px;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

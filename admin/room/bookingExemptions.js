@@ -1,3 +1,5 @@
+let allExemptions = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('token');
   if (!token) {
@@ -7,17 +9,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const typeSelect = document.getElementById('is_permanent');
   const tempGroups = document.querySelectorAll('.temp-date-group');
+  const mobnoInput = document.getElementById('mobno');
+  const cardDetailsBox = document.getElementById('cardDetailsBox');
+  const cardError = document.getElementById('cardError');
+
+  const editTypeSelect = document.getElementById('edit_is_permanent');
+  const editTempGroups = document.querySelectorAll('.edit-temp-date-group');
+
+  let verifiedCard = null;
 
   typeSelect.addEventListener('change', () => {
     const isTemp = typeSelect.value === 'false';
     tempGroups.forEach(el => el.style.display = isTemp ? 'block' : 'none');
   });
 
+  editTypeSelect.addEventListener('change', () => {
+    const isTemp = editTypeSelect.value === 'false';
+    editTempGroups.forEach(el => el.style.display = isTemp ? 'block' : 'none');
+  });
+
+  const fetchCardByMobile = async (mobno) => {
+    if (!mobno || mobno.length < 10) {
+      verifiedCard = null;
+      cardDetailsBox.style.display = 'none';
+      cardError.style.display = 'none';
+      return;
+    }
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/card/by-mobile/${mobno}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        verifiedCard = result.data;
+        document.getElementById('infoCardNo').textContent = verifiedCard.cardno || '-';
+        document.getElementById('infoName').textContent = verifiedCard.issuedto || '-';
+        document.getElementById('infoCenter').textContent = verifiedCard.center || 'N/A';
+        document.getElementById('infoResStatus').textContent = verifiedCard.res_status || 'N/A';
+        cardDetailsBox.style.display = 'block';
+        cardError.style.display = 'none';
+      } else {
+        verifiedCard = null;
+        cardDetailsBox.style.display = 'none';
+        cardError.textContent = result.message || 'No card found for this mobile number.';
+        cardError.style.display = 'block';
+      }
+    } catch (err) {
+      console.error(err);
+      verifiedCard = null;
+      cardDetailsBox.style.display = 'none';
+      cardError.textContent = 'Error verifying card details.';
+      cardError.style.display = 'block';
+    }
+  };
+
+  mobnoInput.addEventListener('input', (e) => {
+    const mobno = e.target.value.trim();
+    if (mobno.length === 10) {
+      fetchCardByMobile(mobno);
+    } else {
+      verifiedCard = null;
+      cardDetailsBox.style.display = 'none';
+      cardError.style.display = 'none';
+    }
+  });
+
+  mobnoInput.addEventListener('blur', (e) => {
+    const mobno = e.target.value.trim();
+    if (mobno.length > 0 && mobno.length !== 10) {
+      cardError.textContent = 'Please enter a valid 10-digit mobile number.';
+      cardError.style.display = 'block';
+    } else if (mobno.length === 10 && !verifiedCard) {
+      fetchCardByMobile(mobno);
+    }
+  });
+
   loadExemptions();
 
   document.getElementById('addExemptionForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const cardno = document.getElementById('cardno').value.trim();
+
+    if (!verifiedCard) {
+      alert('Please enter a valid 10-digit mobile number with an associated card before submitting.');
+      return;
+    }
+
+    const cardno = verifiedCard.cardno;
     const is_permanent = document.getElementById('is_permanent').value === 'true';
     const valid_from = document.getElementById('valid_from').value || null;
     const valid_to = document.getElementById('valid_to').value || null;
@@ -36,10 +114,44 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         alert(data.message || 'Exemption added successfully.');
         document.getElementById('addExemptionForm').reset();
+        verifiedCard = null;
+        cardDetailsBox.style.display = 'none';
+        cardError.style.display = 'none';
         tempGroups.forEach(el => el.style.display = 'none');
         loadExemptions();
       } else {
         alert(data.message || 'Failed to add exemption.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error connecting to server.');
+    }
+  });
+
+  document.getElementById('editExemptionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit_id').value;
+    const is_permanent = document.getElementById('edit_is_permanent').value === 'true';
+    const valid_from = document.getElementById('edit_valid_from').value || null;
+    const valid_to = document.getElementById('edit_valid_to').value || null;
+    const reason = document.getElementById('edit_reason').value.trim();
+
+    try {
+      const response = await fetch(`${CONFIG.basePath}/stay/exemptions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_permanent, valid_from, valid_to, reason })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message || 'Exemption updated successfully.');
+        closeEditModal();
+        loadExemptions();
+      } else {
+        alert(data.message || 'Failed to update exemption.');
       }
     } catch (err) {
       console.error(err);
@@ -59,11 +171,12 @@ async function loadExemptions() {
     });
     const result = await response.json();
     if (response.ok && result.data) {
-      if (result.data.length === 0) {
+      allExemptions = result.data;
+      if (allExemptions.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No exemption records found.</td></tr>';
         return;
       }
-      tbody.innerHTML = result.data.map(item => `
+      tbody.innerHTML = allExemptions.map(item => `
         <tr>
           <td>${item.id}</td>
           <td>${item.cardno}</td>
@@ -73,7 +186,8 @@ async function loadExemptions() {
           <td>${item.reason || '-'}</td>
           <td>${item.updatedBy || 'ADMIN'}</td>
           <td>
-            <button class="btn btn-danger btn-sm" onclick="deleteExemption(${item.id})">Delete</button>
+            <button class="btn-edit-sm" onclick="editExemption(${item.id})">Edit</button>
+            <button class="btn-danger-sm" onclick="deleteExemption(${item.id})">Delete</button>
           </td>
         </tr>
       `).join('');
@@ -84,6 +198,28 @@ async function loadExemptions() {
     console.error(err);
     tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: red;">Error fetching exemptions.</td></tr>`;
   }
+}
+
+function editExemption(id) {
+  const item = allExemptions.find(x => x.id === id);
+  if (!item) return;
+
+  document.getElementById('edit_id').value = item.id;
+  document.getElementById('edit_info').value = `${item.cardno} (${item.CardDb?.issuedto || 'N/A'})`;
+  document.getElementById('edit_is_permanent').value = item.is_permanent ? 'true' : 'false';
+  document.getElementById('edit_valid_from').value = item.valid_from || '';
+  document.getElementById('edit_valid_to').value = item.valid_to || '';
+  document.getElementById('edit_reason').value = item.reason || '';
+
+  const editTempGroups = document.querySelectorAll('.edit-temp-date-group');
+  editTempGroups.forEach(el => el.style.display = item.is_permanent ? 'none' : 'block');
+
+  document.getElementById('editModalOverlay').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('editModalOverlay').style.display = 'none';
+  document.getElementById('editExemptionForm').reset();
 }
 
 async function deleteExemption(id) {
@@ -106,3 +242,7 @@ async function deleteExemption(id) {
     alert('Error connecting to server.');
   }
 }
+
+window.editExemption = editExemption;
+window.closeEditModal = closeEditModal;
+window.deleteExemption = deleteExemption;

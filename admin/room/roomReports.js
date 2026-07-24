@@ -20,8 +20,8 @@ function formatDateForInput(dateInput) {
 let roomreports = [];
 
 function getAction(booking) {
-  if (booking.status === "waiting" || booking.status === "pending") {
-    return `<a href='#' onclick="openRoomUpdateModal('${booking.bookingid}')">Update Status</a>`;
+  if (booking.status === "waiting" || booking.status === "pending" || booking.status === "awaiting confirmation") {
+    return `<a href='javascript:void(0);' onclick="openRoomUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${booking.status === 'awaiting confirmation' ? 'Approve' : 'Update Status'}</a>`;
   }
 
   switch (booking.status) {
@@ -61,8 +61,8 @@ function getEditAction(booking) {
 }
 
 function getFlatAction(booking) {
-  if (booking.status === "waiting" || booking.status === "pending") {
-    return `<a href='#' onclick="openFlatUpdateModal('${booking.bookingid}')">Update Status</a>`;
+  if (booking.status === "waiting" || booking.status === "pending" || booking.status === "awaiting confirmation") {
+    return `<a href='javascript:void(0);' onclick="openFlatUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${booking.status === 'awaiting confirmation' ? 'Approve' : 'Update Status'}</a>`;
   }
 
   switch (booking.status) {
@@ -148,7 +148,7 @@ function createRoomBookingRow(booking, index) {
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
-    <td>${booking.transactions?.[0]?.description || '-'}</td>
+    <td>${booking.extra_stay_reason || booking.transactions?.[0]?.description || '-'}</td>
     <td>${booking.bookedBy || "Self"}</td>
     <td>${getAction(booking)}</td>
     <td>${getCancelAction(booking)}</td>
@@ -171,7 +171,7 @@ function createFlatBookingRow(booking, index) {
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
-    <td>${booking.transactions?.[0]?.description || '-'}</td> 
+    <td>${booking.extra_stay_reason || booking.transactions?.[0]?.description || '-'}</td> 
     <td>${booking.bookedBy || "Self"}</td>
     <td>${getFlatAction(booking)}</td>
     <td>${getFlatCancelAction(booking)}</td>
