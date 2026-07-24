@@ -1284,15 +1284,32 @@
 
           if (hasLogic) {
             const group = $(`.field-group[data-field-id="${field.id}"]`);
+            const pageContainer = group.closest('.form-page');
+            const pageIdx = pageContainer.length > 0 ? parseInt(pageContainer.attr('id').split('_')[1]) : 0;
+            const isOnActivePage = (pageIdx === window.currentPageIdx);
+
             if (show) {
-              if (!group.is(':visible')) {
-                group.slideDown(250);
+              group.removeClass('conditional-hidden');
+              if (isOnActivePage) {
+                if (group.css('display') === 'none') {
+                  group.slideDown(250);
+                }
+              } else {
+                group.css('display', '');
               }
             } else {
-              if (group.is(':visible')) {
-                group.slideUp(250, function() {
+              group.addClass('conditional-hidden');
+              if (isOnActivePage) {
+                if (group.css('display') !== 'none') {
+                  group.slideUp(250, function() {
+                    clearFieldValue(field);
+                  });
+                } else {
                   clearFieldValue(field);
-                });
+                }
+              } else {
+                group.css('display', 'none');
+                clearFieldValue(field);
               }
             }
           }
@@ -1521,8 +1538,8 @@
         fields.forEach(field => {
           if (field.type === 'section') return;
 
-          const isVisible = $(`.field-group[data-field-id="${field.id}"]`).is(':visible');
-          if (!isVisible) return; // Do not submit hidden fields
+          const group = $(`.field-group[data-field-id="${field.id}"]`);
+          if (group.hasClass('conditional-hidden')) return; // Do not submit hidden fields
 
           if (field.type === 'checkbox') {
             const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
