@@ -417,7 +417,7 @@
         fields.forEach(f => {
           headerHtml += `<th>${escapeHtml(f.label)}</th>`;
         });
-        headerHtml += '<th>Submitted At</th></tr>';
+        headerHtml += '<th>Submitted At</th><th>Actions</th></tr>';
         thead.innerHTML = headerHtml;
 
         // Build rows
@@ -449,7 +449,8 @@
             rowsHtml += `<td>${escapeHtml(String(answer ?? ''))}</td>`;
           });
 
-          rowsHtml += `<td>${new Date(resp.submittedAt).toLocaleString()}</td></tr>`;
+          rowsHtml += `<td>${new Date(resp.submittedAt).toLocaleString()}</td>`;
+          rowsHtml += `<td><button type="button" class="btn btn-sm btn-danger" onclick="deleteResponse(${resp.id})" title="Delete response"><i class="fas fa-trash-alt"></i> Delete</button></td></tr>`;
         });
 
         tbody.innerHTML = rowsHtml;
@@ -782,6 +783,36 @@
         alert.className = 'alert-danger';
         alert.textContent = msg;
         alert.style.display = 'block';
+      }
+
+      function showSuccess(msg) {
+        const alert = document.getElementById('alert');
+        alert.className = 'alert-success';
+        alert.textContent = msg;
+        alert.style.display = 'block';
+      }
+
+      async function deleteResponse(responseId) {
+        if (!confirm('Are you sure you want to delete this response? This cannot be undone.')) {
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${formId}/responses/${responseId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            showSuccess('Response deleted successfully');
+            loadResponses();
+          } else {
+            showError(data.message || 'Failed to delete response');
+          }
+        } catch (err) {
+          showError('Error deleting response: ' + err.message);
+        }
       }
 
       // Load on page load

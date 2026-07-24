@@ -9,10 +9,6 @@
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/config.js"></script>
 
-    <!-- clockpicker plugin -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/jquery-clockpicker.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.css" />
-
     <!-- Include FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -78,6 +74,7 @@
       input[type="text"],
       input[type="number"],
       input[type="date"],
+      input[type="time"],
       select,
       textarea {
         width: 100%;
@@ -92,6 +89,7 @@
       input[type="text"]:focus,
       input[type="number"]:focus,
       input[type="date"]:focus,
+      input[type="time"]:focus,
       select:focus,
       textarea:focus {
         border-color: #4c86b0;
@@ -176,13 +174,6 @@
         height: 18px;
         cursor: pointer;
         accent-color: var(--theme-color);
-      }
-
-      /* Clockpicker overrides */
-      .clockpicker-popover {
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border: 1px solid #dee2e6;
       }
 
       /* Success Screen */
@@ -457,8 +448,8 @@
         let progressHtml = '';
         if (form.showProgressBar) {
           progressHtml = `
-            <div id="progressContainer" style="margin-top: 1.5rem; padding: 1rem 0; border-top: 1px solid #dee2e6;">
-              <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#6c757d; margin-bottom:0.4rem;">
+            <div id="progressContainer" style="margin-top: 1.5rem; padding: 1rem 1.5rem; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+              <div style="display:flex; justify-content:space-between; font-size:0.95rem; color:#000000; font-weight:700; margin-bottom:0.4rem;">
                 <span>Progress</span>
                 <span id="progressText">Page 1 of ${pages.length}</span>
               </div>
@@ -551,13 +542,6 @@
 
         window.totalPagesCount = pages.length;
         window.currentPageIdx = 0;
-
-        $('.clockpicker input').clockpicker({
-          autoclose: true,
-          placement: 'bottom',
-          align: 'left',
-          'default': 'now'
-        });
 
         initStarRatings();
         evaluateLogic();
@@ -772,7 +756,7 @@
         const field = formData.fields.find(f => f.id === fid);
         if (!field) return { isValid: true };
 
-        const inputs = $(group).find('input[type="text"], input[type="number"], input[type="date"], input[type="tel"], select, textarea');
+        const inputs = $(group).find('input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="tel"], select, textarea');
 
         let answerVal = null;
         let checkedCount = 0;
@@ -886,6 +870,12 @@
               minDateStr = getLocalDateString(tomorrow);
             } else if (dateConstraints.minType === 'fixed' && dateConstraints.minFixed) {
               minDateStr = dateConstraints.minFixed;
+            }
+
+            // Once date settings exist for a field, never allow a date before today,
+            // regardless of the configured minType (including "no minimum" or a past fixed date).
+            if (!minDateStr || minDateStr < todayStr) {
+              minDateStr = todayStr;
             }
 
             if (minDateStr && chosenStr < minDateStr) {
@@ -1087,7 +1077,7 @@
         let inputHtml = '';
 
         if (field.type === 'text') {
-          inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" ${requiredAttr} />`;
+          inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" data-word-limit="20" maxlength="200" ${requiredAttr} />`;
         } else if (field.type === 'textarea') {
           inputHtml = `<textarea id="${inputId}" rows="4" placeholder="Your answer" ${requiredAttr}></textarea>`;
         } else if (field.type === 'number') {
@@ -1104,16 +1094,23 @@
               return `${year}-${month}-${day}`;
             };
             const todayStr = getLocalDateString(today);
+            let computedMin = null;
             if (field.dateConstraints.minType === 'today') {
-              minAttr = `min="${todayStr}"`;
+              computedMin = todayStr;
             } else if (field.dateConstraints.minType === 'tomorrow') {
               const tomorrow = new Date();
               tomorrow.setDate(tomorrow.getDate() + 1);
-              minAttr = `min="${getLocalDateString(tomorrow)}"`;
+              computedMin = getLocalDateString(tomorrow);
             } else if (field.dateConstraints.minType === 'fixed' && field.dateConstraints.minFixed) {
-              minAttr = `min="${field.dateConstraints.minFixed}"`;
+              computedMin = field.dateConstraints.minFixed;
             }
-            
+            // Once date settings exist for a field, never allow picking a date before today,
+            // regardless of the configured minType (including "no minimum" or a past fixed date).
+            if (!computedMin || computedMin < todayStr) {
+              computedMin = todayStr;
+            }
+            minAttr = `min="${computedMin}"`;
+
             if (field.dateConstraints.maxType === 'today') {
               maxAttr = `max="${todayStr}"`;
             } else if (field.dateConstraints.maxType === 'fixed' && field.dateConstraints.maxFixed) {
@@ -1122,11 +1119,7 @@
           }
           inputHtml = `<input type="date" id="${inputId}" ${minAttr} ${maxAttr} ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
         } else if (field.type === 'time') {
-          inputHtml = `
-            <div class="clockpicker">
-              <input type="text" id="${inputId}" placeholder="00:00" autocomplete="off" ${requiredAttr} />
-            </div>
-          `;
+          inputHtml = `<input type="time" id="${inputId}" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
         } else if (field.type === 'rating') {
           inputHtml = `
             <div class="star-rating" data-id="${field.id}">
@@ -1210,6 +1203,7 @@
             <label for="${inputId}" style="margin-bottom:0.25rem;">${renderRichText(field.label)} ${requiredMark}</label>
             ${field.description ? `<p style="font-size:0.8rem; color:#6c757d; margin-top:-0.15rem; margin-bottom:0.5rem; font-weight:400; line-height:1.4;">${renderRichText(field.description)}</p>` : ''}
             ${inputHtml}
+            ${field.type === 'text' ? `<div class="word-count-hint" id="wordCount_${field.id}" style="font-size:0.78rem; color:#6c757d; margin-top:0.3rem; text-align:right;">0/20 words</div>` : ''}
             <div class="inline-error-msg" id="error_${field.id}" style="color: #dc3545; font-size: 0.82rem; margin-top: 0.35rem; display: none; font-weight: 500;"><i class="fas fa-exclamation-circle"></i> <span></span></div>
           </div>
         `;
@@ -1332,6 +1326,55 @@
           $(`#${inputId}`).val('').trigger('change');
         }
       }
+
+      $(document).on('keydown', 'input[data-word-limit]', function(e) {
+        // Once the word limit is reached: block whitespace (which would start
+        // a new word), and let the user keep typing the word they're already
+        // on, but only up to a sane length — otherwise holding a key down
+        // lets a single "word" grow forever even though the count stays
+        // at the cap.
+        if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) {
+          return;
+        }
+        const hasSelection = this.selectionStart !== this.selectionEnd;
+        if (hasSelection) {
+          return;
+        }
+        const maxWords = parseInt($(this).attr('data-word-limit'), 10);
+        const words = this.value.split(/\s+/).filter(Boolean);
+        const currentWords = words.length;
+        if (currentWords < maxWords) {
+          return;
+        }
+
+        const isWhitespace = /\s/.test(e.key);
+        if (isWhitespace) {
+          e.preventDefault();
+          return;
+        }
+
+        const MAX_LAST_WORD_LENGTH = 25;
+        const lastWord = words[words.length - 1] || '';
+        if (lastWord.length >= MAX_LAST_WORD_LENGTH) {
+          e.preventDefault();
+        }
+      });
+
+      $(document).on('input', 'input[data-word-limit]', function() {
+        const maxWords = parseInt($(this).attr('data-word-limit'), 10);
+        const words = this.value.split(/\s+/).filter(Boolean);
+        if (words.length > maxWords) {
+          this.value = words.slice(0, maxWords).join(' ');
+        }
+
+        const fieldId = $(this).closest('.field-group').data('field-id');
+        const countEl = document.getElementById(`wordCount_${fieldId}`);
+        if (countEl) {
+          const currentCount = this.value.split(/\s+/).filter(Boolean).length;
+          countEl.textContent = `${currentCount}/${maxWords} words`;
+          countEl.style.color = currentCount >= maxWords ? '#dc3545' : '#6c757d';
+        }
+      });
 
       $(document).on('change input blur', 'input, select, textarea', function() {
         // Find the parent field group
