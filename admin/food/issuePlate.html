@@ -26,24 +26,57 @@
     <link rel="stylesheet" href="../../style/css/styles.css" />
     <style>
       .big-alert {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: bold;
         text-align: center;
-        padding: 20px;
-        margin-top: 20px;
+        padding: 25px 20px;
+        margin-top: 15px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
       }
       .alert-success {
-        color: green;
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 2px solid #10b981;
       }
       .alert-danger {
-        color: red;
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #ef4444;
       }
       .alert-warning {
-  /* background-color: #fff3cd; */
-  color: #856404;
-  /* border: 2px solid #ffeeba; */
-}
-
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 2px solid #f59e0b;
+      }
+      .alert-info {
+        background-color: #e0f2fe;
+        color: #075985;
+        border: 2px solid #0284c7;
+      }
+      .kiosk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 12px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .meal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: #4f46e5;
+        color: #fff;
+      }
     </style>
   </head>
 
@@ -62,7 +95,14 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
-            <div class="frm-head">
+
+            <!-- Kiosk Active Meal & Live Clock Header -->
+            <div class="kiosk-header">
+              <span class="meal-badge" id="activeMealBadge">🌅 Loading Meal Slot...</span>
+              <div style="font-size:14px; font-weight:700; color:#334155;" id="liveClockDisplay">--:--:--</div>
+            </div>
+
+            <div class="frm-head" style="text-align:center;">
               <h1>Tap your card for food check-in</h1>
             </div>
 
@@ -71,15 +111,16 @@
 
             <!-- Form wrapper for easy hiding -->
             <div id="formWrapper">
-              <div class="form">
+              <div class="form" style="max-width:500px; margin:0 auto;">
                 <form id="foodCheckinForm">
-                  <div class="form-group">
-                    <label for="cardno">Tap your card:</label>
-                    <input type="text" class="form-control" id="cardno" name="cardno" required />
+                  <div class="form-group" style="text-align:center;">
+                    <label for="cardno" style="font-size:16px; font-weight:600; color:#475569;">Tap your card / Scanner ready:</label>
+                    <input type="text" class="form-control" id="cardno" name="cardno" required autofocus autocomplete="off" style="text-align:center; font-size:18px; font-weight:bold; height:45px; border:2px solid #6366f1; border-radius:8px;" />
+                    <div style="margin-top:6px; font-size:12px; color:#10b981; font-weight:600;">⚡ Hands-free RFID scan active — auto-focused</div>
                   </div>
 
-                  <div class="form-group form-submit">
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                  <div class="form-group form-submit" style="text-align:center;">
+                    <button type="submit" class="btn btn-primary" style="width:100%; height:42px; font-size:15px; font-weight:bold;">Submit</button>
                   </div>
                 </form>
               </div>

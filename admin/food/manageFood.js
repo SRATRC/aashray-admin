@@ -45,6 +45,23 @@ mobileInput.addEventListener('blur', async () => {
   if (!startField.value) startField.value = today;
   if (!endField.value) endField.value = today;
 
+  // Auto-preselect meal based on current time
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const bfCb = document.getElementById('breakfast');
+  const luCb = document.getElementById('lunch');
+  const dnCb = document.getElementById('dinner');
+
+  if (bfCb && luCb && dnCb && !bfCb.checked && !luCb.checked && !dnCb.checked) {
+    if (mins < 630) {
+      bfCb.checked = true; // Breakfast before 10:30 AM
+    } else if (mins <= 930) {
+      luCb.checked = true; // Lunch 10:30 AM - 3:30 PM
+    } else {
+      dnCb.checked = true; // Dinner after 3:30 PM
+    }
+  }
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     resetAlert();
@@ -67,6 +84,39 @@ mobileInput.addEventListener('blur', async () => {
     if (!(breakfast || lunch || dinner)) {
       showErrorMessage('Please select at least one meal option.');
       return;
+    }
+
+    // Overlapping booking warning check
+    try {
+      const checkParams = new URLSearchParams();
+      if (cardno) checkParams.append('cardno', cardno);
+      if (mobno) checkParams.append('mobno', mobno);
+      const checkRes = await fetch(`${CONFIG.basePath}/food/fetch_food_bookings?${checkParams}`, {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        const existing = checkData.data || [];
+        const overlaps = existing.filter(b => {
+          const bDate = (b.date || '').substring(0, 10);
+          return bDate >= start_date && bDate <= end_date && (
+            (breakfast && b.breakfast) || (lunch && b.lunch) || (dinner && b.dinner)
+          );
+        });
+        if (overlaps.length > 0) {
+          const confirmRes = await Swal.fire({
+            icon: 'warning',
+            title: '⚠️ Overlapping Booking Found',
+            html: `Resident already has <b>${overlaps.length}</b> meal booking(s) between <b>${start_date}</b> and <b>${end_date}</b>.<br/><br/>Do you still want to proceed?`,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, proceed',
+            cancelButtonText: 'Cancel'
+          });
+          if (!confirmRes.isConfirmed) return;
+        }
+      }
+    } catch (e) {
+      console.warn('Overlap check skipped:', e);
     }
 
     try {

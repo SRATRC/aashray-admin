@@ -26,6 +26,27 @@ document.addEventListener('DOMContentLoaded', function () {
     window.isFoodAdminSS = userRoles.includes('smilesAdmin');
   }, 100);
 
+  // Live mobile lookup
+  const mobnoInput = document.getElementById('mobno');
+  const cardnoInput = document.getElementById('cardno');
+  if (mobnoInput) {
+    mobnoInput.addEventListener('blur', async () => {
+      const mob = mobnoInput.value.trim();
+      if (mob.length < 10) return;
+      try {
+        const res = await fetch(`${CONFIG.basePath}/card/by-mobile/${mob}`, {
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        });
+        const data = await res.json();
+        if (res.ok && data?.data && cardnoInput && !cardnoInput.value) {
+          cardnoInput.value = data.data.cardno || '';
+        }
+      } catch (e) {
+        console.warn('Mobile lookup error:', e);
+      }
+    });
+  }
+
   const form = document.getElementById('bulkFoodBookingForm');
   const today = formatDate(new Date());
   document.getElementById('date').value = today;
@@ -124,14 +145,18 @@ async function getExistingGuestBookings() {
       return;
     }
 
+    window._lastBulkBookings = bookings;
     tableBody.innerHTML = '';
     bookings.forEach((booking) => {
+      const mobStr = String(booking.CardDb?.mobno || '');
+      const waLink = mobStr ? `<a href="https://wa.me/91${mobStr}" target="_blank" title="WhatsApp" style="text-decoration:none;margin-right:5px;">💬</a>` : '';
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${formatDate(booking.date)}</td>
-        <td>${booking.CardDb.issuedto}</td>
-        <td>${booking.CardDb.mobno}</td>
-        <td>${booking.department}</td>
+        <td>${booking.CardDb?.issuedto || ''}</td>
+        <td style="white-space:nowrap">${waLink}${mobStr || '—'}</td>
+        <td>${booking.department || ''}</td>
         <td id="gc-${booking.bookingid}">${booking.guestCount}</td>
         <td>
           <button onclick="adjustMeal('${booking.bookingid}', 'breakfast', -1)">➖</button>
@@ -163,6 +188,9 @@ async function getExistingGuestBookings() {
           <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', -1)">➖</button>
           <span id="d-${booking.bookingid}">${booking.dinner_plate_issued || 0}</span>
           <button onclick="updatePlateIssued('${booking.bookingid}', 'dinner', 1)">➕</button>
+        </td>
+        <td>
+          <button onclick="issueAllPlates('${booking.bookingid}', ${booking.breakfast||0}, ${booking.lunch||0}, ${booking.dinner||0})" class="btn btn-sm btn-primary" style="font-size:11px; padding:3px 8px; font-weight:bold;" title="Issue all booked plates for this booking at once">⚡ Issue All</button>
         </td>` : ''}
       `;
       tableBody.appendChild(row);
@@ -235,6 +263,39 @@ async function updatePlateIssued(bookingId, mealType, delta) {
   }
 }
 
+async function issueAllPlates(bookingId, bfCount, lnCount, dnCount) {
+  if (!confirm(`Issue all booked plates (${bfCount} Breakfast, ${lnCount} Lunch, ${dnCount} Dinner) for this guest booking?`)) return;
+
+  const mealsToUpdate = [
+    { mealType: 'breakfast', plateIssued: bfCount, spanId: `b-${bookingId}` },
+    { mealType: 'lunch',     plateIssued: lnCount, spanId: `l-${bookingId}` },
+    { mealType: 'dinner',    plateIssued: dnCount, spanId: `d-${bookingId}` }
+  ];
+
+  try {
+    for (const m of mealsToUpdate) {
+      if (m.plateIssued > 0) {
+        const response = await fetch(`${CONFIG.basePath}/food/update_plate_issued/${bookingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ mealType: m.mealType, plateIssued: m.plateIssued })
+        });
+        if (response.ok) {
+          const el = document.getElementById(m.spanId);
+          if (el) el.textContent = m.plateIssued;
+        }
+      }
+    }
+    alert('✅ All plates issued successfully!');
+  } catch (err) {
+    console.error(err);
+    alert('❌ Error issuing all plates');
+  }
+}
+
 // Global tracking objects for debouncing adjustMeal API requests
 const debounceTimers = {};
 const pendingUpdates = {};
@@ -301,4 +362,35 @@ async function adjustMeal(bookingId, mealType, delta) {
       getExistingGuestBookings();
     }
   }, 2500);
+}
+
+function exportBulkFoodCSV() {
+  const data = window._lastBulkBookings || [];
+  if (!data.length) { alert('No guest food bookings loaded to export.'); return; }
+  const rows = [['Date', 'Booked By', 'Mobile No', 'Department', 'Guest Count', 'Breakfast', 'Lunch', 'Dinner', 'B Issued', 'L Issued', 'D Issued']];
+  data.forEach(b => {
+    rows.push([
+      (b.date || '').substring(0, 10),
+      b.CardDb?.issuedto || '',
+      b.CardDb?.mobno || '',
+      b.department || '',
+      b.guestCount || 0,
+      b.breakfast || 0,
+      b.lunch || 0,
+      b.dinner || 0,
+      b.breakfast_plate_issued || 0,
+      b.lunch_plate_issued || 0,
+      b.dinner_plate_issued || 0
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `guest_food_bookings_${new Date().toISOString().substring(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

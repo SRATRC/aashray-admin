@@ -141,8 +141,9 @@
             </form>
           </div>
 
-          <div class="frm-head">
-            <h2>Manage Guest Food Bookings</h2>
+          <div class="frm-head" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <h2 style="margin:0;">Manage Guest Food Bookings</h2>
+            <button type="button" onclick="exportBulkFoodCSV()" class="btn btn-secondary" style="background:#27ae60;color:#fff;border-color:#27ae60;">⬇ Export CSV</button>
           </div>
 
           <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
@@ -161,6 +162,7 @@
                   <th class="issued-header">Breakfast Issued</th>
                   <th class="issued-header">Lunch Issued</th>
                   <th class="issued-header">Dinner Issued</th>
+                  <th class="issued-header">Quick Action</th>
                 </tr>
               </thead>
               <tbody id="bookingsTableBody">

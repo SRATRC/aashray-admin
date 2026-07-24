@@ -22,10 +22,142 @@
     <script src="/sessionstorage.js"></script>
     <script src="/style/js/utils.js"></script>
     <script src="../../style/js/formatDate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="fetchMenu.js"></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .menu-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(6px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+      }
+      .menu-modal-card {
+        background: #fff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 650px;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        overflow: hidden;
+        animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .dish-chip {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin: 2px 3px 2px 0;
+        user-select: none;
+      }
+      .dish-chip:hover {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+      }
+      .autocomplete-box {
+        position: absolute;
+        z-index: 10000;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        max-height: 150px;
+        overflow-y: auto;
+        display: none;
+      }
+      .autocomplete-item {
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+      }
+      .autocomplete-item:hover {
+        background: #eef2ff;
+        color: #4f46e5;
+      }
+      @keyframes modalSlideUp {
+        from { transform: translateY(24px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .modal-tab-container {
+        display: flex;
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 10px;
+        margin: 16px 20px 0 20px;
+        gap: 6px;
+      }
+      .modal-tab-btn {
+        flex: 1;
+        padding: 9px 14px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .modal-tab-btn.active {
+        background: #ffffff;
+        color: #4f46e5;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      }
+      .meal-card-group {
+        border-left: 4px solid #cbd5e1;
+        background: #f8fafc;
+        border-radius: 0 10px 10px 0;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        transition: border-color 0.2s;
+      }
+      .meal-card-group.bf { border-left-color: #f59e0b; }
+      .meal-card-group.lu { border-left-color: #3b82f6; }
+      .meal-card-group.dn { border-left-color: #8b5cf6; }
+      .meal-card-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .drop-zone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 30px 20px;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .drop-zone:hover, .drop-zone.dragover {
+        border-color: #6366f1;
+        background: #eef2ff;
+      }
+    </style>
   </head>
 
   <body>
@@ -44,38 +176,52 @@
         <div class="whitesec">
           <div class="inner-padding">
 
-            <div class="frm-head">
-              <h1>Manage Menu</h1>
+            <!-- Modern Page Banner Header -->
+            <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#fff; border-radius:14px; padding:20px 24px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:28px;">🍽️</span>
+                <div>
+                  <h1 style="margin:0; font-size:20px; font-weight:700; color:#ffffff;">Manage Food Menu</h1>
+                  <div style="font-size:13px; color:#cbd5e1; margin-top:2px;">View, create, edit, or upload 7-day meal menus</div>
+                </div>
+              </div>
+              <button onclick="openAddMenuModal()" style="background:#4f46e5; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(79,70,229,0.3); transition:all 0.2s ease;">
+                ➕ Add Menu
+              </button>
             </div>
 
-            <div class="form">
+            <!-- Filter Toolbar -->
+            <div class="form" style="margin-bottom:20px;">
               <div id="alert" class="alert" role="alert" style="display:none;"></div>
-              <form id="fetchMenuForm">
-                <div class="form-group">
-                  <label for="fromDate">From Date:</label>
-                  <input type="date" id="fromDate" name="fromDate" class="form-control" required />
+              <form id="fetchMenuForm" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; display:flex; align-items:center; flex-wrap:wrap; gap:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <label for="fromDate" style="font-weight:700; margin:0; font-size:13px; color:#475569;">From Date:</label>
+                  <input type="date" id="fromDate" name="fromDate" class="form-control" style="width:auto; padding:6px 12px; border-radius:8px; border:1px solid #cbd5e1; font-weight:600;" required />
                 </div>
 
-                <div class="form-group">
-                  <label for="toDate">To Date:</label>
-                  <input type="date" id="toDate" name="toDate" class="form-control" required />
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <label for="toDate" style="font-weight:700; margin:0; font-size:13px; color:#475569;">To Date:</label>
+                  <input type="date" id="toDate" name="toDate" class="form-control" style="width:auto; padding:6px 12px; border-radius:8px; border:1px solid #cbd5e1; font-weight:600;" required />
                 </div>
 
-                <div class="form-group form-submit">
-                  <button type="submit" class="btn btn-primary">Filter</button>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-left:auto;">
+                  <button type="submit" class="btn btn-primary" style="padding:7px 18px; border-radius:8px; font-weight:bold;">Filter</button>
+                  <button type="button" id="btnMenuToday" class="btn btn-secondary" style="padding:7px 14px; border-radius:8px;">Today</button>
+                  <button type="button" id="btnNext7Days" class="btn btn-secondary" style="padding:7px 14px; border-radius:8px;">Next 7 Days</button>
                 </div>
               </form>
             </div>
 
-            <div class="table-responsive">
-              <table id="menuTable" class="table table-striped table-bordered">
+            <!-- Styled Table -->
+            <div class="table-responsive" style="border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+              <table id="menuTable" class="table table-striped table-bordered" style="margin-bottom:0;">
                 <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Breakfast</th>
-                    <th>Lunch</th>
-                    <th>Dinner</th>
-                    <th>Action</th>
+                  <tr style="background:#1e293b; color:#ffffff;">
+                    <th style="background:#1e293b; color:#ffffff; padding:12px 16px; border:none; font-weight:700;">Date</th>
+                    <th style="background:#1e293b; color:#fbbf24; padding:12px 16px; border:none; font-weight:700;">🌅 Breakfast</th>
+                    <th style="background:#1e293b; color:#60a5fa; padding:12px 16px; border:none; font-weight:700;">☀️ Lunch</th>
+                    <th style="background:#1e293b; color:#a78bfa; padding:12px 16px; border:none; font-weight:700;">🌙 Dinner</th>
+                    <th style="background:#1e293b; color:#ffffff; padding:12px 16px; border:none; font-weight:700; width:120px; text-align:center;">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -84,14 +230,77 @@
               </table>
             </div>
 
-            <div class="form-group form-submit">
-              <button onclick="window.location.href='addMenu.html'" class="btn btn-secondary">
-                Add Menu
-              </button>
-            </div>
-
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 🍽️ Premium Add / Upload Menu Modal -->
+    <div id="addMenuModalOverlay" class="menu-modal-overlay" onclick="closeAddMenuModalOnOverlay(event)">
+      <div class="menu-modal-card">
+        
+        <!-- Header -->
+        <div style="padding:16px 24px; background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#fff; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:22px;">🍽️</span>
+            <div>
+              <h3 style="margin:0; font-size:16px; font-weight:700; color:#fff;" id="modalTitleText">Add / Upload Food Menu</h3>
+              <div style="font-size:12px; color:#94a3b8;">Create single day entry or upload 7-day Excel</div>
+            </div>
+          </div>
+          <button onclick="closeAddMenuModal()" style="background:rgba(255,255,255,0.1); border:none; width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; color:#cbd5e1; display:flex; align-items:center; justify-content:center;">&times;</button>
+        </div>
+
+        <!-- Segmented Tab Switcher -->
+        <div class="modal-tab-container">
+          <button id="tabSingleBtn" class="modal-tab-btn active" onclick="switchAddMenuTab('single')">✍️ Single Day Entry</button>
+          <button id="tabBulkBtn" class="modal-tab-btn" onclick="switchAddMenuTab('bulk')">📊 Bulk Excel Upload</button>
+        </div>
+
+        <!-- Tab 1: Single / Multi-Day Entry -->
+        <div id="tabSingleContent" style="padding:20px 24px 24px 24px; overflow-y:auto; flex:1;">
+          <form id="modalAddMenuForm">
+
+            <!-- Dynamic Day Cards Container -->
+            <div id="dayCardsContainer">
+              <!-- Rendered dynamically by JS -->
+            </div>
+
+            <!-- Modal Action Buttons Bar -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; pt-2; border-top:1px solid #e2e8f0;">
+              <button type="button" id="btnAddAnotherDayBtn" onclick="addAnotherDayCard()" class="btn btn-secondary" style="font-size:12px; font-weight:bold; border-radius:8px; background:#4f46e5; color:#fff; border-color:#4f46e5;">
+                ➕ Add Another Day
+              </button>
+              <div style="display:flex; gap:10px;">
+                <button type="button" onclick="closeAddMenuModal()" class="btn btn-secondary" style="border-radius:8px;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="font-weight:bold; border-radius:8px; padding:8px 20px;">Save All Menus</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab 2: Bulk Excel Upload -->
+        <div id="tabBulkContent" style="padding:20px 24px 24px 24px; display:none;">
+          
+          <!-- Drop Zone -->
+          <div class="drop-zone" onclick="document.getElementById('modalExcelFile').click()" id="modalDropZone">
+            <div style="font-size:36px; margin-bottom:8px;">📊</div>
+            <div style="font-weight:700; font-size:14px; color:#1e293b; margin-bottom:4px;" id="dropZoneText">Click to select or drag & drop Excel file</div>
+            <div style="font-size:12px; color:#64748b;">Supports .xlsx or .xls files (columns: date, breakfast, lunch, dinner)</div>
+            <input type="file" id="modalExcelFile" accept=".xlsx, .xls" style="display:none;" onchange="handleModalFileSelect(this)" />
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:16px; border-top:1px solid #e2e8f0;">
+            <button type="button" onclick="downloadExcelTemplate()" class="btn btn-secondary" style="font-size:12px; padding:6px 12px; border-radius:6px; background:#475569; color:#fff; border-color:#475569;">
+              📥 Download Sample Template
+            </button>
+            <div style="display:flex; gap:10px;">
+              <button type="button" onclick="closeAddMenuModal()" class="btn btn-secondary" style="border-radius:8px;">Cancel</button>
+              <button type="button" onclick="uploadExcelModal()" class="btn btn-success" style="font-weight:bold; border-radius:8px; padding:8px 20px;">Upload & Save</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </body>

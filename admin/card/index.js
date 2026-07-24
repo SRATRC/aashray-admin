@@ -551,9 +551,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       cardCell.innerHTML = highlightText(item.cardno, query);
       row.appendChild(cardCell);
 
-      // Mobile Number
+      // Mobile Number with WhatsApp link
       const mobnoCell = document.createElement('td');
-      mobnoCell.innerHTML = highlightText(item.mobno || '-', query);
+      mobnoCell.style.whiteSpace = 'nowrap';
+      const mobStr = item.mobno ? String(item.mobno) : '';
+      if (mobStr) {
+        const waBtn = document.createElement('a');
+        waBtn.href = `https://wa.me/91${mobStr}`;
+        waBtn.target = '_blank';
+        waBtn.title = 'Open in WhatsApp';
+        waBtn.innerHTML = '💬';
+        waBtn.style.cssText = 'text-decoration:none; font-size:13px; margin-right:5px; vertical-align:middle;';
+        waBtn.addEventListener('click', e => e.stopPropagation());
+        mobnoCell.appendChild(waBtn);
+        const numSpan = document.createElement('span');
+        numSpan.innerHTML = highlightText(mobStr, query);
+        mobnoCell.appendChild(numSpan);
+      } else {
+        mobnoCell.textContent = '-';
+      }
       row.appendChild(mobnoCell);
 
       // Residence Status Badge
@@ -1536,10 +1552,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const openQuickDrawer = (item) => {
     drawerCurrentItem = item;
 
-    // Avatar initials
+    // Avatar — show pfp photo if available, else initials
     const avatar = document.getElementById('drawerAvatar');
-    const initials = (item.issuedto || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-    avatar.textContent = initials;
+    if (item.pfp) {
+      avatar.innerHTML = `<img src="${item.pfp}" alt="${item.issuedto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${(item.issuedto||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}'">`;
+      avatar.style.background = 'none';
+      avatar.style.padding = '0';
+    } else {
+      const initials = (item.issuedto || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      avatar.innerHTML = initials;
+      avatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    }
 
     // Header info
     document.getElementById('drawerName').textContent = item.issuedto || '—';
@@ -2900,14 +2923,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       try {
         const token = sessionStorage.getItem('token');
-        const res = await fetch(`${CONFIG.basePath}/card/search/${encodeURIComponent(val)}`, {
+        const res = await fetch(`${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(val)}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           const result = await res.json();
+          const match = result.data;
           const currentCard = pCardnoInput ? pCardnoInput.value.trim() : '';
-          const match = (result.data || []).find(d => String(d.mobno) === val && (panelMode === 'create' || d.cardno !== currentCard));
-          if (match) {
+          if (match && (panelMode === 'create' || match.cardno !== currentCard)) {
             pMobnoVal.classList.add('visible');
             pMobnoVal.style.color = '#d97706';
             pMobnoVal.textContent = `⚠️ Phone already assigned to ${match.issuedto} (${match.cardno})`;
@@ -2916,6 +2939,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             pMobnoVal.style.color = '#16a34a';
             pMobnoVal.textContent = '✓ Valid Phone Number';
           }
+        } else if (res.status === 404) {
+          // 404 = not found = number is free
+          pMobnoVal.classList.add('visible');
+          pMobnoVal.style.color = '#16a34a';
+          pMobnoVal.textContent = '✓ Valid Phone Number';
         }
       } catch (e) {
         pMobnoVal.classList.remove('visible');
