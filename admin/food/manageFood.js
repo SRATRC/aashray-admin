@@ -25,16 +25,35 @@ mobileInput.addEventListener('blur', async () => {
     if (response.ok && data?.data) {
       nameInput.value = data.data.issuedto || '';
       cardnoInput.value = data.data.cardno || '';
+      updateBookingMemberCard(data.data);
     } else {
       nameInput.value = '';
-      // do NOT clear cardno if admin typed it manually
+      updateBookingMemberCard(null);
     }
   } catch (error) {
     console.error('Mobile lookup failed:', error);
     showErrorMessage('Failed to look up mobile number. Please try again.');
     nameInput.value = '';
+    updateBookingMemberCard(null);
   }
 });
+
+function updateBookingMemberCard(cardData) {
+  const cardEl = document.getElementById('bookingMemberCard');
+  const nameEl = document.getElementById('memberCardName');
+  const metaEl = document.getElementById('memberCardMeta');
+  const initEl = document.getElementById('memberInitials');
+
+  if (!cardEl) return;
+  if (cardData && cardData.issuedto) {
+    cardEl.style.display = 'flex';
+    nameEl.textContent = cardData.issuedto;
+    metaEl.textContent = `Card No: ${cardData.cardno || 'N/A'} | Mobile: ${cardData.mobno || 'N/A'}${cardData.center ? ` | Center: ${cardData.center}` : ''}`;
+    if (initEl) initEl.textContent = cardData.issuedto.charAt(0).toUpperCase();
+  } else {
+    cardEl.style.display = 'none';
+  }
+}
 
   const form = document.getElementById('foodBookingForm');
   const today = formatDate(new Date());

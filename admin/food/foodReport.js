@@ -27,19 +27,31 @@ document.addEventListener('DOMContentLoaded', async function () {
   const ignoreEventsCheckbox = document.getElementById('ignoreEvents');
   if (ignoreEventsCheckbox) ignoreEventsCheckbox.checked = ignore_events;
 
-  // FORM SUBMIT
-  const filterForm = document.getElementById('foodReportFilterForm');
-  if (filterForm) {
-    filterForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const s = document.getElementById('start_date').value;
-      const eDate = document.getElementById('end_date').value;
-      const ignoreEvt = document.getElementById('ignoreEvents').checked;
-      const params = new URLSearchParams({ start_date: s, end_date: eDate });
-      if (ignoreEvt) params.set('ignore_events', 'true');
-      window.location.href = `foodReport.html?${params}`;
-    });
-  }
+  // QUICK FILTER BUTTONS
+  const navigateWithDates = (s, e) => {
+    const ignoreEvt = document.getElementById('ignoreEvents')?.checked;
+    const params = new URLSearchParams({ start_date: s, end_date: e });
+    if (ignoreEvt) params.set('ignore_events', 'true');
+    window.location.href = `foodReport.html?${params}`;
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  document.getElementById('btnToday')?.addEventListener('click', () => {
+    navigateWithDates(todayStr, todayStr);
+  });
+
+  document.getElementById('btnNext7Days')?.addEventListener('click', () => {
+    const next7Obj = new Date(); next7Obj.setDate(next7Obj.getDate() + 6);
+    navigateWithDates(todayStr, next7Obj.toISOString().split('T')[0]);
+  });
+
+  document.getElementById('btnThisMonth')?.addEventListener('click', () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    navigateWithDates(firstDay, lastDay);
+  });
 
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const reportTitle = document.getElementById('reportTitle');

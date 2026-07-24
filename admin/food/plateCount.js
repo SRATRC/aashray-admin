@@ -8,6 +8,32 @@ document.addEventListener('DOMContentLoaded', function () {
   const today = new Date().toISOString().split('T')[0];
   dateInput.value = urlDate || today;
 
+  // Quick Date Shortcut Buttons
+  document.getElementById('btnToday')?.addEventListener('click', () => {
+    dateInput.value = new Date().toISOString().split('T')[0];
+    loadExistingCounts();
+  });
+
+  document.getElementById('btnYesterday')?.addEventListener('click', () => {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    dateInput.value = y.toISOString().split('T')[0];
+    loadExistingCounts();
+  });
+
+  document.getElementById('btnTomorrow')?.addEventListener('click', () => {
+    const t = new Date(); t.setDate(t.getDate() + 1);
+    dateInput.value = t.toISOString().split('T')[0];
+    loadExistingCounts();
+  });
+
+  // Reset Button
+  document.getElementById('btnResetForm')?.addEventListener('click', () => {
+    document.getElementById('breakfast').value = '';
+    document.getElementById('lunch').value = '';
+    document.getElementById('dinner').value = '';
+    updateTotal();
+  });
+
   // Fetch existing counts whenever date changes
   dateInput.addEventListener('change', () => loadExistingCounts());
 
@@ -114,9 +140,10 @@ async function loadExistingCounts() {
 
     const hasData = records.length > 0;
     submitBtn.dataset.mode    = hasData ? 'update' : 'add';
-    submitBtn.textContent     = hasData ? 'Update' : 'Submit';
-    modeLabel.textContent     = hasData ? '✏️ Editing existing counts for this date' : '';
-    modeLabel.style.color     = '#e67e22';
+    submitBtn.textContent     = hasData ? 'Update Count' : 'Submit Count';
+    modeLabel.textContent     = hasData ? '✏️ Editing existing physical plate counts for this date' : '';
+    const modeBox = document.getElementById('modeLabelBox');
+    if (modeBox) modeBox.style.display = hasData ? 'block' : 'none';
 
   } catch (err) {
     console.error('Error loading existing plate counts:', err);
@@ -131,8 +158,10 @@ async function loadExistingCounts() {
     document.getElementById('dinner').value    = '';
     updateTotal();
     submitBtn.dataset.mode    = 'add';
-    submitBtn.textContent     = 'Submit';
+    submitBtn.textContent     = 'Submit Count';
     modeLabel.textContent     = '';
+    const modeBox = document.getElementById('modeLabelBox');
+    if (modeBox) modeBox.style.display = 'none';
   }
 }
 

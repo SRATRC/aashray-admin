@@ -39,14 +39,14 @@ function updateMealSlotHeader() {
   const badgeEl = document.getElementById('activeMealBadge');
   if (!badgeEl) return;
 
-  // Meal windows: Breakfast (6:00 - 10:30), Lunch (11:30 - 15:30), Dinner (18:30 - 22:30)
+  // Meal windows: Breakfast (6:00 - 10:30), Lunch (11:00 - 15:30), Dinner (17:30 - 22:30)
   if (totalMins >= 360 && totalMins <= 630) {
     badgeEl.innerHTML = '🌅 Breakfast';
     badgeEl.style.background = '#f59e0b';
-  } else if (totalMins >= 690 && totalMins <= 930) {
+  } else if (totalMins >= 660 && totalMins <= 930) {
     badgeEl.innerHTML = '☀️ Lunch';
     badgeEl.style.background = '#3b82f6';
-  } else if (totalMins >= 1110 && totalMins <= 1350) {
+  } else if (totalMins >= 1050 && totalMins <= 1350) {
     badgeEl.innerHTML = '🌙 Dinner';
     badgeEl.style.background = '#8b5cf6';
   } else {

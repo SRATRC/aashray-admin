@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     _allPlateData = data.data || [];
     _filteredPlateData = [..._allPlateData];
 
+    // Render Summary KPI Cards
+    renderIssuedPlateSummary(is_issued, meal, date, _allPlateData.length);
+
     /* --- Live search --- */
     const searchInput = document.getElementById('tableSearch');
     if (searchInput) {
@@ -109,6 +112,33 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 });
 
+function renderIssuedPlateSummary(is_issued, meal, date, count) {
+  const container = document.getElementById('issuedPlateSummaryCards');
+  if (!container) return;
+
+  const isIssued = is_issued === '1';
+  const statusLabel = isIssued ? '✅ Plate Issued' : '❌ No-Show (Missed)';
+  const statusColor = isIssued ? '#059669' : '#dc2626';
+  const statusBg = isIssued ? '#ecfdf5' : '#fef2f2';
+
+  const mealIcon = meal === 'breakfast' ? '🌅' : (meal === 'lunch' ? '☀️' : '🌙');
+
+  container.innerHTML = `
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px 18px; flex:1; min-width:200px; box-shadow:0 1px 3px rgba(0,0,0,0.04); border-left:4px solid ${statusColor};">
+      <div style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase;">Total Members</div>
+      <div style="font-size:24px; font-weight:800; color:#0f172a; margin:2px 0;">${count}</div>
+      <div style="font-size:12px; color:#64748b;">${mealIcon} ${meal ? meal.toUpperCase() : ''} on ${formatDate(date)}</div>
+    </div>
+
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px 18px; flex:1; min-width:200px; box-shadow:0 1px 3px rgba(0,0,0,0.04); border-left:4px solid ${statusColor};">
+      <div style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase;">Report Status</div>
+      <div style="font-size:16px; font-weight:800; color:${statusColor}; margin:6px 0;">
+        <span style="background:${statusBg}; padding:4px 12px; border-radius:12px; border:1px solid ${statusColor}44;">${statusLabel}</span>
+      </div>
+    </div>
+  `;
+}
+
 /* ===== Render a page of results ===== */
 function renderPlatePage(page) {
   _platePage = page;
@@ -119,16 +149,22 @@ function renderPlatePage(page) {
 
   pageData.forEach((report, idx) => {
     const rowNum = start + idx + 1;
-    const mobStr = String(report.CardDb?.mobno || '');
-    const waLink = mobStr
-      ? `<a href="https://wa.me/91${mobStr}" target="_blank" title="WhatsApp" style="text-decoration:none;margin-right:5px;">💬</a>`
-      : '';
+    const mobStr = String(report.CardDb?.mobno || '').trim();
+    const cleanMob = mobStr.replace(/\D/g, '');
+
+    const contactLinks = cleanMob ? `
+      <a href="tel:${cleanMob}" class="btn btn-sm" style="background:#0284c7; color:#fff; font-weight:bold; border-radius:4px; font-size:11px; padding:2px 6px; text-decoration:none; margin-right:4px;" title="Call">📞 Call</a>
+      <a href="https://wa.me/91${cleanMob}" target="_blank" class="btn btn-sm" style="background:#25D366; color:#fff; font-weight:bold; border-radius:4px; font-size:11px; padding:2px 6px; text-decoration:none; margin-right:6px;" title="WhatsApp">💬 WhatsApp</a>
+    ` : '';
 
     const baseCells = `
-      <td>${rowNum}</td>
-      <td>${formatDate(report.date)}</td>
-      <td>${report.CardDb?.issuedto || ''}</td>
-      <td style="white-space:nowrap">${waLink}${mobStr || '—'}</td>
+      <td style="text-align:center; font-weight:600;">${rowNum}</td>
+      <td style="text-align:center; white-space:nowrap; font-weight:600;">📅 ${formatDate(report.date)}</td>
+      <td style="font-weight:700; color:#1e293b;">${report.CardDb?.issuedto || '—'}</td>
+      <td style="white-space:nowrap;">
+        ${contactLinks}
+        <span style="font-weight:600; color:#334155;">${mobStr || '—'}</span>
+      </td>
     `;
 
     const row = document.createElement('tr');
