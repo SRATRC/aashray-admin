@@ -8,6 +8,7 @@
     'cardAdmin',
     'officeAdmin',
     'foodAdmin',
+    'foodPlateAdmin',
     'gateAdmin',
     'adhyayanAdmin',
     'travelAdmin',
@@ -28,7 +29,7 @@
   ]);
 </script>
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -76,6 +77,11 @@
       </div>
     </div>
     <script>
+      const shortLinkButton = {
+        href: 'common/shortLinks.html',
+        text: 'Short Link Management'
+      };
+
       // Role-based button configuration
       const roleButtonMap = {
         superAdmin: [
@@ -90,22 +96,35 @@
           { href: 'maintenance/index.html', text: 'Maintenance Management' },
           { href: 'avt/index.html', text: 'AVT Management' },
           { href: 'wifi/index.html', text: 'WiFi Management' },
-          { href: 'utsav/index.html', text: 'Utsav Management' }
+          { href: 'utsav/index.html', text: 'Utsav Management' },
+          shortLinkButton
         ],
         accountsAdmin: [
-          { href: 'account/index.html', text: 'Account Management' }
+          { href: 'account/index.html', text: 'Account Management' },
+          shortLinkButton
         ],
-        roomAdmin: [{ href: 'room/index.html', text: 'Room Management' }],
-        cardAdmin: [{ href: 'card/index.html', text: 'Card Management' }],
+        roomAdmin: [
+          { href: 'room/index.html', text: 'Room Management' },
+          shortLinkButton
+        ],
+        cardAdmin: [
+          { href: 'card/index.html', text: 'Card Management' },
+          shortLinkButton
+        ],
         officeAdmin: [
           { href: 'adhyayan/index.html', text: 'Adhyayan Management' },
           { href: 'card/index.html', text: 'Card Management' },
-          { href: 'room/index.html', text: 'Room Management' }
+          { href: 'room/index.html', text: 'Room Management' },
+          shortLinkButton
         ],
-        foodAdmin: [{ href: 'food/index.html', text: 'Food Management' }],
+        foodAdmin: [
+          { href: 'food/index.html', text: 'Food Management' },
+          shortLinkButton
+        ],
         gateAdmin: [{ href: 'gate/index.html', text: 'Gate Management' }],
         adhyayanAdmin: [
-          { href: 'adhyayan/index.html', text: 'Adhyayan Management' }
+          { href: 'adhyayan/index.html', text: 'Adhyayan Management' },
+          shortLinkButton
         ],
         adhyayanAdminKol: [
           {
@@ -131,7 +150,10 @@
             text: 'Rajnandgaon Utsav Report'
           }
         ],
-        travelAdmin: [{ href: 'travel/index.html', text: 'Travel Management' }],
+        travelAdmin: [
+          { href: 'travel/index.html', text: 'Travel Management' },
+          shortLinkButton
+        ],
         travelAdminDri: [
           {
             href: 'travel/fetchBookingsForDriver.html',
@@ -162,11 +184,27 @@
             text: 'Adhyayan Report'
           }
         ],
-        utsavAdmin: [{ href: 'utsav/index.html', text: 'Utsav Management' }],
-        avtAdmin: [{ href: 'avt/index.html', text: 'AVT Management' }],
-        utsavAdminReadOnly: [{ href: 'utsav/utsavCentre.html', text: 'Utsav Report' }],
-        wifiAdmin: [{ href: 'wifi/index.html', text: 'WiFi Management' }],
-        smilesAdmin: [{ href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }]
+        utsavAdmin: [
+          { href: 'utsav/index.html', text: 'Utsav Management' },
+          shortLinkButton
+        ],
+        avtAdmin: [
+          { href: 'avt/index.html', text: 'AVT Management' },
+          shortLinkButton
+        ],
+        utsavAdminReadOnly: [
+          { href: 'utsav/utsavCentre.html', text: 'Utsav Report' }
+        ],
+        wifiAdmin: [
+          { href: 'wifi/index.html', text: 'WiFi Management' },
+          shortLinkButton
+        ],
+        smilesAdmin: [
+          { href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }
+        ],
+        foodPlateAdmin: [
+          { href: 'food/plateCount.html', text: 'K1 Kitchen Count' }
+        ]
       };
 
       // Function to populate buttons based on user roles

@@ -7,7 +7,8 @@ function checkRoleAccess(allowedRoles) {
     return;
   }
 
-  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const roles    = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const currentPage = window.location.pathname.split('/').pop();
 
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
@@ -20,6 +21,7 @@ function checkRoleAccess(allowedRoles) {
       'cardAdmin',
       'officeAdmin',
       'foodAdmin',
+      'foodPlateAdmin',
       'gateAdmin',
       'adhyayanAdmin',
       'travelAdmin',
@@ -41,14 +43,12 @@ function checkRoleAccess(allowedRoles) {
 
     const hasValidRole = roles.some((role) => validRoles.includes(role));
 
-    if (hasValidRole) {
+    if (hasValidRole && currentPage !== 'adminhome.html') {
       // User has valid roles but not for this specific page
       alert(
         'You are not authorized to access this page.\nRedirecting you to the admin home page...'
       );
-      setTimeout(() => {
-        window.location.href = '/admin/adminhome.html';
-      });
+      window.location.href = '/admin/adminhome.html';
       return;
     }
 
@@ -74,6 +74,7 @@ function getHomePageForRole() {
     'cardAdmin',
     'officeAdmin',
     'foodAdmin',
+    'foodPlateAdmin',
     'gateAdmin',
     'adhyayanAdmin',
     'travelAdmin',

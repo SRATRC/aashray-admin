@@ -87,7 +87,8 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
       });
 
       const utsavData = await response.json();
-      populateTable(utsavData.data);
+      const sortedData = (utsavData.data || []).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      populateTable(sortedData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
