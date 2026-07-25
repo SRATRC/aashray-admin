@@ -4,66 +4,239 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dynamic Room Allocation Priority | Admin</title>
-  <link rel="stylesheet" href="../../style/css/style.css" />
+
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/common.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']);
+  </script>
+  <script src="allocationPriority.js" defer></script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
   <style>
+    .card-box {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #204060;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      border-color: #204060;
+      box-shadow: 0 0 0 3px rgba(32, 64, 96, 0.15);
+    }
     .priority-list {
       list-style: none;
       padding: 0;
-      margin: 20px 0;
-      max-width: 600px;
+      margin: 16px 0 24px 0;
+      width: 100%;
     }
     .priority-item {
       background-color: #ffffff;
-      border: 1px solid #ced4da;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #204060;
       border-radius: 6px;
-      padding: 14px 18px;
-      margin-bottom: 12px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+      cursor: grab;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .priority-item:active {
+      cursor: grabbing;
+    }
+    .priority-item.dragging {
+      opacity: 0.4;
+      background-color: #f1f5f9;
+      border-style: dashed;
+    }
+    .drag-handle {
+      color: #94a3b8;
+      font-size: 1.25rem;
+      margin-right: 12px;
+      user-select: none;
     }
     .priority-item-title {
       font-weight: 600;
-      font-size: 1.05rem;
-      color: #333;
+      font-size: 0.95rem;
+      color: #1e293b;
     }
     .priority-item-subtitle {
       font-size: 0.85rem;
-      color: #6c757d;
+      color: #64748b;
       margin-top: 3px;
     }
-    .btn-move {
-      margin-left: 5px;
-      padding: 4px 12px;
-      font-size: 0.9rem;
-    }
-    .badge-month {
-      background-color: #007bff;
-      color: #fff;
+    .priority-rank {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #204060;
+      font-weight: 700;
+      font-size: 0.8rem;
       padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 0.85em;
+      border-radius: 12px;
+      margin-right: 8px;
     }
-    .badge-default {
-      background-color: #6c757d;
-      color: #fff;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 0.85em;
+    .rank-select {
+      padding: 6px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #204060;
+      font-weight: 600;
+      background-color: #f8fafc;
+      outline: none;
+      cursor: pointer;
     }
-    .table-summary {
+    .rank-select:focus {
+      border-color: #204060;
+    }
+    .btn-submit {
+      background-color: #204060;
+      color: #ffffff;
+      font-weight: 600;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-size: 0.95rem;
+    }
+    .btn-submit:hover {
+      background-color: #162d44;
+    }
+    .btn-cancel {
+      background-color: #64748b;
+      color: #ffffff;
+      font-weight: 600;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    .btn-cancel:hover {
+      background-color: #475569;
+    }
+    .table-container {
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+      margin-top: 16px;
+    }
+    .exemptions-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 25px;
     }
-    .table-summary th, .table-summary td {
-      border: 1px solid #dee2e6;
-      padding: 10px 14px;
+    .exemptions-table th {
+      background-color: #204060;
+      color: #ffffff;
+      padding: 12px 14px;
       text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
     }
-    .table-summary th {
-      background-color: #f8f9fa;
+    .exemptions-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+    .exemptions-table tr:hover {
+      background-color: #f8fafc;
+    }
+    .badge-perm {
+      background-color: #16a34a;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .badge-temp {
+      background-color: #0284c7;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .btn-edit-sm {
+      background-color: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 4px;
+    }
+    .btn-edit-sm:hover {
+      background-color: #0369a1;
+    }
+    .btn-danger-sm {
+      background-color: #dc2626;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-danger-sm:hover {
+      background-color: #b91c1c;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 24px;
+      width: 90%;
+      max-width: 580px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
@@ -84,45 +257,18 @@
         <div class="inner-padding">
           <div class="frm-head">
             <h1>Dynamic Room Allocation Priority</h1>
-            <p>Configure which room groups (OAG/NAG floors) get filled first during room allocation. You can set a <strong>Global Default</strong> or month-specific overrides.</p>
+            <p>Configure which room groups (OAG/NAG floors) get filled first during room allocation.</p>
           </div>
 
           <div id="alert" class="alert" style="display:none;"></div>
 
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 30px;">
-            <h3>Configure Priority Rule</h3>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px;">
-              <div class="form-group" style="margin: 0; min-width: 250px;">
-                <label for="selectMonth" style="font-weight: 600;">Target Month / Scope:</label>
-                <select id="selectMonth" class="form-control">
-                  <option value="default">Global Default (All Months)</option>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
-              </div>
-            </div>
-
-            <p style="margin-bottom: 10px; font-weight: 600; color: #495057;">Re-order Priority (Top = Priority 1, Filled First):</p>
-            <ul id="priorityList" class="priority-list">
-              <!-- Priority items rendered dynamically -->
-            </ul>
-
-            <button type="button" id="savePriorityBtn" class="btn btn-primary" style="padding: 8px 24px;">Save Priority Order</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 1.15rem; font-weight: 600; color: #204060; margin: 0;">Configured Priority Rules Overview</h3>
+            <button type="button" id="openAddModalBtn" class="btn-submit">+ Configure Priority Rule</button>
           </div>
 
-          <h3>Configured Priority Rules Overview</h3>
-          <div id="overviewContainer">
-            <table class="table-summary">
+          <div class="table-container">
+            <table class="exemptions-table">
               <thead>
                 <tr>
                   <th>Scope</th>
@@ -145,8 +291,40 @@
     </div>
   </div>
 
-  <script src="../../style/js/config.js"></script>
-  <script src="../../style/js/common.js"></script>
-  <script src="allocationPriority.js"></script>
+  <!-- Re-order Priority Modal Overlay -->
+  <div id="priorityModal" class="modal-overlay">
+    <div class="modal-card">
+      <div id="modalTitle" class="card-title" style="margin-bottom: 20px;">Configure Room Allocation Priority</div>
+      
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="selectMonth">Target Month / Scope:</label>
+        <select id="selectMonth" class="form-control">
+          <option value="default">Global Default (All Months)</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+
+      <p style="margin-bottom: 12px; font-weight: 600; color: #475569; font-size: 0.9rem;">Re-order Priority (Top = Priority 1, Filled First):</p>
+      <ul id="priorityList" class="priority-list">
+        <!-- Priority items rendered dynamically -->
+      </ul>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" id="closeModalBtn" class="btn-cancel">Cancel</button>
+        <button type="button" id="savePriorityBtn" class="btn-submit">Save Priority Order</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
