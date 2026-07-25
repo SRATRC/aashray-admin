@@ -128,10 +128,6 @@ async function fetchPastDishSuggestions() {
       window._dishSuggestionStore.breakfast = deduplicateDishes(bfRaw);
       window._dishSuggestionStore.lunch = deduplicateDishes(luRaw);
       window._dishSuggestionStore.dinner = deduplicateDishes(dnRaw);
-
-      renderDishChips('breakfast');
-      renderDishChips('lunch');
-      renderDishChips('dinner');
     }
   } catch (err) {
     console.error('Error fetching past dish suggestions:', err);

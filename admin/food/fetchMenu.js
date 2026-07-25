@@ -267,12 +267,6 @@ function renderDayCard(dateVal = '', bf = '', lu = '', dn = '', showDelete = fal
   const card = document.createElement('div');
   card.className = 'day-card-item';
   card.id = cardId;
-  card.style.cssText = 'background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05);';
-
-  const bfChips = getPastDishChips('breakfast', `bf_${cardId}`);
-  const luChips = getPastDishChips('lunch', `lu_${cardId}`);
-  const dnChips = getPastDishChips('dinner', `dn_${cardId}`);
-
   card.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f8fafc; padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0;">
       <div style="display:flex; align-items:center; gap:8px;">
@@ -289,21 +283,18 @@ function renderDayCard(dateVal = '', bf = '', lu = '', dn = '', showDelete = fal
     <div class="meal-card-group bf">
       <div class="meal-card-label" style="color:#d97706;">🌅 Breakfast</div>
       <textarea id="bf_${cardId}" class="form-control card-bf-input" rows="2" placeholder="e.g. Idli Sambhar, Tea / Coffee" required style="resize:vertical; border-radius:6px; font-size:13px;">${bf}</textarea>
-      ${bfChips}
     </div>
 
     <!-- Lunch -->
     <div class="meal-card-group lu">
       <div class="meal-card-label" style="color:#2563eb;">☀️ Lunch</div>
       <textarea id="lu_${cardId}" class="form-control card-lu-input" rows="2" placeholder="e.g. Roti, Paneer Sabzi, Dal Rice" required style="resize:vertical; border-radius:6px; font-size:13px;">${lu}</textarea>
-      ${luChips}
     </div>
 
     <!-- Dinner -->
     <div class="meal-card-group dn">
       <div class="meal-card-label" style="color:#7c3aed;">🌙 Dinner</div>
       <textarea id="dn_${cardId}" class="form-control card-dn-input" rows="2" placeholder="e.g. Puri Bhaji, Khichdi, Kadhi" required style="resize:vertical; border-radius:6px; font-size:13px;">${dn}</textarea>
-      ${dnChips}
     </div>
   `;
   container.appendChild(card);

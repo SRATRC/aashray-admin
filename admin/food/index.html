@@ -1,67 +1,241 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['foodAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['foodAdmin', 'superAdmin', 'smilesAdmin', 'foodPlateAdmin']);
 </script>
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Food Management</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Management</title>
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
 
-    <!-- Additional Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../sessionstorage.js"></script>
+  <style>
+    .section-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-  </head>
+    /* Premium Portal Grid Layout */
+    .portal-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
 
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+    .portal-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    /* Responsive: tablet → 2 cols, mobile → 1 col */
+    @media (max-width: 900px) {
+      .portal-grid-4,
+      .portal-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .portal-grid-4,
+      .portal-grid-3 {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .portal-card {
+        padding: 18px !important;
+      }
+    }
+
+    .portal-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-4px);
+      border-color: #4f46e5;
+      box-shadow: 0 12px 20px -8px rgba(79, 70, 229, 0.18), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #4f46e5 0%, #818cf8 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .portal-card:hover::before {
+      opacity: 1;
+    }
+
+    .portal-icon {
+      font-size: 26px;
+      background: #eef2ff;
+      color: #4f46e5;
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .portal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .portal-desc {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.4;
+      flex-grow: 1;
+    }
+
+    .portal-action {
+      font-size: 12px;
+      font-weight: 700;
+      color: #4f46e5;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      transition: gap 0.2s ease;
+    }
+
+    .portal-card:hover .portal-action {
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
+  </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Food Management</h1>
-            </div>
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding" style="padding: 24px 30px;">
+          
+          <div class="frm-head" style="margin-bottom: 8px;">
+            <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0;">Food Management</h1>
+            <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Kitchen operations, meal bookings, plate issuance, and analytics</div>
+          </div>
 
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="issuePlate.html">Issue Plate</a>
-                <a class="menu-btn" href="manageFood.html">Manage Food Bookings</a>
-                <a class="menu-btn" href="manageBulkFood.html">Manage Guest Food Bookings</a>
-                <a class="menu-btn" href="plateCount.html">Plates Issued</a>
-                <a class="menu-btn" href="foodReport.html">Food Reports</a>
-                <a class="menu-btn" href="fetchMenu.html">Menu Management</a>
-                <a class="menu-btn" href="issuePlateScan.html">Issue Plate - Scanner</a>
-                <a class="menu-btn" href="mealCount.html">Meal Count</a>
-              </div>
-            </div>
+          <!-- Section 1: Quick Operations -->
+          <div class="section-label">⚡ Quick Operations</div>
+          <div class="portal-grid-4">
+            
+            <a class="portal-card" href="issuePlate.html">
+              <div class="portal-icon">🎴</div>
+              <h3 class="portal-title">Issue Plate (Card Tap)</h3>
+              <p class="portal-desc">Quick RFID card scan screen for fast member meal plate check-in.</p>
+              <div class="portal-action">Open Kiosk →</div>
+            </a>
+
+            <a class="portal-card" href="issuePlateScan.html">
+              <div class="portal-icon">📷</div>
+              <h3 class="portal-title">Issue Plate (Camera QR)</h3>
+              <p class="portal-desc">Scan QR code or enter Card No via live camera scanner.</p>
+              <div class="portal-action">Open Scanner →</div>
+            </a>
+
+            <a class="portal-card" href="manageFood.html">
+              <div class="portal-icon">🍱</div>
+              <h3 class="portal-title">Manage Food Bookings</h3>
+              <p class="portal-desc">Book or manage individual member and bulk guest food reservations.</p>
+              <div class="portal-action">Manage Bookings →</div>
+            </a>
+
+            <a class="portal-card" href="fetchMenu.html">
+              <div class="portal-icon">📋</div>
+              <h3 class="portal-title">Menu Management</h3>
+              <p class="portal-desc">View, update, or upload daily food menu and dish schedules.</p>
+              <div class="portal-action">Manage Menu →</div>
+            </a>
 
           </div>
+
+          <!-- Section 2: Reports & Analytics -->
+          <div class="section-label">📊 Reports & Analytics</div>
+          <div class="portal-grid-3">
+            
+            <a class="portal-card" href="plateCount.html">
+              <div class="portal-icon">🍽️</div>
+              <h3 class="portal-title">Plates Issued Count</h3>
+              <p class="portal-desc">Record and view physical kitchen plate counts per meal.</p>
+              <div class="portal-action">View Counts →</div>
+            </a>
+
+            <a class="portal-card" href="foodReport.html">
+              <div class="portal-icon">📈</div>
+              <h3 class="portal-title">Food Booking Reports</h3>
+              <p class="portal-desc">Detailed summary reports of booked vs issued meals across dates.</p>
+              <div class="portal-action">View Reports →</div>
+            </a>
+
+            <a class="portal-card" href="mealCount.html">
+              <div class="portal-icon">👥</div>
+              <h3 class="portal-title">Meal Count & Attendance</h3>
+              <p class="portal-desc">Track member attendance rates, no-show logs, and meal trends.</p>
+              <div class="portal-action">View Analytics →</div>
+            </a>
+
+          </div>
+
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
