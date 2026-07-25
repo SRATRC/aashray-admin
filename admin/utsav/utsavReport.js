@@ -297,17 +297,9 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
       const url =
         `https://aashray.vitraagvigyaan.org/utsav/feedback/${utsavId}`;
 
-      try {
-
-        await navigator.clipboard.writeText(url);
-
-        alert(`Feedback link copied:\n${url}`);
-
-      } catch {
-
-        alert('Failed to copy feedback link.');
-
-      }
+      await copyToClipboard(url, () => {
+        showSuccessMessage(`Feedback link copied: ${url}`);
+      });
 
     }
 

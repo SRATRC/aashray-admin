@@ -18,3 +18,23 @@ const CONFIG = {
     }
   }
 };
+
+// ── Auto-load global utilities ──────────────────────────────────────────────
+// These scripts are small and load async so they don't block page rendering.
+// formatDate.js  → formatDate, formatSimpleDate, formatDateTime, getRelativeTimeString
+// notifications.js → showSuccessMessage, showErrorMessage, showWarningMessage, showInfoMessage, resetAlert
+(function () {
+  const globalScripts = [
+    '/style/js/formatDate.js',
+    '/style/js/notifications.js',
+  ];
+  globalScripts.forEach(function (src) {
+    // Skip if already loaded (e.g., explicitly added by a page)
+    if (document.querySelector(`script[src="${src}"]`)) return;
+    const s = document.createElement('script');
+    s.src = src;
+    s.defer = true;
+    document.head.appendChild(s);
+  });
+})();
+

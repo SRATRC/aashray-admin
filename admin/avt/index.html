@@ -24,6 +24,474 @@
 
     <!-- Shared Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      /* Search Input Wrapper Styles */
+      .search-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .search-input-wrapper {
+        position: relative;
+        flex: 1;
+      }
+      .search-input-wrapper input {
+        padding-right: 32px;
+        padding-left: 32px;
+        height: 38px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .search-input-wrapper::before {
+        content: "🔍";
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        color: #94a3b8;
+        pointer-events: none;
+      }
+      #clearSearchBtn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 18px;
+        font-weight: bold;
+        display: none;
+        user-select: none;
+      }
+      #clearSearchBtn:hover {
+        color: #64748b;
+      }
+
+      /* Sortable Table Headers */
+      th.sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 22px !important;
+        transition: background-color 0.15s ease, color 0.15s ease;
+      }
+      th.sortable:hover {
+        background-color: rgba(79, 70, 229, 0.06) !important;
+        color: #4f46e5 !important;
+      }
+      th.sortable.active-sort {
+        color: #4f46e5 !important;
+        background-color: rgba(79, 70, 229, 0.04) !important;
+        border-bottom: 2px solid #4f46e5 !important;
+        font-weight: 600 !important;
+      }
+      th.sortable:after {
+        content: ' ↕';
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.3);
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      th.sortable.asc:after {
+        content: ' ▲';
+        color: #4f46e5;
+        opacity: 1;
+      }
+      th.sortable.desc:after {
+        content: ' ▼';
+        color: #4f46e5;
+        opacity: 1;
+      }
+
+      /* Circular Avatar Thumbnail */
+      .avatar-thumbnail {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        cursor: pointer;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+      }
+      .avatar-thumbnail:hover {
+        transform: scale(1.1);
+        border-color: #4f46e5;
+      }
+
+      /* Premium Modal Image Overlay */
+      #photoOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        animation: fadeInOverlay 0.25s ease-out forwards;
+      }
+      @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      #photoOverlay img {
+        max-width: 85vw;
+        max-height: 80vh;
+        border-radius: 12px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        transform: scale(0.9);
+        animation: scaleInImg 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      @keyframes scaleInImg {
+        from { transform: scale(0.9); }
+        to { transform: scale(1); }
+      }
+      .overlay-close-btn {
+        position: absolute;
+        top: 24px;
+        right: 32px;
+        font-size: 28px;
+        color: #ffffff;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        user-select: none;
+      }
+      .overlay-close-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+
+      /* WhatsApp Icon styling */
+      .wa-link {
+        color: #16a34a;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.2s ease;
+      }
+      .wa-link:hover {
+        color: #15803d;
+        text-decoration: underline;
+      }
+      .wa-icon {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      /* Table responsive styles */
+      .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .table {
+        width: 100%;
+        min-width: 800px;
+      }
+
+      /* Mobile responsiveness */
+      @media (max-width: 680px) {
+        .inner-padding {
+          padding: 12px !important;
+        }
+        .frm-head h1 {
+          font-size: 20px !important;
+        }
+        .form-group label {
+          font-size: 13px;
+        }
+        .search-row {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
+        }
+        .search-input-wrapper input {
+          font-size: 13px;
+          height: 36px;
+        }
+        .table {
+          font-size: 12px;
+        }
+        .avatar-thumbnail {
+          width: 32px;
+          height: 32px;
+        }
+        .results-count-badge {
+          align-self: flex-start;
+          height: 32px;
+          font-size: 12px;
+        }
+      }
+
+      /* Row status borders */
+      .status-border-active td:first-child {
+        border-left: 4px solid #10b981 !important;
+      }
+      .status-border-inactive td:first-child {
+        border-left: 4px solid #ef4444 !important;
+      }
+      
+      /* Row hover effects */
+      #data-list tbody tr {
+        transition: background-color 0.2s ease;
+      }
+      #data-list tbody tr:hover {
+        background-color: rgba(79, 70, 229, 0.04) !important;
+      }
+
+      /* Table loading dim state */
+      #data-list {
+        transition: opacity 0.15s ease;
+      }
+
+      /* Empty State Card */
+      .empty-state-card {
+        text-align: center;
+        padding: 40px 20px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+      .empty-state-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+        color: #94a3b8;
+      }
+      .empty-state-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+      }
+      .empty-state-desc {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 16px;
+      }
+      .empty-state-btn {
+        background-color: #4f46e5;
+        color: #ffffff;
+        border: none;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .empty-state-btn:hover {
+        background-color: #4338ca;
+      }
+
+      /* Residence Status Badges */
+      .badge-residence {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .badge-mumukshu {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+        border: 1px solid #e9d5ff;
+      }
+      .badge-pr {
+        background-color: #e0e7ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+      }
+      .badge-seva {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+      }
+      .badge-guest {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+      }
+      .badge-default {
+        background-color: #f8fafc;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+      }
+
+      /* Residence Filter Tabs styling */
+      .filter-tabs-row {
+        display: none; /* Show only when results exist */
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .status-filter-group {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+      }
+      .filter-btn {
+        border: none;
+        background: transparent;
+        padding: 5px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #64748b;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .filter-btn:hover {
+        color: #0f172a;
+      }
+      .filter-btn.active {
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Results Count Badge */
+      .results-count-badge {
+        display: none; /* Show only when results exist */
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+        height: 38px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        white-space: nowrap;
+        box-sizing: border-box;
+      }
+
+      /* Mobile Card Grid styling */
+      .mobile-cards-grid {
+        display: none;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 10px;
+      }
+      .profile-mobile-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .profile-mobile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .profile-mobile-card-border {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+      }
+      .profile-mobile-card.status-border-active .profile-mobile-card-border {
+        background-color: #10b981;
+      }
+      .profile-mobile-card.status-border-inactive .profile-mobile-card-border {
+        background-color: #ef4444;
+      }
+      .profile-mobile-card-avatar-wrapper {
+        flex-shrink: 0;
+      }
+      .profile-mobile-card-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #f1f5f9;
+        cursor: pointer;
+        display: block;
+        transition: transform 0.2s ease;
+      }
+      .profile-mobile-card-avatar:hover {
+        transform: scale(1.05);
+      }
+      .profile-mobile-card-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .profile-mobile-card-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+      }
+      .profile-mobile-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 2px;
+      }
+      .profile-mobile-card-cardno {
+        font-family: monospace;
+        font-weight: 500;
+      }
+      .profile-mobile-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 6px;
+      }
+
+      /* Viewport Toggles for Table vs Cards */
+      @media (max-width: 680px) {
+        .table-responsive {
+          display: none !important;
+        }
+        .mobile-cards-grid {
+          display: grid !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="header">
@@ -46,26 +514,46 @@
             <div class="form">
               <div class="form-group">
                 <label for="search">Search by name:</label>
-                <input
-                  type="text"
-                  id="search"
-                  class="form-control"
-                  placeholder="Enter name to search"
-                />
+                <div class="search-row">
+                  <div class="search-input-wrapper">
+                    <input
+                      type="text"
+                      id="search"
+                      class="form-control"
+                      placeholder="Enter name to search... (Press /)"
+                    />
+                    <span id="clearSearchBtn">&times;</span>
+                  </div>
+                  <!-- Count Badge -->
+                  <div id="resultsCountBadge" class="results-count-badge"></div>
+                </div>
               </div>
 
-              <div class="table-responsive">
+                <!-- Residence Filter tabs -->
+                <div class="filter-tabs-row" id="residenceFilterRow">
+                  <span style="font-weight: 600; font-size: 13px; color: #475569;">Residence:</span>
+                  <div class="status-filter-group" id="residenceFilterGroup">
+                    <button type="button" class="filter-btn active" data-filter="all">All</button>
+                    <button type="button" class="filter-btn" data-filter="MUMUKSHU">Mumukshu</button>
+                    <button type="button" class="filter-btn" data-filter="PR">PR</button>
+                    <button type="button" class="filter-btn" data-filter="SEVA">Seva Kutir</button>
+                    <button type="button" class="filter-btn" data-filter="GUEST">Guest</button>
+                  </div>
+                </div>
+
+                <div class="table-responsive">
                 <table
                   id="data-list"
                   class="table table-striped table-bordered"
                 >
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Card Number</th>
-                      <th>Mobile Number</th>
-                      <th>Email Id</th>
-                      <th>Photo Link</th>
+                      <th class="sortable" data-sort="issuedto">Name</th>
+                      <th class="sortable" data-sort="cardno">Card Number</th>
+                      <th class="sortable" data-sort="res_status">Residence Status</th>
+                      <th class="sortable" data-sort="mobno">Mobile Number</th>
+                      <th class="sortable" data-sort="email">Email Id</th>
+                      <th style="width: 100px;">Photo</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -73,6 +561,12 @@
                   </tbody>
                 </table>
               </div>
+
+              <!-- Mobile Cards container -->
+              <div id="mobile-cards-container" class="mobile-cards-grid"></div>
+              
+              <!-- Empty state block placeholder -->
+              <div id="empty-state-container"></div>
 
                 
               </div>

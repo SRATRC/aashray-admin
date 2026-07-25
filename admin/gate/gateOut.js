@@ -2,98 +2,132 @@ document.addEventListener('DOMContentLoaded', function () {
   const qrStatus = document.getElementById('qr-status');
   const scanAgainBtn = document.getElementById('scan-again-btn');
   const alertDiv = document.getElementById('alert');
+  const manualForm = document.getElementById('manualCheckoutForm');
+  const manualInput = document.getElementById('manualCardNo');
+  const recentTableBody = document.getElementById('recentScansTableBody');
 
   let html5QrCode = null;
   let isScanning = false;
+  const recentScans = [];
 
+  if (manualInput) {
+    manualInput.focus();
+  }
+
+  /* ===== Kiosk Live Clock ===== */
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  function updateClock() {
+    const clockEl = document.getElementById('liveClockDisplay');
+    if (clockEl) clockEl.innerText = new Date().toLocaleTimeString('en-US', { hour12: true });
+  }
+
+  /* ===== Camera Scanner Initialization with Fallback ===== */
   startQRScanner();
 
-  scanAgainBtn.addEventListener('click', startQRScanner);
+  scanAgainBtn?.addEventListener('click', startQRScanner);
 
-  function startQRScanner() {
+  async function startQRScanner() {
     if (isScanning) return;
 
-    scanAgainBtn.style.display = 'none';
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
+    if (scanAgainBtn) scanAgainBtn.style.display = 'none';
+    setStatus('Initializing scanner...', 'scanning');
 
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('reader');
     }
 
-    html5QrCode
-      .start(
+    try {
+      await html5QrCode.start(
         { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
         onScanSuccess,
         onScanFailure
-      )
-      .then(() => {
+      );
+      isScanning = true;
+      setStatus('Ready to scan QR Code...', 'scanning');
+    } catch (err1) {
+      console.warn('Environment camera failed, trying front user camera...', err1);
+      try {
+        await html5QrCode.start(
+          { facingMode: 'user' },
+          { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+          onScanSuccess,
+          onScanFailure
+        );
         isScanning = true;
-        qrStatus.innerText = 'Ready to scan...';
-      })
-      .catch((err) => {
-        qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ Scanner initialization failed: ' + err.message;
-        console.error('QR Scanner Error:', err);
-      });
+        setStatus('Ready to scan QR Code...', 'scanning');
+      } catch (err2) {
+        console.warn('Front camera failed, checking camera devices list...', err2);
+        try {
+          const devices = await Html5Qrcode.getCameras();
+          if (devices && devices.length > 0) {
+            await html5QrCode.start(
+              devices[0].id,
+              { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+              onScanSuccess,
+              onScanFailure
+            );
+            isScanning = true;
+            setStatus('Ready to scan QR Code...', 'scanning');
+          } else {
+            throw new Error('No camera devices found.');
+          }
+        } catch (err3) {
+          setStatus('❌ Camera scanner unavailable. Use manual card input below.', 'warning');
+          if (scanAgainBtn) scanAgainBtn.style.display = 'inline-block';
+          if (manualInput) manualInput.focus();
+        }
+      }
+    }
   }
 
   function stopQRScanner() {
     if (html5QrCode && isScanning) {
-      html5QrCode
-        .stop()
-        .then(() => {
-          isScanning = false;
-        })
-        .catch((err) => {
-          console.error('Error stopping scanner:', err);
-        });
+      html5QrCode.stop().then(() => { isScanning = false; }).catch(() => {});
     }
   }
 
   function onScanSuccess(decodedText) {
     stopQRScanner();
-
     const cardno = processScannedText(decodedText);
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = `✅ QR Code Scanned: ${cardno} (fetching name...)`;
-
-    scanAgainBtn.style.display = 'inline-block';
-    sendGateOutRequest(cardno);
+    setStatus(`⏳ Processing Check-Out: ${cardno}...`, 'scanning');
+    if (scanAgainBtn) scanAgainBtn.style.display = 'inline-block';
+    sendCheckoutRequest(cardno);
   }
 
-  function onScanFailure(error) {
-    if (Math.random() < 0.1) {
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = 'Scanning...';
-    }
-  }
+  function onScanFailure(error) {}
 
   function processScannedText(text) {
     let cardno = text.trim();
-
     if (cardno.toLowerCase().startsWith('cardnumber=')) {
       cardno = cardno.split('=')[1].trim();
     }
-
     return cardno;
   }
 
-  function sendGateOutRequest(cardno) {
-    resetAlert();
+  /* ===== Manual Check-Out Form Handler ===== */
+  if (manualForm) {
+    manualForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const cardno = manualInput?.value.trim();
+      if (!cardno) return;
+      sendCheckoutRequest(cardno);
+      if (manualInput) manualInput.value = '';
+    });
+  }
 
+  /* ===== Send Gate Exit API Request ===== */
+  function sendCheckoutRequest(cardno) {
+    resetAlert();
     const token = sessionStorage.getItem('token');
     if (!token || token.split('.').length !== 3) {
       showErrorMessage('⚠️ Not authenticated. Please log in.');
       return;
     }
 
-    showInfoMessage('Processing check-out...');
+    const timeStr = new Date().toLocaleTimeString('en-US', { hour12: true });
 
     fetch(`${CONFIG.basePath}/gate/exit`, {
       method: 'POST',
@@ -103,59 +137,104 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       body: JSON.stringify({ cardno })
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
+      .then((res) => {
+        if (!res.ok) return res.json().then(data => { throw data; });
+        return res.json();
       })
       .then((data) => {
-        if (data.cardno && data.issuedto) {
-          qrStatus.className = 'success-status';
-          qrStatus.innerText = `✅ QR Code Scanned: ${data.cardno} (${data.issuedto})`;
-        }
+        const memberName = data.issuedto || 'Member';
+        setStatus(`✅ Check-Out Success: ${cardno} (${memberName})`, 'success');
+        showSuccessMessage(`✅ Exit Allowed for ${memberName} (${cardno})`);
 
-        if (data.success || data.message === 'Success') {
-          showSuccessMessage(data.message || 'check-out successful.');
-        } else {
-          showErrorMessage(data.message || 'Failed to check-out.');
-        }
+        addRecentScan({
+          time: timeStr,
+          cardno,
+          issuedto: memberName,
+          status: '✅ Exit'
+        });
       })
-      .catch((error) => {
-        console.error('Error:', error);
-        showErrorMessage('Failed to check-out. Please try again.');
+      .catch((err) => {
+        const msg = err?.message || 'Check-Out failed';
+        setStatus(`❌ Exit Denied: ${msg}`, 'danger');
+        showErrorMessage(`❌ Exit Denied: ${msg}`);
+
+        addRecentScan({
+          time: timeStr,
+          cardno,
+          issuedto: '—',
+          status: '❌ Denied'
+        });
       });
   }
 
-  function showMessage(message, type) {
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
-    alertDiv.style.display = 'block';
+  /* ===== Recent Scans Table Activity Feed ===== */
+  function addRecentScan(scan) {
+    recentScans.unshift(scan);
+    if (recentScans.length > 5) recentScans.pop();
+    renderRecentScans();
+  }
 
-    if (type === 'success') {
-      setTimeout(resetAlert, 5000);
+  function renderRecentScans() {
+    if (!recentTableBody) return;
+    recentTableBody.innerHTML = '';
+    recentScans.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:8px 12px; font-weight:600;">${s.time}</td>
+        <td style="padding:8px 12px; font-weight:700; color:#0f172a;">${s.cardno}</td>
+        <td style="padding:8px 12px; font-weight:600; color:#334155;">${s.issuedto}</td>
+        <td style="padding:8px 12px; text-align:center;">
+          <span style="font-weight:700; font-size:11px;">${s.status}</span>
+        </td>
+      `;
+      recentTableBody.appendChild(tr);
+    });
+  }
+
+  /* ===== Mode Switcher ===== */
+  window.switchKioskMode = function(mode) {
+    const btnCamera = document.getElementById('btnModeCamera');
+    const btnManual = document.getElementById('btnModeManual');
+    const cameraSec = document.getElementById('qr-scanner-section');
+
+    if (mode === 'camera') {
+      btnCamera?.classList.add('active');
+      btnManual?.classList.remove('active');
+      if (cameraSec) cameraSec.style.display = 'block';
+      startQRScanner();
+    } else {
+      btnManual?.classList.add('active');
+      btnCamera?.classList.remove('active');
+      if (cameraSec) cameraSec.style.display = 'none';
+      stopQRScanner();
+      if (manualInput) manualInput.focus();
     }
+  };
+
+  /* ===== Status & Alert Helpers ===== */
+  function setStatus(text, statusType) {
+    if (!qrStatus) return;
+    qrStatus.className = `status-pill status-${statusType}`;
+    qrStatus.innerText = text;
   }
 
-  function showSuccessMessage(message) {
-    showMessage(message, 'success');
+  function showSuccessMessage(msg) {
+    if (!alertDiv) return;
+    alertDiv.className = 'alert alert-success big-scan-alert';
+    alertDiv.style.display = 'block';
+    alertDiv.textContent = msg;
   }
 
-  function showErrorMessage(message) {
-    showMessage(message, 'danger');
-  }
-
-  function showInfoMessage(message) {
-    showMessage(message, 'info');
+  function showErrorMessage(msg) {
+    if (!alertDiv) return;
+    alertDiv.className = 'alert alert-danger big-scan-alert';
+    alertDiv.style.display = 'block';
+    alertDiv.textContent = msg;
   }
 
   function resetAlert() {
+    if (!alertDiv) return;
     alertDiv.style.display = 'none';
-    alertDiv.className = 'alert';
     alertDiv.textContent = '';
   }
-
-  window.addEventListener('beforeunload', () => {
-    stopQRScanner();
-  });
 });

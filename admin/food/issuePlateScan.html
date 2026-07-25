@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Plate Issuance Scanner</title>
+  <title>Plate Issuance - QR Scanner</title>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script src="../../style/js/plugin.js"></script>
@@ -18,38 +18,61 @@
   <link rel="stylesheet" href="../../style/css/styles.css">
 
   <style>
-  #qr-scanner-section {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  #qr-status {
-    margin: 10px 0;
-    font-weight: bold;
-    min-height: 25px;
-  }
-
-  .success-status {
-    color: green;
-  }
-
-  .warning-status {
-    color: #8a6d3b; /* brown */
-  }
-
-  .info-status {
-    color: #31708f; /* blue */
-  }
-
-  .danger-status,
-  .error-status {
-    color: red;
-  }
-
-  .scanning-status {
-    color: #666;
-  }
-</style>
+    .kiosk-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: #ffffff;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .meal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: #4f46e5;
+      color: #fff;
+    }
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      margin: auto;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid #cbd5e1;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      background: #0f172a;
+    }
+    .big-scan-alert {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      padding: 16px 20px;
+      margin-top: 15px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .status-scanning { background: #e2e8f0; color: #334155; }
+    .status-success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+    .status-warning { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+    .status-danger { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+  </style>
 
 </head>
 <body>
@@ -69,18 +92,67 @@
     <div class="container">
       <div class="whitesec">
         <div class="inner-padding">
-          <div class="frm-head">
-            <h4><b><u>Plate Issuance</u></b></h4>
-          </div>
 
-          <div class="form">
-            <div id="alert" class="alert" role="alert" style="display: none;"></div>
-
-            <div id="qr-scanner-section">
-              <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
-              <div id="qr-status" class="scanning-status">Initializing scanner...</div>
+          <!-- Kiosk Header Banner -->
+          <div class="kiosk-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:26px;">📷</span>
+              <div>
+                <h3 style="margin:0; font-size:18px; font-weight:700; color:#fff;">Camera QR Plate Issuance Kiosk</h3>
+                <div style="font-size:12px; color:#cbd5e1;">Scan QR code or enter Card No manually</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <span class="meal-badge" id="activeMealBadge">🌅 Loading Slot...</span>
+              <div style="font-size:14px; font-weight:700; color:#fbbf24;" id="liveClockDisplay">--:--:--</div>
             </div>
           </div>
+
+          <!-- Alert Display Box -->
+          <div id="alert" class="big-scan-alert" style="display: none;"></div>
+
+          <div style="max-width:550px; margin:0 auto; text-align:center;">
+            
+            <!-- Camera Scanner Box -->
+            <div id="qr-scanner-section" style="margin-bottom:20px;">
+              <div id="reader"></div>
+              <div id="qr-status" class="status-pill status-scanning">Initializing scanner...</div>
+              <div style="margin-top:10px; display:flex; justify-content:center; gap:10px;">
+                <button type="button" id="btnRestartScanner" class="btn btn-sm btn-secondary" style="font-size:11px; padding:4px 10px; border-radius:6px;">🔄 Restart Camera</button>
+              </div>
+            </div>
+
+            <!-- Manual Card Fallback Form -->
+            <form id="manualScanForm" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <label for="manualCardNo" style="font-weight:700; color:#334155; font-size:13px; margin-bottom:6px; display:block;">Or Issue Plate Manually by Card No:</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="manualCardNo" class="form-control" placeholder="Enter Card No..." style="border-radius:8px; font-weight:600;" />
+                <button type="submit" class="btn btn-primary" style="font-weight:bold; border-radius:8px; padding:6px 18px; white-space:nowrap;">Submit</button>
+              </div>
+            </form>
+
+            <!-- Recent Scans Live Feed Table -->
+            <div style="margin-top:30px; text-align:left;">
+              <h4 style="font-size:14px; font-weight:700; color:#1e293b; margin-bottom:10px;">📜 Recent Scanned Plates Feed</h4>
+              <div class="table-responsive" style="border-radius:10px; overflow:hidden; border:1px solid #e2e8f0;">
+                <table class="table table-striped" style="margin:0; font-size:12px;">
+                  <thead>
+                    <tr style="background:#1e293b; color:#ffffff;">
+                      <th style="padding:8px 12px; color:#fff;">Time</th>
+                      <th style="padding:8px 12px; color:#fff;">Card No</th>
+                      <th style="padding:8px 12px; color:#fff;">Issued To</th>
+                      <th style="padding:8px 12px; color:#fff; text-align:center;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentScansTableBody">
+                    <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:12px;">No scans recorded yet in this session.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
     </div>

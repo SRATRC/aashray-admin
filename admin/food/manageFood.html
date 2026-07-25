@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['foodAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['foodAdmin', 'superAdmin', 'smilesAdmin']);
 </script>
 
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Food Booking Form</title>
+    <title>Food Booking & Management</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -23,12 +23,93 @@
     <script src="/sessionstorage.js"></script>
     <script src="manageFood.js"></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="../../style/js/pagination.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+    <script src="../../style/js/reportExporter.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
     <!-- Styles -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .segmented-tab-btn {
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 13px;
+        border: none;
+        background: transparent;
+        color: #cbd5e1;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .segmented-tab-btn:hover {
+        color: #ffffff;
+        background: rgba(255,255,255,0.1);
+      }
+      .segmented-tab-btn.active {
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      .form-row-2col {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .form-row-2col .form-group {
+        flex: 1;
+        min-width: 220px;
+        margin-bottom: 0;
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+      }
+      .modal-container {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+      }
+
+      /* Mobile Responsive Enhancements */
+      @media (max-width: 768px) {
+        .container {
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 8px !important;
+        }
+        .inner-padding {
+          padding: 12px !important;
+        }
+        .modal-overlay {
+          padding: 8px !important;
+        }
+        .modal-container {
+          max-height: 95vh !important;
+        }
+        .table-responsive {
+          width: 100% !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch;
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -46,97 +127,292 @@
       <div class="container">
         <div class="whitesec">
           <div class="inner-padding">
-            <div class="frm-head">
-              <h1>New Food Booking</h1>
+
+            <!-- Modern Page Banner Header -->
+            <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#fff; border-radius:14px; padding:18px 24px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:26px;">🍱</span>
+                <div>
+                  <h1 style="margin:0; font-size:19px; font-weight:700; color:#ffffff;">Food Booking & Management</h1>
+                  <div style="font-size:12px; color:#cbd5e1; margin-top:2px;">Book member meals or bulk guest reservations</div>
+                </div>
+              </div>
+
+              <!-- Segmented Tab Navigation -->
+              <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.15); padding:4px; border-radius:10px; display:flex; gap:4px;">
+                <button type="button" id="tabBtnMember" onclick="switchBookingTab('member')" class="segmented-tab-btn active">
+                  👤 Member Booking
+                </button>
+                <button type="button" id="tabBtnBulk" onclick="switchBookingTab('bulk')" class="segmented-tab-btn">
+                  👥 Bulk Guest Booking
+                </button>
+              </div>
             </div>
 
-            <div class="form">
-              <div id="alert" class="alert" role="alert" style="display: none;"></div>
-              <form id="foodBookingForm">
-                <div class="form-group">
-                  <label for="mobile">Enter Mobile No:</label>
-                  <input type="tel" id="mobile" name="mobile" class="form-control" />
+            <!-- Member Info Card Preview -->
+            <div id="bookingMemberCard" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:12px 16px; margin-bottom:16px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:38px; height:38px; border-radius:50%; background:#4f46e5; color:#fff; font-weight:bold; font-size:16px; display:flex; align-items:center; justify-content:center;" id="memberInitials">
+                  👤
                 </div>
-
-                <div class="form-group">
-                  <label for="cardno">Or Card No:</label>
-                  <input type="tel" id="cardno" name="cardno" class="form-control" />
+                <div>
+                  <h4 id="memberCardName" style="margin:0; font-weight:700; color:#0f172a; font-size:15px;">Member Name</h4>
+                  <div id="memberCardMeta" style="font-size:12px; color:#64748b; margin-top:2px;">Card No: — | Mobile: —</div>
                 </div>
+              </div>
+            </div>
 
-                <div class="form-group">
-                  <label for="name">Name:</label>
-                  <input type="text" id="name" name="name" class="form-control" disabled /> 
-                </div>
+            <div id="alert" class="alert" role="alert" style="display: none;"></div>
 
-                <div class="form-group">
-                  <label for="start_date">Start Date:</label>
-                  <input type="date" id="start_date" name="start_date" class="form-control" required />
-                </div>
-
-                <div class="form-group">
-                  <label for="end_date">End Date:</label>
-                  <input type="date" id="end_date" name="end_date" class="form-control" required />
-                </div>
-
-                <div class="form-group">
-                  <label>Select Meals:</label>
-                  <div style="display: flex; gap: 20px;">
-                    <label><input type="checkbox" id="breakfast" name="meal" value="breakfast" /> Breakfast</label>
-                    <label><input type="checkbox" id="lunch" name="meal" value="lunch" /> Lunch</label>
-                    <label><input type="checkbox" id="dinner" name="meal" value="dinner" /> Dinner</label>
+            <!-- TAB 1: Member Food Booking Form -->
+            <div id="tabContentMember" class="form">
+              <form id="foodBookingForm" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                
+                <div class="form-row-2col">
+                  <div class="form-group">
+                    <label for="mobile" style="font-weight:700; color:#334155; font-size:13px;">Enter Mobile No:</label>
+                    <input type="tel" id="mobile" name="mobile" class="form-control" placeholder="10-digit mobile number" style="border-radius:8px;" />
+                  </div>
+                  <div class="form-group">
+                    <label for="cardno" style="font-weight:700; color:#334155; font-size:13px;">Or Card No:</label>
+                    <input type="tel" id="cardno" name="cardno" class="form-control" placeholder="RFID card number" style="border-radius:8px;" />
                   </div>
                 </div>
 
-                <div class="form-group">
-  <label for="spicy">Spice Level:</label>
-  <select id="spicy" name="spicy" class="form-control" required>
-    <option value="1" selected>Regular</option>
-    <option value="0">Non-Spicy</option>
-  </select>
-</div>
+                <div class="form-row-2col">
+                  <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:6px;">
+                      <label for="start_date" style="font-weight:700; color:#334155; font-size:13px; margin:0;">Start Date:</label>
+                      <div style="display:flex; gap:4px;">
+                        <button type="button" id="btnBookToday" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 7px; border-radius:5px;">Today</button>
+                        <button type="button" id="btnBookTomorrow" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 7px; border-radius:5px;">Tomorrow</button>
+                        <button type="button" id="btnBookNext3Days" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 7px; border-radius:5px;">Next 3 Days</button>
+                        <button type="button" id="btnBookNext7Days" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 7px; border-radius:5px;">Next 7 Days</button>
+                      </div>
+                    </div>
+                    <input type="date" id="start_date" name="start_date" class="form-control" required style="border-radius:8px;" />
+                  </div>
 
-                <div class="form-group">
-                  <label for="beverage">Tea/Coffee:</label>
-                  <select id="beverage" name="beverage" class="form-control">
-                    <option value="NONE" selected>No, Thank You</option>
-                    <option value="TEA">Tea</option>
-                    <option value="COFFEE">Coffee</option>
-                  </select>
+                  <div class="form-group">
+                    <label for="end_date" style="font-weight:700; color:#334155; font-size:13px; margin-bottom:4px; display:block;">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" required style="border-radius:8px;" />
+                  </div>
                 </div>
 
-                <div class="form-group form-submit">
-                  <button type="submit" class="btn btn-primary">Submit</button>
-                  &nbsp;
-                  <a href="#" onclick="getExistingBookings();" class="btn btn-secondary">Get Existing Bookings</a>
+                <div class="form-group" style="margin-bottom:14px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="font-weight:700; color:#334155; font-size:13px; margin:0;">Select Meals:</label>
+                    <button type="button" id="btnSelectAllMeals" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 8px; border-radius:5px;">☑️ Select All</button>
+                  </div>
+                  <div style="display: flex; gap: 20px; background:#ffffff; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1;">
+                    <label style="margin:0; cursor:pointer; font-weight:600; color:#d97706; font-size:13px;"><input type="checkbox" id="breakfast" name="meal" value="breakfast" /> 🌅 Breakfast</label>
+                    <label style="margin:0; cursor:pointer; font-weight:600; color:#2563eb; font-size:13px;"><input type="checkbox" id="lunch" name="meal" value="lunch" /> ☀️ Lunch</label>
+                    <label style="margin:0; cursor:pointer; font-weight:600; color:#7c3aed; font-size:13px;"><input type="checkbox" id="dinner" name="meal" value="dinner" /> 🌙 Dinner</label>
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div class="form-group">
+                    <label for="spicy" style="font-weight:700; color:#334155; font-size:13px;">Spice Level:</label>
+                    <select id="spicy" name="spicy" class="form-control" required style="border-radius:8px;">
+                      <option value="1" selected>🌶️ Regular</option>
+                      <option value="0">🥗 Non-Spicy</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="beverage" style="font-weight:700; color:#334155; font-size:13px;">Tea / Coffee:</label>
+                    <select id="beverage" name="beverage" class="form-control" style="border-radius:8px;">
+                      <option value="NONE" selected>No, Thank You</option>
+                      <option value="TEA">☕ Tea</option>
+                      <option value="COFFEE">☕ Coffee</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group form-submit" style="display:flex; gap:10px; align-items:center; margin-top:16px;">
+                  <button type="submit" class="btn btn-primary" style="font-weight:bold; border-radius:8px; padding:9px 24px;">Book Member Food</button>
+                  <button type="button" id="btnResetBookingForm" class="btn btn-secondary" style="border-radius:8px; padding:9px 16px; background:#64748b; color:#fff; border-color:#64748b;">🧹 Reset</button>
+                  <button type="button" onclick="openExistingBookingsModal()" class="btn btn-secondary" style="border-radius:8px; padding:9px 18px; margin-left:auto; background:#1e293b; color:#fff; font-weight:bold;">
+                    📋 View Member Bookings
+                  </button>
                 </div>
               </form>
             </div>
 
-            <div class="frm-head">
-              <h1>Manage Existing Bookings</h1>
-            </div>
-<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-            
-            <div class="table-responsive">
-              <table id="bookingsTable" class="table table-striped table-bordered">
-                <thead>
-                  <tr>
-                    <th><input type="checkbox" id="selectAllMeals" /></th> <!-- ✅ NEW COLUMN -->
-                    <th>Date</th>
-                    <th>Meal</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <hr style="margin-top: 20px; margin-bottom: 10px;" />
-<button id="deleteSelectedBtn" class="btn btn-danger" style="margin-bottom: 10px;">Delete Selected</button>
- <tbody id="bookingsTableBody">
-                  <!-- Table rows will be dynamically added here -->
-                </tbody>
-              </table>
+            <!-- TAB 2: Bulk Guest Food Booking Form -->
+            <div id="tabContentBulk" class="form" style="display:none;">
+              <form id="bulkFoodBookingForm" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                
+                <div class="form-row-2col">
+                  <div class="form-group">
+                    <label for="bulk_mobno" style="font-weight:700; color:#334155; font-size:13px;">Host Mobile No.:</label>
+                    <input type="tel" class="form-control" id="bulk_mobno" name="bulk_mobno" placeholder="10-digit mobile number" style="border-radius:8px;" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="bulk_cardno" style="font-weight:700; color:#334155; font-size:13px;">Or Host Card No.:</label>
+                    <input type="tel" class="form-control" id="bulk_cardno" name="bulk_cardno" placeholder="RFID card number" style="border-radius:8px;" />
+                  </div>
+                </div>
+
+                <div class="form-row-2col">
+                  <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label for="bulk_date" style="font-weight:700; color:#334155; font-size:13px; margin:0;">Date:</label>
+                      <div style="display:flex; gap:4px;">
+                        <button type="button" id="btnBulkToday" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 7px; border-radius:5px;">Today</button>
+                        <button type="button" id="btnBulkTomorrow" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 7px; border-radius:5px;">Tomorrow</button>
+                      </div>
+                    </div>
+                    <input type="date" class="form-control" id="bulk_date" name="bulk_date" required style="border-radius:8px;" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="bulk_guestCount" style="font-weight:700; color:#334155; font-size:13px;">Guest Count:</label>
+                    <input type="number" min="1" class="form-control" id="bulk_guestCount" name="bulk_guestCount" placeholder="Number of guests" required style="border-radius:8px;" />
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label for="department" style="font-weight:700; color:#334155; font-size:13px;">Department / Category:</label>
+                  <select id="department" name="department" class="form-control" required style="border-radius:8px;">
+                    <option value='RC' selected>Research Center Guest</option>
+                    <option value='SREC'>School Guest</option>
+                    <option value='SRMC'>Medical Guest</option>
+                    <option value='Smilestones'>Smilestones Guest</option>
+                    <option value='Sanisa'>Sanisa Guest</option>
+                    <option value='Personal'>Personal Guest</option>
+                    <option value='Events-Guest'>Events Guest</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="font-weight:700; color:#334155; font-size:13px; margin:0;">Select Meals for Guests:</label>
+                    <button type="button" id="btnSelectAllBulkMeals" class="btn btn-sm btn-secondary" style="font-size:11px; padding:2px 8px; border-radius:5px;">☑️ Select All</button>
+                  </div>
+                  <div style="display: flex; gap: 20px; background:#ffffff; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1;">
+                    <label style="margin:0; cursor:pointer; font-weight:600; color:#d97706; font-size:13px;"><input type="checkbox" id="bulk_breakfast" name="bulk_meal" value="breakfast" /> 🌅 Breakfast</label>
+                    <label style="margin:0; cursor:pointer; font-weight:600; color:#2563eb; font-size:13px;"><input type="checkbox" id="bulk_lunch" name="bulk_meal" value="lunch" /> ☀️ Lunch</label>
+                    <label style="margin:0; cursor:pointer; font-weight:600; color:#7c3aed; font-size:13px;"><input type="checkbox" id="bulk_dinner" name="bulk_meal" value="dinner" /> 🌙 Dinner</label>
+                  </div>
+                </div>
+
+                <div class="form-group form-submit" style="display:flex; gap:10px; align-items:center; margin-top:16px;">
+                  <button type="submit" class="btn btn-primary" style="font-weight:bold; border-radius:8px; padding:9px 24px;">Book Guest Food</button>
+                  <button type="button" id="btnResetBulkForm" class="btn btn-secondary" style="border-radius:8px; padding:9px 16px; background:#64748b; color:#fff; border-color:#64748b;">🧹 Reset</button>
+                  <button type="button" onclick="openGuestBookingsModal()" class="btn btn-secondary" style="border-radius:8px; padding:9px 18px; margin-left:auto; background:#1e293b; color:#fff; font-weight:bold;">
+                    📋 View Guest Bookings
+                  </button>
+                </div>
+              </form>
             </div>
 
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Existing Member Bookings Modal Popup -->
+    <div id="existingBookingsModalOverlay" class="modal-overlay">
+      <div class="modal-container" style="max-width:950px; width:95vw;">
+        
+        <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#ffffff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:22px;">📋</span>
+            <div>
+              <h3 style="margin:0; font-size:16px; font-weight:700; color:#ffffff;" id="modalMemberTitle">Existing Member Food Bookings</h3>
+              <div style="font-size:12px; color:#cbd5e1;" id="modalMemberSub">Member Reservations List</div>
+            </div>
+          </div>
+          <button type="button" onclick="closeExistingBookingsModal()" style="background:none; border:none; color:#cbd5e1; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+
+        <div style="padding:16px 20px; flex:1; overflow-y:auto;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+            <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search date or meal..." style="width:240px; padding:6px 12px; border-radius:8px;" />
+            <button id="deleteSelectedBtn" class="btn btn-danger" style="border-radius:8px; font-size:12px; padding:7px 14px; font-weight:bold;">🗑️ Delete Selected</button>
+          </div>
+
+          <div class="table-responsive" style="border-radius:12px; overflow-x:auto; border:1px solid #e2e8f0;">
+            <table id="bookingsTable" class="table table-striped table-bordered" style="margin-bottom:0; width:100%; min-width:550px;">
+              <thead>
+                <tr style="background:#1e293b; color:#ffffff;">
+                  <th style="background:#1e293b; color:#ffffff; width:45px; text-align:center;"><input type="checkbox" id="selectAllMeals" /></th>
+                  <th style="background:#1e293b; color:#ffffff; padding:10px 14px; font-size:13px; font-weight:700;">Date</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:10px 14px; font-size:13px; font-weight:700;">Meal</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:10px 14px; font-size:13px; font-weight:700; text-align:center; min-width:100px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="bookingsTableBody">
+                <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Click "View Member Bookings" after selecting a member.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="memberBookingsPaginationContainer" style="margin-top:12px;"></div>
+        </div>
+
+        <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 20px; text-align:right;">
+          <button type="button" onclick="closeExistingBookingsModal()" class="btn btn-secondary" style="border-radius:8px; padding:6px 18px; font-weight:bold;">Close</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Existing Guest Bookings Modal Popup -->
+    <div id="guestBookingsModalOverlay" class="modal-overlay">
+      <div class="modal-container" style="max-width:1150px; width:95vw;">
+        
+        <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#ffffff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:22px;">👥</span>
+            <div>
+              <h3 style="margin:0; font-size:16px; font-weight:700; color:#ffffff;" id="modalGuestTitle">Manage Guest Food Bookings</h3>
+              <div style="font-size:12px; color:#cbd5e1;">Bulk Guest / Event Reservations</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button type="button" onclick="exportBulkFoodCSV()" class="btn btn-sm btn-success" style="font-weight:bold; border-radius:6px; font-size:12px;">⬇ Export CSV</button>
+            <button type="button" onclick="closeGuestBookingsModal()" style="background:none; border:none; color:#cbd5e1; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+          </div>
+        </div>
+
+        <div style="padding:16px 20px; flex:1; overflow-y:auto;">
+          <div style="margin-bottom:12px;">
+            <input type="text" id="guestTableSearch" class="form-control search-box" placeholder="Search date, department or name..." style="width:260px; padding:6px 12px; border-radius:8px;" />
+          </div>
+
+          <div class="table-responsive" style="border-radius:12px; overflow-x:auto; border:1px solid #e2e8f0;">
+            <table id="guestBookingsTable" class="table table-striped table-bordered" style="margin-bottom:0; width:100%;">
+              <thead>
+                <tr style="background:#1e293b; color:#ffffff;">
+                  <th style="background:#1e293b; color:#ffffff; padding:8px; font-size:11px; white-space:nowrap;">Date</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:8px; font-size:11px; white-space:nowrap;">Booked By</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:8px; font-size:11px; white-space:nowrap;">Mobile No.</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:8px; font-size:11px; white-space:nowrap;">Department</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:8px; font-size:11px; text-align:center; white-space:nowrap;">Guests</th>
+                  <th style="background:#1e293b; color:#fbbf24; padding:8px; font-size:11px; text-align:center; white-space:nowrap;">BF</th>
+                  <th style="background:#1e293b; color:#60a5fa; padding:8px; font-size:11px; text-align:center; white-space:nowrap;">LU</th>
+                  <th style="background:#1e293b; color:#a78bfa; padding:8px; font-size:11px; text-align:center; white-space:nowrap;">DN</th>
+                  <th style="background:#1e293b; color:#10b981; padding:8px; font-size:11px; text-align:center; white-space:nowrap;" class="issued-header">BF Issued</th>
+                  <th style="background:#1e293b; color:#10b981; padding:8px; font-size:11px; text-align:center; white-space:nowrap;" class="issued-header">LU Issued</th>
+                  <th style="background:#1e293b; color:#10b981; padding:8px; font-size:11px; text-align:center; white-space:nowrap;" class="issued-header">DN Issued</th>
+                  <th style="background:#1e293b; color:#ffffff; padding:8px; font-size:11px; text-align:center; white-space:nowrap; min-width:70px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="guestBookingsTableBody">
+                <tr><td colspan="12" style="text-align:center; color:#94a3b8; padding:20px;">Click "View Guest Bookings" to load guest reservations.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="guestBookingsPaginationContainer" style="margin-top:12px;"></div>
+        </div>
+
+        <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 20px; text-align:right;">
+          <button type="button" onclick="closeGuestBookingsModal()" class="btn btn-secondary" style="border-radius:8px; padding:6px 18px; font-weight:bold;">Close</button>
+        </div>
+
       </div>
     </div>
   </body>

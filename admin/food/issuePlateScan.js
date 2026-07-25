@@ -1,68 +1,138 @@
 document.addEventListener('DOMContentLoaded', function () {
   const qrStatus = document.getElementById('qr-status');
   const alertDiv = document.getElementById('alert');
+  const manualScanForm = document.getElementById('manualScanForm');
+  const manualCardNoInput = document.getElementById('manualCardNo');
+  const btnRestartScanner = document.getElementById('btnRestartScanner');
+  const recentScansTableBody = document.getElementById('recentScansTableBody');
 
   let html5QrCode = null;
-  let isProcessing = false; // 🔒 scan lock
+  let isProcessing = false;
+  const recentScans = [];
 
+  /* ===== Kiosk Clock & Meal Slot Updater ===== */
+  updateKioskHeader();
+  setInterval(updateKioskHeader, 1000);
+
+  function updateKioskHeader() {
+    const clockEl = document.getElementById('liveClockDisplay');
+    const badgeEl = document.getElementById('activeMealBadge');
+
+    const now = new Date();
+    if (clockEl) clockEl.innerText = now.toLocaleTimeString('en-US', { hour12: true });
+
+    const totalMins = now.getHours() * 60 + now.getMinutes();
+
+    if (!badgeEl) return;
+    // Meal windows: Breakfast (6:00 - 10:30), Lunch (11:00 - 15:30), Dinner (17:30 - 22:30)
+    if (totalMins >= 360 && totalMins <= 630) {
+      badgeEl.innerHTML = '🌅 Breakfast';
+      badgeEl.style.background = '#f59e0b';
+    } else if (totalMins >= 660 && totalMins <= 930) {
+      badgeEl.innerHTML = '☀️ Lunch';
+      badgeEl.style.background = '#3b82f6';
+    } else if (totalMins >= 1050 && totalMins <= 1350) {
+      badgeEl.innerHTML = '🌙 Dinner';
+      badgeEl.style.background = '#8b5cf6';
+    } else {
+      badgeEl.innerHTML = '⏸️ Off-Meal Hours';
+      badgeEl.style.background = '#64748b';
+    }
+  }
+
+  /* ===== Camera Scanner Initialization with Fallback ===== */
   startQRScanner();
 
-  /* -------------------- SCANNER -------------------- */
+  btnRestartScanner?.addEventListener('click', () => {
+    if (html5QrCode) {
+      html5QrCode.stop().catch(() => {}).then(() => startQRScanner());
+    } else {
+      startQRScanner();
+    }
+  });
 
-  function startQRScanner() {
+  async function startQRScanner() {
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('reader');
     }
 
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
+    setStatus('Initializing camera scanner...', 'scanning');
 
-    html5QrCode
-      .start(
+    try {
+      // Attempt 1: Try rear environment camera
+      await html5QrCode.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+        { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
         onScanSuccess,
         onScanFailure
-      )
-      .then(() => {
-        qrStatus.innerText = 'Ready to scan...';
-      })
-      .catch((err) => {
-        qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ Scanner initialization failed';
-        console.error('QR Scanner Error:', err);
-      });
+      );
+      setStatus('Ready to scan QR code...', 'scanning');
+    } catch (err1) {
+      console.warn('Environment camera failed, trying front/user camera...', err1);
+      try {
+        // Attempt 2: Try front user camera
+        await html5QrCode.start(
+          { facingMode: 'user' },
+          { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+          onScanSuccess,
+          onScanFailure
+        );
+        setStatus('Ready to scan QR code...', 'scanning');
+      } catch (err2) {
+        console.warn('Front camera failed, trying camera devices list...', err2);
+        try {
+          // Attempt 3: Select first available camera device
+          const devices = await Html5Qrcode.getCameras();
+          if (devices && devices.length > 0) {
+            await html5QrCode.start(
+              devices[0].id,
+              { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+              onScanSuccess,
+              onScanFailure
+            );
+            setStatus('Ready to scan QR code...', 'scanning');
+          } else {
+            throw new Error('No camera devices found.');
+          }
+        } catch (err3) {
+          console.error('All camera initialization attempts failed:', err3);
+          setStatus('❌ Camera access failed or disabled. Use manual card input below.', 'danger');
+        }
+      }
+    }
   }
 
   async function onScanSuccess(decodedText) {
-    // 🔒 Prevent multiple scans
     if (isProcessing) return;
     isProcessing = true;
 
     const cardno = processScannedText(decodedText);
-
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = `Issuing plate for ${cardno}...`;
+    setStatus(`Issuing plate for ${cardno}...`, 'scanning');
 
     try {
       await sendIssuePlateRequest(cardno);
-    } catch (_) {
-      // handled inside
-    }
+    } catch (_) {}
 
-    // ⏸ Pause scanning for 1.5 seconds, then resume
     setTimeout(() => {
       isProcessing = false;
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = 'Ready to scan...';
-    }, 1500); // 🔁 adjust 1000–5000 if needed
+      setStatus('Ready to scan QR code...', 'scanning');
+    }, 1500);
   }
 
-  function onScanFailure(error) {
-    // silent to avoid flicker
-  }
+  function onScanFailure(error) {}
 
-  /* -------------------- HELPERS -------------------- */
+  /* ===== Manual Form Submit Fallback ===== */
+  manualScanForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cardno = manualCardNoInput?.value.trim();
+    if (!cardno) return;
+
+    setStatus(`Issuing plate for ${cardno}...`, 'scanning');
+    try {
+      await sendIssuePlateRequest(cardno);
+      if (manualCardNoInput) manualCardNoInput.value = '';
+    } catch (_) {}
+  });
 
   function processScannedText(text) {
     let cardno = text.trim();
@@ -74,16 +144,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getAlertTypeFromMessage(message = '') {
     const msg = message.toLowerCase();
-
-    if (msg.includes('already issued')) return 'warning'; // 🟤
-    if (msg.includes('invalid meal time')) return 'info'; // 🔵
-    if (msg.includes('booking not found')) return 'danger'; // 🔴
-
+    if (msg.includes('already issued')) return 'warning';
+    if (msg.includes('invalid meal time') || msg.includes('off-meal')) return 'warning';
+    if (msg.includes('booking not found') || msg.includes('not booked')) return 'danger';
     return 'danger';
   }
 
-  /* -------------------- API -------------------- */
-
+  /* ===== Send Plate Issuance API Request ===== */
   async function sendIssuePlateRequest(cardno) {
     resetAlert();
 
@@ -92,8 +159,6 @@ document.addEventListener('DOMContentLoaded', function () {
       showMessage('⚠️ Not authenticated. Please log in.', 'danger');
       throw new Error('Not authenticated');
     }
-
-    showMessage('Issuing plate...', 'info');
 
     try {
       const response = await fetch(`${CONFIG.basePath}/food/issue/${cardno}`, {
@@ -106,51 +171,125 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       const data = await response.json();
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour12: true });
 
       if (!response.ok) {
         const alertType = getAlertTypeFromMessage(data.message);
-
-        qrStatus.className = `${alertType}-status`;
-        qrStatus.innerText = '❌ ' + (data.message || 'Failed to issue plate');
-
+        setStatus('❌ ' + (data.message || 'Failed to issue plate'), alertType);
         showMessage(data.message || 'Failed to issue plate', alertType);
+        playErrorBuzzer();
+
+        addRecentScan({
+          time: timeStr,
+          cardno,
+          issuedto: '—',
+          status: '❌ ' + (data.message || 'Failed')
+        });
         throw data;
       }
 
-      // ✅ SUCCESS
-      qrStatus.className = 'success-status';
-      qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
-      showMessage(data.message || 'Plate issued successfully.', 'success');
+      // Success
+      setStatus(`✅ Plate issued to ${data.issuedto || 'Member'}`, 'success');
+      showMessage(data.message || 'Plate issued successfully!', 'success');
+      playSuccessBeep();
+
+      addRecentScan({
+        time: timeStr,
+        cardno,
+        issuedto: data.issuedto || 'Member',
+        status: '✅ Issued'
+      });
 
     } catch (err) {
       if (!err?.message) {
-        qrStatus.className = 'danger-status';
-        qrStatus.innerText = '❌ Unexpected error occurred';
+        setStatus('❌ Unexpected error occurred', 'danger');
         showMessage('Unexpected error occurred.', 'danger');
+        playErrorBuzzer();
       }
       throw err;
     }
   }
 
-  /* -------------------- ALERTS -------------------- */
+  function playSuccessBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) {
+      console.warn('Audio feedback error:', e);
+    }
+  }
+
+  function playErrorBuzzer() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 220;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {
+      console.warn('Audio feedback error:', e);
+    }
+  }
+
+  /* ===== Status & Alert Helpers ===== */
+  function setStatus(text, statusType) {
+    if (!qrStatus) return;
+    qrStatus.className = `status-pill status-${statusType}`;
+    qrStatus.innerText = text;
+  }
 
   function showMessage(message, type) {
-    alertDiv.className = `alert alert-${type}`;
+    if (!alertDiv) return;
+    alertDiv.className = `alert alert-${type} big-scan-alert`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
     if (type === 'success') {
-      setTimeout(resetAlert, 500);
+      setTimeout(resetAlert, 1500);
     }
   }
 
   function resetAlert() {
+    if (!alertDiv) return;
     alertDiv.style.display = 'none';
     alertDiv.className = 'alert';
     alertDiv.textContent = '';
   }
 
-  /* -------------------- CLEANUP -------------------- */
+  function addRecentScan(scanItem) {
+    recentScans.unshift(scanItem);
+    if (recentScans.length > 5) recentScans.pop();
+
+    if (recentScansTableBody) {
+      recentScansTableBody.innerHTML = recentScans.map(s => `
+        <tr>
+          <td style="font-weight:600; color:#64748b;">${s.time}</td>
+          <td style="font-weight:700; color:#0f172a;">${s.cardno}</td>
+          <td style="font-weight:600;">${s.issuedto}</td>
+          <td style="text-align:center;">
+            <span style="font-weight:700; font-size:11px; padding:2px 8px; border-radius:10px; ${s.status.includes('Issued') ? 'background:#ecfdf5; color:#059669;' : 'background:#fef2f2; color:#dc2626;'}">
+              ${s.status}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
 
   window.addEventListener('beforeunload', () => {
     if (html5QrCode) {

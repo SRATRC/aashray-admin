@@ -24,6 +24,113 @@
 
   <!-- Shared Styles -->
   <link rel="stylesheet" href="../../style/css/styles.css" />
+
+  <style>
+    /* Premium Portal Grid Layout */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    @media (max-width: 700px) {
+      .portal-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .portal-card {
+        padding: 18px !important;
+      }
+    }
+
+    .portal-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-4px);
+      border-color: #4f46e5;
+      box-shadow: 0 12px 20px -8px rgba(79, 70, 229, 0.15), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #4f46e5 0%, #818cf8 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .portal-card:hover::before {
+      opacity: 1;
+    }
+
+    .portal-icon {
+      font-size: 32px;
+      background: #f1f5f9;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      color: #4f46e5;
+      transition: all 0.3s ease;
+    }
+
+    .portal-card:hover .portal-icon {
+      background: #e0f2fe;
+      color: #0284c7;
+      transform: scale(1.05);
+    }
+
+    .portal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+    }
+
+    .portal-desc {
+      font-size: 13.5px;
+      color: #64748b;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .portal-arrow {
+      margin-top: auto;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4f46e5;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: gap 0.2s ease;
+    }
+
+    .portal-card:hover .portal-arrow {
+      gap: 8px;
+    }
+  </style>
 </head>
 
 <body>
@@ -47,12 +154,22 @@
             <h1>WiFi Management</h1>
           </div>
 
-          <div class="admin-menu">
-            <div class="menu-grid">
-              <a class="menu-btn" href="uploadCodes.html">Upload New Temporary Codes</a>
-              <a class="menu-btn" href="wifiReport.html">Temporary Wifi Codes Usage Report</a>
-              <a class="menu-btn" href="permanentCodeRequests.html">Permanent Code Requests</a>
-            </div>
+          <div class="portal-grid">
+            <a href="wifiReport.html" class="portal-card">
+              <div class="portal-icon">📊</div>
+              <h2 class="portal-title">Temporary WiFi Codes</h2>
+              <p class="portal-desc">Search, filter, and review temporary wifi codes log assignments. Includes Excel
+                exporter and inline code uploads.</p>
+              <div class="portal-arrow">Explore Report <span>→</span></div>
+            </a>
+
+            <a href="permanentCodeRequests.html" class="portal-card">
+              <div class="portal-icon">🔑</div>
+              <h2 class="portal-title">Permanent WiFi Codes</h2>
+              <p class="portal-desc">Manage permanent code request cycles. Approve, reject, delete, or manually
+                provision permanent client accounts.</p>
+              <div class="portal-arrow">Manage Requests <span>→</span></div>
+            </a>
           </div>
 
         </div>

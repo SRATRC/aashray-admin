@@ -42,18 +42,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// ✅ Browser alert-based message functions
-function showSuccessMessage(message) {
-  alert(message);
-}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js
 
-function showErrorMessage(message) {
-  alert("Error: " + message);
-}
-
-function resetAlert() {
-  // This could clear UI banners if used in future (currently placeholder)
-}
 
 
 async function uploadExcel() {
@@ -130,4 +120,15 @@ const rows = rawRows.map(row => {
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+function downloadExcelTemplate() {
+  const sampleData = [
+    { date: '2026-07-25', breakfast: 'Idli Sambhar, Tea/Coffee', lunch: 'Roti, Paneer Sabzi, Dal Rice, Salads', dinner: 'Puri Bhaji, Khichdi, Kadhi' },
+    { date: '2026-07-26', breakfast: 'Poha, Jalebi, Tea/Coffee', lunch: 'Roti, Mix Veg Sabzi, Rajma Rice', dinner: 'Dosa, Sambhar, Coconut Chutney' }
+  ];
+  const ws = XLSX.utils.json_to_sheet(sampleData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'MenuTemplate');
+  XLSX.writeFile(wb, '7_day_food_menu_template.xlsx');
 }

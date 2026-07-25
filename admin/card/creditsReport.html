@@ -23,6 +23,180 @@
   <script src="../../style/js/exportToExcel.js"></script>
 
   <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    .search-input-wrapper::before {
+      content: "🔍";
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+    
+    /* Clickable Credit Pills */
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      border: 1px solid transparent;
+      user-select: none;
+    }
+    .credit-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    }
+    .credit-pill-room { background-color: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .credit-pill-room:hover { background-color: #d1fae5; }
+    .credit-pill-food { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .credit-pill-food:hover { background-color: #fef3c7; }
+    .credit-pill-travel { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .credit-pill-travel:hover { background-color: #dbeafe; }
+    .credit-pill-utsav { background-color: #f8fafc; color: #475569; border-color: #cbd5e1; }
+    .credit-pill-utsav:hover { background-color: #f1f5f9; }
+
+    /* Timeline details sub-row */
+    .transaction-row {
+      background-color: #f8fafc !important;
+    }
+    .timeline-container {
+      padding: 18px 24px;
+      border-radius: 8px;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      margin: 8px 0;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    
+    /* Premium vertical timeline styling */
+    .timeline-list {
+      position: relative;
+      padding: 10px 0 10px 20px;
+      margin: 0;
+      list-style: none;
+    }
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 6px;
+      width: 2px;
+      background: #e2e8f0;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+    .timeline-dot {
+      position: absolute;
+      top: 14px;
+      left: -20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid #cbd5e1;
+      z-index: 1;
+      transform: translateX(-50%);
+    }
+    .timeline-dot.credited {
+      border-color: #10b981;
+      background-color: #10b981;
+    }
+    .timeline-dot.debited {
+      border-color: #ef4444;
+      background-color: #ef4444;
+    }
+    .timeline-content {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .timeline-info {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .timeline-booking {
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 14px;
+    }
+    .timeline-date {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 3px;
+    }
+    .timeline-desc {
+      font-size: 12.5px;
+      color: #475569;
+      margin-top: 5px;
+    }
+    .timeline-amount-badge {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .timeline-amount-badge.credited {
+      background-color: #ecfdf5;
+      color: #047857;
+    }
+    .timeline-amount-badge.debited {
+      background-color: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .timeline-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .timeline-close {
+      cursor: pointer;
+      font-size: 18px;
+      color: #94a3b8;
+    }
+    .timeline-close:hover {
+      color: #64748b;
+    }
+
+    /* Row fade-in animations */
+    #creditsTable tbody tr {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: rowFadeIn 0.3s ease-out forwards;
+      transition: background-color 0.15s ease;
+    }
+    @keyframes rowFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -47,9 +221,25 @@
           </div>
 
           <div class="form">
+            <!-- Search bar wrapper -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="creditsSearch">Search Credit Details:</label>
+              <div class="search-input-wrapper" style="position: relative; display: block; max-width: 320px;">
+                <input
+                  type="text"
+                  id="creditsSearch"
+                  class="form-control"
+                  placeholder="Search by name, card, phone, or email... (Press /)"
+                  autocomplete="off"
+                  style="padding-left: 32px; padding-right: 32px; height: 38px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; width: 100%; box-sizing: border-box;"
+                />
+                <span id="clearSearchBtn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 18px; font-weight: bold; display: none; user-select: none;">&times;</span>
+              </div>
+            </div>
+
             <div class="table-responsive">
-              <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
-                <div></div>
+              <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div id="creditsResultsCountBadge" style="display: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background-color: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap;">● 0 Records Found</div>
                 <div id="downloadBtnContainer"></div>
               </div>
 
