@@ -23,6 +23,10 @@
     <script src="/sessionstorage.js"></script>
     <script src="issuedPlateReport.js"></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="../../style/js/pagination.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+    <script src="../../style/js/reportExporter.js" defer></script>
     
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -46,6 +50,23 @@
         .table {
           width: 100% !important;
           table-layout: auto !important;
+        }
+      }
+
+      /* Mobile Responsive Enhancements */
+      @media (max-width: 768px) {
+        .container {
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 8px !important;
+        }
+        .inner-padding {
+          padding: 12px !important;
+        }
+        .table-responsive {
+          width: 100% !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch;
         }
       }
     </style>

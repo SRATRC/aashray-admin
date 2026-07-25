@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <script src="../../style/js/config.js"></script>
     <script src="../../style/js/roleCheck.js"></script>
 
@@ -23,142 +22,179 @@
     </script>
 
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Short Link Management</title>
 
-    <title>
-        Short Link Management
-    </title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link rel="stylesheet" href="../../style/css/styles.css" />
 
     <style>
         .dashboard-grid {
-
             display: grid;
-
-            grid-template-columns:
-                repeat(auto-fit,
-                    minmax(250px, 1fr));
-
-            gap: 20px;
-
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
             margin-bottom: 20px;
         }
 
-        .dashboard-card {
+        /* .summary-card, .summary-icon-badge, .summary-value, .summary-label → global styles.css */
 
-            background: #f8f9fb;
-
-            border-radius: 10px;
-
-            padding: 20px;
-
-            border: 1px solid #ddd;
-        }
-
-        .summary-value {
-
-            font-size: 28px;
-
-            font-weight: 700;
-
-            margin-top: 10px;
-        }
-
-        .summary-label {
-
-            font-size: 14px;
-
-            font-weight: 600;
-
-            color: #555;
-        }
-
-        .passenger-controls {
-
+        .controls-toolbar {
             display: flex;
-
-            gap: 15px;
-
+            gap: 12px;
             margin-bottom: 20px;
-
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .passenger-controls input,
-        .passenger-controls select {
-
-            padding: 10px;
-
-            border: 1px solid #ccc;
-
-            border-radius: 6px;
-
-            min-width: 220px;
+        .controls-toolbar input,
+        .controls-toolbar select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
         }
 
         .form-grid {
-
             display: grid;
-
-            grid-template-columns:
-                repeat(auto-fit,
-                    minmax(250px, 1fr));
-
-            gap: 15px;
-
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
         }
 
         .form-group {
-
             display: flex;
-
             flex-direction: column;
         }
 
         .form-group label {
-
-            margin-bottom: 6px;
-
-            font-weight: 600;
+            margin-bottom: 4px;
+            font-weight: 700;
+            font-size: 13px;
+            color: #334155;
         }
 
         .form-group input,
         .form-group select {
-
-            padding: 10px;
-
-            border-radius: 6px;
-
-            border: 1px solid #ccc;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 13px;
         }
 
         .action-buttons {
-
             display: flex;
-
-            gap: 10px;
-
+            gap: 6px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .short-link {
-
-            max-width: 250px;
-
+        .short-link-text {
+            max-width: 180px;
             overflow: hidden;
-
             text-overflow: ellipsis;
-
             white-space: nowrap;
-
             display: inline-block;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .target-url-text {
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            color: #475569;
+            font-size: 12px;
+        }
+
+        /* .modal-overlay → global styles.css */
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        /* Action Dropdown Menu */
+        .action-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .action-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #ffffff;
+            min-width: 155px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            z-index: 100;
+            padding: 4px 0;
+            text-align: left;
+        }
+        .action-dropdown-menu.show {
+            display: block;
+        }
+        .action-dropdown-menu button {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 7px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .action-dropdown-menu button:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .action-dropdown-menu button.danger-item:hover {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 8px !important;
+            }
+            .inner-padding {
+                padding: 12px !important;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
+            .table-responsive {
+                width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
         }
     </style>
 
     <script src="shortLinks.js" defer></script>
+    <script src="../../style/js/pagination.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+    <script src="../../style/js/reportExporter.js" defer></script>
 
 </head>
 
@@ -175,156 +211,176 @@
         </div>
     </div>
 
-
     <div class="middlecontent">
-
-        <div class="container">
-
+        <div class="container" style="max-width:1400px; width:96vw;">
             <div class="whitesec">
-
                 <div class="inner-padding">
 
-                    <div class="frm-head">
-
-                        <h1>
-                            Short Link Management
-                        </h1>
-
+                    <!-- Modern Header Banner -->
+                    <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#fff; border-radius:14px; padding:18px 24px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:26px;">🔗</span>
+                            <div>
+                                <h1 style="margin:0; font-size:19px; font-weight:700; color:#ffffff;">Short Link Management</h1>
+                                <div style="font-size:12px; color:#cbd5e1; margin-top:2px;">Create, track, and manage custom URL shorteners & QR codes</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" onclick="openQuickLookup()" class="btn btn-sm btn-secondary" style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 12px; border-radius:8px;">
+                                ⚡ Quick Lookup
+                            </button>
+                            <button type="button" onclick="toggleCommandPalette()" class="btn btn-sm btn-secondary" style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 12px; border-radius:8px;">
+                                🔍 Quick Search <kbd style="background:rgba(255,255,255,0.2); font-size:10px; padding:2px 5px; border-radius:4px; margin-left:4px;">Alt+K</kbd>
+                            </button>
+                            <button type="button" onclick="printTablePDF('linksTable', 'Short Links Directory')" class="btn btn-sm btn-secondary" style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 12px; border-radius:8px;">
+                                🖨️ Print PDF
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- SUMMARY -->
-
-                    <div class="dashboard-grid" id="summaryCards">
-
-                    </div>
-
-                    <!-- FILTERS -->
-
-                    <div class="passenger-controls">
-
-                        <input type="text" id="searchInput" placeholder="Search links..." />
-
-                        <select id="typeFilter"></select>
-                        <select id="statusFilter">
-
-                            <option value="all">
-                                All Status
-                            </option>
-
-                            <option value="active">
-                                Active
-                            </option>
-
-                            <option value="inactive">
-                                Inactive
-                            </option>
-
-                        </select>
-
-                    </div>
+                    <!-- SUMMARY CARDS -->
+                    <div class="dashboard-grid" id="summaryCards"></div>
 
                     <!-- CREATE FORM -->
-
-                    <div class="dashboard-card">
-
-                        <h3>
-                            Create Short Link
-                        </h3>
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:20px 24px; margin-bottom:24px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.03);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:34px; height:34px; background:#e0e7ff; color:#4f46e5; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold;">➕</div>
+                                <div>
+                                    <h3 style="margin:0; font-size:16px; font-weight:700; color:#0f172a;">Create New Short Link</h3>
+                                    <div style="font-size:12px; color:#64748b;">Generate a branded redirect link for any destination URL</div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="document.getElementById('shortLinkForm').reset(); updateLivePreview();" class="btn btn-sm btn-secondary" style="font-size:11px; padding:4px 10px; border-radius:6px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;">🔄 Reset</button>
+                        </div>
 
                         <form id="shortLinkForm">
-
                             <div class="form-grid">
-
+                                
+                                <!-- Custom Slug Field with Input Group Badge -->
                                 <div class="form-group">
-
-                                    <label>
-                                        Slug
+                                    <label for="slug" style="font-weight:700; color:#334155; font-size:13px; display:flex; align-items:center; gap:5px;">
+                                        <span>🔗</span> Custom Short Slug:
                                     </label>
-
-                                    <input type="text" id="slug" placeholder="wifi-guest" required />
-
+                                    <div style="display:flex; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; background:#f8fafc;">
+                                        <span style="background:#e2e8f0; color:#475569; padding:8px 10px; font-size:12px; font-weight:600; border-right:1px solid #cbd5e1; display:flex; align-items:center; white-space:nowrap;">.../go/</span>
+                                        <input type="text" id="slug" placeholder="wifi-guest" required style="border:none; padding:8px 12px; font-size:13px; width:100%; outline:none; background:#fff; font-weight:700; color:#0f172a;" />
+                                    </div>
                                 </div>
 
+                                <!-- Target URL Field -->
                                 <div class="form-group">
-
-                                    <label>
-                                        Target URL
+                                    <label for="target_url" style="font-weight:700; color:#334155; font-size:13px; display:flex; align-items:center; gap:5px;">
+                                        <span>🌐</span> Target Destination URL:
                                     </label>
-
-                                    <input type="url" id="target_url" placeholder="https://example.com" required />
-
+                                    <input type="url" id="target_url" placeholder="https://example.com/destination-url" required style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;" />
                                 </div>
 
+                                <!-- Module Type Selection -->
                                 <div class="form-group">
-
-                                    <label>
-                                        Type
+                                    <label for="type" style="font-weight:700; color:#334155; font-size:13px; display:flex; align-items:center; gap:5px;">
+                                        <span>📁</span> Module Type:
                                     </label>
+                                    <select id="type" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px; font-weight:600;"></select>
+                                </div>
 
-                                    <select id="type"></select>
-
+                                <!-- Expiration Date Field (Optional) -->
+                                <div class="form-group">
+                                    <label for="expiresAt" style="font-weight:700; color:#334155; font-size:13px; display:flex; align-items:center; gap:5px;">
+                                        <span>⏳</span> Expiration Date (Optional):
+                                    </label>
+                                    <input type="date" id="expiresAt" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;" />
                                 </div>
 
                             </div>
 
-                            <br />
-
-                            <button type="submit" class="btn btn-primary">
-                                Create Link
-                            </button>
-
+                            <!-- Real-time Live Link Preview Card -->
+                            <div id="livePreviewBox" style="margin-top:16px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+                                    <span style="font-weight:700; color:#4f46e5;">⚡ Generated Link Preview:</span>
+                                    <span style="font-weight:700; color:#2563eb;">https://aashray.vitraagvigyaan.org/go/<span id="previewSlug">slug</span></span>
+                                    <span style="color:#94a3b8;">➔</span>
+                                    <span style="color:#64748b; font-size:11px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="previewTargetUrl">https://example.com</span>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); border:none; font-weight:bold; border-radius:8px; padding:8px 22px; font-size:13px; box-shadow:0 4px 6px -1px rgba(79,70,229,0.3); transition:all 0.2s ease;">
+                                    ✨ Create Short Link
+                                </button>
+                            </div>
                         </form>
-
                     </div>
 
-                    <br />
+                    <!-- FILTERS TOOLBAR & TABLE -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <h3 style="margin:0; font-size:16px; font-weight:700; color:#1e293b;">Active Short Links Directory</h3>
+                            
+                            <!-- Quick Filter Preset Chips -->
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" onclick="setQuickFilter('all')" class="chip-btn" id="chip-all" style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; border:1px solid #1e293b; background:#1e293b; color:#fff; cursor:pointer;">All</button>
+                                <button type="button" onclick="setQuickFilter('active')" class="chip-btn" id="chip-active" style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; cursor:pointer;">🟢 Active</button>
+                                <button type="button" onclick="setQuickFilter('inactive')" class="chip-btn" id="chip-inactive" style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; cursor:pointer;">🔴 Disabled</button>
+                                <button type="button" onclick="setQuickFilter('top')" class="chip-btn" id="chip-top" style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; cursor:pointer;">🔥 Top Clicked</button>
+                            </div>
+                        </div>
 
-                    <!-- TABLE -->
+                        <div class="controls-toolbar" style="margin:0;">
+                            <input type="text" id="searchInput" placeholder="🔍 Search slug or URL..." style="width:200px;" />
+                            <select id="typeFilter"></select>
+                            <select id="statusFilter" style="display:none;">
+                                <option value="all">All Status</option>
+                                <option value="active">🟢 Active</option>
+                                <option value="inactive">🔴 Disabled</option>
+                            </select>
+                            <button type="button" onclick="exportShortLinksCSV()" class="btn btn-sm btn-success" style="font-weight:bold; border-radius:8px; padding:6px 12px; font-size:12px;">⬇️ Export CSV</button>
+                        </div>
+                    </div>
 
-                    <div class="table-responsive">
-
-                        <table class="table table-striped table-bordered" id="linksTable">
-
+                    <div class="table-responsive" style="border-radius:12px; overflow-x:auto; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04);">
+                        <table class="table table-striped table-bordered" id="linksTable" style="margin-bottom:0; width:100%;">
                             <thead>
-
-                                <tr>
-
-                                    <th>#</th>
-
-                                    <th>Slug</th>
-
-                                    <th>Short URL</th>
-
-                                    <th>Type</th>
-
-                                    <th>Clicks</th>
-
-                                    <th>Status</th>
-
-                                    <th>Created</th>
-
-                                    <th>Actions</th>
-
+                                <tr style="background:#1e293b; color:#ffffff;">
+                                    <th onclick="sortTable(0)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; text-align:center; cursor:pointer;" title="Sort by index">#</th>
+                                    <th onclick="sortTable(1)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; cursor:pointer;" title="Sort by Slug">Slug ⇕</th>
+                                    <th onclick="sortTable(2)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; cursor:pointer;" title="Sort by Short URL">Short URL ⇕</th>
+                                    <th onclick="sortTable(3)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; cursor:pointer;" title="Sort by Target URL">Target URL (Original Redirect) ⇕</th>
+                                    <th onclick="sortTable(4)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; cursor:pointer;" title="Sort by Type">Type ⇕</th>
+                                    <th onclick="sortTable(5)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; cursor:pointer;" title="Sort by Admin Creator">Created By ⇕</th>
+                                    <th onclick="sortTable(6)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; text-align:center; cursor:pointer;" title="Sort by Clicks">Clicks ⇕</th>
+                                    <th onclick="sortTable(7)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; text-align:center; cursor:pointer;" title="Sort by Status">Status ⇕</th>
+                                    <th onclick="sortTable(8)" style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; cursor:pointer;" title="Sort by Date">Created ⇕</th>
+                                    <th style="background:#1e293b; color:#ffffff; padding:10px 12px; font-size:12px; text-align:center; min-width:120px;">Actions</th>
                                 </tr>
-
                             </thead>
-
                             <tbody>
-
+                                <tr><td colspan="10" style="text-align:center; color:#94a3b8; padding:20px;">Loading short links...</td></tr>
                             </tbody>
-
                         </table>
-
                     </div>
+                    <div id="shortLinksPaginationContainer" style="margin-top:14px;"></div>
 
                 </div>
-
             </div>
-
         </div>
+    </div>
 
+    <!-- QR CODE PREVIEW MODAL -->
+    <div id="qrCodeModalOverlay" class="modal-overlay">
+        <div class="modal-box">
+            <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#ffffff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="margin:0; font-size:15px; font-weight:700; color:#fff;" id="qrModalTitle">📷 Short Link QR Code</h4>
+                <button type="button" onclick="closeQrModal()" style="background:none; border:none; color:#cbd5e1; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div style="padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+                <div id="qrContainer" style="padding:12px; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);"></div>
+                <div style="font-size:12px; font-weight:700; color:#475569;" id="qrModalUrl">https://...</div>
+                <div style="display:flex; gap:10px; margin-top:6px;">
+                    <button type="button" id="btnDownloadQr" class="btn btn-sm btn-success" style="font-weight:bold; border-radius:6px; font-size:12px; padding:6px 14px;">⬇️ Download QR Image</button>
+                    <button type="button" onclick="closeQrModal()" class="btn btn-sm btn-secondary" style="border-radius:6px; font-size:12px; padding:6px 14px;">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </body>
-
 </html>

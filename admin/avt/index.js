@@ -640,14 +640,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function showSuccessMessage(message) {
-  alert(message);
-}
-
-function showErrorMessage(message) {
-  alert("Error: " + message);
-}
-
-function resetAlert() {
-  // Clear placeholder UI banners
-}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js

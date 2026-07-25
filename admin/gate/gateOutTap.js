@@ -1,19 +1,28 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('gateCheckinForm');
+  const form = document.getElementById('tapForm') || document.getElementById('gateCheckoutForm');
   const cardInput = document.getElementById('cardno');
   const alertDiv = document.getElementById('alert');
 
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const cardno = cardInput.value.trim();
-    if (!cardno) return;
-
-    sendCheckinRequest(cardno);
-    cardInput.value = '';
+  if (cardInput) {
     cardInput.focus();
-  });
+    cardInput.select();
+  }
 
-  function sendCheckinRequest(cardno) {
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const cardno = cardInput ? cardInput.value.trim() : '';
+      if (!cardno) return;
+
+      sendCheckoutRequest(cardno);
+      if (cardInput) {
+        cardInput.value = '';
+        cardInput.focus();
+      }
+    });
+  }
+
+  function sendCheckoutRequest(cardno) {
     resetAlert();
 
     const token = sessionStorage.getItem('token');
@@ -22,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    showInfoMessage('Processing check-in...');
+    showInfoMessage('Processing check-out...');
 
     fetch(`${CONFIG.basePath}/gate/exit`, {
       method: 'POST',
@@ -35,34 +44,36 @@ document.addEventListener('DOMContentLoaded', function () {
       .then((res) => res.json().then(data => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (ok) {
-          showSuccessMessage(`${data.message || 'Check-in successful.'} (Card: ${data.cardno}, Name: ${data.issuedto})`);
+          showSuccessMessage(`✅ Exit Allowed: ${data.cardno} (${data.issuedto || 'Member'})`);
         } else {
-          showErrorMessage(data.message || 'Failed to check-in.');
+          showErrorMessage(`❌ Exit Denied: ${data.message || 'Failed to check-out.'}`);
         }
       })
       .catch((err) => {
         console.error('Error:', err);
-        showErrorMessage('Failed to check-in. Please try again.');
+        showErrorMessage('❌ Check-out failed. Please try again.');
+      })
+      .finally(() => {
+        if (cardInput) cardInput.focus();
       });
   }
 
   function showMessage(message, type) {
-    alertDiv.className = `big-alert alert-${type}`;
+    if (!alertDiv) return;
+    alertDiv.className = `big-scan-alert alert alert-${type}`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
     if (type === 'success') {
-      setTimeout(resetAlert, 3000);
+      setTimeout(resetAlert, 4000);
     }
   }
 
   function showSuccessMessage(message) {
-    playSuccessSound();
     showMessage(message, 'success');
   }
 
   function showErrorMessage(message) {
-    playErrorSound();
     showMessage(message, 'danger');
   }
 
@@ -71,17 +82,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function resetAlert() {
-    alertDiv.className = 'big-alert';
+    if (!alertDiv) return;
     alertDiv.style.display = 'none';
     alertDiv.textContent = '';
-  }
-
-  function playErrorSound() {
-    const sound = document.getElementById('errorSound');
-    if (sound) sound.play();
-  }
-
-  function playSuccessSound() {
-    // Optional: Add separate success sound if needed
   }
 });

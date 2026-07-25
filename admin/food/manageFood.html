@@ -23,6 +23,10 @@
     <script src="/sessionstorage.js"></script>
     <script src="manageFood.js"></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="../../style/js/pagination.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+    <script src="../../style/js/reportExporter.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Styles -->
@@ -81,6 +85,29 @@
         flex-direction: column;
         overflow: hidden;
         box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+      }
+
+      /* Mobile Responsive Enhancements */
+      @media (max-width: 768px) {
+        .container {
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 8px !important;
+        }
+        .inner-padding {
+          padding: 12px !important;
+        }
+        .modal-overlay {
+          padding: 8px !important;
+        }
+        .modal-container {
+          max-height: 95vh !important;
+        }
+        .table-responsive {
+          width: 100% !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch;
+        }
       }
     </style>
   </head>
@@ -323,6 +350,7 @@
               </tbody>
             </table>
           </div>
+          <div id="memberBookingsPaginationContainer" style="margin-top:12px;"></div>
         </div>
 
         <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 20px; text-align:right;">
@@ -378,6 +406,7 @@
               </tbody>
             </table>
           </div>
+          <div id="guestBookingsPaginationContainer" style="margin-top:12px;"></div>
         </div>
 
         <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 20px; text-align:right;">

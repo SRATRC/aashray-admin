@@ -573,15 +573,4 @@ function downloadExcelTemplate() {
   XLSX.writeFile(wb, '7_day_food_menu_template.xlsx');
 }
 
-// Alert helpers
-function showSuccessMessage(message) {
-  alert(message);
-}
-
-function showErrorMessage(message) {
-  alert("Error: " + message);
-}
-
-function resetAlert() {
-  // Placeholder for UI alert clear logic
-}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js

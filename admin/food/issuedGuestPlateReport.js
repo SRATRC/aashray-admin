@@ -237,12 +237,5 @@ function formatDate(dateStr) {
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function showSuccessMessage(message) {
-  const alertBox = document.getElementById('alertBox');
-  if (!alertBox) return;
-  alertBox.style.display = 'block';
-  alertBox.style.backgroundColor = '#d4edda';
-  alertBox.style.color = '#155724';
-  alertBox.textContent = message;
-  setTimeout(() => alertBox.style.display = 'none', 2000);
-}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js
+

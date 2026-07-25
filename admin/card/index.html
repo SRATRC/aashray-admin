@@ -21,8 +21,12 @@
     <script src="../../style/js/config.js"></script>
     <script src="../../sessionstorage.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="../../style/js/exportToExcel.js"></script>
     <script src="index.js"></script>
+    <script src="../../style/js/tableSortFilter.js" defer></script>
+    <script src="../../style/js/pagination.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+    <script src="../../style/js/reportExporter.js" defer></script>
 
     <!-- Shared Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -1191,25 +1195,8 @@
         background-color: #fef2f2;
         color: #b91c1c;
       }
-      .stat-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 16px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        user-select: none;
-        cursor: pointer;
-      }
-      .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        border-color: #cbd5e1;
-      }
-    </style>
+        /* .stat-card, .stat-card:hover → global styles.css */
+      </style>
   </head>
   <body>
     <div class="header">

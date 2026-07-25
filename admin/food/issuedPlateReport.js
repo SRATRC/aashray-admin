@@ -2,7 +2,7 @@
 let _allPlateData = [];
 let _filteredPlateData = [];
 let _platePage = 1;
-const PLATE_PAGE_SIZE = 50;
+const PLATE_PAGE_SIZE = 10;
 let _plateCanIssue = false;
 let _plateMeal = '';
 let _plateTableBody = null;
@@ -193,41 +193,16 @@ function renderPlatePage(page) {
 
 /* ===== Pagination controls ===== */
 function renderPlatePagination() {
-  const total      = _filteredPlateData.length;
-  const totalPages = Math.ceil(total / PLATE_PAGE_SIZE);
-  const container  = document.getElementById('platePaginationContainer');
-  if (!container) return;
-
-  if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-  const start = (_platePage - 1) * PLATE_PAGE_SIZE + 1;
-  const end   = Math.min(_platePage * PLATE_PAGE_SIZE, total);
-
-  let html = `
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
-                gap:10px;margin-top:15px;padding:10px 0;border-top:1px solid #e2e8f0;">
-      <span style="color:#666;font-size:14px;">Showing ${start}–${end} of ${total}</span>
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-  `;
-
-  if (_platePage > 1)
-    html += `<button onclick="renderPlatePage(${_platePage - 1})" class="btn btn-secondary" style="padding:4px 10px;font-size:13px;">‹ Prev</button>`;
-
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || Math.abs(i - _platePage) <= 1) {
-      html += `<button onclick="renderPlatePage(${i})" class="btn ${i === _platePage ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:13px;">${i}</button>`;
-    } else if (i === 2 && _platePage > 3) {
-      html += `<span style="padding:4px 6px;">…</span>`;
-    } else if (i === totalPages - 1 && _platePage < totalPages - 2) {
-      html += `<span style="padding:4px 6px;">…</span>`;
-    }
+  if (typeof renderUniversalPagination === 'function') {
+    renderUniversalPagination({
+      container: 'platePaginationContainer',
+      currentPage: _platePage,
+      totalItems: _filteredPlateData.length,
+      pageSize: PLATE_PAGE_SIZE,
+      onPageChange: (newPage) => renderPlatePage(newPage),
+      itemLabel: 'entries'
+    });
   }
-
-  if (_platePage < totalPages)
-    html += `<button onclick="renderPlatePage(${_platePage + 1})" class="btn btn-secondary" style="padding:4px 10px;font-size:13px;">Next ›</button>`;
-
-  html += `</div></div>`;
-  container.innerHTML = html;
 }
 
 /* ===== CSV Export ===== */
@@ -324,25 +299,4 @@ function markRowAsIssued(cardno) {
 }
 
 /* ===== Alert helpers ===== */
-function showSuccessMessage(msg) {
-  const box = document.getElementById('alertBox');
-  box.style.display = 'block';
-  box.style.backgroundColor = '#d4edda';
-  box.style.color = '#155724';
-  box.textContent = msg;
-  setTimeout(() => { box.style.display = 'none'; }, 3000);
-}
-
-function showErrorMessage(msg) {
-  const box = document.getElementById('alertBox');
-  box.style.display = 'block';
-  box.style.backgroundColor = '#f8d7da';
-  box.style.color = '#721c24';
-  box.textContent = msg;
-  setTimeout(() => { box.style.display = 'none'; }, 4000);
-}
-
-function resetAlert() {
-  const box = document.getElementById('alertBox');
-  if (box) { box.style.display = 'none'; box.textContent = ''; }
-}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js

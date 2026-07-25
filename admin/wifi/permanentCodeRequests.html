@@ -573,6 +573,10 @@
   <script src="/sessionstorage.js"></script>
   <script src="permanentCodeRequests.js"></script>
   <script src="../../style/js/tableSortFilter.js" defer></script>
+  <script src="../../style/js/pagination.js" defer></script>
+  <script src="../../style/js/commandPalette.js" defer></script>
+  <script src="../../style/js/quickLookup.js" defer></script>
+  <script src="../../style/js/reportExporter.js" defer></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="../../style/js/exportToExcel.js"></script>
 </head>
@@ -633,23 +637,8 @@
             </div>
 
             <!-- Top Pagination Container -->
-            <div class="pagination-container" id="paginationContainerTop" style="margin-top: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; width: 100%;">
-              <div id="paginationInfoTop" style="color: #666; font-size: 13px; white-space: nowrap; flex-shrink: 0;"></div>
-              <ul id="paginationTop" class="pagination" style="margin: 0; flex-shrink: 0;"></ul>
-              <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
-                <select id="pageSizeSelectTop" class="form-control" style="width: 70px; height: 30px; padding: 4px 8px; font-size: 13px; display: inline-block; margin: 0;">
-                  <option value="10">10</option>
-                  <option value="20" selected>20</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
-                <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
-                  <label for="gotoPageInputTop" style="margin: 0; font-size: 13px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
-                  <input type="number" id="gotoPageInputTop" class="form-control" min="1" style="width: 50px; height: 30px; padding: 4px 6px; font-size: 13px; display: inline-block; margin: 0;">
-                  <span style="color: #666; font-size: 13px; white-space: nowrap;">of <span id="totalPagesLabelTop">1</span></span>
-                </div>
-              </div>
-            </div>
+            <!-- Top Pagination Container -->
+            <div id="paginationTop" style="margin-top: 8px; margin-bottom: 12px; width: 100%;"></div>
 
             <div class="table-responsive">
               <div id="tableLoader" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); z-index: 10; justify-content: center; align-items: center; flex-direction: column;">
@@ -680,26 +669,7 @@
             </div>
 
             <!-- Bottom Pagination Container -->
-            <div class="pagination-container" id="paginationContainerBottom" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; width: 100%;">
-              <div id="paginationInfoBottom" style="color: #666; font-size: 13px; white-space: nowrap; flex-shrink: 0;"></div>
-              <ul id="paginationBottom" class="pagination" style="margin: 0; flex-shrink: 0;"></ul>
-              <div class="pagination-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
-                <div class="page-size-selector" style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
-                  <label for="pageSizeSelectBottom" style="margin: 0; font-size: 13px; color: #666; white-space: nowrap;">Items per page:</label>
-                  <select id="pageSizeSelectBottom" class="form-control" style="width: 70px; height: 30px; padding: 4px 8px; font-size: 13px; display: inline-block; margin: 0;">
-                    <option value="10">10</option>
-                    <option value="20" selected>20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
-                </div>
-                <div class="page-goto-selector" style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
-                  <label for="gotoPageInputBottom" style="margin: 0; font-size: 13px; color: #666; font-weight: normal; white-space: nowrap;">Go to:</label>
-                  <input type="number" id="gotoPageInputBottom" class="form-control" min="1" style="width: 50px; height: 30px; padding: 4px 6px; font-size: 13px; display: inline-block; margin: 0;">
-                  <span style="color: #666; font-size: 13px; white-space: nowrap;">of <span id="totalPagesLabelBottom">1</span></span>
-                </div>
-              </div>
-            </div>
+            <div id="paginationBottom" style="margin-top: 12px; width: 100%;"></div>
           </div>
 
           <!-- Modals Section -->

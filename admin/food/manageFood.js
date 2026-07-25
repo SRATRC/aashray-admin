@@ -392,42 +392,73 @@ async function getExistingBookings() {
     if (!response.ok) { showErrorMessage(data.message); return; }
 
     const bookings = data.data || [];
+    window._cachedMemberBookings = bookings;
     if (bookings.length === 0) {
       if (tableBody) tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">No existing bookings found for this member.</td></tr>`;
       return;
     }
 
-    if (tableBody) {
-      tableBody.innerHTML = '';
-      bookings.forEach((booking) => {
-        ['breakfast', 'lunch', 'dinner'].forEach((mealType) => {
-          if (booking[mealType]) {
-            const isIssued = booking[`${mealType}_plate_issued`];
-            const tr = document.createElement('tr');
-            const dateStr = formatDate(booking.date);
-            const mealCapitalized = mealType.charAt(0).toUpperCase() + mealType.slice(1);
-            const mealIcon = mealType === 'breakfast' ? '🌅' : (mealType === 'lunch' ? '☀️' : '🌙');
-
-            tr.innerHTML = `
-              <td style="text-align:center;">
-                <input type="checkbox" class="meal-checkbox" data-bookingid="${booking.bookingid}" data-mealtype="${mealType}" ${isIssued ? 'disabled' : ''}>
-              </td>
-              <td style="font-weight:600; color:#1e293b;">📅 ${dateStr}</td>
-              <td style="font-weight:600;">${mealIcon} ${mealCapitalized}</td>
-              <td style="text-align:center;">
-                ${isIssued
-                  ? `<span style="padding:2px 8px; background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; border-radius:10px; font-weight:700; font-size:11px;">✅ Issued</span>`
-                  : `<button type="button" onclick="cancelSingleMeal('${booking.bookingid}', '${mealType}')" class="btn btn-sm btn-danger" style="border-radius:6px; font-size:11px; padding:3px 8px;">Cancel</button>`}
-              </td>
-            `;
-            tableBody.appendChild(tr);
-          }
-        });
-      });
-    }
+    window._memberCurrentPage = 1;
+    renderMemberBookingsPage();
   } catch (error) {
     console.error('Error fetching bookings:', error);
     showErrorMessage(error.message);
+  }
+}
+
+window._memberCurrentPage = 1;
+function renderMemberBookingsPage(page = 1) {
+  window._memberCurrentPage = page;
+  const tableBody = document.querySelector('#bookingsTableBody');
+  if (!tableBody || !window._cachedMemberBookings) return;
+
+  const allRows = [];
+  window._cachedMemberBookings.forEach((booking) => {
+    ['breakfast', 'lunch', 'dinner'].forEach((mealType) => {
+      if (booking[mealType]) {
+        allRows.push({ booking, mealType });
+      }
+    });
+  });
+
+  const pageSize = 10;
+  const totalItems = allRows.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const startIdx = (page - 1) * pageSize;
+  const pageRows = allRows.slice(startIdx, startIdx + pageSize);
+
+  tableBody.innerHTML = '';
+  pageRows.forEach(({ booking, mealType }) => {
+    const isIssued = booking[`${mealType}_plate_issued`];
+    const tr = document.createElement('tr');
+    const dateStr = formatDate(booking.date);
+    const mealCapitalized = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+    const mealIcon = mealType === 'breakfast' ? '🌅' : (mealType === 'lunch' ? '☀️' : '🌙');
+
+    tr.innerHTML = `
+      <td style="text-align:center;">
+        <input type="checkbox" class="meal-checkbox" data-bookingid="${booking.bookingid}" data-mealtype="${mealType}" ${isIssued ? 'disabled' : ''}>
+      </td>
+      <td style="font-weight:600; color:#1e293b;">📅 ${dateStr}</td>
+      <td style="font-weight:600;">${mealIcon} ${mealCapitalized}</td>
+      <td style="text-align:center;">
+        ${isIssued
+          ? `<span style="padding:2px 8px; background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; border-radius:10px; font-weight:700; font-size:11px;">✅ Issued</span>`
+          : `<button type="button" onclick="cancelSingleMeal('${booking.bookingid}', '${mealType}')" class="btn btn-sm btn-danger" style="border-radius:6px; font-size:11px; padding:3px 8px;">Cancel</button>`}
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+  if (typeof renderUniversalPagination === 'function') {
+    renderUniversalPagination({
+      container: 'memberBookingsPaginationContainer',
+      currentPage: page,
+      totalItems,
+      pageSize,
+      onPageChange: (newPage) => renderMemberBookingsPage(newPage),
+      itemLabel: 'items'
+    });
   }
 }
 
@@ -486,19 +517,29 @@ async function getExistingGuestBookings() {
       return;
     }
 
-    renderGuestBookingsTable(bookings);
+    window._guestCurrentPage = 1;
+    renderGuestBookingsTablePage(1);
   } catch (error) {
     console.error('Error fetching guest bookings:', error);
     showErrorMessage(error.message);
   }
 }
 
-function renderGuestBookingsTable(bookings) {
+window._guestCurrentPage = 1;
+function renderGuestBookingsTablePage(page = 1) {
+  window._guestCurrentPage = page;
   const tableBody = document.querySelector('#guestBookingsTableBody');
-  if (!tableBody) return;
+  if (!tableBody || !window._cachedGuestBookings) return;
+
+  const bookings = window._cachedGuestBookings;
+  const pageSize = 10;
+  const totalItems = bookings.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const startIdx = (page - 1) * pageSize;
+  const pageItems = bookings.slice(startIdx, startIdx + pageSize);
 
   tableBody.innerHTML = '';
-  bookings.forEach(b => {
+  pageItems.forEach(b => {
     const tr = document.createElement('tr');
     const dateStr = formatDate(b.date);
     const hideIssuedCols = window.isFoodAdminSS ? 'display:none;' : '';
@@ -521,6 +562,17 @@ function renderGuestBookingsTable(bookings) {
     `;
     tableBody.appendChild(tr);
   });
+
+  if (typeof renderUniversalPagination === 'function') {
+    renderUniversalPagination({
+      container: 'guestBookingsPaginationContainer',
+      currentPage: page,
+      totalItems,
+      pageSize,
+      onPageChange: (newPage) => renderGuestBookingsTablePage(newPage),
+      itemLabel: 'bookings'
+    });
+  }
 }
 
 async function deleteGuestBooking(bookingId) {

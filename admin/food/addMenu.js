@@ -42,18 +42,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// ✅ Browser alert-based message functions
-function showSuccessMessage(message) {
-  alert(message);
-}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js
 
-function showErrorMessage(message) {
-  alert("Error: " + message);
-}
-
-function resetAlert() {
-  // This could clear UI banners if used in future (currently placeholder)
-}
 
 
 async function uploadExcel() {

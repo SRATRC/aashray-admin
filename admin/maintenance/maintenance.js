@@ -358,9 +358,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${truncateText(m.comments, searchQuery)}</td>
         <td>${formatDateTime(m.closedAt)}${closedRelHtml}</td>
         <td>
-          <a class="badge-status ${statusClass}" href="#">
-            ${m.status}
-          </a>
+          <div class="action-dropdown" style="position:relative; display:inline-block;">
+            <a class="badge-status ${statusClass}" href="#" onclick="toggleMaintenanceDropdown(event, '${m.bookingid}')" style="display:inline-flex; align-items:center; gap:4px;">
+              ${m.status} <span style="font-size:9px;">▾</span>
+            </a>
+            <div id="m-dropdown-${m.bookingid}" class="action-dropdown-menu" style="display:none; position:absolute; right:0; top:100%; background:#ffffff; min-width:150px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid #cbd5e1; border-radius:8px; z-index:100; padding:4px 0; text-align:left;">
+              <button type="button" onclick="openEditModal({ bookingid: '${m.bookingid}', department: '${m.department}', issuedto: '${(m.CardDb?.issuedto || '').replace(/'/g, "\\'")}', comments: '${(m.comments || '').replace(/'/g, "\\'")}', status: '${m.status}' })" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#334155; cursor:pointer;">✏️ Edit Details</button>
+              <button type="button" onclick="quickUpdateStatus('${m.bookingid}', 'in progress', '${(m.comments || '').replace(/'/g, "\\'")}')" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#2563eb; cursor:pointer;">⏳ In Progress</button>
+              <button type="button" onclick="quickUpdateStatus('${m.bookingid}', 'closed', '${(m.comments || 'Resolved').replace(/'/g, "\\'")}')" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#059669; cursor:pointer;">✅ Mark Resolved</button>
+              <button type="button" onclick="quickUpdateStatus('${m.bookingid}', 'open', '${(m.comments || '').replace(/'/g, "\\'")}')" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#d97706; cursor:pointer;">🔄 Reopen Task</button>
+            </div>
+          </div>
         </td>
       `;
 
@@ -405,131 +413,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const renderPagination = (pagination) => {
-    const pUlTop = document.getElementById('paginationTop');
-    const pUlBottom = document.getElementById('paginationBottom');
-    const pInfoTop = document.getElementById('paginationInfoTop');
-    const pInfoBottom = document.getElementById('paginationInfoBottom');
-    const gotoInputTop = document.getElementById('gotoPageInputTop');
-    const gotoInputBottom = document.getElementById('gotoPageInputBottom');
-    const labelTop = document.getElementById('totalPagesLabelTop');
-    const labelBottom = document.getElementById('totalPagesLabelBottom');
-
-    if (!pagination || pagination.totalPages <= 1) {
-      if (pUlTop) pUlTop.innerHTML = '';
-      if (pUlBottom) pUlBottom.innerHTML = '';
-      
-      const totalCount = pagination ? pagination.totalCount : 0;
-      const infoText = totalCount > 0 ? `Showing 1 to ${totalCount} of ${totalCount} entries` : '';
-      if (pInfoTop) pInfoTop.innerHTML = infoText;
-      if (pInfoBottom) pInfoBottom.innerHTML = infoText;
-
-      if (gotoInputTop) { gotoInputTop.value = 1; gotoInputTop.max = 1; }
-      if (gotoInputBottom) { gotoInputBottom.value = 1; gotoInputBottom.max = 1; }
-      if (labelTop) labelTop.textContent = '1';
-      if (labelBottom) labelBottom.textContent = '1';
-      maxPageValue = 1;
-      return;
-    }
-
+    if (!pagination) return;
     const { page, page_size, totalCount, totalPages } = pagination;
-    maxPageValue = totalPages;
+    maxPageValue = totalPages || 1;
 
-    if (gotoInputTop) { gotoInputTop.value = page; gotoInputTop.max = totalPages; }
-    if (gotoInputBottom) { gotoInputBottom.value = page; gotoInputBottom.max = totalPages; }
-
-    if (labelTop) labelTop.textContent = totalPages;
-    if (labelBottom) labelBottom.textContent = totalPages;
-
-    const startEntry = (page - 1) * page_size + 1;
-    const endEntry = Math.min(page * page_size, totalCount);
-    
-    const infoTextTop = `
-      Showing ${startEntry} to ${endEntry} of ${totalCount} entries
-      <span class="keyboard-helper" style="font-size: 12px; color: #94a3b8; margin-left: 15px; display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
-        <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">←</span>
-        <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">→</span>
-        <span>navigate pages</span>
-      </span>
-    `;
-    const infoTextBottom = `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`;
-    
-    if (pInfoTop) pInfoTop.innerHTML = infoTextTop;
-    if (pInfoBottom) pInfoBottom.innerHTML = infoTextBottom;
-
-    let html = '';
-
-    // First and Previous Buttons
-    if (page === 1) {
-      html += `<li class="disabled"><span>«</span></li>`;
-      html += `<li class="disabled"><span>‹</span></li>`;
-    } else {
-      html += `<li><a href="#" data-page="1" title="First Page">«</a></li>`;
-      html += `<li><a href="#" data-page="${page - 1}" title="Previous Page">‹</a></li>`;
-    }
-
-    // Page Numbers - Google Style
-    const range = 2;
-    let startPage = Math.max(1, page - range);
-    let endPage = Math.min(totalPages, page + range);
-
-    if (page <= range) {
-      endPage = Math.min(totalPages, range * 2 + 1);
-    }
-    if (page > totalPages - range) {
-      startPage = Math.max(1, totalPages - range * 2);
-    }
-
-    // First page block
-    if (startPage > 1) {
-      html += `<li><a href="#" data-page="1">1</a></li>`;
-      if (startPage > 2) {
-        html += `<li class="disabled"><span>...</span></li>`;
-      }
-    }
-
-    // Active/number links
-    for (let i = startPage; i <= endPage; i++) {
-      if (i === page) {
-        html += `<li class="active"><span>${i}</span></li>`;
-      } else {
-        html += `<li><a href="#" data-page="${i}">${i}</a></li>`;
-      }
-    }
-
-    // Last page block
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        html += `<li class="disabled"><span>...</span></li>`;
-      }
-      html += `<li><a href="#" data-page="${totalPages}">${totalPages}</a></li>`;
-    }
-
-    // Next and Last Buttons
-    if (page === totalPages) {
-      html += `<li class="disabled"><span>›</span></li>`;
-      html += `<li class="disabled"><span>»</span></li>`;
-    } else {
-      html += `<li><a href="#" data-page="${page + 1}" title="Next Page">›</a></li>`;
-      html += `<li><a href="#" data-page="${totalPages}" title="Last Page">»</a></li>`;
-    }
-
-    if (pUlTop) pUlTop.innerHTML = html;
-    if (pUlBottom) pUlBottom.innerHTML = html;
-
-    // Attach click listeners to both pagination bars
-    [pUlTop, pUlBottom].forEach(ul => {
-      if (!ul) return;
-      ul.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const targetPage = parseInt(link.getAttribute('data-page'), 10);
-          if (targetPage && targetPage !== page) {
-            currentPage = targetPage;
-            fetchMaintenance();
+    if (typeof renderUniversalPagination === 'function') {
+      renderUniversalPagination({
+        container: ['paginationTop', 'paginationBottom'],
+        currentPage: page,
+        totalItems: totalCount,
+        pageSize: page_size,
+        onPageChange: (newPage, newSize) => {
+          currentPage = newPage;
+          if (newSize && newSize !== pageSize) {
+            pageSize = newSize;
+            localStorage.setItem('maintenancePageSize', pageSize);
           }
-        });
+          fetchMaintenance();
+        },
+        itemLabel: 'requests'
       });
-    });
+    }
   };
 
   // Sync page size selectors
@@ -697,6 +601,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (commentsInput) commentsInput.disabled = isSaving;
     if (statusSelect) statusSelect.disabled = isSaving;
+  };
+
+  window.toggleMaintenanceDropdown = function(e, id) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.querySelectorAll('.action-dropdown-menu').forEach(d => {
+      if (d.id !== `m-dropdown-${id}`) d.style.display = 'none';
+    });
+    const menu = document.getElementById(`m-dropdown-${id}`);
+    if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  };
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.action-dropdown-menu').forEach(d => d.style.display = 'none');
+  });
+
+  window.quickUpdateStatus = async function(bookingid, status, comments) {
+    try {
+      const res = await fetch(`${CONFIG.basePath}/maintenance/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ bookingid, status, comments })
+      });
+      if (res.ok) {
+        fetchMaintenance();
+      }
+    } catch (err) {
+      console.error('Error updating status:', err);
+    }
   };
 
   const saveEditRequest = async () => {
@@ -956,15 +892,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   fetchMaintenance();
 });
 
-// Helper: format date
-function formatDateTime(dateInput) {
-  if (!dateInput) return '-';
-  const dateObj = new Date(dateInput);
-  if (isNaN(dateObj)) return '-';
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const year = dateObj.getFullYear();
-  const hours = String(dateObj.getHours()).padStart(2, '0');
-  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
-}
+// formatDateTime → provided by global /style/js/formatDate.js
+

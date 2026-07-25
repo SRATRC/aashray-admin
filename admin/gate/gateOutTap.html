@@ -1,89 +1,78 @@
-<script src="/style/js/roleCheck.js"></script>
-<script>
-  checkRoleAccess(['gateAdmin', 'superAdmin']); // customize allowed roles
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gate Check-Out</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Card Tap Exit</title>
 
-    <!-- Load jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-
-    <!-- Scripts -->
     <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
-    <script src="/sessionstorage.js"></script>
-    <script src="gateOutTap.js"></script>
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <script src="../../sessionstorage.js"></script>
+    <script src="gateOutTap.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+  
+    <link rel="stylesheet" href="../../style/css/styles.css">
+    
     <style>
-      .big-alert {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: center;
-        padding: 20px;
-        margin-top: 20px;
-      }
-      .alert-success {
-        color: green;
-      }
-      .alert-danger {
-        color: red;
-      }
+        .kiosk-container { max-width: 750px; margin: 30px auto; padding: 0 15px; }
+        .kiosk-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 18px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; }
+        .big-scan-alert { border-radius: 14px; font-size: 17px; font-weight: 700; padding: 18px 24px; text-align: center; margin-top: 20px; }
     </style>
-  </head>
-
-  <body>
+</head>
+<body>
     <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        <div class="container">
+            <div class="logout">
+                <a href="javascript:void(0);" onclick="history.back()">Back</a>
+                &nbsp; | &nbsp; 
+                <a href="javascript:void(0);" onclick="goToHome()">Home</a> 
+                &nbsp; | &nbsp;
+                <a href="javascript:void(0);" onclick="logout()">Logout</a>
+            </div>
         </div>
-      </div>
     </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Tap your card for gate exit</h1>
+    <div class="kiosk-container">
+        <div class="kiosk-card">
+            
+            <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#ffffff; padding:20px 26px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px;">🚪</span>
+                    <div>
+                        <h2 style="margin:0; font-size:19px; font-weight:700; color:#ffffff;">Gate Card Tap Check-Out</h2>
+                        <div style="font-size:12px; color:#cbd5e1; margin-top:2px;">Tap RFID card or type card number to check-out</div>
+                    </div>
+                </div>
+                <button type="button" onclick="window.location.href='gateOut.html'" class="btn btn-sm btn-secondary" style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 14px; border-radius:8px;">
+                    📷 Camera QR Mode
+                </button>
             </div>
 
-            <div id="alert" class="big-alert" style="display: none;"></div>
-
-            <div id="formWrapper">
-              <div class="form">
-                <form id="gateCheckinForm">
-                  <div class="form-group">
-                    <label for="cardno">Tap your card:</label>
-                    <input type="text" class="form-control" id="cardno" name="cardno" required />
-                  </div>
-
-                  <div class="form-group form-submit">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                  </div>
+            <div style="padding:28px 24px; text-align:center;">
+                <form id="tapForm">
+                    <div style="background:#f8fafc; border:2px dashed #cbd5e1; border-radius:14px; padding:24px; max-width:520px; margin:0 auto;">
+                        <label for="cardno" style="font-size:15px; font-weight:700; color:#1e293b; display:block; margin-bottom:12px;">
+                            Tap RFID Card or Enter Card Number:
+                        </label>
+                        <input type="text" id="cardno" name="cardno" placeholder="Scanning card..." required style="width:100%; padding:12px 16px; border-radius:10px; border:1px solid #cbd5e1; font-size:16px; font-weight:700; color:#0f172a; text-align:center; outline:none; background:#fff;" autofocus />
+                        <button type="submit" class="btn btn-danger" style="margin-top:14px; width:100%; font-size:15px; font-weight:700; padding:12px; border-radius:10px; background:#e11d48; border:none; color:#fff;">
+                            🔴 Submit Gate Check-Out
+                        </button>
+                    </div>
                 </form>
-              </div>
+
+                <div id="alert" class="alert" role="alert" style="display:none;"></div>
             </div>
 
-            <audio id="errorSound">
-              <source src="/assets/sound/alert.mp3" type="audio/mp3" />
-            </audio>
-
-          </div>
         </div>
-      </div>
     </div>
-  </body>
+
+    <script src="/style/js/roleCheck.js"></script>
+    <script>
+        checkRoleAccess(['gateAdmin', 'superAdmin']);
+    </script>
+</body>
 </html>

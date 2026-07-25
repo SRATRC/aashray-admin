@@ -177,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const alertType = getAlertTypeFromMessage(data.message);
         setStatus('❌ ' + (data.message || 'Failed to issue plate'), alertType);
         showMessage(data.message || 'Failed to issue plate', alertType);
+        playErrorBuzzer();
 
         addRecentScan({
           time: timeStr,
@@ -190,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // Success
       setStatus(`✅ Plate issued to ${data.issuedto || 'Member'}`, 'success');
       showMessage(data.message || 'Plate issued successfully!', 'success');
+      playSuccessBeep();
 
       addRecentScan({
         time: timeStr,
@@ -202,8 +204,45 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!err?.message) {
         setStatus('❌ Unexpected error occurred', 'danger');
         showMessage('Unexpected error occurred.', 'danger');
+        playErrorBuzzer();
       }
       throw err;
+    }
+  }
+
+  function playSuccessBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) {
+      console.warn('Audio feedback error:', e);
+    }
+  }
+
+  function playErrorBuzzer() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 220;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {
+      console.warn('Audio feedback error:', e);
     }
   }
 

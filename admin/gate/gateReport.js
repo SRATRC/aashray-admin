@@ -324,17 +324,7 @@ function highlightActiveHeader() {
   });
 }
 
-function highlightText(text, search) {
-  if (!search || !text) return text || '';
-  const textStr = String(text);
-  const index = textStr.toLowerCase().indexOf(search.toLowerCase());
-  if (index === -1) return textStr;
-
-  const before = textStr.substring(0, index);
-  const match = textStr.substring(index, index + search.length);
-  const after = textStr.substring(index + search.length);
-  return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 1px 3px; border-radius: 3px; font-weight: 600;">${match}</mark>${after}`;
-}
+// highlightText → provided by global /style/js/utils.js
 
 function displayGateRecords(gateRecords) {
   const gateRecordsContainer = document.getElementById('gateRecords');
@@ -377,33 +367,7 @@ function displayGateRecords(gateRecords) {
   }
 }
 
-function formatDateTime(dateInput, includeRelative = false) {
-  if (!dateInput) return '-';
-  const dateObj = new Date(dateInput);
-  if (isNaN(dateObj)) return '-';
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const year = dateObj.getFullYear();
-  const hours = String(dateObj.getHours()).padStart(2, '0');
-  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-  const absoluteStr = `${day}-${month}-${year} ${hours}:${minutes}`;
-
-  if (!includeRelative) return absoluteStr;
-
-  const now = new Date();
-  const diffMs = now - dateObj;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  let relativeStr = '';
-  if (diffDays > 0)   relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffDays}d ago)</span>`;
-  else if (diffHours > 0) relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffHours}h ago)</span>`;
-  else if (diffMins > 0)  relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(${diffMins}m ago)</span>`;
-  else                    relativeStr = `<span style="font-size: 11px; color: #94a3b8; display: block;">(just now)</span>`;
-
-  return `${absoluteStr}${relativeStr}`;
-}
+// formatDateTime → provided by global /style/js/formatDate.js
 
 function updateUrlParams() {
   const params = new URLSearchParams();
@@ -452,120 +416,28 @@ window.resetFiltersAndSearch = function() {
 };
 
 function renderPagination(pagination) {
-  const pUlTop = document.getElementById('paginationTop');
-  const pUlBottom = document.getElementById('paginationBottom');
-  const pInfoTop = document.getElementById('paginationInfoTop');
-  const pInfoBottom = document.getElementById('paginationInfoBottom');
-  const gotoInputTop = document.getElementById('gotoPageInputTop');
-  const gotoInputBottom = document.getElementById('gotoPageInputBottom');
-  const labelTop = document.getElementById('totalPagesLabelTop');
-  const labelBottom = document.getElementById('totalPagesLabelBottom');
-
-  if (!pagination || pagination.totalPages <= 1) {
-    if (pUlTop) pUlTop.innerHTML = '';
-    if (pUlBottom) pUlBottom.innerHTML = '';
-    
-    const totalCount = pagination ? pagination.totalCount : 0;
-    const infoText = totalCount > 0 ? `Showing 1 to ${totalCount} of ${totalCount} entries` : '';
-    if (pInfoTop) pInfoTop.innerHTML = infoText;
-    if (pInfoBottom) pInfoBottom.innerHTML = infoText;
-
-    if (gotoInputTop) { gotoInputTop.value = 1; gotoInputTop.max = 1; }
-    if (gotoInputBottom) { gotoInputBottom.value = 1; gotoInputBottom.max = 1; }
-    if (labelTop) labelTop.textContent = '1';
-    if (labelBottom) labelBottom.textContent = '1';
-    maxPageValue = 1;
-    return;
-  }
-
+  if (!pagination) return;
   const { page, page_size, totalCount, totalPages } = pagination;
-  maxPageValue = totalPages;
+  maxPageValue = totalPages || 1;
 
-  if (gotoInputTop) { gotoInputTop.value = page; gotoInputTop.max = totalPages; }
-  if (gotoInputBottom) { gotoInputBottom.value = page; gotoInputBottom.max = totalPages; }
-
-  if (labelTop) labelTop.textContent = totalPages;
-  if (labelBottom) labelBottom.textContent = totalPages;
-
-  const startEntry = (page - 1) * page_size + 1;
-  const endEntry = Math.min(page * page_size, totalCount);
-  
-  const infoTextTop = `
-    Showing ${startEntry}-${endEntry} of ${totalCount}
-    <span class="keyboard-helper" style="font-size: 12px; color: #94a3b8; margin-left: 8px; display: inline-flex; align-items: center; gap: 2px; vertical-align: middle;">
-      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 4px; font-family: monospace; font-size: 10px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">←</span>
-      <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 4px; font-family: monospace; font-size: 10px; color: #64748b; box-shadow: 0 1px 0px rgba(0,0,0,0.08); line-height: 1;">→</span>
-    </span>
-  `;
-  const infoTextBottom = `Showing ${startEntry}-${endEntry} of ${totalCount}`;
-  if (pInfoTop) pInfoTop.innerHTML = infoTextTop;
-  if (pInfoBottom) pInfoBottom.innerHTML = infoTextBottom;
-
-  let html = '';
-
-  // First and Previous Buttons
-  if (page === 1) {
-    html += `<li class="disabled"><span>«</span></li>`;
-    html += `<li class="disabled"><span>‹</span></li>`;
-  } else {
-    html += `<li><a href="#" data-page="1" title="First Page">«</a></li>`;
-    html += `<li><a href="#" data-page="${page - 1}" title="Previous Page">‹</a></li>`;
-  }
-
-  // Page Numbers - Compact Google style
-  const pageRange = 1;
-  let startPage = Math.max(1, page - pageRange);
-  let endPage = Math.min(totalPages, page + pageRange);
-
-  if (startPage > 1) {
-    html += `<li><a href="#" data-page="1">1</a></li>`;
-    if (startPage > 2) {
-      html += `<li class="disabled"><span>...</span></li>`;
-    }
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    if (i === page) {
-      html += `<li class="active"><span>${i}</span></li>`;
-    } else {
-      html += `<li><a href="#" data-page="${i}">${i}</a></li>`;
-    }
-  }
-
-  if (endPage < totalPages) {
-    if (endPage < totalPages - 1) {
-      html += `<li class="disabled"><span>...</span></li>`;
-    }
-    html += `<li><a href="#" data-page="${totalPages}">${totalPages}</a></li>`;
-  }
-
-  // Next and Last Buttons
-  if (page === totalPages) {
-    html += `<li class="disabled"><span>›</span></li>`;
-    html += `<li class="disabled"><span>»</span></li>`;
-  } else {
-    html += `<li><a href="#" data-page="${page + 1}" title="Next Page">›</a></li>`;
-    html += `<li><a href="#" data-page="${totalPages}" title="Last Page">»</a></li>`;
-  }
-
-  if (pUlTop) pUlTop.innerHTML = html;
-  if (pUlBottom) pUlBottom.innerHTML = html;
-
-  // Attach click listeners to both pagination bars
-  [pUlTop, pUlBottom].forEach(ul => {
-    if (!ul) return;
-    ul.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetPage = parseInt(link.getAttribute('data-page'), 10);
-        if (targetPage && targetPage !== page) {
-          currentPage = targetPage;
-          fetchGateRecords();
-          updateUrlParams();
+  if (typeof renderUniversalPagination === 'function') {
+    renderUniversalPagination({
+      container: ['paginationTop', 'paginationBottom'],
+      currentPage: page,
+      totalItems: totalCount,
+      pageSize: page_size,
+      onPageChange: (newPage, newSize) => {
+        currentPage = newPage;
+        if (newSize && newSize !== pageSize) {
+          pageSize = newSize;
+          localStorage.setItem('gatePageSize', pageSize);
         }
-      });
+        fetchGateRecords();
+        updateUrlParams();
+      },
+      itemLabel: 'entries'
     });
-  });
+  }
 }
 
 async function exportToExcel() {

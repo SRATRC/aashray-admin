@@ -752,110 +752,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   };
 
-  // --- Render Pagination Links ---
   const renderPagination = (totalItems, totalPages) => {
-    const container = document.getElementById('paginationContainerBottom');
-    if (!container) return;
-
-    if (totalItems <= pageSize) {
-      container.style.display = 'none';
-      return;
-    }
-
-    container.style.display = 'flex';
-
-    // Pagination Info Text
-    const startIndex = (currentPage - 1) * pageSize + 1;
-    const endIndex = Math.min(startIndex + pageSize - 1, totalItems);
-    
-    const infoText = `Showing ${startIndex}-${endIndex} of ${totalItems} entries <span style="display:inline-flex; gap:3px; margin-left:8px;"><kbd style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:1px 4px; border-radius:3px; font-size:10px; font-weight:bold;">&larr;</kbd><kbd style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:1px 4px; border-radius:3px; font-size:10px; font-weight:bold;">&rarr;</kbd> navigate pages</span>`;
-    const infoEl = document.getElementById('paginationInfoBottom');
-    if (infoEl) infoEl.innerHTML = infoText;
-
-    // Set Go To Input and Total Pages Label
-    const gotoInput = document.getElementById('gotoPageInputBottom');
-    const totalLabel = document.getElementById('totalPagesLabelBottom');
-    if (gotoInput) { gotoInput.value = currentPage; gotoInput.max = totalPages; }
-    if (totalLabel) totalLabel.textContent = totalPages;
-
-    // Generate page links (Google-style compact range)
-    const renderLinks = (ulId) => {
-      const ul = document.getElementById(ulId);
-      if (!ul) return;
-      ul.innerHTML = '';
-
-      // First & Prev
-      const firstLi = document.createElement('li');
-      firstLi.className = currentPage === 1 ? 'disabled' : '';
-      firstLi.innerHTML = `<a href="javascript:void(0);" data-page="1" title="First Page">&laquo;</a>`;
-      ul.appendChild(firstLi);
-
-      const prevLi = document.createElement('li');
-      prevLi.className = currentPage === 1 ? 'disabled' : '';
-      prevLi.innerHTML = `<a href="javascript:void(0);" data-page="${currentPage - 1}" title="Previous Page">&lsaquo;</a>`;
-      ul.appendChild(prevLi);
-
-      // Page numbers range
-      let startPage = Math.max(1, currentPage - pageRange);
-      let endPage = Math.min(totalPages, currentPage + pageRange);
-
-      if (startPage > 1) {
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="javascript:void(0);" data-page="1">1</a>`;
-        ul.appendChild(li);
-        if (startPage > 2) {
-          const dotsLi = document.createElement('li');
-          dotsLi.className = 'disabled';
-          dotsLi.innerHTML = `<span>...</span>`;
-          ul.appendChild(dotsLi);
-        }
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        const li = document.createElement('li');
-        li.className = i === currentPage ? 'active' : '';
-        if (i === currentPage) {
-          li.innerHTML = `<span>${i}</span>`;
-        } else {
-          li.innerHTML = `<a href="javascript:void(0);" data-page="${i}">${i}</a>`;
-        }
-        ul.appendChild(li);
-      }
-
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          const dotsLi = document.createElement('li');
-          dotsLi.className = 'disabled';
-          dotsLi.innerHTML = `<span>...</span>`;
-          ul.appendChild(dotsLi);
-        }
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="javascript:void(0);" data-page="${totalPages}">${totalPages}</a>`;
-        ul.appendChild(li);
-      }
-
-      // Next & Last
-      const nextLi = document.createElement('li');
-      nextLi.className = currentPage === totalPages ? 'disabled' : '';
-      nextLi.innerHTML = `<a href="javascript:void(0);" data-page="${currentPage + 1}" title="Next Page">&rsaquo;</a>`;
-      ul.appendChild(nextLi);
-
-      const lastLi = document.createElement('li');
-      lastLi.className = currentPage === totalPages ? 'disabled' : '';
-      lastLi.innerHTML = `<a href="javascript:void(0);" data-page="${totalPages}" title="Last Page">&raquo;</a>`;
-      ul.appendChild(lastLi);
-
-      // Bind click handlers
-      ul.querySelectorAll('li:not(.disabled):not(.active) a').forEach(a => {
-        a.addEventListener('click', (e) => {
-          e.preventDefault();
-          currentPage = parseInt(a.dataset.page);
+    if (typeof renderUniversalPagination === 'function') {
+      renderUniversalPagination({
+        container: 'paginationContainerBottom',
+        currentPage,
+        totalItems,
+        pageSize,
+        onPageChange: (newPage, newSize) => {
+          currentPage = newPage;
+          if (newSize && newSize !== pageSize) {
+            pageSize = newSize;
+            localStorage.setItem('cardDirectoryPageSize', pageSize);
+          }
           filterAndRender();
-        });
+        },
+        itemLabel: 'cards'
       });
-    };
-
-    renderLinks('paginationBottom');
+    }
   };
 
 
@@ -1242,13 +1156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
   }
 
-  // Helper debounce function
-  function debounce(callback, delay) {
-    return (...args) => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => callback(...args), delay);
-    };
-  }
+  // debounce → provided by global /style/js/utils.js
+
 
   // ─── Feature 1: URL State Preservation ───────────────────────────────────
   const syncUrlState = () => {
