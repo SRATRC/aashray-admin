@@ -621,9 +621,9 @@
           `;
         });
 
-        // Save-progress / email-a-copy is a single persistent block (not tied to
-        // one page) so it survives page navigation. Not offered while previewing
-        // or while editing an already-submitted response.
+        // Save-progress and email-a-copy are two independent persistent blocks
+        // (not tied to one page) so they survive page navigation. Not offered
+        // while previewing or while editing an already-submitted response.
         let saveProgressHtml = '';
         const isEditFlow = !!urlParams.get('responseId');
         if (urlParams.get('preview') !== 'true' && !isEditFlow) {
@@ -631,13 +631,23 @@
             <div class="save-progress-section" id="saveProgressSection" style="max-width:680px; margin:0 auto 1.25rem auto; background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.1rem 1.25rem; box-shadow:0 4px 6px rgba(0,0,0,0.03);">
               <label style="display:flex; align-items:center; gap:0.6rem; font-weight:700; color: var(--theme-color); cursor:pointer; margin:0;">
                 <input type="checkbox" id="saveProgressToggle" style="width:auto; margin:0;" />
-                Save my progress &amp; email me a copy of my response
+                Save my progress
               </label>
               <p style="margin:0.35rem 0 0 1.9rem; font-size:0.8rem; color:#6c757d;">If you leave and come back, we'll restore what you've already filled in.</p>
               <div id="draftHintMsg" style="display:none; margin:0.5rem 0 0 1.9rem; font-size:0.8rem; color:#0d6efd;"></div>
               <div id="saveProgressEmailWrap" style="display:none; margin-top:0.75rem;">
                 <input type="email" id="saveProgressEmail" autocomplete="off" placeholder="Enter your email address" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #ced4da; border-radius:6px; font-size:0.95rem; background-color:#fafafa;" />
                 <div id="draftStatusMsg" style="margin-top:0.5rem; font-size:0.82rem; color:#6c757d; display:none;"></div>
+              </div>
+            </div>
+            <div class="email-copy-section" id="emailCopySection" style="max-width:680px; margin:0 auto 1.25rem auto; background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.1rem 1.25rem; box-shadow:0 4px 6px rgba(0,0,0,0.03);">
+              <label style="display:flex; align-items:center; gap:0.6rem; font-weight:700; color: var(--theme-color); cursor:pointer; margin:0;">
+                <input type="checkbox" id="emailCopyToggle" style="width:auto; margin:0;" />
+                Email me a copy of my response
+              </label>
+              <p style="margin:0.35rem 0 0 1.9rem; font-size:0.8rem; color:#6c757d;">We'll send a copy of your response to this email address after you submit.</p>
+              <div id="emailCopyEmailWrap" style="display:none; margin-top:0.75rem;">
+                <input type="email" id="emailCopyEmail" autocomplete="off" placeholder="Enter your email address" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #ced4da; border-radius:6px; font-size:0.95rem; background-color:#fafafa;" />
               </div>
             </div>
           `;
@@ -824,6 +834,11 @@
         if (EMAIL_REGEX.test(this.value.trim())) {
           attemptRestoreDraft(this.value.trim());
         }
+      });
+
+      $(document).on('change', '#emailCopyToggle', function() {
+        const wrap = document.getElementById('emailCopyEmailWrap');
+        wrap.style.display = this.checked ? 'block' : 'none';
       });
 
       function goToPage(pageIdx) {
@@ -1308,6 +1323,10 @@
               if (data.data.email && saveEmailInput && !saveEmailInput.value.trim()) {
                 saveEmailInput.value = data.data.email;
               }
+              const copyEmailInput = document.getElementById('emailCopyEmail');
+              if (data.data.email && copyEmailInput && !copyEmailInput.value.trim()) {
+                copyEmailInput.value = data.data.email;
+              }
 
               // Resolving a registered mobile/card number is itself a real
               // identity check, so it's safe to auto-restore a saved draft —
@@ -1712,12 +1731,13 @@
       });
 
       $(document).on('change input blur', 'input, select, textarea', function() {
-        // The save-progress checkbox/email are meta-controls, not form
-        // answers — they have their own dedicated handlers below and must
-        // never themselves trigger an autosave of (possibly still-empty)
+        // The save-progress/email-copy checkboxes and emails are meta-controls,
+        // not form answers — they have their own dedicated handlers below and
+        // must never themselves trigger an autosave of (possibly still-empty)
         // form fields.
         const elId = $(this).attr('id');
-        if (elId === 'saveProgressEmail' || elId === 'saveProgressToggle') return;
+        if (elId === 'saveProgressEmail' || elId === 'saveProgressToggle' ||
+            elId === 'emailCopyEmail' || elId === 'emailCopyToggle') return;
 
         // Find the parent field group
         const group = $(this).closest('.field-group');
@@ -1888,15 +1908,27 @@
           }
         });
 
-        let emailOptToSend = null;
+        let saveProgressEmailToSend = null;
         const saveProgressToggle = document.getElementById('saveProgressToggle');
         if (saveProgressToggle && saveProgressToggle.checked) {
-          const emailOptValue = document.getElementById('saveProgressEmail').value.trim();
-          if (!EMAIL_REGEX.test(emailOptValue)) {
+          const saveEmailValue = document.getElementById('saveProgressEmail').value.trim();
+          if (!EMAIL_REGEX.test(saveEmailValue)) {
             isValid = false;
-            if (!firstInvalidMsg) firstInvalidMsg = 'Please enter a valid email address to save your progress / receive a copy';
+            if (!firstInvalidMsg) firstInvalidMsg = 'Please enter a valid email address to save your progress';
           } else {
-            emailOptToSend = emailOptValue;
+            saveProgressEmailToSend = saveEmailValue;
+          }
+        }
+
+        let copyEmailToSend = null;
+        const emailCopyToggle = document.getElementById('emailCopyToggle');
+        if (emailCopyToggle && emailCopyToggle.checked) {
+          const copyEmailValue = document.getElementById('emailCopyEmail').value.trim();
+          if (!EMAIL_REGEX.test(copyEmailValue)) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = 'Please enter a valid email address to receive a copy of your response';
+          } else {
+            copyEmailToSend = copyEmailValue;
           }
         }
 
@@ -1921,7 +1953,7 @@
         // for this session, even if the checkbox got unchecked right before
         // submitting — otherwise an orphaned draft is never cleaned up and
         // resurfaces on a later visit.
-        const cleanupEmail = emailOptToSend || sessionDraftEmail;
+        const cleanupEmail = saveProgressEmailToSend || sessionDraftEmail;
         if (cleanupEmail) {
           body.email = cleanupEmail;
         }
@@ -1992,14 +2024,14 @@
             sessionDraftEmail = null;
             lastRestoredDraftEmail = null;
             const newRespId = data.data?.id || responseId;
-            if (emailOptToSend && newRespId) {
+            if (copyEmailToSend && newRespId) {
               fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${newRespId}/email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailOptToSend })
+                body: JSON.stringify({ email: copyEmailToSend })
               }).catch(() => {});
             }
-            showSuccessScreen(newRespId, emailOptToSend);
+            showSuccessScreen(newRespId, copyEmailToSend);
           } else {
             showFormAlertOnPage(currentPageIdx, data.message || 'Failed to submit response', 'danger');
             if (submitBtn) {
