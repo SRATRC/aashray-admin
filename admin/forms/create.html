@@ -375,6 +375,15 @@
                 <button class="btn btn-info" onclick="previewForm()" type="button"><i class="fas fa-eye"></i> Preview Form</button>
               </div>
 
+              <!-- Draft Recovery Banner -->
+              <div id="draftRecoveryBanner" style="display:none; background:#e2f0d9; border:1px solid #a9d08e; border-radius:6px; padding:0.75rem 1rem; margin-bottom:1rem; justify-content:space-between; align-items:center; font-size:0.88rem; color:#385723;">
+                <span><i class="fas fa-history"></i> You have an unsaved draft from <strong id="draftTime"></strong>.</span>
+                <div style="display:flex; gap:0.5rem;">
+                  <button type="button" onclick="restoreDraft()" class="btn btn-success" style="padding:0.25rem 0.75rem; font-size:0.78rem; height:auto; background:#28a745; border:none; color:#fff; border-radius:4px; cursor:pointer;">Restore Draft</button>
+                  <button type="button" onclick="discardDraft()" class="btn btn-secondary" style="padding:0.25rem 0.75rem; font-size:0.78rem; height:auto; background:#6c757d; border:none; color:#fff; border-radius:4px; cursor:pointer;">Discard</button>
+                </div>
+              </div>
+
               <div id="alert"></div>
 
               <!-- Form Settings -->
@@ -509,6 +518,8 @@
       const FIELD_TYPES = [
         { value: 'text', label: 'Short Answer' },
         { value: 'textarea', label: 'Paragraph' },
+        { value: 'email', label: 'Email' },
+        { value: 'phone', label: 'Phone Number (10-digit)' },
         { value: 'number', label: 'Number' },
         { value: 'date', label: 'Date' },
         { value: 'time', label: 'Time' },
@@ -588,8 +599,8 @@
         const fieldOptions = fieldData?.options || [];
         const fieldLogic = fieldData?.logic || (fieldData?.conditions && fieldData.conditions[0] ? { dependsOn: fieldData.conditions[0].fieldId, operator: fieldData.conditions[0].operator, value: fieldData.conditions[0].value } : null);
         const fieldDesc = fieldData?.description || '';
-        const fieldRows = fieldData?.rows || [];
-        const fieldCols = fieldData?.columns || [];
+        const fieldRows = fieldData?.rows && fieldData.rows.length > 0 ? fieldData.rows : ['Row 1', 'Row 2'];
+        const fieldCols = fieldData?.columns && fieldData.columns.length > 0 ? fieldData.columns : ['Column 1', 'Column 2'];
 
         const dateConstraints = fieldData?.dateConstraints || {};
         const minType = dateConstraints.minType || '';
@@ -1036,6 +1047,7 @@
               select.value = currentValue;
             }
           });
+          saveBuilderDraft();
         } catch (e) {
           console.error("Error updating logic dropdowns:", e);
         }
@@ -1514,6 +1526,8 @@
           const data = await res.json();
 
           if (data.success) {
+            isFormSaved = true;
+            localStorage.removeItem('form_builder_draft');
             showSuccess(editId ? 'Form updated successfully!' : 'Form created successfully!');
             setTimeout(() => {
               window.location.href = 'index.html';
@@ -1541,41 +1555,7 @@
 
           const form = data.data;
           document.getElementById('pageTitle').textContent = '✏️ Edit Form';
-          document.getElementById('formTitle').value = form.title || '';
-          document.getElementById('formDescription').value = form.description || '';
-          document.getElementById('formDept').value = form.dept_name || '';
-
-          let accessVal = 'public';
-          if (!form.isPublic) {
-            accessVal = form.authType === 'mobno' ? 'mobno' : 'cardno';
-          }
-          document.getElementById('formType').value = accessVal;
-
-          document.getElementById('limitOneResponse').checked = form.limitOneResponse || false;
-          document.getElementById('allowEdit').checked = form.allowEdit || false;
-          document.getElementById('showProgressBar').checked = form.showProgressBar !== undefined ? form.showProgressBar : true;
-          document.getElementById('showSubmitAnother').checked = form.showSubmitAnother !== undefined ? form.showSubmitAnother : true;
-          document.getElementById('confirmationMessage').value = form.confirmationMessage || 'Thank you, your response has been recorded.';
-          const themeColorVal = form.themeColor || '#204060';
-          document.getElementById('themeColor').value = themeColorVal;
-          $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
-          $(`.theme-swatch[data-color="${themeColorVal}"]`).addClass('active').css('box-shadow', `0 0 0 2px ${themeColorVal}`);
-          
-          document.getElementById('expiresAt').value = form.expiresAt ? new Date(form.expiresAt).toISOString().substring(0, 16) : '';
-          document.getElementById('maxResponses').value = form.maxResponses || '';
-          document.getElementById('closeMessage').value = form.closeMessage || '';
-          
-          document.getElementById('formSlug').value = form.slug || '';
-          document.getElementById('requireOtp').checked = form.requireOtp || false;
-          const accessValNow = document.getElementById('formType').value;
-          document.getElementById('requireOtpRow').style.display = accessValNow === 'mobno' ? 'flex' : 'none';
-
-          // Load fields
-          if (form.fields && Array.isArray(form.fields)) {
-            // Remove initial default empty field
-            document.getElementById('fieldsContainer').innerHTML = '';
-            form.fields.forEach(f => addField(f));
-          }
+          populateFormBuilder(form);
         } catch (err) {
           showError('Error loading form: ' + err.message);
         }
@@ -1648,6 +1628,139 @@
         window.open('view.html?preview=true', '_blank');
       }
 
+      // Keep track of draft state and page unload confirmation
+      let isFormSaved = false;
+
+      window.addEventListener('beforeunload', function (e) {
+        if (isFormSaved) return;
+        const title = document.getElementById('formTitle').value.trim();
+        const fields = collectFields();
+        if (title || fields.length > 0) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
+
+      function saveBuilderDraft() {
+        if (editId) return; // Don't autosave draft when editing an existing database form
+        const title = document.getElementById('formTitle').value.trim();
+        const description = document.getElementById('formDescription').value.trim();
+        const dept_name = document.getElementById('formDept').value.trim();
+        
+        const accessVal = document.getElementById('formType').value;
+        const isPublic = accessVal === 'public';
+        const authType = accessVal === 'public' ? 'cardno' : accessVal;
+
+        const limitOneResponse = document.getElementById('limitOneResponse').checked;
+        const allowEdit = document.getElementById('allowEdit').checked;
+        const showProgressBar = document.getElementById('showProgressBar').checked;
+        const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
+        const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        
+        let section1Action = 'next';
+        const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+        if (firstSectionCard) {
+          section1Action = firstSectionCard.value;
+        }
+
+        const themeColor = document.getElementById('themeColor').value;
+        const expiresAt = document.getElementById('expiresAt').value || null;
+        const maxResponses = document.getElementById('maxResponses').value || null;
+        const closeMessage = document.getElementById('closeMessage').value.trim() || null;
+        const slug = document.getElementById('formSlug').value.trim();
+        const fields = collectFields();
+        const requireOtp = document.getElementById('requireOtp').checked;
+
+        const draft = {
+          title, description, dept_name, isPublic, authType, accessVal,
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+          expiresAt, closeMessage, maxResponses, requireOtp, fields,
+          timestamp: Date.now()
+        };
+
+        if (title || description || fields.length > 0) {
+          localStorage.setItem('form_builder_draft', JSON.stringify(draft));
+        } else {
+          localStorage.removeItem('form_builder_draft');
+        }
+      }
+
+      function checkAndShowDraftRecovery() {
+        if (editId) return;
+        const rawDraft = localStorage.getItem('form_builder_draft');
+        if (!rawDraft) {
+          addField();
+          return;
+        }
+
+        try {
+          const draft = JSON.parse(rawDraft);
+          const timeString = new Date(draft.timestamp).toLocaleString();
+          document.getElementById('draftTime').textContent = timeString;
+          document.getElementById('draftRecoveryBanner').style.display = 'flex';
+        } catch (e) {
+          localStorage.removeItem('form_builder_draft');
+          addField();
+        }
+      }
+
+      function restoreDraft() {
+        const rawDraft = localStorage.getItem('form_builder_draft');
+        if (!rawDraft) return;
+
+        try {
+          const draft = JSON.parse(rawDraft);
+          populateFormBuilder(draft);
+          document.getElementById('draftRecoveryBanner').style.display = 'none';
+        } catch (e) {
+          console.error("Error restoring draft:", e);
+        }
+      }
+
+      function discardDraft() {
+        localStorage.removeItem('form_builder_draft');
+        document.getElementById('draftRecoveryBanner').style.display = 'none';
+        document.getElementById('fieldsContainer').innerHTML = '';
+        addField();
+      }
+
+      function populateFormBuilder(form) {
+        document.getElementById('formTitle').value = form.title || '';
+        document.getElementById('formDescription').value = form.description || '';
+        document.getElementById('formDept').value = form.dept_name || '';
+
+        let accessVal = 'public';
+        if (form.isPublic === false || form.accessVal !== 'public') {
+          accessVal = form.accessVal || (form.authType === 'mobno' ? 'mobno' : 'cardno');
+        }
+        document.getElementById('formType').value = accessVal;
+
+        document.getElementById('limitOneResponse').checked = form.limitOneResponse || false;
+        document.getElementById('allowEdit').checked = form.allowEdit || false;
+        document.getElementById('showProgressBar').checked = form.showProgressBar !== undefined ? form.showProgressBar : true;
+        document.getElementById('showSubmitAnother').checked = form.showSubmitAnother !== undefined ? form.showSubmitAnother : true;
+        document.getElementById('confirmationMessage').value = form.confirmationMessage || 'Thank you, your response has been recorded.';
+        const themeColorVal = form.themeColor || '#204060';
+        document.getElementById('themeColor').value = themeColorVal;
+        $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
+        $(`.theme-swatch[data-color="${themeColorVal}"]`).addClass('active').css('box-shadow', `0 0 0 2px ${themeColorVal}`);
+        
+        document.getElementById('expiresAt').value = form.expiresAt ? (form.expiresAt.includes('T') ? form.expiresAt : new Date(form.expiresAt).toISOString().substring(0, 16)) : '';
+        document.getElementById('maxResponses').value = form.maxResponses || '';
+        document.getElementById('closeMessage').value = form.closeMessage || '';
+        
+        document.getElementById('formSlug').value = form.slug || '';
+        document.getElementById('requireOtp').checked = form.requireOtp || false;
+        const accessValNow = document.getElementById('formType').value;
+        document.getElementById('requireOtpRow').style.display = accessValNow === 'mobno' ? 'flex' : 'none';
+
+        // Load fields
+        if (form.fields && Array.isArray(form.fields)) {
+          document.getElementById('fieldsContainer').innerHTML = '';
+          form.fields.forEach(f => addField(f));
+        }
+      }
+
       // Listen for formType changes to toggle OTP option
       $(document).on('change', '#formType', function() {
         const val = this.value;
@@ -1660,12 +1773,16 @@
         }
       });
 
+      // Bind input changes to save draft
+      $(document).on('change input blur', 'input, select, textarea', function() {
+        saveBuilderDraft();
+      });
+
       // Initialize
       if (editId) {
         loadForm(editId);
       } else {
-        // Start with 1 empty field
-        addField();
+        checkAndShowDraftRecovery();
       }
     </script>
   </body>

@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,15 +18,18 @@
       :root {
         --theme-color: #204060;
       }
+
       body {
         background-color: #f0f2f5;
         padding: 2rem 1rem;
         font-family: 'Inter', -apple-system, sans-serif;
       }
+
       .form-container {
         max-width: 680px;
         margin: 0 auto;
       }
+
       .form-header {
         background: #fff;
         border-top: 10px solid var(--theme-color);
@@ -34,6 +38,7 @@
         margin-bottom: 1.25rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.03);
       }
+
       .form-header h1 {
         margin: 0 0 0.75rem 0;
         color: var(--theme-color);
@@ -41,6 +46,7 @@
         font-weight: 800;
         word-wrap: break-word;
       }
+
       .form-header p {
         margin: 0;
         color: #495057;
@@ -48,6 +54,7 @@
         line-height: 1.5;
         word-wrap: break-word;
       }
+
       .form-body {
         background: #fff;
         border-radius: 8px;
@@ -55,9 +62,11 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.03);
         margin-bottom: 1.25rem;
       }
+
       .field-group {
         margin-bottom: 2rem;
       }
+
       .field-group label {
         display: block;
         font-weight: 700;
@@ -65,6 +74,7 @@
         margin-bottom: 0.5rem;
         font-size: 0.95rem;
       }
+
       .field-group .required {
         color: #dc3545;
         margin-left: 0.2rem;
@@ -86,6 +96,7 @@
         transition: border-color 0.2s, background-color 0.2s;
         box-sizing: border-box;
       }
+
       input[type="text"]:focus,
       input[type="number"]:focus,
       input[type="date"]:focus,
@@ -97,6 +108,7 @@
         outline: none;
         box-shadow: 0 0 0 3px rgba(76, 134, 176, 0.1);
       }
+
       textarea {
         resize: vertical;
       }
@@ -108,6 +120,7 @@
         gap: 0.6rem;
         margin-bottom: 0.6rem;
       }
+
       .option-item input[type="radio"],
       .option-item input[type="checkbox"] {
         width: 18px;
@@ -115,6 +128,7 @@
         cursor: pointer;
         accent-color: var(--theme-color);
       }
+
       .option-item label {
         margin: 0;
         font-weight: 400;
@@ -130,13 +144,16 @@
         font-size: 2.2rem;
         cursor: pointer;
       }
+
       .star-rating .star {
         color: #dee2e6;
         transition: color 0.15s, transform 0.1s;
       }
+
       .star-rating .star:hover {
         transform: scale(1.15);
       }
+
       .star-rating .star.selected,
       .star-rating .star.hovered {
         color: #ffc107;
@@ -149,6 +166,7 @@
         margin-top: 0.75rem;
         font-size: 0.9rem;
       }
+
       .grid-table th {
         background: #f8f9fa;
         color: var(--theme-color);
@@ -157,17 +175,20 @@
         text-align: center;
         border: 1px solid #dee2e6;
       }
+
       .grid-table td {
         padding: 0.75rem;
         text-align: center;
         border: 1px solid #dee2e6;
       }
+
       .grid-table td:first-child {
         text-align: left;
         font-weight: 600;
         color: #495057;
         background: #fbfbfb;
       }
+
       .grid-table input[type="radio"],
       .grid-table input[type="checkbox"] {
         width: 18px;
@@ -184,16 +205,19 @@
         text-align: center;
         box-shadow: 0 4px 6px rgba(0,0,0,0.03);
       }
+
       .success-icon {
         font-size: 4rem;
         margin-bottom: 1.5rem;
       }
+
       .success-screen h2 {
         color: var(--theme-color);
         margin-top: 0;
         margin-bottom: 0.75rem;
         font-weight: 800;
       }
+
       .success-screen p {
         color: #6c757d;
         margin: 0;
@@ -209,8 +233,18 @@
         display: none;
         font-weight: 500;
       }
-      .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-      .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
 
       .submit-btn {
         background-color: var(--theme-color);
@@ -228,13 +262,16 @@
         gap: 0.4rem;
         box-shadow: 0 4px 6px rgba(32, 64, 96, 0.15);
       }
+
       .submit-btn:hover {
         opacity: 0.9;
       }
+
       .submit-btn:disabled {
         background-color: #6c757d;
         cursor: not-allowed;
       }
+
       .auth-section {
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -242,10 +279,13 @@
         border-radius: 8px;
         margin-bottom: 2rem;
       }
-      .loading-state, .error-state {
+
+    .loading-state,
+    .error-state {
         text-align: center;
         padding: 4rem 2rem;
       }
+
       .spinner {
         border: 4px solid rgba(0, 0, 0, 0.1);
         width: 36px;
@@ -255,30 +295,50 @@
         animation: spin 1s linear infinite;
         margin: 0 auto 1.5rem auto;
       }
+
       @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
       }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
       .error-state i {
         font-size: 3rem;
         color: #dc3545;
         margin-bottom: 1rem;
       }
+
       .error-state h2 {
         margin-bottom: 0.5rem;
       }
 
       @media (max-width: 600px) {
-        body { padding: 1rem 0.5rem; }
-        .form-header { padding: 1.5rem; }
-        .form-body { padding: 1.5rem; }
-        .form-header h1 { font-size: 1.5rem; }
+      body {
+        padding: 1rem 0.5rem;
+      }
+
+      .form-header {
+        padding: 1.5rem;
+      }
+
+      .form-body {
+        padding: 1.5rem;
+      }
+
+      .form-header h1 {
+        font-size: 1.5rem;
+      }
       }
     </style>
   </head>
 
   <body>
-    <div id="previewBanner" style="display:none; position:fixed; top:0; left:0; right:0; background:#ffc107; color:#212529; text-align:center; padding:0.6rem; font-weight:700; font-size:0.95rem; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.15);">
+  <div id="previewBanner"
+    style="display:none; position:fixed; top:0; left:0; right:0; background:#ffc107; color:#212529; text-align:center; padding:0.6rem; font-weight:700; font-size:0.95rem; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.15);">
       <i class="fas fa-eye"></i> Form Preview Mode — Responses will not be submitted
     </div>
 
@@ -1065,6 +1125,28 @@
           }
         }
 
+      // 3. Email Type Check
+      if (field.type === 'email' && answerVal) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(answerVal)) {
+          const msg = `Must be a valid email address`;
+          showInlineError(field.id, msg);
+          inputs.css('border-color', '#dc3545');
+          return { isValid: false, errorMsg: msg };
+        }
+      }
+
+      // 4. Phone Type Check
+      if (field.type === 'phone' && answerVal) {
+        const cleanNum = answerVal.replace(/\D/g, '');
+        if (cleanNum.length !== 10) {
+          const msg = `Must be a 10-digit phone number`;
+          showInlineError(field.id, msg);
+          inputs.css('border-color', '#dc3545');
+          return { isValid: false, errorMsg: msg };
+        }
+      }
+
         // Date constraints check
         if (field.type === 'date' && answerVal) {
           const dateConstraints = field.dateConstraints;
@@ -1312,6 +1394,10 @@
           inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" data-word-limit="20" maxlength="200" ${requiredAttr} />`;
         } else if (field.type === 'textarea') {
           inputHtml = `<textarea id="${inputId}" rows="4" placeholder="Your answer" ${requiredAttr}></textarea>`;
+      } else if (field.type === 'email') {
+        inputHtml = `<input type="email" id="${inputId}" placeholder="Your email address" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+      } else if (field.type === 'phone') {
+        inputHtml = `<input type="tel" id="${inputId}" placeholder="10-digit mobile number" maxlength="10" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
         } else if (field.type === 'number') {
           inputHtml = `<input type="number" id="${inputId}" placeholder="Your answer" ${requiredAttr} />`;
         } else if (field.type === 'date') {
@@ -1516,15 +1602,32 @@
 
           if (hasLogic) {
             const group = $(`.field-group[data-field-id="${field.id}"]`);
+          const pageContainer = group.closest('.form-page');
+          const pageIdx = pageContainer.length > 0 ? parseInt(pageContainer.attr('id').split('_')[1]) : 0;
+          const isOnActivePage = (pageIdx === window.currentPageIdx);
+
             if (show) {
-              if (!group.is(':visible')) {
+            group.removeClass('conditional-hidden');
+            if (isOnActivePage) {
+              if (group.css('display') === 'none') {
                 group.slideDown(250);
               }
             } else {
-              if (group.is(':visible')) {
+              group.css('display', '');
+            }
+          } else {
+            group.addClass('conditional-hidden');
+            if (isOnActivePage) {
+              if (group.css('display') !== 'none') {
                 group.slideUp(250, function() {
                   clearFieldValue(field);
                 });
+              } else {
+                clearFieldValue(field);
+              }
+            } else {
+              group.css('display', 'none');
+              clearFieldValue(field);
               }
             }
           }
@@ -1548,14 +1651,14 @@
       function clearFieldValue(field) {
         const inputId = `input_${field.id}`;
         if (field.type === 'checkbox' || field.type === 'radio') {
-          $(`input[name="${field.id}"]`).prop('checked', false).trigger('change');
+        $(`input[name="${field.id}"]`).prop('checked', false);
         } else if (field.type === 'rating') {
-          $(`#${inputId}`).val('').trigger('change');
+        $(`#${inputId}`).val('');
           $(`.star-rating[data-id="${field.id}"] .star`).removeClass('selected');
         } else if (field.type === 'grid_radio' || field.type === 'grid_checkbox') {
           $(`input[name^="response_${field.id}_"]`).prop('checked', false);
         } else {
-          $(`#${inputId}`).val('').trigger('change');
+        $(`#${inputId}`).val('');
         }
       }
 
@@ -1716,8 +1819,8 @@
         formData.fields.forEach(field => {
           if (field.type === 'section') return;
 
-          const isVisible = $(`.field-group[data-field-id="${field.id}"]`).is(':visible');
-          if (!isVisible) return; // Do not submit hidden fields
+        const group = $(`.field-group[data-field-id="${field.id}"]`);
+        if (group.hasClass('conditional-hidden')) return; // Do not submit hidden fields
 
           if (field.type === 'checkbox') {
             const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
@@ -2011,6 +2114,8 @@
         populateAnswers(answers);
       }
 
+
+
       function showErrorState(message) {
         const container = document.getElementById('formContainer');
         container.innerHTML = `
@@ -2038,4 +2143,5 @@
       loadForm();
     </script>
   </body>
+
 </html>
