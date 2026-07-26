@@ -412,8 +412,8 @@
           return;
         }
 
-        // Build header: # | Name | Centre | Res Status | Mob No | Card No | each field label | Submitted At
-        let headerHtml = '<tr><th>#</th><th>Name</th><th>Centre</th><th>Res Status</th><th>Mob No</th><th>Card No</th>';
+        // Build header: # | Name | Centre | Res Status | Mob No | Card No | Email | each field label | Submitted At
+        let headerHtml = '<tr><th>#</th><th>Name</th><th>Centre</th><th>Res Status</th><th>Mob No</th><th>Card No</th><th>Email</th>';
         fields.forEach(f => {
           headerHtml += `<th>${escapeHtml(f.label)}</th>`;
         });
@@ -428,6 +428,7 @@
           let resStatus = '';
           let mobno = '';
           let cardno = '';
+          let email = resp.email ? escapeHtml(resp.email) : '';
 
           if (resp.respondent) {
             name = resp.respondent.issuedto ? escapeHtml(resp.respondent.issuedto) : '';
@@ -435,11 +436,12 @@
             resStatus = resp.respondent.res_status ? escapeHtml(resp.respondent.res_status) : '';
             mobno = resp.respondent.mobno ? escapeHtml(String(resp.respondent.mobno)) : '';
             cardno = resp.respondent.cardno ? escapeHtml(resp.respondent.cardno) : (resp.cardno ? escapeHtml(resp.cardno) : '');
+            if (!email && resp.respondent.email) email = escapeHtml(resp.respondent.email);
           } else if (resp.cardno) {
             cardno = escapeHtml(resp.cardno);
           }
 
-          rowsHtml += `<tr><td>${idx + 1}</td><td>${name}</td><td>${center}</td><td>${resStatus}</td><td>${mobno}</td><td>${cardno}</td>`;
+          rowsHtml += `<tr><td>${idx + 1}</td><td>${name}</td><td>${center}</td><td>${resStatus}</td><td>${mobno}</td><td>${cardno}</td><td>${email}</td>`;
 
           fields.forEach(f => {
             let answer = resp.responses ? resp.responses[f.id] : '';
@@ -735,6 +737,7 @@
           let resStatus = '';
           let mobno = '';
           let cardno = '';
+          let email = resp.email || '';
 
           if (resp.respondent) {
             name = resp.respondent.issuedto || '';
@@ -742,6 +745,7 @@
             resStatus = resp.respondent.res_status || '';
             mobno = resp.respondent.mobno || '';
             cardno = resp.respondent.cardno || resp.cardno || '';
+            if (!email) email = resp.respondent.email || '';
           } else if (resp.cardno) {
             cardno = resp.cardno;
           }
@@ -751,6 +755,7 @@
           row['Res Status'] = resStatus;
           row['Mob No'] = mobno;
           row['Card No'] = cardno;
+          row['Email'] = email;
 
           cachedForm.fields.forEach(f => {
             let answer = resp.responses ? resp.responses[f.id] : '';

@@ -290,6 +290,18 @@
     </div>
 
     <script>
+      // If the browser restores this page from its back-forward cache (e.g.
+      // the user hits Back), the entire DOM is served frozen exactly as it
+      // was left — none of this script re-runs, so any auth/draft state
+      // that was cleared or changed since would appear stale or reversed.
+      // Force a real reload whenever that happens so the page always
+      // reflects current state.
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+
       const urlParams = new URLSearchParams(window.location.search);
       const formId = urlParams.get('id');
 
@@ -346,6 +358,20 @@
           const responseId = urlParams.get('responseId');
           if (responseId && formData.allowEdit) {
             await loadAndPopulateResponse(responseId);
+          } else if (!responseId) {
+            // We don't know WHO is opening this link (it could be
+            // shared/forwarded, or the device could be shared), so we never
+            // silently restore or prefill an email. We only show a generic,
+            // non-identifying hint; the visitor must actively prove who they
+            // are (type their email, or — on authenticated forms — resolve
+            // their mobile/card number) before anything is restored.
+            if (localStorage.getItem(`form_has_draft_${formId}`) === 'true') {
+              const hintEl = document.getElementById('draftHintMsg');
+              if (hintEl) {
+                hintEl.textContent = 'Have a saved draft on this form? Check "Save my progress" above and enter your email to resume it.';
+                hintEl.style.display = 'block';
+              }
+            }
           }
         } catch (err) {
           showErrorState('Unable to load form. Please try again later.');
@@ -471,13 +497,13 @@
                 <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
                   <label for="input_mobno" style="font-weight: 700; color: var(--theme-color);">Mobile Number *</label>
                   <div style="display:flex; gap:0.5rem; align-items:stretch;">
-                    <input type="tel" id="input_mobno" placeholder="Enter your registered mobile number" required style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                    <input type="tel" id="input_mobno" autocomplete="off" placeholder="Enter your registered mobile number" required style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
                     <button type="button" id="sendOtpBtn" class="submit-btn" style="width: auto; padding: 0 1rem; font-size: 0.85rem; display:none; background-color: var(--theme-color);">Send OTP</button>
                   </div>
                   <div id="otpInputSection" style="display:none; margin-top: 1rem; border-top: 1px dashed #ced4da; padding-top: 1rem;">
                     <label for="input_otp" style="font-weight: 700; color: var(--theme-color);">Verification OTP *</label>
                     <div style="display:flex; gap:0.5rem; align-items:stretch;">
-                      <input type="text" id="input_otp" placeholder="Enter 6-digit OTP" maxLength="6" style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                      <input type="text" id="input_otp" autocomplete="off" placeholder="Enter 6-digit OTP" maxLength="6" style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
                       <button type="button" id="verifyOtpBtn" class="submit-btn" style="width: auto; padding: 0 1rem; font-size: 0.85rem; background-color: #28a745;">Verify</button>
                     </div>
                   </div>
@@ -487,7 +513,7 @@
               fieldsHtml += `
                 <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
                   <label for="${isMobAuth ? 'input_mobno' : 'input_cardno'}" style="font-weight: 700; color: var(--theme-color);">${isMobAuth ? 'Mobile Number *' : 'Card Number *'}</label>
-                  <input type="${isMobAuth ? 'tel' : 'text'}" id="${isMobAuth ? 'input_mobno' : 'input_cardno'}" placeholder="${isMobAuth ? 'Enter your registered mobile number' : 'Enter your card number'}" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                  <input type="${isMobAuth ? 'tel' : 'text'}" id="${isMobAuth ? 'input_mobno' : 'input_cardno'}" autocomplete="off" placeholder="${isMobAuth ? 'Enter your registered mobile number' : 'Enter your card number'}" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
                 </div>
               `;
             }
@@ -524,7 +550,7 @@
               </div>
               <div class="form-body">
                 <div id="formAlert_${pi}"></div>
-                <form class="page-form" onsubmit="submitForm(event)">
+                <form class="page-form" autocomplete="off" onsubmit="submitForm(event)">
                   ${fieldsHtml}
                   <div style="margin-top:2rem; display:flex; justify-content:space-between; align-items:center;">
                     <div>${navButtonsHtml}</div>
@@ -535,7 +561,30 @@
           `;
         });
 
+        // Save-progress / email-a-copy is a single persistent block (not tied to
+        // one page) so it survives page navigation. Not offered while previewing
+        // or while editing an already-submitted response.
+        let saveProgressHtml = '';
+        const isEditFlow = !!urlParams.get('responseId');
+        if (urlParams.get('preview') !== 'true' && !isEditFlow) {
+          saveProgressHtml = `
+            <div class="save-progress-section" id="saveProgressSection" style="max-width:680px; margin:0 auto 1.25rem auto; background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.1rem 1.25rem; box-shadow:0 4px 6px rgba(0,0,0,0.03);">
+              <label style="display:flex; align-items:center; gap:0.6rem; font-weight:700; color: var(--theme-color); cursor:pointer; margin:0;">
+                <input type="checkbox" id="saveProgressToggle" style="width:auto; margin:0;" />
+                Save my progress &amp; email me a copy of my response
+              </label>
+              <p style="margin:0.35rem 0 0 1.9rem; font-size:0.8rem; color:#6c757d;">If you leave and come back, we'll restore what you've already filled in.</p>
+              <div id="draftHintMsg" style="display:none; margin:0.5rem 0 0 1.9rem; font-size:0.8rem; color:#0d6efd;"></div>
+              <div id="saveProgressEmailWrap" style="display:none; margin-top:0.75rem;">
+                <input type="email" id="saveProgressEmail" autocomplete="off" placeholder="Enter your email address" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #ced4da; border-radius:6px; font-size:0.95rem; background-color:#fafafa;" />
+                <div id="draftStatusMsg" style="margin-top:0.5rem; font-size:0.82rem; color:#6c757d; display:none;"></div>
+              </div>
+            </div>
+          `;
+        }
+
         container.innerHTML = `
+          ${saveProgressHtml}
           <div id="pagesContainer">${pagesHtml}</div>
           ${progressHtml}
         `;
@@ -546,6 +595,176 @@
         initStarRatings();
         evaluateLogic();
       }
+
+      const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      let lastRestoredDraftEmail = null;
+      let draftSaveTimeout = null;
+      // The email a server-side draft actually exists under for this session,
+      // independent of whatever the checkbox happens to be set to right now —
+      // so if the user unchecks "save my progress" before hitting Submit, we
+      // still know which draft to tell the server to delete.
+      let sessionDraftEmail = null;
+
+      function showDraftStatusMsg(msg) {
+        const el = document.getElementById('draftStatusMsg');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'block';
+      }
+
+      // Populates form fields from a plain { fieldId: answer } map. Shared by
+      // the "edit an existing submitted response" flow and the "restore a
+      // saved in-progress draft" flow.
+      function populateAnswers(answers) {
+        if (!answers || !formData) return;
+
+        formData.fields.forEach(field => {
+          const ans = answers[field.id];
+          if (ans === undefined || ans === null) return;
+
+          const inputId = `input_${field.id}`;
+
+          if (field.type === 'checkbox') {
+            const vals = Array.isArray(ans) ? ans : [ans];
+            vals.forEach(v => {
+              $(`input[name="${field.id}"][value="${v}"]`).prop('checked', true);
+            });
+          } else if (field.type === 'radio') {
+            $(`input[name="${field.id}"][value="${ans}"]`).prop('checked', true);
+          } else if (field.type === 'rating') {
+            const val = parseInt(ans);
+            const parent = $(`.star-rating[data-id="${field.id}"]`);
+            parent.find('.input-rating-val').val(val);
+            parent.find('.star').each(function() {
+              if ($(this).data('val') <= val) {
+                $(this).addClass('selected');
+              }
+            });
+          } else if (field.type === 'grid_radio') {
+            const gridAns = ans || {};
+            field.rows.forEach((r, ri) => {
+              const rowVal = gridAns[r];
+              if (rowVal) {
+                $(`input[name="response_${field.id}_${ri}"][value="${rowVal}"]`).prop('checked', true);
+              }
+            });
+          } else if (field.type === 'grid_checkbox') {
+            const gridAns = ans || {};
+            field.rows.forEach((r, ri) => {
+              const rowVals = gridAns[r] || [];
+              rowVals.forEach(v => {
+                $(`input[name="response_${field.id}_${ri}"][value="${v}"]`).prop('checked', true);
+              });
+            });
+          } else {
+            const el = document.getElementById(inputId);
+            if (el) el.value = ans;
+          }
+        });
+
+        evaluateLogic();
+      }
+
+      // Fetches a previously saved in-progress draft (opt-in, keyed by email)
+      // and restores it into the form if one exists.
+      async function attemptRestoreDraft(email) {
+        if (!email || !formData || urlParams.get('preview') === 'true' || urlParams.get('responseId')) return;
+        const normalized = email.trim().toLowerCase();
+        if (!EMAIL_REGEX.test(normalized) || normalized === lastRestoredDraftEmail) return;
+        lastRestoredDraftEmail = normalized;
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/draft?email=${encodeURIComponent(normalized)}`);
+          const data = await res.json();
+          const hasRealAnswers = data.data && data.data.responses &&
+            Object.values(data.data.responses).some(v => Array.isArray(v) ? v.length > 0 : (v !== '' && v !== null && v !== undefined));
+          if (data.success && hasRealAnswers) {
+            sessionDraftEmail = normalized;
+            populateAnswers(data.data.responses);
+
+            // Proving identity via email is itself the confirmation needed to
+            // also restore the mobile/card number field — so it doesn't have
+            // to be retyped separately. Re-run the same resolve it would get
+            // from typing it, to show the "Registered to..." confirmation.
+            const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+            if (authInput && !authInput.value.trim()) {
+              const restoredNumber = authInput.id === 'input_mobno' ? data.data.mobno : data.data.cardno;
+              if (restoredNumber) {
+                authInput.value = restoredNumber;
+                checkAuthInputValidation(authInput);
+              }
+            }
+
+            const when = data.data.updatedAt ? new Date(data.data.updatedAt).toLocaleString() : '';
+            const toggle = document.getElementById('saveProgressToggle');
+            const wrap = document.getElementById('saveProgressEmailWrap');
+            if (toggle) toggle.checked = true;
+            if (wrap) wrap.style.display = 'block';
+            const hintEl = document.getElementById('draftHintMsg');
+            if (hintEl) hintEl.style.display = 'none';
+            showDraftStatusMsg(`We restored your saved progress${when ? ` from ${when}` : ''}.`);
+          }
+        } catch (err) {
+          console.error('Failed to restore saved draft:', err);
+        }
+      }
+
+      // Debounced autosave of an in-progress draft — no-ops unless the user
+      // has opted in via the "save my progress" checkbox with a valid email.
+      function scheduleDraftSave() {
+        if (!formData || urlParams.get('preview') === 'true' || urlParams.get('responseId')) return;
+        const toggle = document.getElementById('saveProgressToggle');
+        if (!toggle || !toggle.checked) return;
+        const emailInput = document.getElementById('saveProgressEmail');
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        if (!EMAIL_REGEX.test(email)) return;
+
+        clearTimeout(draftSaveTimeout);
+        draftSaveTimeout = setTimeout(async () => {
+          try {
+            const responses = collectResponses();
+            const cardno = document.getElementById('input_cardno')?.value?.trim() || null;
+            const mobno = document.getElementById('input_mobno')?.value?.trim() || null;
+            const saveRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/draft`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, cardno, mobno, responses })
+            });
+            if (!saveRes.ok) throw new Error(`Draft save failed with status ${saveRes.status}`);
+            sessionDraftEmail = email;
+            // Only remember a non-identifying flag — never the email itself —
+            // so a later visitor on this device sees just a generic "you may
+            // have a draft" hint, never who saved it or what they entered.
+            localStorage.setItem(`form_has_draft_${formId}`, 'true');
+            showDraftStatusMsg('Progress saved.');
+          } catch (err) {
+            console.error('Failed to save draft:', err);
+          }
+        }, 1000);
+      }
+
+      $(document).on('change', '#saveProgressToggle', function() {
+        const wrap = document.getElementById('saveProgressEmailWrap');
+        if (this.checked) {
+          wrap.style.display = 'block';
+          const hintEl = document.getElementById('draftHintMsg');
+          if (hintEl) hintEl.style.display = 'none';
+          const email = document.getElementById('saveProgressEmail').value.trim();
+          if (EMAIL_REGEX.test(email)) {
+            attemptRestoreDraft(email);
+          }
+        } else {
+          wrap.style.display = 'none';
+        }
+      });
+
+      $(document).on('blur', '#saveProgressEmail', function() {
+        const toggle = document.getElementById('saveProgressToggle');
+        if (!toggle || !toggle.checked) return;
+        if (EMAIL_REGEX.test(this.value.trim())) {
+          attemptRestoreDraft(this.value.trim());
+        }
+      });
 
       function goToPage(pageIdx) {
         $(`.form-page`).hide();
@@ -1002,6 +1221,19 @@
               if (formData.requireOtp && isMob) {
                 $('#sendOtpBtn').show();
               }
+
+              const saveEmailInput = document.getElementById('saveProgressEmail');
+              if (data.data.email && saveEmailInput && !saveEmailInput.value.trim()) {
+                saveEmailInput.value = data.data.email;
+              }
+
+              // Resolving a registered mobile/card number is itself a real
+              // identity check, so it's safe to auto-restore a saved draft —
+              // UNLESS this form also requires OTP, in which case we wait for
+              // that stronger verification before pulling anything back.
+              if (data.data.email && !(formData.requireOtp && isMob)) {
+                attemptRestoreDraft(data.data.email);
+              }
             } else {
               showInlineError(errorId, data.message || 'Not registered');
               $(inputEl).css('border-color', '#dc3545');
@@ -1377,6 +1609,13 @@
       });
 
       $(document).on('change input blur', 'input, select, textarea', function() {
+        // The save-progress checkbox/email are meta-controls, not form
+        // answers — they have their own dedicated handlers below and must
+        // never themselves trigger an autosave of (possibly still-empty)
+        // form fields.
+        const elId = $(this).attr('id');
+        if (elId === 'saveProgressEmail' || elId === 'saveProgressToggle') return;
+
         // Find the parent field group
         const group = $(this).closest('.field-group');
         if (group.length > 0) {
@@ -1387,8 +1626,9 @@
         if ($(this).attr('id') === 'input_cardno' || $(this).attr('id') === 'input_mobno') {
           checkAuthInputValidation(this);
         }
-        
+
         evaluateLogic();
+        scheduleDraftSave();
       });
 
       $(document).on('click', '#sendOtpBtn', async function() {
@@ -1450,6 +1690,12 @@
             verifyBtn.disabled = true;
             verifyBtn.textContent = 'Verified ✓';
             verifyBtn.style.backgroundColor = '#28a745';
+
+            const saveEmailInput = document.getElementById('saveProgressEmail');
+            const knownEmail = saveEmailInput ? saveEmailInput.value.trim() : '';
+            if (knownEmail) {
+              attemptRestoreDraft(knownEmail);
+            }
           } else {
             alert(data.message || 'Invalid OTP. Please try again.');
             verifyBtn.textContent = 'Verify';
@@ -1463,62 +1709,11 @@
         }
       });
 
-      async function submitForm(e) {
-        e.preventDefault();
-
-        const currentPageIdx = window.currentPageIdx;
-        const submitBtn = document.querySelector(`#formPage_${currentPageIdx} #submitBtn`) || document.getElementById('submitBtn');
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Submitting...';
-        }
-
+      // Collects current answers from every visible field across all pages.
+      // Shared by the final submit and the in-progress draft autosave.
+      function collectResponses() {
         const responses = {};
-        const fields = formData.fields;
-
-        // Perform final page validation on the current active page
-        const pageContainer = document.getElementById(`formPage_${currentPageIdx}`);
-        let isValid = true;
-        let firstInvalidMsg = '';
-
-        if (currentPageIdx === 0 && !formData.isPublic) {
-          const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
-          if (authInput) {
-            const isAuthValid = checkAuthInputValidation(authInput);
-            if (!isAuthValid) {
-              isValid = false;
-              firstInvalidMsg = document.getElementById('input_mobno') ? 'Mobile Number is required' : 'Card Number is required';
-            } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
-              isValid = false;
-              firstInvalidMsg = 'Please verify your mobile number using OTP first';
-            }
-          }
-        }
-
-        const visibleGroups = $(pageContainer).find('.field-group:visible');
-        visibleGroups.each(function() {
-          const check = checkFieldValidation(this);
-          if (!check.isValid) {
-            isValid = false;
-            if (!firstInvalidMsg) firstInvalidMsg = check.errorMsg;
-          }
-        });
-
-        if (!isValid) {
-          showFormAlertOnPage(currentPageIdx, firstInvalidMsg || 'Please correct the errors in the form', 'danger');
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Response';
-          }
-          return;
-        }
-
-        // Clear general alert if valid
-        const alert = document.getElementById(`formAlert_${currentPageIdx}`);
-        if (alert) alert.style.display = 'none';
-
-        // Collect responses across ALL pages
-        fields.forEach(field => {
+        formData.fields.forEach(field => {
           if (field.type === 'section') return;
 
           const isVisible = $(`.field-group[data-field-id="${field.id}"]`).is(':visible');
@@ -1549,8 +1744,84 @@
             responses[field.id] = el ? el.value.trim() : '';
           }
         });
+        return responses;
+      }
+
+      async function submitForm(e) {
+        e.preventDefault();
+
+        const currentPageIdx = window.currentPageIdx;
+        const submitBtn = document.querySelector(`#formPage_${currentPageIdx} #submitBtn`) || document.getElementById('submitBtn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting...';
+        }
+
+        // Perform final page validation on the current active page
+        const pageContainer = document.getElementById(`formPage_${currentPageIdx}`);
+        let isValid = true;
+        let firstInvalidMsg = '';
+
+        if (currentPageIdx === 0 && !formData.isPublic) {
+          const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+          if (authInput) {
+            const isAuthValid = checkAuthInputValidation(authInput);
+            if (!isAuthValid) {
+              isValid = false;
+              firstInvalidMsg = document.getElementById('input_mobno') ? 'Mobile Number is required' : 'Card Number is required';
+            } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
+              isValid = false;
+              firstInvalidMsg = 'Please verify your mobile number using OTP first';
+            }
+          }
+        }
+
+        const visibleGroups = $(pageContainer).find('.field-group:visible');
+        visibleGroups.each(function() {
+          const check = checkFieldValidation(this);
+          if (!check.isValid) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = check.errorMsg;
+          }
+        });
+
+        let emailOptToSend = null;
+        const saveProgressToggle = document.getElementById('saveProgressToggle');
+        if (saveProgressToggle && saveProgressToggle.checked) {
+          const emailOptValue = document.getElementById('saveProgressEmail').value.trim();
+          if (!EMAIL_REGEX.test(emailOptValue)) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = 'Please enter a valid email address to save your progress / receive a copy';
+          } else {
+            emailOptToSend = emailOptValue;
+          }
+        }
+
+        if (!isValid) {
+          showFormAlertOnPage(currentPageIdx, firstInvalidMsg || 'Please correct the errors in the form', 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+          return;
+        }
+
+        // Clear general alert if valid
+        const alert = document.getElementById(`formAlert_${currentPageIdx}`);
+        if (alert) alert.style.display = 'none';
+
+        // Collect responses across ALL pages
+        const responses = collectResponses();
 
         const body = { responses };
+        // Always tell the backend which email (if any) a draft exists under
+        // for this session, even if the checkbox got unchecked right before
+        // submitting — otherwise an orphaned draft is never cleaned up and
+        // resurfaces on a later visit.
+        const cleanupEmail = emailOptToSend || sessionDraftEmail;
+        if (cleanupEmail) {
+          body.email = cleanupEmail;
+        }
 
         if (urlParams.get('preview') === 'true') {
           showFormAlertOnPage(currentPageIdx, 'Validation Passed! This is a preview, so no response was recorded.', 'success');
@@ -1607,7 +1878,25 @@
             if (!isEdit && formData.limitOneResponse) {
               localStorage.setItem(`form_submitted_${formId}`, 'true');
             }
-            showSuccessScreen(data.data?.id || responseId);
+            // A completed submission means this fill session is over — wipe
+            // all local state so the next visit (or "submit another
+            // response") starts from a genuinely blank form, not whatever
+            // was last typed here. Also cancel any pending autosave: if one
+            // was already scheduled from typing right before hitting submit,
+            // letting it fire afterward would silently recreate a draft.
+            clearTimeout(draftSaveTimeout);
+            localStorage.removeItem(`form_has_draft_${formId}`);
+            sessionDraftEmail = null;
+            lastRestoredDraftEmail = null;
+            const newRespId = data.data?.id || responseId;
+            if (emailOptToSend && newRespId) {
+              fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${newRespId}/email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: emailOptToSend })
+              }).catch(() => {});
+            }
+            showSuccessScreen(newRespId, emailOptToSend);
           } else {
             showFormAlertOnPage(currentPageIdx, data.message || 'Failed to submit response', 'danger');
             if (submitBtn) {
@@ -1624,7 +1913,7 @@
         }
       }
 
-      function showSuccessScreen(respId) {
+      function showSuccessScreen(respId, emailedTo) {
         const container = document.getElementById('formContainer');
         const isEdit = urlParams.get('responseId') ? true : false;
         
@@ -1651,11 +1940,16 @@
 
         const msgText = formData.confirmationMessage || 'Thank you for filling out the form. Your response has been recorded.';
 
+        const emailedNoticeHtml = emailedTo
+          ? `<p style="margin-top:1rem; font-size:0.9rem; color:#28a745;"><i class="fas fa-envelope"></i> A copy of your response has been emailed to ${emailedTo}.</p>`
+          : '';
+
         container.innerHTML = `
           <div class="success-screen">
             <div class="success-icon" style="color:#28a745;">✓</div>
             <h2>${isEdit ? 'Response Updated!' : 'Response Submitted!'}</h2>
             <p>${renderRichText(msgText)}</p>
+            ${emailedNoticeHtml}
             <div style="margin-top:2rem; display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem;">
               ${actionsHtml}
             </div>
@@ -1714,51 +2008,7 @@
           `);
         }
 
-        formData.fields.forEach(field => {
-          const ans = answers[field.id];
-          if (ans === undefined || ans === null) return;
-
-          const inputId = `input_${field.id}`;
-
-          if (field.type === 'checkbox') {
-            const vals = Array.isArray(ans) ? ans : [ans];
-            vals.forEach(v => {
-              $(`input[name="${field.id}"][value="${v}"]`).prop('checked', true);
-            });
-          } else if (field.type === 'radio') {
-            $(`input[name="${field.id}"][value="${ans}"]`).prop('checked', true);
-          } else if (field.type === 'rating') {
-            const val = parseInt(ans);
-            const parent = $(`.star-rating[data-id="${field.id}"]`);
-            parent.find('.input-rating-val').val(val);
-            parent.find('.star').each(function() {
-              if ($(this).data('val') <= val) {
-                $(this).addClass('selected');
-              }
-            });
-          } else if (field.type === 'grid_radio') {
-            const gridAns = ans || {};
-            field.rows.forEach((r, ri) => {
-              const rowVal = gridAns[r];
-              if (rowVal) {
-                $(`input[name="response_${field.id}_${ri}"][value="${rowVal}"]`).prop('checked', true);
-              }
-            });
-          } else if (field.type === 'grid_checkbox') {
-            const gridAns = ans || {};
-            field.rows.forEach((r, ri) => {
-              const rowVals = gridAns[r] || [];
-              rowVals.forEach(v => {
-                $(`input[name="response_${field.id}_${ri}"][value="${v}"]`).prop('checked', true);
-              });
-            });
-          } else {
-            const el = document.getElementById(inputId);
-            if (el) el.value = ans;
-          }
-        });
-
-        evaluateLogic();
+        populateAnswers(answers);
       }
 
       function showErrorState(message) {
