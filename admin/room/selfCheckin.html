@@ -6,6 +6,10 @@
   <title>Self Check-In Kiosk | Ashram Stay</title>
   <link rel="stylesheet" href="../../style/css/style.css" />
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin', 'housekeepingAdmin']);
+  </script>
   <style>
     * { box-sizing: border-box; }
     body {

@@ -212,6 +212,8 @@
                 <input type="date" id="valid_to" class="form-control" />
               </div>
 
+              <div id="dateError" style="display: none; grid-column: 1 / -1; color: #dc2626; font-size: 0.85rem; margin-top: -8px; font-weight: 500;"></div>
+
               <div class="form-group">
                 <label for="reason">Reason / Note:</label>
                 <input type="text" id="reason" class="form-control" placeholder="e.g. Medical treatment" />
@@ -290,6 +292,8 @@
           <label for="edit_valid_to">Valid To:</label>
           <input type="date" id="edit_valid_to" class="form-control" />
         </div>
+
+        <div id="editDateError" style="display: none; margin-bottom: 12px; color: #dc2626; font-size: 0.85rem; font-weight: 500;"></div>
 
         <div class="form-group" style="margin-bottom: 20px;">
           <label for="edit_reason">Reason / Note:</label>

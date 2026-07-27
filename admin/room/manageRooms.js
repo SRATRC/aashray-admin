@@ -29,7 +29,7 @@ function renderBlocks(blocks) {
         ? 'Permanent'
         : `${formatDate(b.start_date)} → ${formatDate(b.end_date)}`;
       const cls = isPermanent ? 'permanent' : 'daterange';
-      const reason = b.reason ? ` · ${b.reason}` : '';
+      const reason = b.reason ? ` · ${escapeHtml(b.reason)}` : '';
       return `
         <div style="margin-bottom: 2px;">
           <span class="block-badge ${cls}">${label}${reason}</span>
@@ -205,9 +205,9 @@ async function submitBlock() {
     if (data.warnings) {
       const warningEl = document.getElementById('modalWarning');
       const bookingList = data.warnings.bookings
-        .map((b) => `${b.bookingid} (${b.roomno}: ${formatDate(b.checkin)} → ${formatDate(b.checkout)})`)
+        .map((b) => `${escapeHtml(b.bookingid)} (${escapeHtml(b.roomno)}: ${formatDate(b.checkin)} → ${formatDate(b.checkout)})`)
         .join(', ');
-      warningEl.innerHTML = `⚠️ <strong>${data.warnings.message}</strong><br>Affected: ${bookingList}`;
+      warningEl.innerHTML = `⚠️ <strong>${escapeHtml(data.warnings.message)}</strong><br>Affected: ${bookingList}`;
       warningEl.style.display = 'block';
       // Don't close modal — let admin see the warning, then close manually
       setTimeout(() => {
@@ -426,9 +426,12 @@ function renderTable() {
 
     // Action button for the entire room
     const allBlocked = blockedBeds === totalBeds;
+    const safeBaseRoomNo = escapeHtml(baseRoomNo);
+    const safeRoomType = escapeHtml(group.roomtype);
+    const safeGender = escapeHtml(group.gender);
     const actionHtml = allBlocked
       ? `<span style="color:#aaa; cursor:not-allowed;">Block Room</span>`
-      : `<a href="#" onclick="event.stopPropagation(); openBlockModal('${baseRoomNo}A', true)">Block Room</a>`;
+      : `<a href="#" onclick="event.stopPropagation(); openBlockModal('${safeBaseRoomNo}A', true)">Block Room</a>`;
 
     const parentRow = document.createElement('tr');
     parentRow.style.cursor = 'pointer';
@@ -437,17 +440,17 @@ function renderTable() {
     parentRow.dataset.type = group.roomtype;
     parentRow.dataset.gender = group.gender;
     parentRow.innerHTML = `
-      <td style="text-align: center;"><input type="checkbox" class="room-checkbox" data-room="${baseRoomNo}" onclick="event.stopPropagation(); toggleRoomCheckbox('${baseRoomNo}')" /></td>
+      <td style="text-align: center;"><input type="checkbox" class="room-checkbox" data-room="${safeBaseRoomNo}" onclick="event.stopPropagation(); toggleRoomCheckbox('${safeBaseRoomNo}')" /></td>
       <td>
         <span class="toggle-icon" style="margin-right: 6px; font-size: 0.85em; color: #34495e; display: inline-block; width: 12px;">▶</span>
         ${index + 1}
       </td>
       <td style="font-weight:bold;">
-        Room ${baseRoomNo}
-        <a href="#" onclick="event.stopPropagation(); openUpdateRoomModal('${baseRoomNo}', '${group.roomtype}', '${group.gender}')" style="margin-left: 8px; font-size: 0.85em; text-decoration: none;" title="Update Room Details">✎</a>
+        Room ${safeBaseRoomNo}
+        <a href="#" onclick="event.stopPropagation(); openUpdateRoomModal('${safeBaseRoomNo}', '${safeRoomType}', '${safeGender}')" style="margin-left: 8px; font-size: 0.85em; text-decoration: none;" title="Update Room Details">✎</a>
       </td>
-      <td>${group.roomtype}</td>
-      <td>${group.gender}</td>
+      <td>${safeRoomType}</td>
+      <td>${safeGender}</td>
       <td>${statusText}</td>
       <td>${actionHtml}</td>
     `;
@@ -474,18 +477,19 @@ function renderTable() {
     // Render child rows representing individual beds
     group.beds.forEach((bed, subIndex) => {
       const isBedBlocked = bed.blocks && bed.blocks.length > 0;
+      const safeBedNo = escapeHtml(bed.roomno);
       const bedActionHtml = isBedBlocked
         ? `<span style="color:#aaa; cursor:not-allowed;">Block Bed</span>`
-        : `<a href="#" onclick="event.stopPropagation(); openBlockModal('${bed.roomno}', false)">Block Bed</a>`;
+        : `<a href="#" onclick="event.stopPropagation(); openBlockModal('${safeBedNo}', false)">Block Bed</a>`;
 
       const childRow = document.createElement('tr');
       childRow.className = `child-row child-${baseRoomNo}`;
       childRow.style.display = 'none'; // Hidden by default
       childRow.style.backgroundColor = '#fcfcfc';
       childRow.innerHTML = `
-        <td style="text-align: center;"><input type="checkbox" class="bed-checkbox bed-of-${baseRoomNo}" data-bed="${bed.roomno}" onclick="event.stopPropagation(); onBedCheckboxChange('${baseRoomNo}')" /></td>
+        <td style="text-align: center;"><input type="checkbox" class="bed-checkbox bed-of-${safeBaseRoomNo}" data-bed="${safeBedNo}" onclick="event.stopPropagation(); onBedCheckboxChange('${safeBaseRoomNo}')" /></td>
         <td style="color:#777; font-size:0.85em; text-align:right; padding-right: 15px;">${index + 1}.${subIndex + 1}</td>
-        <td style="padding-left: 20px; color: #555;">↳ Bed ${bed.roomno}</td>
+        <td style="padding-left: 20px; color: #555;">↳ Bed ${safeBedNo}</td>
         <td></td>
         <td></td>
         <td>${renderBlocks(bed.blocks)}</td>

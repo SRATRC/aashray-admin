@@ -12,6 +12,7 @@
   <script src="../../style/js/custom.js"></script>
   <script src="../../style/js/config.js"></script>
   <script src="../../style/js/formatDate.js"></script>
+  <script src="../../style/js/common.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="roomReports.js" defer></script>
   <script src="../../style/js/tableSortFilter.js" defer></script>
@@ -98,7 +99,7 @@
                   <label><input type="checkbox" name="status" value="checkedout" /> Checked-out</label>
                   <label><input type="checkbox" name="status" value="pending checkin" /> Pending Check-in</label>
                   <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
-                  <label><input type="checkbox" name="status" value="awaiting confirmation" /> Awaiting Confirmation</label>
+                  <label><input type="checkbox" name="status" value="waiting_rolling_window_limit" /> Over 9-night (approval)</label>
                   <label><input type="checkbox" name="status" value="pending" /> Pending</label>
                   <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
                   <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
@@ -210,6 +211,30 @@
         <button type="submit" class="btn btn-primary">Submit</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Focused Approve/Reject dialog for rolling-window (extended-stay) holds -->
+<div id="approvalModal" class="modal">
+  <div class="modal-content" style="width: 460px; max-width: 92%;">
+    <div class="modal-header">Approve Extended Stay</div>
+
+    <div style="font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 12px;">
+      <div><strong id="approval_name"></strong> <span id="approval_mobno" style="color: #888;"></span></div>
+      <div><span id="approval_type"></span> &middot; <span id="approval_dates"></span></div>
+      <div id="approval_window" style="color: #856404; margin-top: 4px; display: none;"></div>
+    </div>
+
+    <div style="background: #fff3cd; border: 1px solid #ffeeba; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px;">
+      <div style="font-weight: 600; color: #856404; margin-bottom: 4px;">Member's reason</div>
+      <div id="approval_reason" style="color: #856404; white-space: pre-wrap;"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeApprovalModal()">Close</button>
+      <button type="button" class="btn" onclick="submitApproval('admin cancelled')" style="background: #dc3545; color: #fff;">Reject</button>
+      <button type="button" class="btn btn-primary" onclick="submitApproval('pending')">Approve &rarr; Proceed to Payment</button>
+    </div>
   </div>
 </div>
 

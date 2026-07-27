@@ -19,9 +19,16 @@ function formatDateForInput(dateInput) {
 
 let roomreports = [];
 
+// An over-cap hold is a 'waiting' booking held for the rolling 9-night/30-day
+// cap (no separate status — see hold_reason).
+function isRollingWindowHold(booking) {
+  return booking.status === "waiting" && booking.hold_reason === "ROLLING_WINDOW_LIMIT";
+}
+
 function getAction(booking) {
-  if (booking.status === "waiting" || booking.status === "pending" || booking.status === "awaiting confirmation") {
-    return `<a href='javascript:void(0);' onclick="openRoomUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${booking.status === 'awaiting confirmation' ? 'Approve' : 'Update Status'}</a>`;
+  if (booking.status === "waiting" || booking.status === "pending") {
+    const label = isRollingWindowHold(booking) ? "Approve" : "Update Status";
+    return `<a href='javascript:void(0);' onclick="openRoomUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${label}</a>`;
   }
 
   switch (booking.status) {
@@ -56,13 +63,14 @@ function getEditAction(booking) {
     default:
       editUrl = `<a href='javascript:void(0);' onclick="openUpdateRoomBookingModal('${booking.bookingid}')" style="margin-right: 6px; text-decoration: none;"><span>✎</span></a>`;
   }
-  editUrl += (booking.roomno || "Not Assigned");
+  editUrl += escapeHtml(booking.roomno || "Not Assigned");
   return editUrl;
 }
 
 function getFlatAction(booking) {
-  if (booking.status === "waiting" || booking.status === "pending" || booking.status === "awaiting confirmation") {
-    return `<a href='javascript:void(0);' onclick="openFlatUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${booking.status === 'awaiting confirmation' ? 'Approve' : 'Update Status'}</a>`;
+  if (booking.status === "waiting" || booking.status === "pending") {
+    const label = isRollingWindowHold(booking) ? "Approve" : "Update Status";
+    return `<a href='javascript:void(0);' onclick="openFlatUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${label}</a>`;
   }
 
   switch (booking.status) {
@@ -133,23 +141,35 @@ async function flat_checkout(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
 
+// Reason column: for a rolling-window hold, show the member's typed reason
+// (hold_reason_meta.userReason) or "(no reason given)"; otherwise fall back
+// to the transaction description as before. Always HTML-escaped.
+function getReasonOrDescription(booking) {
+  if (isRollingWindowHold(booking)) {
+    const userReason = booking.hold_reason_meta?.userReason;
+    return userReason ? escapeHtml(userReason) : '(no reason given)';
+  }
+  const description = booking.transactions?.[0]?.description;
+  return description ? escapeHtml(description) : '-';
+}
+
 function createRoomBookingRow(booking, index) {
   const row = document.createElement('tr');
   row.innerHTML = `
     <td>${index + 1}</td>
     <td>${booking.bookingid}</td>
-    <td>${booking.CardDb.issuedto}</td>
-    <td>${booking.CardDb.mobno}</td>
-    <td>${booking.CardDb.center}</td>
+    <td>${escapeHtml(booking.CardDb.issuedto)}</td>
+    <td>${escapeHtml(booking.CardDb.mobno)}</td>
+    <td>${escapeHtml(booking.CardDb.center)}</td>
     <td>${getEditAction(booking)}</td>
-    <td>${booking.roomtype}</td>
+    <td>${escapeHtml(booking.roomtype)}</td>
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
-    <td>${booking.extra_stay_reason || booking.transactions?.[0]?.description || '-'}</td>
-    <td>${booking.bookedBy || "Self"}</td>
+    <td>${getReasonOrDescription(booking)}</td>
+    <td>${escapeHtml(booking.bookedBy || "Self")}</td>
     <td>${getAction(booking)}</td>
     <td>${getCancelAction(booking)}</td>
   `;
@@ -161,18 +181,18 @@ function createFlatBookingRow(booking, index) {
   row.innerHTML = `
     <td>${index + 1}</td>
     <td>${booking.bookingid}</td>
-    <td>${booking.CardDb.issuedto}</td>
-    <td>${booking.CardDb.mobno}</td>
-    <td>${booking.CardDb.center}</td>
-    <td>${booking.flatno}</td>
+    <td>${escapeHtml(booking.CardDb.issuedto)}</td>
+    <td>${escapeHtml(booking.CardDb.mobno)}</td>
+    <td>${escapeHtml(booking.CardDb.center)}</td>
+    <td>${escapeHtml(booking.flatno)}</td>
     <td>Flat</td>
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
     <td>${booking.status}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
-    <td>${booking.extra_stay_reason || booking.transactions?.[0]?.description || '-'}</td> 
-    <td>${booking.bookedBy || "Self"}</td>
+    <td>${getReasonOrDescription(booking)}</td>
+    <td>${escapeHtml(booking.bookedBy || "Self")}</td>
     <td>${getFlatAction(booking)}</td>
     <td>${getFlatCancelAction(booking)}</td>
   `;
@@ -197,12 +217,18 @@ async function fetchReport() {
   const checkedValues = [...document.querySelectorAll('input[type="checkbox"]:checked')]
     .map(checkbox => checkbox.value);
 
+  // 'waiting_rolling_window_limit' is a client-only filter value (there is no
+  // such backend status). It maps to the real 'waiting' status server-side;
+  // the hold_reason narrowing happens client-side after the fetch below.
+  const overCapOnlyRequested = checkedValues.includes('waiting_rolling_window_limit') && !checkedValues.includes('waiting');
+  const apiStatuses = [...new Set(checkedValues.map((v) => (v === 'waiting_rolling_window_limit' ? 'waiting' : v)))];
+
   const searchParams = new URLSearchParams({
     start_date: startDate,
     end_date: endDate
   });
 
-  checkedValues.forEach((x) => searchParams.append('statuses', x));
+  apiStatuses.forEach((x) => searchParams.append('statuses', x));
 
   const reportUrl = `${CONFIG.basePath}/stay/${reportType}?${searchParams}`;
 
@@ -223,7 +249,9 @@ async function fetchReport() {
     }
 
     roomreports = data.data || [];
-    console.log(JSON.stringify(roomreports[0], null, 2));
+    if (overCapOnlyRequested) {
+      roomreports = roomreports.filter(isRollingWindowHold);
+    }
     setupDownloadButton();
 
     const reportsTableBody = document.getElementById('reportTableBody');
@@ -333,11 +361,104 @@ function showErrorMessage(message) {
   alert(message);
 }
 
+async function updateBookingStatus({ bookingid, isFlat, status, description, successMessage, onSuccess }) {
+  const endpoint = isFlat
+    ? `${CONFIG.basePath}/stay/update_flat_booking_status`
+    : `${CONFIG.basePath}/stay/update_booking_status`;
+  sessionStorage.setItem('roomReportFilters', JSON.stringify(collectFilters()));
+  try {
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+      body: JSON.stringify({ bookingid, status, description })
+    });
+    const result = await response.json();
+    if (response.ok) {
+      if (onSuccess) onSuccess();
+      showSuccessMessage(result.message || successMessage);
+      window.location.reload();
+    } else {
+      showErrorMessage(result.message || 'Failed to update booking.');
+    }
+  } catch (err) {
+    console.error('Update failed:', err);
+    showErrorMessage('Error while updating booking.');
+  }
+}
+
 function openRoomUpdateModal(bookingid) {
+  const booking = roomreports.find(b => b.bookingid === bookingid);
+  // A rolling-window (extended-stay) hold only needs a yes/no on the member's
+  // reason — send it to the focused approve/reject dialog, not the full status
+  // editor (amounts/credits/room-no aren't decided at approval time).
+  if (booking && isRollingWindowHold(booking)) return openApprovalModal(booking, 'room');
   openGenericModal(bookingid, 'room');
 }
 function openFlatUpdateModal(bookingid) {
+  const booking = roomreports.find(b => b.bookingid === bookingid);
+  if (booking && isRollingWindowHold(booking)) return openApprovalModal(booking, 'flat');
   openGenericModal(bookingid, 'flat');
+}
+
+// ── Focused approve/reject dialog for rolling-window (extended-stay) holds ──
+// Approve → 'pending' (member proceeds to payment); Reject → 'admin cancelled'.
+// Reuses the same status endpoint the generic editor uses — no new backend.
+let approvalBookingId = null;
+let approvalType = null;
+
+function openApprovalModal(booking, type) {
+  if (!booking) return;
+  approvalBookingId = booking.bookingid;
+  approvalType = type;
+
+  document.getElementById('approval_name').textContent = booking.CardDb?.issuedto || '-';
+  document.getElementById('approval_mobno').textContent = booking.CardDb?.mobno || '';
+  document.getElementById('approval_type').textContent =
+    type === 'flat' ? 'Flat' : (booking.roomtype || 'Room');
+  document.getElementById('approval_dates').textContent =
+    `${formatDate(booking.checkin)} → ${formatDate(booking.checkout)} (${booking.nights} nights)`;
+
+  const meta = booking.hold_reason_meta || {};
+  const ctx = document.getElementById('approval_window');
+  if (meta.windowNights && meta.limit) {
+    ctx.textContent = `${meta.windowNights} nights within a 30-day window (limit ${meta.limit}).`;
+    ctx.style.display = 'block';
+  } else {
+    ctx.style.display = 'none';
+  }
+
+  document.getElementById('approval_reason').textContent =
+    meta.userReason || '(no reason given)';
+
+  document.getElementById('approvalModal').style.display = 'block';
+}
+
+function closeApprovalModal() {
+  document.getElementById('approvalModal').style.display = 'none';
+  approvalBookingId = null;
+  approvalType = null;
+}
+
+async function submitApproval(newStatus) {
+  if (!approvalBookingId) return;
+  if (
+    newStatus === 'admin cancelled' &&
+    !confirm('Reject this extended-stay request? The booking will be cancelled.')
+  ) {
+    return;
+  }
+
+  await updateBookingStatus({
+    bookingid: approvalBookingId,
+    isFlat: approvalType === 'flat',
+    status: newStatus,
+    description: '',
+    successMessage:
+      newStatus === 'pending'
+        ? 'Approved — the member can now proceed to payment.'
+        : 'Extended-stay request rejected.',
+    onSuccess: closeApprovalModal
+  });
 }
 
 function openGenericModal(bookingid, type) {
@@ -365,7 +486,7 @@ function openGenericModal(bookingid, type) {
   const statusSelect = document.getElementById('modal_status');
   const allowedStatuses = [];
 
-  if (booking.status === 'waiting' || booking.status === 'awaiting confirmation') {
+  if (booking.status === 'waiting') {
     allowedStatuses.push('pending', 'admin cancelled');
   } else if (booking.status === 'pending') {
     allowedStatuses.push('pending checkin', 'admin cancelled');
@@ -386,18 +507,7 @@ function openGenericModal(bookingid, type) {
     statusSelect.appendChild(opt);
   });
 
-  const reasonGroup = document.getElementById('modal_extra_stay_reason_group');
-  const reasonText = document.getElementById('modal_extra_stay_reason_text');
-  if (reasonGroup && reasonText) {
-    if (booking.extra_stay_reason) {
-      reasonText.textContent = booking.extra_stay_reason;
-      reasonGroup.style.display = 'block';
-    } else {
-      reasonGroup.style.display = 'none';
-    }
-  }
-
-  document.getElementById('modal_roomno_group').style.display = type === 'room' && (booking.status === 'waiting' || booking.status === 'awaiting confirmation') ? 'block' : 'none';
+  document.getElementById('modal_roomno_group').style.display = type === 'room' && booking.status === 'waiting' ? 'block' : 'none';
   document.getElementById('roomUpdateModal').style.display = 'block';
 }
 
@@ -418,37 +528,15 @@ document.getElementById('roomStatusForm').addEventListener('submit', async funct
   }
 
   const isFlat = roomreports.find(b => b.bookingid === bookingid)?.flatno !== undefined;
-  const endpoint = isFlat
-    ? `${CONFIG.basePath}/stay/update_flat_booking_status`
-    : `${CONFIG.basePath}/stay/update_booking_status`;
 
-  // ✅ Save filters before reload
-  const filters = collectFilters();
-  sessionStorage.setItem('roomReportFilters', JSON.stringify(filters));
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ bookingid, status, description })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      document.getElementById('roomUpdateModal').style.display = 'none';
-      showSuccessMessage(result.message || "Booking updated successfully.");
-      window.location.reload(); // ✅ filters restore after reload
-    } else {
-      showErrorMessage(result.message || "Failed to update booking.");
-    }
-  } catch (err) {
-    console.error("Update failed:", err);
-    showErrorMessage("Error while updating booking.");
-  }
+  await updateBookingStatus({
+    bookingid,
+    isFlat,
+    status,
+    description,
+    successMessage: 'Booking updated successfully.',
+    onSuccess: () => { document.getElementById('roomUpdateModal').style.display = 'none'; }
+  });
 });
 
 let conflictingBooking = null;

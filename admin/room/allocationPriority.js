@@ -179,7 +179,7 @@ async function loadConfiguredRules() {
               <td>${getGroupLabel(orderArr[1])}</td>
               <td>${getGroupLabel(orderArr[2])}</td>
               <td>${getGroupLabel(orderArr[3])}</td>
-              <td>${r.updatedBy || 'ADMIN'}</td>
+              <td>${escapeHtml(r.updatedBy || 'ADMIN')}</td>
               <td>
                 <button class="btn-edit-sm" onclick="selectRuleForEdit(${r.month})">Edit</button>
                 ${!isGlobal ? `<button class="btn-danger-sm" onclick="deleteRule(${r.month})">Delete</button>` : ''}
@@ -199,7 +199,7 @@ async function loadConfiguredRules() {
 
 function getGroupLabel(id) {
   const item = GROUPS.find(g => g.id === id);
-  return item ? item.name : (id || '-');
+  return item ? item.name : escapeHtml(id || '-');
 }
 
 function selectRuleForEdit(monthVal) {

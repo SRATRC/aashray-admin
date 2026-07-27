@@ -1,5 +1,26 @@
 let allExemptions = [];
 
+// Temporary exemptions require both dates present and valid_from <= valid_to.
+// Returns an error message string, or '' if valid. (mirrors manageRooms.submitBlock's date checks)
+function validateTempExemptionDates(is_permanent, valid_from, valid_to) {
+  if (is_permanent) return '';
+  if (!valid_from || !valid_to) {
+    return 'Temporary exemptions require both a Valid From and Valid To date.';
+  }
+  if (valid_from > valid_to) {
+    return 'Valid From date must be on or before the Valid To date.';
+  }
+  return '';
+}
+
+// Displays (or hides) a validation error message on the given element.
+// Returns true if a message was shown (i.e. validation failed).
+function showDateError(el, message) {
+  el.textContent = message || '';
+  el.style.display = message ? 'block' : 'none';
+  return !!message;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('token');
   if (!token) {
@@ -101,6 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const valid_to = document.getElementById('valid_to').value || null;
     const reason = document.getElementById('reason').value.trim();
 
+    const dateError = document.getElementById('dateError');
+    const dateValidationMessage = validateTempExemptionDates(is_permanent, valid_from, valid_to);
+    if (showDateError(dateError, dateValidationMessage)) {
+      return;
+    }
+
     try {
       const response = await fetch(`${CONFIG.basePath}/stay/exemptions`, {
         method: 'POST',
@@ -135,6 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const valid_from = document.getElementById('edit_valid_from').value || null;
     const valid_to = document.getElementById('edit_valid_to').value || null;
     const reason = document.getElementById('edit_reason').value.trim();
+
+    const editDateError = document.getElementById('editDateError');
+    const dateValidationMessage = validateTempExemptionDates(is_permanent, valid_from, valid_to);
+    if (showDateError(editDateError, dateValidationMessage)) {
+      return;
+    }
 
     try {
       const response = await fetch(`${CONFIG.basePath}/stay/exemptions/${id}`, {
@@ -179,12 +212,12 @@ async function loadExemptions() {
       tbody.innerHTML = allExemptions.map(item => `
         <tr>
           <td>${item.id}</td>
-          <td>${item.cardno}</td>
-          <td>${item.CardDb?.issuedto || 'N/A'}</td>
+          <td>${escapeHtml(item.cardno)}</td>
+          <td>${escapeHtml(item.CardDb?.issuedto || 'N/A')}</td>
           <td>${item.is_permanent ? '<span class="badge-perm">Permanent</span>' : '<span class="badge-temp">Temporary</span>'}</td>
-          <td>${item.is_permanent ? 'Always Active' : `${item.valid_from || 'Start'} to ${item.valid_to || 'End'}`}</td>
-          <td>${item.reason || '-'}</td>
-          <td>${item.updatedBy || 'ADMIN'}</td>
+          <td>${item.is_permanent ? 'Always Active' : `${escapeHtml(item.valid_from || 'Start')} to ${escapeHtml(item.valid_to || 'End')}`}</td>
+          <td>${escapeHtml(item.reason || '-')}</td>
+          <td>${escapeHtml(item.updatedBy || 'ADMIN')}</td>
           <td>
             <button class="btn-edit-sm" onclick="editExemption(${item.id})">Edit</button>
             <button class="btn-danger-sm" onclick="deleteExemption(${item.id})">Delete</button>

@@ -36,6 +36,23 @@ const getBaseRoomNo = (roomno) => {
   return str;
 };
 
+// Backend is expected to return checkin/checkout as plain 'YYYY-MM-DD' strings.
+// Normalize defensively (e.g. an ISO datetime like '2026-07-24T00:00:00.000Z',
+// or a Date instance) so the plain string-equality/comparison logic below
+// (===, >, <) keeps working even if that contract slips.
+function normalizeDateOnly(dateInput) {
+  if (!dateInput) return '';
+  if (typeof dateInput === 'string') {
+    const match = dateInput.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return String(dateInput);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60 * 1000);
+  return local.toISOString().split('T')[0];
+}
+
 async function fetchOccupancyReport(date) {
   const tableBody = document.querySelector('#occupancyTable tbody');
   tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading occupancy report...</td></tr>';
@@ -57,7 +74,11 @@ async function fetchOccupancyReport(date) {
     }
 
     const data = await response.json();
-    occupancy = data.data || [];
+    occupancy = (data.data || []).map((booking) => ({
+      ...booking,
+      checkin: normalizeDateOnly(booking.checkin),
+      checkout: normalizeDateOnly(booking.checkout)
+    }));
     currentReportDate = date;
     
     // Filter active occupants staying tonight (checkedin staying beyond today, OR pending checkin today)
@@ -171,16 +192,16 @@ function renderTable() {
 
     row.innerHTML = `
       <td>${index + 1}</td>
-      <td>${booking.bookingid}</td>
-      <td>${booking.CardDb?.issuedto || ''}</td>
-      <td>${booking.CardDb?.mobno || ''}</td>
-      <td>${booking.CardDb?.center || ''}</td>
-      <td>${booking.roomno}</td>
+      <td>${escapeHtml(booking.bookingid)}</td>
+      <td>${escapeHtml(booking.CardDb?.issuedto || '')}</td>
+      <td>${escapeHtml(booking.CardDb?.mobno || '')}</td>
+      <td>${escapeHtml(booking.CardDb?.center || '')}</td>
+      <td>${escapeHtml(booking.roomno)}</td>
       <td>${badgeHtml}</td>
       <td>${checkinHtml}</td>
       <td>${checkoutHtml}</td>
       <td>${booking.nights}</td>
-      <td>${booking.bookedBy || "Self"}</td>
+      <td>${escapeHtml(booking.bookedBy || "Self")}</td>
     `;
 
     tableBody.appendChild(row);
