@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
 
-  const QUEUE_STORAGE_KEY = 'adhyayan_attendance_offline_queue';
+  const QUEUE_STORAGE_KEY = 'adhyayan_attendance_mob_offline_queue';
   const COOLDOWN_MS = 5 * 60 * 1000;
 
   let isSyncing = false;
@@ -67,12 +67,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function enqueueScan(shibirId, sessionNo, cardno, scannedAt) {
+  function enqueueScan(shibir_id, session_no, cardno, scannedAt) {
     const queue = getOfflineQueue();
     const now = Date.now();
 
     const recentDuplicate = queue.find(
-      item => item.cardno === cardno && item.shibirId === shibirId && item.sessionNo === sessionNo && now - item.timestampMs < COOLDOWN_MS
+      item => item.cardno === cardno && item.shibir_id === shibir_id && String(item.session_no) === String(session_no) && now - item.timestampMs < COOLDOWN_MS
     );
 
     if (recentDuplicate) {
@@ -80,9 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const newItem = {
-      id: `${cardno}_${now}`,
-      shibirId,
-      sessionNo,
+      id: `${shibir_id}_${session_no}_${cardno}_${now}`,
+      shibir_id,
+      session_no,
       cardno,
       scannedAt,
       timestampMs: now,
@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!navigator.onLine) break;
 
       try {
-        await markAttendanceRequest(item.shibirId, item.sessionNo, item.cardno, item.scannedAt);
+        await markAttendanceRequest(item.shibir_id, item.session_no, item.cardno, item.scannedAt);
         syncedCount++;
 
         queue = getOfflineQueue().filter(q => q.id !== item.id);
@@ -206,8 +206,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateNetworkUI();
   }
 
-  window.handleOfflineScan = function(shibirId, sessionNo, cardno, scannedAt) {
-    const result = enqueueScan(shibirId, sessionNo, cardno, scannedAt);
+  window.handleOfflineScan = function(shibir_id, session_no, cardno, scannedAt) {
+    const result = enqueueScan(shibir_id, session_no, cardno, scannedAt);
 
     if (result.success) {
       qrStatus.className = 'warning-status';

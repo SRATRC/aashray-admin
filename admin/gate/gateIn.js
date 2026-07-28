@@ -327,8 +327,10 @@ document.addEventListener('DOMContentLoaded', function () {
     isSyncing = false;
     updateNetworkUI();
 
-    if (syncedCount > 0 || warningCount > 0) {
-      showSuccessMessage(`Batch sync completed! ${syncedCount} gate check-ins synced successfully.`);
+    if (syncedCount > 0) {
+      showSuccessMessage(`Batch sync completed! ${syncedCount} gate check-ins synced successfully.${warningCount > 0 ? ` (${warningCount} failed)` : ''}`);
+    } else if (warningCount > 0) {
+      showErrorMessage(`Sync failed: ${warningCount} item(s) could not be submitted.`);
     }
   }
 
