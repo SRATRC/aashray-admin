@@ -945,8 +945,15 @@ function restoreFilters() {
 function formatDateTime(dateInput) {
   if (!dateInput) return '';
 
+  if (typeof dateInput === 'string') {
+    const trimmed = dateInput.trim();
+    if (/^\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$/i.test(trimmed)) {
+      return trimmed;
+    }
+  }
+
   const dateObj = new Date(dateInput);
-  if (isNaN(dateObj)) return '';
+  if (isNaN(dateObj)) return dateInput;
 
   const day = String(dateObj.getDate()).padStart(2, '0');
   const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
