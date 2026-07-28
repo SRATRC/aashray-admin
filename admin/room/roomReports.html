@@ -12,6 +12,7 @@
   <script src="../../style/js/custom.js"></script>
   <script src="../../style/js/config.js"></script>
   <script src="../../style/js/formatDate.js"></script>
+  <script src="../../style/js/common.js"></script>
   <script src="/sessionstorage.js"></script>
   <script src="roomReports.js" defer></script>
   <script src="../../style/js/tableSortFilter.js" defer></script>
@@ -98,6 +99,7 @@
                   <label><input type="checkbox" name="status" value="checkedout" /> Checked-out</label>
                   <label><input type="checkbox" name="status" value="pending checkin" /> Pending Check-in</label>
                   <label><input type="checkbox" name="status" value="waiting" /> Waiting</label>
+                  <label><input type="checkbox" name="status" value="waiting_rolling_window_limit" /> Over 9-night (approval)</label>
                   <label><input type="checkbox" name="status" value="pending" /> Pending</label>
                   <label><input type="checkbox" name="status" value="cancelled" /> Cancelled By User</label>
                   <label><input type="checkbox" name="status" value="admin cancelled" /> Cancelled By Admin</label>
@@ -206,6 +208,66 @@
 
       <div class="modal-actions">
         <button type="button" id="closeRoomModal" class="btn btn-secondary">Close</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Focused Approve/Reject dialog for rolling-window (extended-stay) holds -->
+<div id="approvalModal" class="modal">
+  <div class="modal-content" style="width: 460px; max-width: 92%;">
+    <div class="modal-header">Approve Extended Stay</div>
+
+    <div style="font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 12px;">
+      <div><strong id="approval_name"></strong> <span id="approval_mobno" style="color: #888;"></span></div>
+      <div><span id="approval_type"></span> &middot; <span id="approval_dates"></span></div>
+      <div id="approval_window" style="color: #856404; margin-top: 4px; display: none;"></div>
+    </div>
+
+    <div style="background: #fff3cd; border: 1px solid #ffeeba; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px;">
+      <div style="font-weight: 600; color: #856404; margin-bottom: 4px;">Member's reason</div>
+      <div id="approval_reason" style="color: #856404; white-space: pre-wrap;"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeApprovalModal()">Close</button>
+      <button type="button" class="btn" onclick="submitApproval('admin cancelled')" style="background: #dc3545; color: #fff;">Reject</button>
+      <button type="button" class="btn btn-primary" onclick="submitApproval('pending')">Approve &rarr; Proceed to Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Room Booking Room Number Update -->
+<div id="updateRoomBookingModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">Update Assigned Room</div>
+    <form id="updateRoomForm">
+      <div class="form-group">
+        <label for="modal_update_bookingid_display">Booking ID:</label>
+        <input type="text" id="modal_update_bookingid_display" class="form-control" readonly disabled />
+        <input type="hidden" id="modal_update_bookingid" />
+      </div>
+
+      <div class="form-group">
+        <label for="modal_update_roomNumber">New Room No:</label>
+        <select id="modal_update_roomNumber" class="form-control" required></select>
+      </div>
+
+      <!-- Option for assigning a new room to the conflicting booking -->
+      <div id="conflict_resolution_section" style="display: none; border: 1px solid #ffcccc; background-color: #fff5f5; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+        <p style="color: #cc0000; font-weight: bold; margin-top: 0;" id="conflict_message"></p>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label><input type="checkbox" id="resolve_conflict_checkbox" /> Also assign a new room to the conflicting booking</label>
+        </div>
+        <div class="form-group" id="conflicting_room_select_group" style="display: none; margin-top: 10px; margin-bottom: 0;">
+          <label for="modal_update_conflicting_roomNumber" id="conflicting_room_label">New Room No for Conflicting Guest:</label>
+          <select id="modal_update_conflicting_roomNumber" class="form-control"></select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="closeUpdateRoomModal" class="btn btn-secondary">Close</button>
         <button type="submit" class="btn btn-primary">Submit</button>
       </div>
     </form>

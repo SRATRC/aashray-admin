@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('total_seats').value = data.total_seats;
     document.getElementById('available_seats').value = data.available_seats;
     document.getElementById('comments').value = data.comments;
+    document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
     document.getElementById('location').value = data.location;
     document.getElementById('registration_deadline').value = data.registration_deadline;
 
@@ -74,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
       location: utsavForm.get('location'),
       registration_deadline: utsavForm.get('registration_deadline'),
       starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null
+      ending_meal: endingMeal.length ? endingMeal : null,
+      whatsapp_link: utsavForm.get('whatsapp_link')
     };
 
     try {

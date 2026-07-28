@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
       location: formData.get('location'),
       registration_deadline: formatDateForDB(formData.get('registration_deadline')),
       starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null
+      ending_meal: endingMeal.length ? endingMeal : null,
+      whatsapp_link: formData.get('whatsapp_link')
     };
 
     try {

@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     foodAllowedSelect.value = data.food_allowed ? "1" : "0";
     document.getElementById('amount').value = data.amount;
     document.getElementById('comments').value = data.comments;
+    document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
 
     document.getElementById('saveButton').addEventListener('click', () => {
       updateAdhyayanDetails(document.getElementById('id').value);
@@ -64,7 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
       available_seats: adhyayanForm.get('available_seats'),
       food_allowed: adhyayanForm.get('food_allowed'),
       amount: adhyayanForm.get('amount'),
-      comments: adhyayanForm.get('comments')
+      comments: adhyayanForm.get('comments'),
+      whatsapp_link: adhyayanForm.get('whatsapp_link')
     };
 
     try {

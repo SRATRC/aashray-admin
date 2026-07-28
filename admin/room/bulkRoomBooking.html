@@ -1,0 +1,111 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bulk Room Booking</title>
+
+    <!-- Load jQuery first -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+
+            <div class="frm-head">
+              <h1>Bulk Room Booking</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
+              <form id="bulkBookingForm">
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                  <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                    <label for="checkin_date">Check-in Date:</label>
+                    <input type="date" id="checkin_date" name="checkin_date" class="form-control" required />
+                  </div>
+
+                  <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                    <label for="checkout_date">Check-out Date:</label>
+                    <input type="date" id="checkout_date" name="checkout_date" class="form-control" required />
+                  </div>
+
+                  <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                    <label for="floor_pref">Floor Preference:</label>
+                    <select id="floor_pref" name="floor_pref" class="form-control">
+                      <option value="" selected>None</option>
+                      <option value="SC">Ground</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label style="font-weight: bold; font-size: 1.1em; color: #2c3e50;">Mumukshus List</label>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered" id="bookingTable">
+                    <thead>
+                      <tr>
+                        <th style="width: 50px; text-align: center;">#</th>
+                        <th style="min-width: 150px;">Mobile No</th>
+                        <th style="min-width: 120px;">Card No</th>
+                        <th style="min-width: 180px;">Name</th>
+                        <th style="min-width: 90px;">Gender</th>
+                        <th style="min-width: 140px;">Center</th>
+                        <th style="min-width: 120px;">Res Status</th>
+                        <th style="min-width: 130px;">Room Type</th>
+                        <th style="width: 80px; text-align: center;">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="bookingTableBody">
+                      <!-- Dynamic rows will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="form-group form-submit" style="display: flex; gap: 10px; margin-top: 15px;">
+                  <button type="button" id="addRowBtn" class="btn btn-secondary" style="margin-bottom: 0;">+ Add Row</button>
+                  <button type="submit" class="btn btn-primary" style="margin-bottom: 0;">Submit Bookings</button>
+                </div>
+
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+    <script src="../../style/js/clockpicker.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="/sessionstorage.js"></script>
+    <script src="bulkRoomBooking.js"></script>
+  </body>
+</html>

@@ -19,12 +19,89 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/common.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="manageRooms.js"></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+
+    <style>
+      .block-badge {
+        display: inline-block;
+        font-size: 0.72em;
+        padding: 2px 7px;
+        border-radius: 10px;
+        margin: 2px 0;
+        white-space: nowrap;
+      }
+      .block-badge.permanent { background: #fde8e8; color: #c0392b; }
+      .block-badge.daterange { background: #fff3cd; color: #856404; }
+      .cancel-block-link {
+        font-size: 0.75em;
+        color: #c0392b;
+        cursor: pointer;
+        margin-left: 4px;
+        text-decoration: underline;
+      }
+      .action-links a { margin-right: 6px; }
+
+      /* Modal */
+      #blockModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      #blockModal.open { display: flex; }
+      #updateRoomModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      #updateRoomModal.open { display: flex; }
+      .modal-box {
+        background: #fff;
+        border-radius: 8px;
+        padding: 28px 32px;
+        width: 380px;
+        max-width: 95vw;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      }
+      .modal-box h3 { margin-top: 0; font-size: 1.1em; }
+      .modal-box label { display: block; margin-top: 12px; font-size: 0.9em; font-weight: 600; }
+      .modal-box input[type=text],
+      .modal-box input[type=date] {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-top: 4px;
+        box-sizing: border-box;
+      }
+      .modal-radio-group { display: flex; gap: 20px; margin-top: 8px; }
+      .modal-radio-group label { font-weight: normal; display: flex; align-items: center; gap: 6px; margin-top: 0; }
+      .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+      .modal-actions button { padding: 7px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+      .btn-confirm { background: #c0392b; color: #fff; }
+      .btn-cancel-modal { background: #eee; color: #333; }
+      #modalWarning {
+        margin-top: 12px;
+        padding: 8px 12px;
+        background: #fff3cd;
+        border-radius: 4px;
+        font-size: 0.82em;
+        display: none;
+      }
+    </style>
   </head>
 
   <body>
@@ -49,17 +126,57 @@
 
             <div class="form">
               <div id="alert" class="alert" role="alert" style="display: none;"></div>
-              <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+              <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+                <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search..." style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <label for="blockFilter" style="font-weight: bold; margin-bottom: 0; white-space: nowrap;">Block Type:</label>
+                  <select id="blockFilter" class="form-control" style="width: auto; min-width: 140px; padding: 6px 12px;">
+                    <option value="all">All</option>
+                    <option value="available">Available</option>
+                    <option value="permanent">Permanently Blocked</option>
+                    <option value="temp">Temporarily Blocked</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <label for="typeFilter" style="font-weight: bold; margin-bottom: 0; white-space: nowrap;">Room Type:</label>
+                  <select id="typeFilter" class="form-control" style="width: auto; min-width: 120px; padding: 6px 12px;">
+                    <option value="all">All</option>
+                    <option value="ac">A.C.</option>
+                    <option value="nac">Non A.C.</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <label for="genderFilter" style="font-weight: bold; margin-bottom: 0; white-space: nowrap;">Gender:</label>
+                  <select id="genderFilter" class="form-control" style="width: auto; min-width: 140px; padding: 6px 12px;">
+                    <option value="all">All</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                    <option value="SCM">Senior Citizen Male</option>
+                    <option value="SCF">Senior Citizen Female</option>
+                    <option value="NA">NA</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Bulk Actions Bar -->
+              <div id="bulkActionsBar" style="display: none; background: #e3f2fd; border: 1px solid #bbdefb; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <span id="bulkSelectedCount" style="font-weight: bold; color: #0d47a1;">0 beds selected</span>
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-secondary" onclick="openBulkBlockModal()" style="margin-bottom: 0; background: #c0392b; border-color: #c0392b; color: #fff; padding: 6px 15px; font-size: 0.9em; border-radius: 4px;">Bulk Block</button>
+                  <button class="btn btn-secondary" onclick="submitBulkUnblock()" style="margin-bottom: 0; background: #27ae60; border-color: #27ae60; color: #fff; padding: 6px 15px; font-size: 0.9em; border-radius: 4px;">Bulk Unblock</button>
+                </div>
+              </div>
+
               <div class="table-responsive">
                 <table id="reportTable" class="table table-striped table-bordered">
                   <thead>
                     <tr>
+                      <th style="width: 40px; text-align: center; vertical-align: middle;"><input type="checkbox" id="selectAllCheckbox" style="margin:0; width:auto; cursor:pointer;" onclick="toggleSelectAll()" /></th>
                       <th>#</th>
-                      <th>&nbsp;</th>
                       <th>Room No</th>
                       <th>Room Type</th>
                       <th>Gender</th>
-                      <th>Status</th>
+                      <th>Status / Active Blocks</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -69,17 +186,75 @@
                 </table>
               </div>
 
-              <!-- <div class="form-group form-submit mt-3">
-                <button onclick="window.location.href='addRoom.html'" class="btn btn-secondary">
-                  Add New Room
-                </button>
-              </div> -->
-
             </div>
 
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Block Room Modal -->
+    <div id="blockModal">
+      <div class="modal-box">
+        <h3>Block Room: <span id="modalRoomNo"></span></h3>
+
+        <label>Block Type</label>
+        <div class="modal-radio-group">
+          <label><input type="radio" name="blockType" value="permanent" id="typePermanent"> Permanent</label>
+          <label><input type="radio" name="blockType" value="daterange" id="typeDateRange" checked> Date Range</label>
+        </div>
+
+        <label for="modalStartDate">Start Date</label>
+        <input type="date" id="modalStartDate" />
+
+        <div id="endDateRow">
+          <label for="modalEndDate">End Date</label>
+          <input type="date" id="modalEndDate" />
+        </div>
+
+        <label for="modalReason">Reason (optional)</label>
+        <input type="text" id="modalReason" placeholder="e.g. Painting, Under repair" />
+
+        <div id="blockAllBedsCheckboxContainer" style="margin-top: 15px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="blockAllBedsCheckbox" checked style="width: auto; margin: 0;" />
+          <label for="blockAllBedsCheckbox" style="margin: 0; font-weight: normal; cursor: pointer;">Block all beds of this room together</label>
+        </div>
+
+        <div id="modalWarning"></div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel-modal" onclick="closeBlockModal()">Cancel</button>
+          <button class="btn-confirm" onclick="submitBlock()">Confirm Block</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Room Modal -->
+    <div id="updateRoomModal">
+      <div class="modal-box">
+        <h3>Update Room: Room <span id="modalUpdateRoomNo"></span></h3>
+
+        <label for="modalUpdateRoomType">Room Type</label>
+        <select id="modalUpdateRoomType" class="form-control" style="width:100%; margin-top:4px; padding: 6px 10px;">
+          <option value="ac">A.C.</option>
+          <option value="nac">Non A.C.</option>
+        </select>
+
+        <label for="modalUpdateGender">Gender</label>
+        <select id="modalUpdateGender" class="form-control" style="width:100%; margin-top:4px; padding: 6px 10px;">
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+          <option value="SCM">Senior Citizen Male</option>
+          <option value="SCF">Senior Citizen Female</option>
+          <option value="NA">NA</option>
+        </select>
+
+        <div class="modal-actions" style="margin-top:20px;">
+          <button class="btn-cancel-modal" onclick="closeUpdateRoomModal()">Cancel</button>
+          <button class="btn-confirm" onclick="submitUpdateRoom()" style="background:#2980b9; color:#fff;">Update</button>
+        </div>
+      </div>
+    </div>
+
   </body>
 </html>
