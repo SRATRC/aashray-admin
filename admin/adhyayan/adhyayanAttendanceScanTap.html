@@ -42,6 +42,48 @@ margin-top:20px;
 .alert-success{ color:green }
 .alert-danger{ color:red }
 .alert-warning{ color:#856404 }
+.alert-info{ color:#0056b3 }
+
+.network-badge-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 15px;
+}
+.network-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+}
+.network-badge.online {
+  background-color: #e6fffa;
+  color: #234e52;
+  border: 1px solid #b2f5ea;
+}
+.network-badge.offline {
+  background-color: #fffaf0;
+  color: #7b341e;
+  border: 1px solid #feebc8;
+}
+.queue-count {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
+}
+.btn-sync {
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  background-color: #319795;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.btn-sync:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 </style>
 
@@ -52,6 +94,12 @@ margin-top:20px;
 <div class="header">
 <div class="container">
 <div class="logout">
+<div class="network-badge-container">
+<span id="network-badge" class="network-badge online">🟢 Online</span>
+<span id="queue-count" class="queue-count">0 Pending Scans</span>
+<button id="sync-now-btn" class="btn-sync" style="display: none;">Sync Now</button>
+</div>
+&nbsp; | &nbsp;
 <a href="javascript:void(0);" onclick="history.back()">Back</a>
 &nbsp; | &nbsp;
 <a href="javascript:void(0);" onclick="goToHome()">Home</a>
