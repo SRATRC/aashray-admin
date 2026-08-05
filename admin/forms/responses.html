@@ -444,11 +444,8 @@
           rowsHtml += `<tr><td>${idx + 1}</td><td>${name}</td><td>${center}</td><td>${resStatus}</td><td>${mobno}</td><td>${cardno}</td><td>${email}</td>`;
 
           fields.forEach(f => {
-            let answer = resp.responses ? resp.responses[f.id] : '';
-            if (Array.isArray(answer)) {
-              answer = answer.join(', ');
-            }
-            rowsHtml += `<td>${escapeHtml(String(answer ?? ''))}</td>`;
+            const answer = resp.responses ? resp.responses[f.id] : '';
+            rowsHtml += `<td>${escapeHtml(formatAnswerForDisplay(answer))}</td>`;
           });
 
           rowsHtml += `<td>${new Date(resp.submittedAt).toLocaleString()}</td>`;
@@ -712,7 +709,7 @@
               answers.forEach(ans => {
                 const item = document.createElement('div');
                 item.className = 'text-response-item';
-                item.textContent = ans;
+                item.textContent = formatAnswerForDisplay(ans);
                 listDiv.appendChild(item);
               });
               card.appendChild(listDiv);
@@ -758,9 +755,8 @@
           row['Email'] = email;
 
           cachedForm.fields.forEach(f => {
-            let answer = resp.responses ? resp.responses[f.id] : '';
-            if (Array.isArray(answer)) answer = answer.join(', ');
-            row[f.label] = answer ?? '';
+            const answer = resp.responses ? resp.responses[f.id] : '';
+            row[f.label] = formatAnswerForDisplay(answer);
           });
 
           row['Submitted At'] = new Date(resp.submittedAt).toLocaleString();
@@ -769,6 +765,21 @@
 
         const fileName = `${cachedForm.title.replace(/[^a-zA-Z0-9]/g, '_')}_responses.xlsx`;
         downloadExcelFromJSON(dataArray, fileName, 'Responses');
+      }
+
+      // Grid-type answers (accommodation/food date grids etc.) are stored as
+      // { date: value } or { date: [values] } objects, not plain scalars —
+      // format them into a readable "date: value" list instead of letting
+      // them fall through to JS's default "[object Object]" stringification.
+      function formatAnswerForDisplay(answer) {
+        if (answer === null || answer === undefined || answer === '') return '';
+        if (Array.isArray(answer)) return answer.join(', ');
+        if (typeof answer === 'object') {
+          return Object.entries(answer)
+            .map(([date, val]) => `${date}: ${Array.isArray(val) ? val.join('/') : val}`)
+            .join('; ');
+        }
+        return String(answer);
       }
 
       function escapeHtml(str) {

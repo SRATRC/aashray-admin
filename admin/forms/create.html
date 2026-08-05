@@ -427,6 +427,13 @@
                       <label for="requireOtp" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Require OTP Verification</label>
                     </div>
                   </div>
+                  <div>
+                    <label for="formCategory">Form Category</label>
+                    <select id="formCategory" class="form-control" onchange="handleFormCategoryChange()">
+                      <option value="generic">Generic</option>
+                      <option value="vendor">Vendor Registration</option>
+                    </select>
+                  </div>
                   <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
                       <input type="checkbox" id="limitOneResponse" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
@@ -485,6 +492,27 @@
                       <input type="text" id="formSlug" class="form-control" placeholder="e.g. registration-form" />
                     </div>
                   </div>
+
+                  <!-- OTP Allowlist: shown whenever Access Type = mobno, in both create and edit mode -->
+                  <div class="full-width" id="otpAllowlistSection" style="display:none; border-top: 1px dashed #ced4da; padding-top: 1rem; margin-top: 0.5rem;">
+                    <label style="font-weight:600; color:#204060;">Authorized Numbers (OTP Allowlist)</label>
+                    <small style="display:block; color:#6c757d; margin-bottom:0.5rem;">
+                      Restricts OTP sign-in on this form to these mobile numbers only (each must already be a registered member). Leave empty to allow any registered member.
+                      While creating a new form, numbers added here are staged and saved once you click Save Form.
+                    </small>
+                    <div id="otpAllowlistList" style="margin-bottom:0.5rem;"></div>
+                    <div style="display:flex; gap:0.5rem; align-items:flex-end; flex-wrap:wrap;">
+                      <div>
+                        <label style="font-size:0.75rem; font-weight:600; color:#6c757d; display:block;">Mobile Number</label>
+                        <input type="text" id="allowlistMobno" class="form-control" placeholder="10-digit number" style="width:180px; padding:0.4rem 0.6rem;" />
+                      </div>
+                      <div>
+                        <label style="font-size:0.75rem; font-weight:600; color:#6c757d; display:block;">Department</label>
+                        <input type="text" id="allowlistDepartment" class="form-control" placeholder="e.g. Kitchen" style="width:180px; padding:0.4rem 0.6rem;" />
+                      </div>
+                      <button type="button" class="btn" style="padding:0.4rem 0.9rem;" onclick="addOtpAllowlistEntry()"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -514,6 +542,12 @@
       const editId = urlParams.get('id');
       let fieldCounter = 0;
       let activeFormatInput = null;
+
+      // Staged OTP allowlist entries for a form that doesn't exist yet (create
+      // mode). Held in memory and flushed to the real endpoint right after the
+      // form is created, since custom_form_otp_allowlist rows need a form_id.
+      let pendingOtpAllowlist = [];
+      let pendingOtpAllowlistNextId = 1;
 
       const FIELD_TYPES = [
         { value: 'text', label: 'Short Answer' },
@@ -593,7 +627,8 @@
         const container = document.getElementById('fieldsContainer');
 
         const fieldId = fieldData?.id || `field_${idx}`;
-        const fieldLabel = fieldData?.label || '';
+        const fieldLabel = fieldData?.labelIsPlaceholder ? '' : (fieldData?.label || '');
+        const fieldLabelPlaceholder = fieldData?.labelIsPlaceholder ? fieldData.label : 'e.g. Full Name';
         const fieldType = fieldData?.type || 'text';
         const fieldRequired = fieldData?.required || false;
         const fieldOptions = fieldData?.options || [];
@@ -637,7 +672,7 @@
           <div class="field-row">
             <div>
               <label class="label-title">Field Label *</label>
-              <input type="text" class="field-label" value="${escapeAttr(fieldLabel)}" placeholder="e.g. Full Name" />
+              <input type="text" class="field-label" value="${escapeAttr(fieldLabel)}" placeholder="${escapeAttr(fieldLabelPlaceholder)}" />
             </div>
             <div>
               <label>Input Type</label>
@@ -658,7 +693,19 @@
               <label for="req_${idx}" style="margin:0; font-weight:400;">Required field</label>
             </div>
           </div>
-          
+
+          <!-- Vendor field role (only shown when Form Category = Vendor Registration) -->
+          <div class="vendor-field-role-wrapper" style="display:none; margin-top:0.5rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:#204060;">Vendor Field Role (optional)</label>
+            <select class="field-vendor-role form-control" style="padding:0.3rem 0.5rem; font-size:0.85rem; height:auto;">
+              <option value="" ${!fieldData?.vendorRole ? 'selected' : ''}>-- None --</option>
+              <option value="department" ${fieldData?.vendorRole === 'department' ? 'selected' : ''}>Department</option>
+              <option value="kitchen_type" ${fieldData?.vendorRole === 'kitchen_type' ? 'selected' : ''}>Kitchen Type</option>
+              <option value="remarks" ${fieldData?.vendorRole === 'remarks' ? 'selected' : ''}>Remarks</option>
+            </select>
+            <small style="color:#6c757d;">Tags this field so vendor submissions map into the structured Vendor Registrations table.</small>
+          </div>
+
           <!-- Validation Rules Container -->
           <div class="validation-trigger-wrapper" style="margin-top: 0.75rem; border-top: 1px dashed #eee; padding-top: 0.75rem; display: ${['text', 'textarea', 'checkbox', 'number', 'date'].includes(fieldType) ? 'block' : 'none'}">
             <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="toggleValidationPanel(${idx})">
@@ -757,7 +804,22 @@
 
           <!-- Matrix Grid editor -->
           <div class="options-container" id="gridContainer_${idx}" style="display: ${['grid_radio', 'grid_checkbox'].includes(fieldType) ? 'block' : 'none'}; border-color: #ced4da;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="vendor-dynamic-rows-wrapper" style="display:none; margin-bottom:0.75rem; padding-bottom:0.75rem; border-bottom:1px dashed #ced4da;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <input type="checkbox" class="field-dynamic-rows" id="dynrows_${idx}" ${fieldData?.dynamicRows === 'utsav' ? 'checked' : ''} onchange="toggleDynamicRows(${idx})" />
+                <label for="dynrows_${idx}" style="margin:0; font-weight:600; font-size:0.85rem; color:#204060;">Use live dates from the active Utsav (instead of manual rows)</label>
+              </div>
+              <div class="dynamic-rows-role-wrapper" style="display:${fieldData?.dynamicRows === 'utsav' ? 'block' : 'none'}; margin-top:0.5rem;">
+                <label style="font-size:0.8rem; font-weight:600; color:#204060;">Date Role</label>
+                <select class="field-date-role form-control" style="padding:0.3rem 0.5rem; font-size:0.85rem; height:auto;">
+                  <option value="accommodation" ${fieldData?.dateRole === 'accommodation' ? 'selected' : ''}>Accommodation (one choice per night)</option>
+                  <option value="food_meals" ${fieldData?.dateRole === 'food_meals' ? 'selected' : ''}>Food - Meals (checkboxes per day)</option>
+                  <option value="food_headcount" ${fieldData?.dateRole === 'food_headcount' ? 'selected' : ''}>Food - Headcount (one choice per day)</option>
+                </select>
+                <small style="color:#6c757d;">Rows will be replaced with the current/upcoming Utsav's dates whenever this form is opened or submitted.</small>
+              </div>
+            </div>
+            <div class="grid-manual-rows-wrapper" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
               <div>
                 <label style="color:#204060; font-weight:600; font-size:0.85rem;">Rows</label>
                 <div id="gridRowsList_${idx}">
@@ -829,6 +891,9 @@
 
         // Apply visual layout rules based on initial type (handles sections)
         onTypeChange(idx);
+        if (['grid_radio', 'grid_checkbox'].includes(fieldType)) {
+          toggleDynamicRows(idx);
+        }
 
         updateLogicDropdowns();
         updateSectionActionDropdowns();
@@ -955,6 +1020,131 @@
         updateCardAccent(card, type);
         updateSectionActionDropdowns();
         populateValidationRuleOptions(idx, type, null);
+        updateVendorFieldUI(idx);
+      }
+
+      // Shows/hides the vendor-only per-field controls (Vendor Field Role for
+      // plain fields, Dynamic Rows/Date Role for grid fields) based on the
+      // form-level Form Category setting and this field's type.
+      function updateVendorFieldUI(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        if (!card) return;
+        const type = card.querySelector('.field-type').value;
+        const isVendorForm = document.getElementById('formCategory')?.value === 'vendor';
+        const isGrid = ['grid_radio', 'grid_checkbox'].includes(type);
+
+        const roleWrapper = card.querySelector('.vendor-field-role-wrapper');
+        if (roleWrapper) {
+          roleWrapper.style.display = (isVendorForm && !isGrid && type !== 'section') ? 'block' : 'none';
+        }
+
+        const dynRowsWrapper = card.querySelector('.vendor-dynamic-rows-wrapper');
+        if (dynRowsWrapper) {
+          dynRowsWrapper.style.display = (isVendorForm && isGrid) ? 'block' : 'none';
+        }
+      }
+
+      function onFormCategoryChange() {
+        const container = document.getElementById('fieldsContainer');
+        container.querySelectorAll('.field-card').forEach(card => {
+          const idx = card.dataset.idx;
+          if (idx) updateVendorFieldUI(idx);
+        });
+      }
+
+      // Fires only on a real user interaction with the Form Category select
+      // (not when a form is loaded for editing — see initFormForEdit, which
+      // calls onFormCategoryChange() directly instead). Auto-populates the
+      // standard vendor field set the very first time someone switches a
+      // blank form to Vendor Registration, so they don't have to hand-build
+      // and hand-tag every field the backend's vendor mapping expects.
+      function handleFormCategoryChange() {
+        const container = document.getElementById('fieldsContainer');
+        // A brand-new form always starts with one blank starter field
+        // (see checkAndShowDraftRecovery), so the container is never
+        // truly empty — treat it as "still blank" when every field card
+        // present has no label typed in yet.
+        const cards = Array.from(container.querySelectorAll('.field-card'));
+        const isBlank = cards.every(card => !card.querySelector('.field-label').value.trim());
+        if (document.getElementById('formCategory').value === 'vendor' && isBlank) {
+          container.innerHTML = '';
+          insertVendorFieldTemplate();
+        }
+        onFormCategoryChange();
+        renderOtpAllowlistPanel();
+      }
+
+      // Mirrors the field structure of the existing production "Vendors List"
+      // form (form id 4, dept "utsav") so newly created vendor forms start
+      // from the same shape that's already proven out, rather than a fresh
+      // guess. Admin can freely edit/remove/reorder afterward.
+      function insertVendorFieldTemplate() {
+        addField({
+          label: 'Name Of Department',
+          labelIsPlaceholder: true,
+          type: 'select',
+          required: true,
+          vendorRole: 'department',
+          options: [
+            'Ashram Staff', 'Camera', 'Decor', 'Infra (Generator)', 'Infra (Labour)',
+            'Infra (Mandap)', 'Infra (Shoe)', 'Kitchen', 'LED', 'Light',
+            'Logistics (Echo & Rickshaw)', 'Logistics (Tempo Traveler)', 'Medical Staff',
+            'Musician', 'RC Kitchen Staff', 'School Staff', 'Sound', 'Others'
+          ]
+        });
+        addField({
+          label: 'Accommodation Requirement (per night)',
+          labelIsPlaceholder: true,
+          type: 'grid_radio',
+          required: true,
+          dynamicRows: 'utsav',
+          dateRole: 'accommodation',
+          columns: ['0-15', 'More Than 15'],
+          limitOnePerColumn: false
+        });
+        addField({
+          label: 'Food Requirement - Meals (per day)',
+          labelIsPlaceholder: true,
+          type: 'grid_checkbox',
+          required: true,
+          dynamicRows: 'utsav',
+          dateRole: 'food_meals',
+          columns: ['Breakfast', 'Lunch', 'Dinner']
+        });
+        addField({
+          label: 'Food Requirement - Headcount (per day)',
+          labelIsPlaceholder: true,
+          type: 'grid_radio',
+          required: true,
+          dynamicRows: 'utsav',
+          dateRole: 'food_headcount',
+          columns: ['0-15', 'More Than 15'],
+          limitOnePerColumn: false
+        });
+        addField({
+          label: 'Kitchen Type',
+          labelIsPlaceholder: true,
+          type: 'select',
+          required: true,
+          vendorRole: 'kitchen_type',
+          options: ['Main Kitchen Mandap', 'K1 Kitchen']
+        });
+        addField({
+          label: 'Remarks',
+          labelIsPlaceholder: true,
+          type: 'text',
+          required: false,
+          vendorRole: 'remarks'
+        });
+      }
+
+      // Toggles a grid field between manually-defined rows and live Utsav dates.
+      function toggleDynamicRows(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        if (!card) return;
+        const checked = card.querySelector('.field-dynamic-rows').checked;
+        card.querySelector('.dynamic-rows-role-wrapper').style.display = checked ? 'block' : 'none';
+        card.querySelector('.grid-manual-rows-wrapper').style.display = checked ? 'none' : 'grid';
       }
 
       function removeField(idx) {
@@ -1379,10 +1569,21 @@
             const colInputs = card.querySelectorAll('.grid-col-value');
             field.rows = Array.from(rowInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
             field.columns = Array.from(colInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
-            
+
             if (type === 'grid_radio') {
               const limitColBox = card.querySelector('.grid-limit-column');
               field.limitOnePerColumn = limitColBox ? limitColBox.checked : false;
+            }
+
+            const dynRowsBox = card.querySelector('.field-dynamic-rows');
+            if (dynRowsBox && dynRowsBox.checked) {
+              field.dynamicRows = 'utsav';
+              field.dateRole = card.querySelector('.field-date-role').value;
+            }
+          } else if (type !== 'section') {
+            const vendorRoleSelect = card.querySelector('.field-vendor-role');
+            if (vendorRoleSelect && vendorRoleSelect.value) {
+              field.vendorRole = vendorRoleSelect.value;
             }
           }
 
@@ -1494,18 +1695,23 @@
             showError(`Field "${f.label}" needs at least one option`);
             return;
           }
-          if (['grid_radio', 'grid_checkbox'].includes(f.type) && (!f.rows || f.rows.length === 0 || !f.columns || f.columns.length === 0)) {
+          if (['grid_radio', 'grid_checkbox'].includes(f.type) && f.dynamicRows !== 'utsav' && (!f.rows || f.rows.length === 0 || !f.columns || f.columns.length === 0)) {
             showError(`Grid field "${f.label}" needs at least one row and one column`);
+            return;
+          }
+          if (['grid_radio', 'grid_checkbox'].includes(f.type) && f.dynamicRows === 'utsav' && (!f.columns || f.columns.length === 0)) {
+            showError(`Grid field "${f.label}" needs at least one column`);
             return;
           }
         }
 
         const requireOtp = document.getElementById('requireOtp').checked;
+        const formCategory = document.getElementById('formCategory').value;
 
         const body = { 
           title, description, dept_name, fields, isPublic, authType, slug, 
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses, requireOtp
+          expiresAt, closeMessage, maxResponses, requireOtp, formCategory
         };
 
         try {
@@ -1528,10 +1734,16 @@
           if (data.success) {
             isFormSaved = true;
             localStorage.removeItem('form_builder_draft');
-            showSuccess(editId ? 'Form updated successfully!' : 'Form created successfully!');
+
+            let allowlistWarning = '';
+            if (!editId && pendingOtpAllowlist.length > 0) {
+              allowlistWarning = await flushPendingOtpAllowlist(data.data.id);
+            }
+
+            showSuccess((editId ? 'Form updated successfully!' : 'Form created successfully!') + allowlistWarning);
             setTimeout(() => {
               window.location.href = 'index.html';
-            }, 1000);
+            }, allowlistWarning ? 2500 : 1000);
           } else {
             showError(data.message || 'Failed to save form');
           }
@@ -1558,6 +1770,183 @@
           populateFormBuilder(form);
         } catch (err) {
           showError('Error loading form: ' + err.message);
+        }
+      }
+
+      // Persists numbers staged in create mode once the form actually has an
+      // id. Runs sequentially so a duplicate/failed entry doesn't abort the
+      // rest. Returns a short warning suffix (empty string if everything saved).
+      async function flushPendingOtpAllowlist(newFormId) {
+        const failures = [];
+        for (const entry of pendingOtpAllowlist) {
+          try {
+            const res = await fetch(`${CONFIG.basePath}/forms/${newFormId}/otp-allowlist`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ mobno: entry.mobno, department: entry.department })
+            });
+            const data = await res.json();
+            if (!data.success) {
+              failures.push(`${entry.mobno} (${data.message || 'failed'})`);
+            }
+          } catch (err) {
+            failures.push(`${entry.mobno} (${err.message})`);
+          }
+        }
+        return failures.length > 0
+          ? ` Note: could not save allowlist number(s): ${failures.join(', ')} — add them from the Edit Form page.`
+          : '';
+      }
+
+      function updateOtpAllowlistVisibility() {
+        const section = document.getElementById('otpAllowlistSection');
+        const accessVal = document.getElementById('formType').value;
+        const isVendorForm = document.getElementById('formCategory').value === 'vendor';
+        section.style.display = (accessVal === 'mobno' && isVendorForm) ? 'block' : 'none';
+      }
+
+      function renderPendingOtpAllowlist() {
+        const listEl = document.getElementById('otpAllowlistList');
+        if (pendingOtpAllowlist.length === 0) {
+          listEl.innerHTML = '<small style="color:#6c757d;">No numbers added yet — any registered member can OTP-auth on this form.</small>';
+          return;
+        }
+        listEl.innerHTML = pendingOtpAllowlist.map(e => `
+          <div style="display:flex; align-items:center; gap:0.5rem; padding:0.35rem 0; border-bottom:1px solid #f0f0f0;">
+            <span style="font-weight:600; color:#204060; min-width:110px;">${escapeHtml(e.mobno)}</span>
+            <span style="color:#6c757d;">${escapeHtml(e.department)}</span>
+            <span style="color:#f0ad4e; font-size:0.75rem;">(saved once the form is created)</span>
+            <button type="button" onclick="deleteOtpAllowlistEntry(${e.id})" style="margin-left:auto; background:none; border:none; color:#dc3545; cursor:pointer;" title="Remove"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        `).join('');
+      }
+
+      async function renderOtpAllowlistPanel() {
+        updateOtpAllowlistVisibility();
+        if (!editId) {
+          renderPendingOtpAllowlist();
+          return;
+        }
+
+        const listEl = document.getElementById('otpAllowlistList');
+        listEl.innerHTML = '<small style="color:#6c757d;">Loading...</small>';
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${editId}/otp-allowlist`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (!data.success) {
+            listEl.innerHTML = `<small style="color:#dc3545;">${data.message || 'Failed to load allowlist'}</small>`;
+            return;
+          }
+
+          const entries = data.data || [];
+          if (entries.length === 0) {
+            listEl.innerHTML = '<small style="color:#6c757d;">No numbers added yet — any registered member can OTP-auth on this form.</small>';
+            return;
+          }
+
+          listEl.innerHTML = entries.map(e => `
+            <div style="display:flex; align-items:center; gap:0.5rem; padding:0.35rem 0; border-bottom:1px solid #f0f0f0;">
+              <span style="font-weight:600; color:#204060; min-width:110px;">${escapeHtml(e.mobno)}</span>
+              <span style="color:#6c757d;">${escapeHtml(e.department)}</span>
+              <button type="button" onclick="deleteOtpAllowlistEntry(${e.id})" style="margin-left:auto; background:none; border:none; color:#dc3545; cursor:pointer;" title="Remove"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          `).join('');
+        } catch (err) {
+          listEl.innerHTML = `<small style="color:#dc3545;">Error loading allowlist: ${err.message}</small>`;
+        }
+      }
+
+      async function addOtpAllowlistEntry() {
+        const mobno = document.getElementById('allowlistMobno').value.trim();
+        const department = document.getElementById('allowlistDepartment').value.trim();
+
+        if (!mobno || !department) {
+          showError('Mobile number and department are both required');
+          return;
+        }
+
+        if (!editId) {
+          const cleanMob = mobno.replace(/\D/g, '').slice(-10);
+          if (cleanMob.length !== 10) {
+            showError('Invalid mobile number format. Please enter a 10-digit number.');
+            return;
+          }
+          if (pendingOtpAllowlist.some(e => e.mobno === cleanMob)) {
+            showError('This mobile number is already on the allowlist for this form');
+            return;
+          }
+          // Mirror the backend's own check (addOtpAllowlistEntry requires a
+          // registered member) using the public resolve-identity lookup,
+          // since the real allowlist endpoint needs a form_id we don't have yet.
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${encodeURIComponent(cleanMob)}`);
+            const data = await res.json();
+            if (!data.success) {
+              showError('This mobile number is not a registered member and cannot be OTP-authenticated');
+              return;
+            }
+          } catch (err) {
+            showError('Error checking registration: ' + err.message);
+            return;
+          }
+
+          pendingOtpAllowlist.push({ id: pendingOtpAllowlistNextId++, mobno: cleanMob, department });
+          document.getElementById('allowlistMobno').value = '';
+          document.getElementById('allowlistDepartment').value = '';
+          renderPendingOtpAllowlist();
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${editId}/otp-allowlist`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ mobno, department })
+          });
+          const data = await res.json();
+          if (!data.success) {
+            showError(data.message || 'Failed to add allowlist entry');
+            return;
+          }
+          document.getElementById('allowlistMobno').value = '';
+          document.getElementById('allowlistDepartment').value = '';
+          renderOtpAllowlistPanel();
+        } catch (err) {
+          showError('Error adding allowlist entry: ' + err.message);
+        }
+      }
+
+      async function deleteOtpAllowlistEntry(entryId) {
+        if (!confirm('Remove this number from the allowlist?')) return;
+
+        if (!editId) {
+          pendingOtpAllowlist = pendingOtpAllowlist.filter(e => e.id !== entryId);
+          renderPendingOtpAllowlist();
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${editId}/otp-allowlist/${entryId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (!data.success) {
+            showError(data.message || 'Failed to remove allowlist entry');
+            return;
+          }
+          renderOtpAllowlistPanel();
+        } catch (err) {
+          showError('Error removing allowlist entry: ' + err.message);
         }
       }
 
@@ -1618,11 +2007,12 @@
         const fields = collectFields();
 
         const requireOtp = document.getElementById('requireOtp').checked;
+        const formCategory = document.getElementById('formCategory').value;
 
         const previewData = { 
           title, description, dept_name, fields, isPublic, authType, slug, 
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses, requireOtp
+          expiresAt, closeMessage, maxResponses, requireOtp, formCategory
         };
         sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
         window.open('view.html?preview=true', '_blank');
@@ -1670,11 +2060,12 @@
         const slug = document.getElementById('formSlug').value.trim();
         const fields = collectFields();
         const requireOtp = document.getElementById('requireOtp').checked;
+        const formCategory = document.getElementById('formCategory').value;
 
         const draft = {
           title, description, dept_name, isPublic, authType, accessVal,
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses, requireOtp, fields,
+          expiresAt, closeMessage, maxResponses, requireOtp, formCategory, fields,
           timestamp: Date.now()
         };
 
@@ -1753,12 +2144,16 @@
         document.getElementById('requireOtp').checked = form.requireOtp || false;
         const accessValNow = document.getElementById('formType').value;
         document.getElementById('requireOtpRow').style.display = accessValNow === 'mobno' ? 'flex' : 'none';
+        document.getElementById('formCategory').value = form.formCategory || 'generic';
 
         // Load fields
         if (form.fields && Array.isArray(form.fields)) {
           document.getElementById('fieldsContainer').innerHTML = '';
           form.fields.forEach(f => addField(f));
         }
+
+        onFormCategoryChange();
+        renderOtpAllowlistPanel();
       }
 
       // Listen for formType changes to toggle OTP option
@@ -1771,6 +2166,7 @@
           row.style.display = 'none';
           document.getElementById('requireOtp').checked = false;
         }
+        renderOtpAllowlistPanel();
       });
 
       // Bind input changes to save draft

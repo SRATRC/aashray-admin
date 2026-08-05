@@ -197,6 +197,29 @@
         accent-color: var(--theme-color);
       }
 
+      /* Quick-fill column headers: click once to apply that answer to every row,
+         instead of clicking each row individually. */
+      .grid-table th.grid-col-quickfill {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        user-select: none;
+      }
+      .grid-table th.grid-col-quickfill:hover {
+        background: #e3ecf5;
+      }
+      .grid-table th.grid-col-quickfill:active {
+        background: #d3e0ee;
+      }
+      .grid-col-quickfill-hint {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: #6c757d;
+        margin-top: 0.2rem;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
       /* Success Screen */
       .success-screen {
         background: #fff;
@@ -1045,6 +1068,29 @@
         }
       }
 
+      // Lets the user click a grid column header once to apply that answer to
+      // every row, instead of clicking each row individually — the main
+      // click-reduction for multi-day Accommodation/Food grids. For checkbox
+      // grids this toggles: if every row already has that column checked, it
+      // clears them all; otherwise it checks them all.
+      function applyColumnToAllRows(fieldId, colIndex, isRadio) {
+        const inputs = document.querySelectorAll(`input[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
+        if (inputs.length === 0) return;
+
+        if (isRadio) {
+          inputs.forEach(input => {
+            input.checked = true;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        } else {
+          const allChecked = Array.from(inputs).every(input => input.checked);
+          inputs.forEach(input => {
+            input.checked = !allChecked;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        }
+      }
+
       function checkFieldValidation(group) {
         const fid = $(group).data('field-id');
         const field = formData.fields.find(f => f.id === fid);
@@ -1062,6 +1108,11 @@
           const selected = document.querySelector(`input[name="${field.id}"]:checked`);
           answerVal = selected ? selected.value : '';
         } else if (field.type === 'grid_radio') {
+          if (field.dynamicRows === 'utsav' && field.noActiveUtsav && field.required) {
+            const errMsg = 'This section is unavailable because no upcoming event is currently configured.';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
           const selectedCols = [];
           let hasSelectionError = false;
           let errMsg = '';
@@ -1091,6 +1142,11 @@
             return { isValid: true };
           }
         } else if (field.type === 'grid_checkbox') {
+          if (field.dynamicRows === 'utsav' && field.noActiveUtsav && field.required) {
+            const errMsg = 'This section is unavailable because no upcoming event is currently configured.';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
           let hasSelectionError = false;
           let errMsg = '';
           field.rows.forEach((r, ri) => {
@@ -1302,7 +1358,7 @@
             `);
             
             const type = isMob ? 'mobno' : 'cardno';
-            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=${type}&value=${encodeURIComponent(val)}`);
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=${type}&value=${encodeURIComponent(val)}&formId=${formData.id}`);
             const data = await res.json();
             
             $(`#${infoId}`).remove();
@@ -1317,6 +1373,22 @@
               
               if (formData.requireOtp && isMob) {
                 $('#sendOtpBtn').show();
+              }
+
+              // If this number is a department head on this form's OTP allowlist,
+              // pre-fill (but don't lock) the Department field — it's a helpful
+              // default, not a verified fact yet, so the submitter can still
+              // correct it. If OTP verification later confirms it, that flow
+              // re-sets and locks the field with the stronger guarantee.
+              if (data.data.department) {
+                const deptField = (formData.fields || []).find(f => f.vendorRole === 'department');
+                if (deptField) {
+                  const deptEl = document.getElementById(`input_${deptField.id}`);
+                  if (deptEl && !deptEl.disabled) {
+                    deptEl.value = data.data.department;
+                    deptEl.dispatchEvent(new Event('change'));
+                  }
+                }
               }
 
               const saveEmailInput = document.getElementById('saveProgressEmail');
@@ -1497,42 +1569,55 @@
           const cols = field.columns || [];
           const isRadio = field.type === 'grid_radio';
 
-          let tableHtml = `
-            <div style="overflow-x: auto;">
-              <table class="grid-table">
-                <thead>
-                  <tr>
-                    <th>Row</th>
-                    ${cols.map(c => `<th>${escapeHtml(c)}</th>`).join('')}
-                  </tr>
-                </thead>
-                <tbody>
-          `;
-
-          rows.forEach((r, ri) => {
-            tableHtml += `
-              <tr>
-                <td>${escapeHtml(r)}</td>
-                ${cols.map((c, ci) => `
-                  <td>
-                    <input type="${isRadio ? 'radio' : 'checkbox'}" 
-                      name="response_${field.id}_${ri}" 
-                      value="${escapeAttr(c)}" 
-                      class="grid-input"
-                      data-field-id="${field.id}"
-                      data-row-index="${ri}" />
-                  </td>
-                `).join('')}
-              </tr>
+          if (field.dynamicRows === 'utsav' && field.noActiveUtsav) {
+            inputHtml = `
+              <div class="dynamic-grid-unavailable" style="background:#fff3cd; border:1px solid #ffeeba; color:#856404; border-radius:6px; padding:0.75rem 1rem; font-size:0.9rem;">
+                <i class="fas fa-exclamation-triangle"></i> No upcoming event is currently configured, so this section can't be filled out yet. Please check back later.
+              </div>
             `;
-          });
+          } else {
+            const showQuickfill = rows.length > 1;
+            let tableHtml = `
+              <div style="overflow-x: auto;">
+                <table class="grid-table">
+                  <thead>
+                    <tr>
+                      <th>Row</th>
+                      ${cols.map((c, ci) => showQuickfill
+                        ? `<th class="grid-col-quickfill" onclick="applyColumnToAllRows('${field.id}', ${ci}, ${isRadio})" title="Apply '${escapeAttr(c)}' to every row">${escapeHtml(c)}<span class="grid-col-quickfill-hint"><i class="fas fa-check-double"></i> Apply to all</span></th>`
+                        : `<th>${escapeHtml(c)}</th>`
+                      ).join('')}
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
 
-          tableHtml += `
-                </tbody>
-              </table>
-            </div>
-          `;
-          inputHtml = tableHtml;
+            rows.forEach((r, ri) => {
+              tableHtml += `
+                <tr>
+                  <td>${escapeHtml(r)}</td>
+                  ${cols.map((c, ci) => `
+                    <td>
+                      <input type="${isRadio ? 'radio' : 'checkbox'}"
+                        name="response_${field.id}_${ri}"
+                        value="${escapeAttr(c)}"
+                        class="grid-input"
+                        data-field-id="${field.id}"
+                        data-row-index="${ri}"
+                        data-col-index="${ci}" />
+                    </td>
+                  `).join('')}
+                </tr>
+              `;
+            });
+
+            tableHtml += `
+                  </tbody>
+                </table>
+              </div>
+            `;
+            inputHtml = tableHtml;
+          }
         }
 
         return `
@@ -1764,11 +1849,21 @@
           const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobno })
+            body: JSON.stringify({ mobno, formId: formData.id })
           });
           const data = await res.json();
           if (data.success) {
-            alert('OTP sent successfully to your WhatsApp!');
+            if (data.devOtp) {
+              // Dev-only bypass: WhatsApp isn't configured, so the backend handed
+              // the OTP back directly instead of sending it. Autofill it so local
+              // testing doesn't require digging it out of the database/logs.
+              alert(`[DEV MODE] WhatsApp isn't configured, so here's the OTP directly: ${data.devOtp}`);
+              const otpInput = document.getElementById('input_otp');
+              otpInput.value = data.devOtp;
+              otpInput.dispatchEvent(new Event('input', { bubbles: true }));
+            } else {
+              alert('OTP sent successfully to your WhatsApp!');
+            }
             $('#otpInputSection').slideDown();
             sendBtn.textContent = 'Resend OTP';
           } else {
@@ -1784,16 +1879,22 @@
         }
       });
 
-      $(document).on('click', '#verifyOtpBtn', async function() {
+      let otpVerifyInFlight = false;
+
+      // Shared by the Verify button and the auto-verify-on-6-digits trigger,
+      // so typing the OTP is enough on its own — no extra click needed.
+      async function verifyOtp() {
+        if (isOtpVerified || otpVerifyInFlight) return;
+
         const mobno = document.getElementById('input_mobno').value.trim();
         const otp = document.getElementById('input_otp').value.trim();
-        const verifyBtn = this;
+        const verifyBtn = document.getElementById('verifyOtpBtn');
 
         if (!otp || otp.length !== 6) {
-          alert('Please enter a valid 6-digit OTP');
           return;
         }
 
+        otpVerifyInFlight = true;
         verifyBtn.disabled = true;
         verifyBtn.textContent = 'Verifying...';
 
@@ -1801,18 +1902,31 @@
           const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobno, otp })
+            body: JSON.stringify({ mobno, otp, formId: formData.id })
           });
           const data = await res.json();
           if (data.success) {
             isOtpVerified = true;
-            alert('OTP verified successfully!');
             $('#input_mobno').prop('readonly', true).css('background-color', '#e9ecef');
             $('#input_otp').prop('readonly', true).css('background-color', '#e9ecef');
             $('#sendOtpBtn').hide();
             verifyBtn.disabled = true;
             verifyBtn.textContent = 'Verified ✓';
             verifyBtn.style.backgroundColor = '#28a745';
+
+            // If this number is on the form's OTP allowlist, pre-select the
+            // Department field (if present) to the department it's authorized
+            // for. Left editable in case the submitter needs to correct it.
+            if (data.department) {
+              const deptField = (formData.fields || []).find(f => f.vendorRole === 'department');
+              if (deptField) {
+                const deptEl = document.getElementById(`input_${deptField.id}`);
+                if (deptEl) {
+                  deptEl.value = data.department;
+                  deptEl.dispatchEvent(new Event('change'));
+                }
+              }
+            }
 
             const saveEmailInput = document.getElementById('saveProgressEmail');
             const knownEmail = saveEmailInput ? saveEmailInput.value.trim() : '';
@@ -1829,6 +1943,25 @@
           alert('Error verifying OTP.');
           verifyBtn.textContent = 'Verify';
           verifyBtn.disabled = false;
+        } finally {
+          otpVerifyInFlight = false;
+        }
+      }
+
+      $(document).on('click', '#verifyOtpBtn', function() {
+        const otp = document.getElementById('input_otp').value.trim();
+        if (!otp || otp.length !== 6) {
+          alert('Please enter a valid 6-digit OTP');
+          return;
+        }
+        verifyOtp();
+      });
+
+      // Auto-verify as soon as a 6-digit OTP is typed/pasted in — saves the
+      // extra click on the Verify button for the common case.
+      $(document).on('input', '#input_otp', function() {
+        if (this.value.trim().length === 6) {
+          verifyOtp();
         }
       });
 
