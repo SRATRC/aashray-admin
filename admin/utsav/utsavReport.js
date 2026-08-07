@@ -159,6 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
   📝 Copy Feedback Link
 </button>
 
+<button
+  class="btn btn-sm btn-outline-primary short-link"
+  data-slug="u${item.id}"
+>
+  🌐 Copy WhatsApp Shortlink
+</button>
+
 <a
   href="fetchUtsavFeedbacks.html?utsav_id=${item.id}"
   class="btn btn-sm btn-success"
@@ -309,6 +316,18 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
 
       }
 
+    }
+
+    if (e.target.classList.contains('short-link')) {
+      const slug = e.target.dataset.slug;
+      const url = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/${slug}`;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`WhatsApp Shortlink copied:\n${url}`);
+      } catch {
+        alert('Failed to copy shortlink.');
+      }
     }
 
     const toggleStatusBtn = e.target.closest('.toggle-status');
