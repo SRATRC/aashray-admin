@@ -549,7 +549,10 @@ function renderAuditLists() {
         `;
         tbodyExtra.appendChild(row);
       });
-    }// Helper to enforce write permission on JS functions
+    }
+  }
+
+// Helper to enforce write permission on JS functions
 function checkWritePermission() {
   const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
   const isWriteAdmin = roles.includes('superAdmin') || roles.includes('utsavAdmin') || roles.includes('adhyayanAdmin') || roles.includes('officeAdmin');
