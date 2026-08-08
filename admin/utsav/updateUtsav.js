@@ -36,6 +36,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('available_seats').value = data.available_seats;
     document.getElementById('comments').value = data.comments;
     document.getElementById('location').value = data.location;
+    document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
+
+    const shortlinkGroup = document.getElementById('shortlink_group');
+    const shortlinkInput = document.getElementById('shortlink');
+    const shortlinkUrl = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/u${data.id}`;
+    shortlinkInput.value = shortlinkUrl;
+    shortlinkGroup.style.display = 'block';
+
+    const copyBtn = document.getElementById('copy_shortlink_btn');
+    if (copyBtn) {
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(shortlinkUrl);
+        alert('Shortlink copied to clipboard!');
+      };
+    }
     document.getElementById('registration_deadline').value = data.registration_deadline;
 
     const prefillSelect = (id, values) => {
@@ -72,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       available_seats: utsavForm.get('available_seats'),
       comments: utsavForm.get('comments'),
       location: utsavForm.get('location'),
+      whatsapp_link: utsavForm.get('whatsapp_link') || null,
       registration_deadline: utsavForm.get('registration_deadline'),
       starting_meal: startingMeal.length ? startingMeal : null,
       ending_meal: endingMeal.length ? endingMeal : null
