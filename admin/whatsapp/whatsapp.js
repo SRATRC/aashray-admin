@@ -195,7 +195,7 @@ function populateUtsavTable(utsavs) {
     `;
 
     row.innerHTML = `
-      <td><strong>${utsav.name}</strong></td>
+      <td><strong>${escapeHtml(utsav.name)}</strong></td>
       <td>${formattedDate}</td>
       <td>${jidText}</td>
       <td>${linkText}</td>
@@ -238,7 +238,7 @@ function populateShibirTable(shibirs) {
     `;
 
     row.innerHTML = `
-      <td><strong>${shibir.name}</strong></td>
+      <td><strong>${escapeHtml(shibir.name)}</strong></td>
       <td>${formattedDate}</td>
       <td>${jidText}</td>
       <td>${linkText}</td>
@@ -490,54 +490,58 @@ function renderAuditLists() {
     });
   }
 
-  // Missing
-  const btnReminder = document.getElementById('sendReminderToAllMissingBtn');
-  if (missing.length === 0) {
-    tbodyMissing.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">All confirmed participants have joined!</td></tr>';
-    if (btnReminder) btnReminder.style.display = 'none';
-  } else {
-    if (btnReminder) btnReminder.style.display = 'inline-block';
-    missing.forEach(m => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><strong>${escapeHtml(m.issuedto)}</strong></td>
-        <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
-        <td>+${m.phone || m.mobno}</td>
-        <td>
-          <button type="button" class="btn-sync-action" style="background:#0284c7;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;" onclick="sendSingleReminder('${m.phone || m.mobno}', '${escapeHtml(m.issuedto)}')">
-            📩 Send Reminder
-          </button>
-        </td>
-      `;
-      tbodyMissing.appendChild(row);
-    });
-  }
+    // Missing
+    const btnReminder = document.getElementById('sendReminderToAllMissingBtn');
+    if (missing.length === 0) {
+      tbodyMissing.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">All confirmed participants have joined!</td></tr>';
+      if (btnReminder) btnReminder.style.display = 'none';
+    } else {
+      if (btnReminder) btnReminder.style.display = 'inline-block';
+      missing.forEach(m => {
+        const row = document.createElement('tr');
+        const phoneVal = m.phone || m.mobno || '';
+        const nameVal = m.issuedto || '';
+        row.innerHTML = `
+          <td><strong>${escapeHtml(nameVal)}</strong></td>
+          <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
+          <td>+${escapeHtml(phoneVal)}</td>
+          <td>
+            <button type="button" class="btn-sync-action" style="background:#0284c7;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;" data-phone="${escapeHtml(phoneVal)}" data-name="${escapeHtml(nameVal)}" onclick="sendSingleReminder(this.dataset.phone, this.dataset.name)">
+              📩 Send Reminder
+            </button>
+          </td>
+        `;
+        tbodyMissing.appendChild(row);
+      });
+    }
 
-  // Extra
-  if (extra.length === 0) {
-    tbodyExtra.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">No extra members found.</td></tr>';
-    const syncBtn = document.getElementById('syncRemoveAllBtn');
-    if (syncBtn) syncBtn.style.display = 'none';
-  } else {
-    const syncBtn = document.getElementById('syncRemoveAllBtn');
-    if (syncBtn) syncBtn.style.display = 'block';
-    extra.forEach(m => {
-      const row = document.createElement('tr');
-      const cardNoText = m.cardno ? `<code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code>` : '<span style="color:#aaa; font-style:italic;">Not registered</span>';
-      row.innerHTML = `
-        <td><strong>${escapeHtml(m.issuedto)}</strong></td>
-        <td>${cardNoText}</td>
-        <td>+${m.phone}</td>
-        <td>
-          <button type="button" class="btn-remove-action" onclick="syncSingleMember('remove', '${m.phone}', '${m.issuedto}')">
-            Remove
-          </button>
-        </td>
-      `;
-      tbodyExtra.appendChild(row);
-    });
+    // Extra
+    if (extra.length === 0) {
+      tbodyExtra.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">No extra members found.</td></tr>';
+      const syncBtn = document.getElementById('syncRemoveAllBtn');
+      if (syncBtn) syncBtn.style.display = 'none';
+    } else {
+      const syncBtn = document.getElementById('syncRemoveAllBtn');
+      if (syncBtn) syncBtn.style.display = 'block';
+      extra.forEach(m => {
+        const row = document.createElement('tr');
+        const cardNoText = m.cardno ? `<code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code>` : '<span style="color:#aaa; font-style:italic;">Not registered</span>';
+        const phoneVal = m.phone || '';
+        const nameVal = m.issuedto || '';
+        row.innerHTML = `
+          <td><strong>${escapeHtml(nameVal)}</strong></td>
+          <td>${cardNoText}</td>
+          <td>+${escapeHtml(phoneVal)}</td>
+          <td>
+            <button type="button" class="btn-remove-action" data-phone="${escapeHtml(phoneVal)}" data-name="${escapeHtml(nameVal)}" onclick="syncSingleMember('remove', this.dataset.phone, this.dataset.name)">
+              Remove
+            </button>
+          </td>
+        `;
+        tbodyExtra.appendChild(row);
+      });
+    }
   }
-}
 
 // Sync a single member JID addition or removal
 async function syncSingleMember(actionType, phone, name) {
