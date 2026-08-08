@@ -166,6 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
   🌐 Copy WhatsApp Shortlink
 </button>
 
+<button
+  class="btn btn-sm btn-info send-grp-reminder"
+  data-utsav="${item.id}"
+  data-name="${item.name}"
+>
+  💬 Audit & Send Reminders
+</button>
+
 <a
   href="fetchUtsavFeedbacks.html?utsav_id=${item.id}"
   class="btn btn-sm btn-success"
@@ -327,6 +335,19 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
         alert(`WhatsApp Shortlink copied:\n${url}`);
       } catch {
         alert('Failed to copy shortlink.');
+      }
+    }
+
+    if (e.target.classList.contains('send-grp-reminder')) {
+      const utsavId = e.target.dataset.utsav;
+      const utsav = utsavfetch.find(u => String(u.id) === String(utsavId));
+      const jid = utsav?.whatsapp_group_jid || '';
+
+      const newUrl = `${window.location.pathname}?event_id=${utsavId}&type=utsav${jid ? '&jid=' + encodeURIComponent(jid) : ''}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      if (typeof openAuditModal === 'function') {
+        openAuditModal(jid || utsavId);
       }
     }
 

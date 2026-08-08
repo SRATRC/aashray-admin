@@ -18,43 +18,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
-    body {
-      font-family: 'Inter', sans-serif !important;
-      background: #f8fafc !important;
-      color: #1e293b;
+    /* Table Styling matching standard Admin Portal */
+    .group-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
     }
 
-    /* Outer Wrapper overrides */
-    .whitesec {
-      background: rgba(255, 255, 255, 0.85) !important;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      border-radius: 20px !important;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+    .group-table th {
+      background-color: #204060 !important;
+      color: #ffffff !important;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    .inner-padding {
-      padding: 32px !important;
+    .group-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e9ecef;
+      color: #333;
     }
 
-    .frm-head h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: #0f172a;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
+    .group-table tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
     }
 
-    .frm-head h1::after {
-      background: linear-gradient(to right, #075e54, #128c7e) !important;
-      height: 4px;
-      border-radius: 2px;
-    }
-
-    .frm-head p {
-      color: #64748b;
-      font-size: 1.05rem;
+    .group-table tbody tr:hover {
+      background-color: #e9ecef;
     }
 
     .wa-container {
@@ -584,8 +577,146 @@
       margin-right: 8px;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    /* Modal Backdrop & Container */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: block;
+      padding: 40px 16px;
+      box-sizing: border-box;
+    }
+
+    .modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-container {
+      background: #ffffff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      transform: translateY(-20px);
+      transition: transform 0.25s ease;
+      overflow: hidden;
+    }
+
+    .modal-backdrop.show .modal-container {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0f172a;
+      border: none !important;
+      padding-bottom: 0 !important;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.75rem;
+      font-weight: 400;
+      color: #64748b;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .audit-tab-content {
+      display: none;
+    }
+    .audit-tab-content.active {
+      display: block;
+    }
+
+    .msg-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      font-weight: 600;
+      font-size: 0.78rem;
+      border-radius: 30px;
+    }
+    .msg-success { background-color: #ecfdf5; color: #047857; }
+    .msg-failed { background-color: #fef2f2; color: #b91c1c; }
+    .msg-pending { background-color: #fffbeb; color: #b45309; }
+
+    /* Standard Admin Theme Overrides */
+    .frm-head h1::after {
+      background: linear-gradient(to right, #204060, #4c86b0) !important;
+    }
+
+    table.group-table th {
+      background-color: #204060 !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+    }
+
+    .btn-primary {
+      background: #204060 !important;
+      color: white !important;
+      box-shadow: 0 4px 10px rgba(32, 64, 96, 0.2) !important;
+    }
+
+    .btn-primary:hover {
+      background: #4c86b0 !important;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(32, 64, 96, 0.3) !important;
+    }
+
+    .btn-success {
+      background: #16a34a !important;
+      color: white !important;
+    }
+
+    .btn-success:hover {
+      background: #15803d !important;
+    }
+
+    .action-btn.btn-use {
+      background-color: #204060 !important;
+      color: #ffffff !important;
+      border: none !important;
+      box-shadow: 0 2px 5px rgba(32, 64, 96, 0.15);
+    }
+
+    .action-btn.btn-use:hover {
+      background-color: #4c86b0 !important;
+      color: #ffffff !important;
+    }
+
+    .tab-btn.active {
+      border-bottom-color: #204060 !important;
+      color: #204060 !important;
     }
   </style>
 
@@ -620,103 +751,189 @@
             <p>Manage WhatsApp connection credentials, monitor connection status, and send broadcast announcements.</p>
           </div>
 
-          <div class="wa-container">
-            <!-- Left Side: Status & Authentication -->
-            <div>
-              <div class="wa-card">
-                <h2>Connection Status</h2>
-                <div id="statusContainer">
-                  <span class="status-badge status-disconnected" id="statusBadge">Disconnected</span>
-                  <div style="color: #666; font-size: 0.85rem; margin-top: 5px;" id="lastUpdated">
-                    Last checked: -
-                  </div>
+          <!-- Top Bar: Connection Status -->
+          <div class="wa-card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <h2 style="margin: 0; border: none; padding: 0; font-size: 1.2rem;">Connection Status:</h2>
+                <div id="statusContainer" style="display: inline-flex; align-items: center; gap: 12px;">
+                  <span class="status-badge status-disconnected" id="statusBadge" style="margin: 0;">Disconnected</span>
+                  <span style="color: #64748b; font-size: 0.85rem;" id="lastUpdated">Last checked: -</span>
                 </div>
-
-                <div class="qr-container" id="qrContainer" style="display: none;">
-                  <p><strong>Action Required:</strong> Scan the QR code below using Linked Devices in your WhatsApp mobile application.</p>
-                  <img class="qr-image" id="qrImage" src="" alt="WhatsApp QR Code" />
-                  <p style="font-size: 0.8rem; color: #888;">The QR code resets automatically. If it expires, click refresh below.</p>
-                </div>
-
-                <button class="btn btn-primary refresh-btn" id="refreshBtn" onclick="checkStatus(true)">
-                  Refresh Status
-                </button>
               </div>
-
-              <!-- Message Center Navigation -->
-              <div class="wa-card">
-                <h2>Message Center</h2>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 18px;">
-                  Access the Message Center to compose broadcast announcements, view logs of previously sent messages, and search logs.
-                </p>
-                <a href="messages.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; margin-right: 6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                  Open Message Center
-                </a>
-              </div>
+              <button class="btn btn-primary" id="refreshBtn" onclick="checkStatus(true)" style="padding: 8px 18px; font-size: 0.85rem; width: auto; margin: 0;">
+                Refresh Status
+              </button>
             </div>
 
-            <!-- Right Side: Active Events and JIDs -->
-            <div>
-              <div class="wa-card">
-                <h2>Active WhatsApp Groups</h2>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">
-                  Below are the active events. You can copy their JIDs or click "Use" to auto-populate the broadcast form.
-                </p>
-
-                <div class="tab-container">
-                  <div class="tab-header">
-                    <button id="utsavTabBtn" class="tab-btn active" onclick="switchTab('utsavTab', this)">Utsav Groups</button>
-                    <button id="shibirTabBtn" class="tab-btn" onclick="switchTab('shibirTab', this)">Adhyayan (Shibir)</button>
-                  </div>
-
-                  <!-- Utsav Tab Content -->
-                  <div id="utsavTab" class="tab-content active">
-                    <div class="table-container">
-                      <table class="group-table" id="utsavTable">
-                        <thead>
-                          <tr>
-                            <th>Utsav Name</th>
-                            <th>Date</th>
-                            <th>WhatsApp JID</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td colspan="4" style="text-align: center; color: #888;">Loading Utsav groups...</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <!-- Shibir Tab Content -->
-                  <div id="shibirTab" class="tab-content">
-                    <div class="table-container">
-                      <table class="group-table" id="shibirTable">
-                        <thead>
-                          <tr>
-                            <th>Shibir Name</th>
-                            <th>Date</th>
-                            <th>WhatsApp JID</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td colspan="4" style="text-align: center; color: #888;">Loading Shibir groups...</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div> <!-- /tab-container -->
-              </div> <!-- /wa-card -->
+            <div class="qr-container" id="qrContainer" style="display: none; margin-top: 16px;">
+              <p style="margin-bottom: 8px;"><strong>Action Required:</strong> Scan the QR code below using Linked Devices in your WhatsApp mobile application.</p>
+              <img class="qr-image" id="qrImage" src="" alt="WhatsApp QR Code" />
+              <p style="font-size: 0.8rem; color: #888; margin: 0;">The QR code resets automatically. If it expires, click refresh above.</p>
             </div>
-
           </div>
 
+          <!-- Active WhatsApp Groups Table Card -->
+          <div class="wa-card">
+            <h2>Active WhatsApp Groups</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">
+              Below are the active events. You can copy their JIDs or click "Use" to auto-populate the broadcast form.
+            </p>
+
+            <div class="tab-container">
+              <div class="tab-header">
+                <button id="utsavTabBtn" class="tab-btn active" onclick="switchTab('utsavTab', this)">Utsav Groups</button>
+                <button id="shibirTabBtn" class="tab-btn" onclick="switchTab('shibirTab', this)">Adhyayan (Shibir)</button>
+              </div>
+
+              <!-- Utsav Tab Content -->
+              <div id="utsavTab" class="tab-content active">
+                <div class="table-container">
+                  <table class="group-table" id="utsavTable">
+                    <thead>
+                      <tr>
+                        <th>Utsav Name</th>
+                        <th>Date</th>
+                        <th>WhatsApp JID (Baileys)</th>
+                        <th>Group Shortlink</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colspan="5" style="text-align: center; color: #888;">Loading Utsav groups...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Shibir Tab Content -->
+              <div id="shibirTab" class="tab-content">
+                <div class="table-container">
+                  <table class="group-table" id="shibirTable">
+                    <thead>
+                      <tr>
+                        <th>Shibir Name</th>
+                        <th>Date</th>
+                        <th>WhatsApp JID (Baileys)</th>
+                        <th>Group Shortlink</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colspan="5" style="text-align: center; color: #888;">Loading Shibir groups...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div> <!-- /tab-container -->
+          </div> <!-- /wa-card -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Reconciliation Modal -->
+  <div id="auditModal" class="modal-backdrop" onclick="handleAuditBackdropClick(event)">
+    <div class="modal-container" style="max-width: 900px;">
+      <div class="modal-header">
+        <h2>Group Member Reconciliation & Audit</h2>
+        <button type="button" class="modal-close-btn" onclick="closeAuditModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="grid-template-columns: 1fr; padding: 24px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <span style="font-size: 0.85rem; color: #64748b; font-weight: 550;">Target Group JID:</span>
+            <span id="auditGroupJidVal" class="jid-code" style="margin-left: 6px;">-</span>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="runReconciliationAudit()" id="runAuditBtn" style="margin: 0; padding: 8px 16px; font-size: 0.85rem;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-top: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+            Re-Run Audit
+          </button>
+        </div>
+
+        <div id="auditLoading" style="display: none; text-align: center; padding: 40px 0;">
+          <span class="loading-spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #128c7e;"></span>
+          <p style="margin-top: 16px; color: #64748b; font-weight: 650; margin-bottom: 4px;">Auditing WhatsApp Group Members...</p>
+          <p style="font-size: 0.8rem; color: #94a3b8; max-width: 400px; margin: 0 auto;">This queues a fetch job to fetch current WhatsApp participants and reconciles against confirmed database bookings (takes ~5-10s).</p>
+        </div>
+
+        <div id="auditResults" style="display: none;">
+          <div style="display: flex; gap: 12px; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px;">
+            <button type="button" class="tab-btn active" id="btnTabMatched" onclick="switchAuditTab('matched')" style="display: flex; align-items: center; gap: 6px; padding: 12px 16px; border:none; background:none; font-weight:600; font-size:0.95rem; cursor:pointer;">
+              Matched <span class="msg-badge msg-success" id="countMatched">0</span>
+            </button>
+            <button type="button" class="tab-btn" id="btnTabMissing" onclick="switchAuditTab('missing')" style="display: flex; align-items: center; gap: 6px; padding: 12px 16px; border:none; background:none; font-weight:600; font-size:0.95rem; cursor:pointer;">
+              Missing from Group <span class="msg-badge msg-failed" id="countMissing">0</span>
+            </button>
+            <button type="button" class="tab-btn" id="btnTabExtra" onclick="switchAuditTab('extra')" style="display: flex; align-items: center; gap: 6px; padding: 12px 16px; border:none; background:none; font-weight:600; font-size:0.95rem; cursor:pointer;">
+              Extra in Group <span class="msg-badge msg-pending" id="countExtra">0</span>
+            </button>
+          </div>
+
+          <div id="auditTabMatched" class="audit-tab-content active">
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">These members have confirmed bookings in the database and are present in the WhatsApp group.</p>
+            <div class="table-container" style="max-height: 280px;">
+              <table class="group-table" id="tableMatched">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Card No</th>
+                    <th>Phone</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="auditTabMissing" class="audit-tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+              <p style="font-size: 0.85rem; color: #64748b; margin: 0;">These people have confirmed bookings but have NOT joined the WhatsApp group yet.</p>
+              <button type="button" class="btn btn-success" id="sendReminderToAllMissingBtn" onclick="sendTemplateReminderToMissing()" style="padding: 8px 16px; font-size: 0.85rem; margin: 0; background: #047857; color: white;">
+                📩 Send Template Reminder to All Missing
+              </button>
+            </div>
+            <div class="table-container" style="max-height: 280px;">
+              <table class="group-table" id="tableMissing">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Card No</th>
+                    <th>Phone</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="auditTabExtra" class="audit-tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+              <p style="font-size: 0.85rem; color: #64748b; margin: 0;">These JIDs are in the WhatsApp group but do NOT have confirmed bookings in the database.</p>
+              <button type="button" class="btn btn-warning" id="syncRemoveAllBtn" onclick="syncAllExtra()" style="padding: 6px 12px; font-size: 0.8rem; margin: 0;">
+                Queue Remove for All Extra
+              </button>
+            </div>
+            <div class="table-container" style="max-height: 280px;">
+              <table class="group-table" id="tableExtra">
+                <thead>
+                  <tr>
+                    <th>Name / Lookup</th>
+                    <th>Card No</th>
+                    <th>Phone</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

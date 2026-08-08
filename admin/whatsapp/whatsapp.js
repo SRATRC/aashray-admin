@@ -29,14 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Initial checks and loads
-  checkStatus();
-  loadEvents(showUtsav, showShibir);
+  // Initial checks and loads if status badge element exists on page
+  if (document.getElementById('statusBadge')) {
+    checkStatus();
+    loadEvents(showUtsav, showShibir);
 
-  // Set up periodic status polling (every 10 seconds)
-  setInterval(() => {
-    checkStatus(false);
-  }, 10000);
+    // Set up periodic status polling (every 10 seconds)
+    setInterval(() => {
+      checkStatus(false);
+    }, 10000);
+  }
 });
 
 // Switch between Utsav and Shibir tabs
@@ -67,7 +69,7 @@ async function checkStatus(isManualClick = false) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const response = await fetch(`${CONFIG.basePath}/whatsapp/qr`, {
+    const response = await fetch(`${CONFIG.baseUrl}/admin/wa/qr`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -132,7 +134,7 @@ async function loadEvents(showUtsav = true, showShibir = true) {
   // 1. Fetch Utsavs
   if (showUtsav) {
     try {
-      const res = await fetch(`${CONFIG.basePath}/utsav/fetch`, { method: 'GET', headers });
+      const res = await fetch(`${CONFIG.baseUrl}/admin/utsav/fetch`, { method: 'GET', headers });
       const result = await res.json();
       const utsavs = result.data || [];
       populateUtsavTable(utsavs);
@@ -147,7 +149,7 @@ async function loadEvents(showUtsav = true, showShibir = true) {
   // 2. Fetch Shibirs (Adhyayan)
   if (showShibir) {
     try {
-      const res = await fetch(`${CONFIG.basePath}/adhyayan/fetchALLadhyayan`, { method: 'GET', headers });
+      const res = await fetch(`${CONFIG.baseUrl}/admin/adhyayan/fetchALLadhyayan`, { method: 'GET', headers });
       const result = await res.json();
       const shibirs = result.data || [];
       populateShibirTable(shibirs);
@@ -166,7 +168,7 @@ function populateUtsavTable(utsavs) {
   tbody.innerHTML = '';
 
   if (utsavs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">No Utsavs found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">No Utsavs found.</td></tr>';
     return;
   }
 
@@ -180,33 +182,23 @@ function populateUtsavTable(utsavs) {
     }) : '-';
 
     const jid = utsav.whatsapp_group_jid || '';
-    const jidText = jid ? `<code class="jid-code">${jid}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
+    const hasLink = utsav.whatsapp_link || false;
+    const slug = `u${utsav.id}`;
 
-    let actionButtons = '';
-    if (jid) {
-      actionButtons = `
-        <button class="action-btn btn-copy" onclick="copyToClipboard('${jid}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          Copy
-        </button>
-        <a href="messages.html?jid=${jid}" class="action-btn btn-use">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-          Messages
-        </a>
-      `;
-    } else {
-      actionButtons = `
-        <button class="action-btn btn-create" onclick="triggerGroupCreation('utsav', ${utsav.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></svg>
-          Create Group
-        </button>
-      `;
-    }
+    let jidText = jid ? `<code class="jid-code">${jid}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
+    let linkText = hasLink ? `<span class="badge bg-success" style="color:#15803d;font-weight:600;">Link Added (/go/${slug})</span>` : '<span style="color:#aaa;font-style:italic;">No Link</span>';
+
+    let actionButtons = `
+      <button onclick="openAuditModalForEvent('${utsav.id}', 'utsav', '${jid}')" class="action-btn btn-use" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:0.85rem;cursor:pointer;">
+        📊 Audit Reconciliation
+      </button>
+    `;
 
     row.innerHTML = `
       <td><strong>${utsav.name}</strong></td>
       <td>${formattedDate}</td>
       <td>${jidText}</td>
+      <td>${linkText}</td>
       <td>${actionButtons}</td>
     `;
     tbody.appendChild(row);
@@ -219,7 +211,7 @@ function populateShibirTable(shibirs) {
   tbody.innerHTML = '';
 
   if (shibirs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">No Shibirs found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">No Shibirs found.</td></tr>';
     return;
   }
 
@@ -233,37 +225,36 @@ function populateShibirTable(shibirs) {
     }) : '-';
 
     const jid = shibir.whatsapp_group_jid || '';
-    const jidText = jid ? `<code class="jid-code">${jid}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
+    const hasLink = shibir.whatsapp_link || false;
+    const slug = `a${shibir.id}`;
 
-    let actionButtons = '';
-    if (jid) {
-      actionButtons = `
-        <button class="action-btn btn-copy" onclick="copyToClipboard('${jid}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          Copy
-        </button>
-        <a href="messages.html?jid=${jid}" class="action-btn btn-use">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-          Messages
-        </a>
-      `;
-    } else {
-      actionButtons = `
-        <button class="action-btn btn-create" onclick="triggerGroupCreation('shibir', ${shibir.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></svg>
-          Create Group
-        </button>
-      `;
-    }
+    let jidText = jid ? `<code class="jid-code">${jid}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
+    let linkText = hasLink ? `<span class="badge bg-success" style="color:#15803d;font-weight:600;">Link Added (/go/${slug})</span>` : '<span style="color:#aaa;font-style:italic;">No Link</span>';
+
+    let actionButtons = `
+      <button onclick="openAuditModalForEvent('${shibir.id}', 'shibir', '${jid}')" class="action-btn btn-use" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:0.85rem;cursor:pointer;">
+        📊 Audit Reconciliation
+      </button>
+    `;
 
     row.innerHTML = `
       <td><strong>${shibir.name}</strong></td>
       <td>${formattedDate}</td>
       <td>${jidText}</td>
+      <td>${linkText}</td>
       <td>${actionButtons}</td>
     `;
     tbody.appendChild(row);
   });
+}
+
+// Helper to open Audit Reconciliation Modal directly on index.html
+function openAuditModalForEvent(eventId, type, jid = '') {
+  const newUrl = `${window.location.pathname}?event_id=${eventId}&type=${type}${jid ? '&jid=' + encodeURIComponent(jid) : ''}`;
+  window.history.pushState({ path: newUrl }, '', newUrl);
+  if (typeof openAuditModal === 'function') {
+    openAuditModal(jid || eventId);
+  }
 }
 
 // Utility: Copy group JID to clipboard
@@ -289,7 +280,7 @@ async function triggerGroupCreation(type, eventId) {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/groups/trigger-create`, {
+    const res = await fetch(`${CONFIG.baseUrl}/admin/wa/groups/trigger-create`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ type, eventId })
@@ -348,4 +339,373 @@ function showToast(message, type = 'success') {
       toast.remove();
     }, 300);
   }, 4000);
+}
+
+/* ==========================================================================
+   Group Member Reconciliation & Audit Modal Logic
+   ========================================================================== */
+
+let reconciliationData = { matched: [], missing: [], extra: [] };
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Open secondary Audit Reconciliation modal
+function openAuditModal(jid = '') {
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventId = urlParams.get('event_id');
+  const urlJid = urlParams.get('jid');
+  const targetJid = jid || urlJid || eventId || '';
+  if (!targetJid) {
+    showToast('Please specify an Event ID or Target Group JID first.', 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('auditModal');
+  if (!modal) return;
+
+  const type = urlParams.get('type') || 'shibir';
+  const displayJid = jid || (urlJid && urlJid !== 'undefined' ? urlJid : '') || (eventId ? (type === 'utsav' ? `Utsav #${eventId}` : `Shibir #${eventId}`) : targetJid);
+  const jidElem = document.getElementById('auditGroupJidVal');
+  if (jidElem) jidElem.textContent = displayJid;
+
+  modal.classList.add('show');
+  document.body.classList.add('modal-open');
+
+  runReconciliationAudit();
+}
+
+// Close secondary Audit Reconciliation modal
+function closeAuditModal() {
+  const modal = document.getElementById('auditModal');
+  if (!modal) return;
+
+  modal.classList.remove('show');
+  document.body.classList.remove('modal-open');
+}
+
+function handleAuditBackdropClick(event) {
+  if (event.target.id === 'auditModal') {
+    closeAuditModal();
+  }
+}
+
+// Run members audit reconciliation via DB-RPC queue
+async function runReconciliationAudit() {
+  const groupJid = document.getElementById('auditGroupJidVal').textContent.trim();
+  const loading = document.getElementById('auditLoading');
+  const results = document.getElementById('auditResults');
+  const runBtn = document.getElementById('runAuditBtn');
+
+  if (!groupJid || !loading || !results || !runBtn) return;
+
+  loading.style.display = 'block';
+  results.style.display = 'none';
+  runBtn.disabled = true;
+  runBtn.innerHTML = '<span class="loading-spinner"></span> Auditing...';
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('event_id');
+    const type = urlParams.get('type');
+    let endpoint = `${CONFIG.baseUrl}/admin/wa/groups/${encodeURIComponent(groupJid)}/reconciliation`;
+    if (eventId) {
+      endpoint = `${CONFIG.baseUrl}/admin/wa/groups/${encodeURIComponent(groupJid)}/reconciliation?event_id=${eventId}&type=${type || 'shibir'}`;
+    }
+
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Audit check failed');
+
+    reconciliationData = result.data || { matched: [], missing: [], extra: [] };
+
+    if (result.data?.groupJid) {
+      document.getElementById('auditGroupJidVal').textContent = result.data.groupJid;
+    }
+
+    // Update counts
+    document.getElementById('countMatched').textContent = reconciliationData.matched.length;
+    document.getElementById('countMissing').textContent = reconciliationData.missing.length;
+    document.getElementById('countExtra').textContent = reconciliationData.extra.length;
+
+    // Render lists
+    renderAuditLists();
+
+    loading.style.display = 'none';
+    results.style.display = 'block';
+  } catch (err) {
+    console.error('Audit failed:', err);
+    showToast(`Audit failed: ${err.message}`, 'error');
+    closeAuditModal();
+  } finally {
+    runBtn.disabled = false;
+    runBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-top: -2px; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+      Re-Run Audit
+    `;
+  }
+}
+
+// Render members into Matched, Missing and Extra lists
+function renderAuditLists() {
+  const tbodyMatched = document.querySelector('#tableMatched tbody');
+  const tbodyMissing = document.querySelector('#tableMissing tbody');
+  const tbodyExtra = document.querySelector('#tableExtra tbody');
+
+  if (!tbodyMatched || !tbodyMissing || !tbodyExtra) return;
+
+  tbodyMatched.innerHTML = '';
+  tbodyMissing.innerHTML = '';
+  tbodyExtra.innerHTML = '';
+
+  const { matched, missing, extra } = reconciliationData;
+
+  // Matched
+  if (matched.length === 0) {
+    tbodyMatched.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888; padding: 20px;">No matched members.</td></tr>';
+  } else {
+    matched.forEach(m => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>${escapeHtml(m.issuedto)}</strong></td>
+        <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
+        <td>+${m.phone}</td>
+      `;
+      tbodyMatched.appendChild(row);
+    });
+  }
+
+  // Missing
+  const btnReminder = document.getElementById('sendReminderToAllMissingBtn');
+  if (missing.length === 0) {
+    tbodyMissing.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">All confirmed participants have joined!</td></tr>';
+    if (btnReminder) btnReminder.style.display = 'none';
+  } else {
+    if (btnReminder) btnReminder.style.display = 'inline-block';
+    missing.forEach(m => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>${escapeHtml(m.issuedto)}</strong></td>
+        <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
+        <td>+${m.phone || m.mobno}</td>
+        <td>
+          <button type="button" class="btn-sync-action" style="background:#0284c7;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;" onclick="sendSingleReminder('${m.phone || m.mobno}', '${escapeHtml(m.issuedto)}')">
+            📩 Send Reminder
+          </button>
+        </td>
+      `;
+      tbodyMissing.appendChild(row);
+    });
+  }
+
+  // Extra
+  if (extra.length === 0) {
+    tbodyExtra.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">No extra members found.</td></tr>';
+    const syncBtn = document.getElementById('syncRemoveAllBtn');
+    if (syncBtn) syncBtn.style.display = 'none';
+  } else {
+    const syncBtn = document.getElementById('syncRemoveAllBtn');
+    if (syncBtn) syncBtn.style.display = 'block';
+    extra.forEach(m => {
+      const row = document.createElement('tr');
+      const cardNoText = m.cardno ? `<code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code>` : '<span style="color:#aaa; font-style:italic;">Not registered</span>';
+      row.innerHTML = `
+        <td><strong>${escapeHtml(m.issuedto)}</strong></td>
+        <td>${cardNoText}</td>
+        <td>+${m.phone}</td>
+        <td>
+          <button type="button" class="btn-remove-action" onclick="syncSingleMember('remove', '${m.phone}', '${m.issuedto}')">
+            Remove
+          </button>
+        </td>
+      `;
+      tbodyExtra.appendChild(row);
+    });
+  }
+}
+
+// Sync a single member JID addition or removal
+async function syncSingleMember(actionType, phone, name) {
+  const groupJid = document.getElementById('auditGroupJidVal').textContent.trim();
+  if (!confirm(`Are you sure you want to queue "${actionType}" action for ${name} (+${phone})?`)) return;
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.baseUrl}/admin/wa/groups/${encodeURIComponent(groupJid)}/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        actions: [{ action: actionType, phone }]
+      })
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Sync action failed');
+
+    showToast(`Sync job queued successfully for ${name}!`, 'success');
+    
+    setTimeout(runReconciliationAudit, 1000);
+  } catch (err) {
+    console.error('Sync failed:', err);
+    showToast(`Sync failed: ${err.message}`, 'error');
+  }
+}
+
+// Sync all extra members in one click
+async function syncAllExtra() {
+  const { extra } = reconciliationData;
+  if (!extra || extra.length === 0) return;
+
+  if (!confirm(`Are you sure you want to queue group REMOVE jobs for all ${extra.length} extra members?`)) return;
+
+  const groupJid = document.getElementById('auditGroupJidVal').textContent.trim();
+  const actions = extra.map(m => ({ action: 'remove', phone: m.phone }));
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.baseUrl}/admin/wa/groups/${encodeURIComponent(groupJid)}/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ actions })
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Sync failed');
+
+    showToast(`Queued REMOVE jobs for all ${extra.length} extra members!`, 'success');
+    setTimeout(runReconciliationAudit, 1000);
+  } catch (err) {
+    console.error('Batch sync failed:', err);
+    showToast(`Sync failed: ${err.message}`, 'error');
+  }
+}
+
+// Switch between Matched, Missing, and Extra tabs in auditResults
+function switchAuditTab(tab) {
+  document.querySelectorAll('.audit-tab-content').forEach(el => {
+    el.classList.remove('active');
+  });
+  
+  const tabMatchedBtn = document.getElementById('btnTabMatched');
+  const tabMissingBtn = document.getElementById('btnTabMissing');
+  const tabExtraBtn = document.getElementById('btnTabExtra');
+
+  if (tabMatchedBtn && tabMissingBtn && tabExtraBtn) {
+    tabMatchedBtn.classList.remove('active');
+    tabMissingBtn.classList.remove('active');
+    tabExtraBtn.classList.remove('active');
+  }
+
+  if (tab === 'matched') {
+    const el = document.getElementById('auditTabMatched');
+    if (el) el.classList.add('active');
+    if (tabMatchedBtn) tabMatchedBtn.classList.add('active');
+  } else if (tab === 'missing') {
+    const el = document.getElementById('auditTabMissing');
+    if (el) el.classList.add('active');
+    if (tabMissingBtn) tabMissingBtn.classList.add('active');
+  } else if (tab === 'extra') {
+    const el = document.getElementById('auditTabExtra');
+    if (el) el.classList.add('active');
+    if (tabExtraBtn) tabExtraBtn.classList.add('active');
+  }
+}
+
+// Send single WhatsApp template reminder
+async function sendSingleReminder(phone, name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const shibirId = urlParams.get('event_id');
+  const rawType = urlParams.get('type') || 'adhyayan';
+  const type = (rawType === 'shibir' || rawType === 'adhyayan') ? 'adhyayan' : 'utsav';
+
+  if (!confirm(`Send WhatsApp group join reminder to ${name} (${phone})?`)) return;
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const endpoint = `${CONFIG.baseUrl}/admin/${type}/send-group-reminder`;
+    const body = type === 'utsav' ? { utsav_id: shibirId, phone } : { shibir_id: shibirId, phone };
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Failed to send reminder');
+    showToast(`✅ Reminder sent to ${name}!`, 'success');
+  } catch (err) {
+    console.error('Failed to send single reminder:', err);
+    showToast(`Error: ${err.message}`, 'error');
+  }
+}
+
+// Send WhatsApp template reminder to ALL missing members
+async function sendTemplateReminderToMissing() {
+  const { missing } = reconciliationData || { missing: [] };
+  if (!missing || missing.length === 0) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const shibirId = urlParams.get('event_id');
+  const rawType = urlParams.get('type') || 'adhyayan';
+  const type = (rawType === 'shibir' || rawType === 'adhyayan') ? 'adhyayan' : 'utsav';
+
+  if (!confirm(`Are you sure you want to send a WhatsApp group join reminder to all ${missing.length} un-joined participants?`)) return;
+
+  const btn = document.getElementById('sendReminderToAllMissingBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sending reminders...';
+  }
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const endpoint = `${CONFIG.baseUrl}/admin/${type}/send-group-reminder`;
+    const body = type === 'utsav' ? { utsav_id: shibirId } : { shibir_id: shibirId };
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Failed to send reminders');
+    showToast(`✅ Reminders dispatched to ${missing.length} un-joined members!`, 'success');
+  } catch (err) {
+    console.error('Batch reminder failed:', err);
+    showToast(`Error: ${err.message}`, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📩 Send Template Reminder to All Missing';
+    }
+  }
 }
