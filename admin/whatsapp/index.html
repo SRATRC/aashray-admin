@@ -1,0 +1,728 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['superAdmin', 'utsavAdmin', 'adhyayanAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Automation Management</title>
+
+  <!-- Load jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif !important;
+      background: #f8fafc !important;
+      color: #1e293b;
+    }
+
+    /* Outer Wrapper overrides */
+    .whitesec {
+      background: rgba(255, 255, 255, 0.85) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 20px !important;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .inner-padding {
+      padding: 32px !important;
+    }
+
+    .frm-head h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .frm-head h1::after {
+      background: linear-gradient(to right, #075e54, #128c7e) !important;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .frm-head p {
+      color: #64748b;
+      font-size: 1.05rem;
+    }
+
+    .wa-container {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    @media (max-width: 950px) {
+      .wa-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .wa-card {
+      background: #ffffff;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+      margin-bottom: 32px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wa-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+      transition: background 0.3s ease;
+    }
+
+    .wa-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 1px 5px rgba(0, 0, 0, 0.03);
+    }
+
+    .wa-card:hover::before {
+      background: linear-gradient(90deg, #128c7e, #075e54);
+    }
+
+    .wa-card h2 {
+      font-size: 1.3rem;
+      font-weight: 650;
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #0f172a;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Status Badge & Indicator */
+    .status-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: 30px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+
+    .status-badge::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-connected {
+      background-color: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+    .status-connected::before {
+      background-color: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: wa-pulse 2s infinite;
+    }
+
+    .status-connecting {
+      background-color: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    .status-connecting::before {
+      background-color: #3b82f6;
+      box-shadow: 0 0 8px #3b82f6;
+      animation: wa-pulse 1.5s infinite;
+    }
+
+    .status-disconnected {
+      background-color: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+    .status-disconnected::before {
+      background-color: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+
+    .status-qr {
+      background-color: #fffbeb;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+    .status-qr::before {
+      background-color: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: wa-pulse 1s infinite;
+    }
+
+    @keyframes wa-pulse {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    /* QR Code styling */
+    .qr-container {
+      text-align: center;
+      margin: 24px 0;
+      padding: 24px;
+      background: #fafbfc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .qr-image {
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+      margin: 16px auto;
+      display: block;
+      border: 8px solid #fff;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #128c7e, #075e54);
+      color: white;
+      box-shadow: 0 4px 12px rgba(18, 140, 126, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(18, 140, 126, 0.35);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-warning:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+    }
+
+    .refresh-btn {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    /* Action Buttons (Table and small triggers) */
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+
+    .action-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .btn-copy {
+      background-color: #f8fafc;
+      color: #475569;
+      border-color: #cbd5e1;
+    }
+
+    .btn-copy:hover {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+
+    .btn-use {
+      background-color: #f0fdf4;
+      color: #16a34a;
+      border-color: #bbf7d0;
+      margin-left: 6px;
+    }
+
+    .btn-use:hover {
+      background-color: #dcfce7;
+      color: #15803d;
+      border-color: #86efac;
+    }
+
+    .btn-create {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-create:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px -2px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-retry {
+      background-color: #fffbeb;
+      color: #d97706;
+      border-color: #fde68a;
+    }
+
+    .btn-retry:hover {
+      background-color: #fef3c7;
+      color: #b45309;
+      border-color: #fcd34d;
+    }
+
+    /* Tabs Styling */
+    .tab-header {
+      display: flex;
+      gap: 12px;
+      border-bottom: 2px solid #f1f5f9;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #64748b;
+      transition: all 0.25s ease;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      color: #0f172a;
+    }
+
+    .tab-btn.active {
+      border-bottom-color: #128c7e;
+      color: #128c7e;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Scrollable Container */
+    .table-container {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid #f1f5f9;
+      border-radius: 10px;
+      background: #fafbfc;
+    }
+
+    /* Custom Scrollbar */
+    .table-container::-webkit-scrollbar,
+    textarea::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .table-container::-webkit-scrollbar-track,
+    textarea::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    .table-container::-webkit-scrollbar-thumb,
+    textarea::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    .table-container::-webkit-scrollbar-thumb:hover,
+    textarea::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Tables */
+    .group-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.88rem;
+    }
+
+    .group-table th, .group-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .group-table th {
+      background-color: #f8fafc;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .group-table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+
+    .group-table tbody tr:hover td {
+      background-color: #f1f5f9;
+    }
+
+    .jid-code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-weight: 550;
+      background: #f1f5f9;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+      font-size: 0.82rem;
+    }
+
+    /* Forms */
+    .form-group label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 0.92rem;
+      color: #0f172a;
+      transition: all 0.2s ease;
+      background-color: #fff;
+    }
+
+    .form-control::placeholder {
+      color: #94a3b8;
+    }
+
+    .form-control:focus {
+      border-color: #128c7e;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(18, 140, 126, 0.12);
+    }
+
+    .textarea-control {
+      height: 120px;
+      resize: vertical;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #128c7e, #075e54);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(18, 140, 126, 0.2);
+    }
+
+    .submit-btn:hover {
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(18, 140, 126, 0.35);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Header modifications */
+    .header {
+      background-color: #075e54 !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    }
+
+    .logout a {
+      font-weight: 600 !important;
+    }
+    
+    .logout a:hover {
+      color: #25d366 !important;
+      text-decoration: none !important;
+    }
+
+    /* Toast Notifications */
+    #toastContainer {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .wa-toast {
+      background: white;
+      border-left: 4px solid #128c7e;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-weight: 550;
+      font-size: 0.9rem;
+      color: #1e293b;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 280px;
+      max-width: 450px;
+      pointer-events: auto;
+    }
+
+    .wa-toast-success {
+      border-left-color: #10b981;
+    }
+
+    .wa-toast-error {
+      border-left-color: #ef4444;
+    }
+
+    .wa-toast-warning {
+      border-left-color: #f59e0b;
+    }
+
+    .wa-toast-info {
+      border-left-color: #3b82f6;
+    }
+
+    .wa-toast svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2.5px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="whatsapp.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp; 
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a> 
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>WhatsApp Automation Management</h1>
+            <p>Manage WhatsApp connection credentials, monitor connection status, and send broadcast announcements.</p>
+          </div>
+
+          <div class="wa-container">
+            <!-- Left Side: Status & Authentication -->
+            <div>
+              <div class="wa-card">
+                <h2>Connection Status</h2>
+                <div id="statusContainer">
+                  <span class="status-badge status-disconnected" id="statusBadge">Disconnected</span>
+                  <div style="color: #666; font-size: 0.85rem; margin-top: 5px;" id="lastUpdated">
+                    Last checked: -
+                  </div>
+                </div>
+
+                <div class="qr-container" id="qrContainer" style="display: none;">
+                  <p><strong>Action Required:</strong> Scan the QR code below using Linked Devices in your WhatsApp mobile application.</p>
+                  <img class="qr-image" id="qrImage" src="" alt="WhatsApp QR Code" />
+                  <p style="font-size: 0.8rem; color: #888;">The QR code resets automatically. If it expires, click refresh below.</p>
+                </div>
+
+                <button class="btn btn-primary refresh-btn" id="refreshBtn" onclick="checkStatus(true)">
+                  Refresh Status
+                </button>
+              </div>
+
+              <!-- Message Center Navigation -->
+              <div class="wa-card">
+                <h2>Message Center</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 18px;">
+                  Access the Message Center to compose broadcast announcements, view logs of previously sent messages, and search logs.
+                </p>
+                <a href="messages.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; margin-right: 6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  Open Message Center
+                </a>
+              </div>
+            </div>
+
+            <!-- Right Side: Active Events and JIDs -->
+            <div>
+              <div class="wa-card">
+                <h2>Active WhatsApp Groups</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">
+                  Below are the active events. You can copy their JIDs or click "Use" to auto-populate the broadcast form.
+                </p>
+
+                <div class="tab-container">
+                  <div class="tab-header">
+                    <button id="utsavTabBtn" class="tab-btn active" onclick="switchTab('utsavTab', this)">Utsav Groups</button>
+                    <button id="shibirTabBtn" class="tab-btn" onclick="switchTab('shibirTab', this)">Adhyayan (Shibir)</button>
+                  </div>
+
+                  <!-- Utsav Tab Content -->
+                  <div id="utsavTab" class="tab-content active">
+                    <div class="table-container">
+                      <table class="group-table" id="utsavTable">
+                        <thead>
+                          <tr>
+                            <th>Utsav Name</th>
+                            <th>Date</th>
+                            <th>WhatsApp JID</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td colspan="4" style="text-align: center; color: #888;">Loading Utsav groups...</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Shibir Tab Content -->
+                  <div id="shibirTab" class="tab-content">
+                    <div class="table-container">
+                      <table class="group-table" id="shibirTable">
+                        <thead>
+                          <tr>
+                            <th>Shibir Name</th>
+                            <th>Date</th>
+                            <th>WhatsApp JID</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td colspan="4" style="text-align: center; color: #888;">Loading Shibir groups...</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div> <!-- /tab-container -->
+              </div> <!-- /wa-card -->
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer"></div>
+</body>
+</html>
