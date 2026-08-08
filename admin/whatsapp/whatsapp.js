@@ -549,11 +549,20 @@ function renderAuditLists() {
         `;
         tbodyExtra.appendChild(row);
       });
-    }
+    }// Helper to enforce write permission on JS functions
+function checkWritePermission() {
+  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const isWriteAdmin = roles.includes('superAdmin') || roles.includes('utsavAdmin') || roles.includes('adhyayanAdmin') || roles.includes('officeAdmin');
+  if (!isWriteAdmin) {
+    showToast('Permission denied: Read-only accounts cannot perform action operations.', 'error');
+    return false;
   }
+  return true;
+}
 
 // Sync a single member JID addition or removal
 async function syncSingleMember(actionType, phone, name) {
+  if (!checkWritePermission()) return;
   const groupJid = document.getElementById('auditGroupJidVal').textContent.trim();
   if (!confirm(`Are you sure you want to queue "${actionType}" action for ${name} (+${phone})?`)) return;
 
@@ -584,6 +593,7 @@ async function syncSingleMember(actionType, phone, name) {
 
 // Sync all extra members in one click
 async function syncAllExtra() {
+  if (!checkWritePermission()) return;
   const { extra } = reconciliationData;
   if (!extra || extra.length === 0) return;
 
@@ -647,6 +657,7 @@ function switchAuditTab(tab) {
 
 // Send single WhatsApp template reminder
 async function sendSingleReminder(phone, name) {
+  if (!checkWritePermission()) return;
   const urlParams = new URLSearchParams(window.location.search);
   const shibirId = urlParams.get('event_id');
   const rawType = urlParams.get('type') || 'adhyayan';
@@ -679,6 +690,7 @@ async function sendSingleReminder(phone, name) {
 
 // Send WhatsApp template reminder to ALL missing members
 async function sendTemplateReminderToMissing() {
+  if (!checkWritePermission()) return;
   const { missing } = reconciliationData || { missing: [] };
   if (!missing || missing.length === 0) return;
 
