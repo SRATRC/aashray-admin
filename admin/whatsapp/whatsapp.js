@@ -185,11 +185,11 @@ function populateUtsavTable(utsavs) {
     const hasLink = utsav.whatsapp_link || false;
     const slug = `u${utsav.id}`;
 
-    let jidText = jid ? `<code class="jid-code">${jid}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
+    let jidText = jid ? `<code class="jid-code">${escapeHtml(jid)}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
     let linkText = hasLink ? `<span class="badge bg-success" style="color:#15803d;font-weight:600;">Link Added (/go/${slug})</span>` : '<span style="color:#aaa;font-style:italic;">No Link</span>';
 
     let actionButtons = `
-      <button onclick="openAuditModalForEvent('${utsav.id}', 'utsav', '${jid}')" class="action-btn btn-use" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:0.85rem;cursor:pointer;">
+      <button data-event-id="${escapeHtml(utsav.id)}" data-type="utsav" data-jid="${escapeHtml(jid)}" onclick="openAuditModalForEvent(this.dataset.eventId, this.dataset.type, this.dataset.jid)" class="action-btn btn-use" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:0.85rem;cursor:pointer;">
         📊 Audit Reconciliation
       </button>
     `;
@@ -228,11 +228,11 @@ function populateShibirTable(shibirs) {
     const hasLink = shibir.whatsapp_link || false;
     const slug = `a${shibir.id}`;
 
-    let jidText = jid ? `<code class="jid-code">${jid}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
+    let jidText = jid ? `<code class="jid-code">${escapeHtml(jid)}</code>` : '<span style="color:#aaa;font-style:italic;">Not Created</span>';
     let linkText = hasLink ? `<span class="badge bg-success" style="color:#15803d;font-weight:600;">Link Added (/go/${slug})</span>` : '<span style="color:#aaa;font-style:italic;">No Link</span>';
 
     let actionButtons = `
-      <button onclick="openAuditModalForEvent('${shibir.id}', 'shibir', '${jid}')" class="action-btn btn-use" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:0.85rem;cursor:pointer;">
+      <button data-event-id="${escapeHtml(shibir.id)}" data-type="shibir" data-jid="${escapeHtml(jid)}" onclick="openAuditModalForEvent(this.dataset.eventId, this.dataset.type, this.dataset.jid)" class="action-btn btn-use" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:0.85rem;cursor:pointer;">
         📊 Audit Reconciliation
       </button>
     `;
