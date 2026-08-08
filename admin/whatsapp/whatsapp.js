@@ -4,10 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const isSuperAdmin = roles.includes('superAdmin');
   const isUtsavAdmin = roles.includes('utsavAdmin');
   const isAdhyayanAdmin = roles.includes('adhyayanAdmin');
+  const isOfficeAdmin = roles.includes('officeAdmin');
+  const isAdhyayanReadOnly = roles.includes('adhyayanAdminReadOnly');
+  const isUtsavReadOnly = roles.includes('utsavAdminReadOnly');
 
   // Handle role-based UI tab visibility
-  const showUtsav = isSuperAdmin || isUtsavAdmin;
-  const showShibir = isSuperAdmin || isAdhyayanAdmin;
+  const showUtsav = isSuperAdmin || isUtsavAdmin || isOfficeAdmin || isUtsavReadOnly;
+  const showShibir = isSuperAdmin || isAdhyayanAdmin || isOfficeAdmin || isAdhyayanReadOnly;
 
   const utsavBtn = document.getElementById('utsavTabBtn');
   const shibirBtn = document.getElementById('shibirTabBtn');
@@ -490,26 +493,31 @@ function renderAuditLists() {
     });
   }
 
+    // Check permissions for action buttons
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    const isWriteAdmin = roles.includes('superAdmin') || roles.includes('utsavAdmin') || roles.includes('adhyayanAdmin') || roles.includes('officeAdmin');
+
     // Missing
     const btnReminder = document.getElementById('sendReminderToAllMissingBtn');
     if (missing.length === 0) {
       tbodyMissing.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">All confirmed participants have joined!</td></tr>';
       if (btnReminder) btnReminder.style.display = 'none';
     } else {
-      if (btnReminder) btnReminder.style.display = 'inline-block';
+      if (btnReminder) btnReminder.style.display = isWriteAdmin ? 'inline-block' : 'none';
       missing.forEach(m => {
         const row = document.createElement('tr');
         const phoneVal = m.phone || m.mobno || '';
         const nameVal = m.issuedto || '';
+        const actionCell = isWriteAdmin ? `
+          <button type="button" class="btn-sync-action" style="background:#0284c7;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;" data-phone="${escapeHtml(phoneVal)}" data-name="${escapeHtml(nameVal)}" onclick="sendSingleReminder(this.dataset.phone, this.dataset.name)">
+            📩 Send Reminder
+          </button>
+        ` : '<span style="color:#aaa; font-style:italic;">Read Only</span>';
         row.innerHTML = `
           <td><strong>${escapeHtml(nameVal)}</strong></td>
           <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
           <td>+${escapeHtml(phoneVal)}</td>
-          <td>
-            <button type="button" class="btn-sync-action" style="background:#0284c7;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;" data-phone="${escapeHtml(phoneVal)}" data-name="${escapeHtml(nameVal)}" onclick="sendSingleReminder(this.dataset.phone, this.dataset.name)">
-              📩 Send Reminder
-            </button>
-          </td>
+          <td>${actionCell}</td>
         `;
         tbodyMissing.appendChild(row);
       });
@@ -522,29 +530,42 @@ function renderAuditLists() {
       if (syncBtn) syncBtn.style.display = 'none';
     } else {
       const syncBtn = document.getElementById('syncRemoveAllBtn');
-      if (syncBtn) syncBtn.style.display = 'block';
+      if (syncBtn) syncBtn.style.display = isWriteAdmin ? 'block' : 'none';
       extra.forEach(m => {
         const row = document.createElement('tr');
         const cardNoText = m.cardno ? `<code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code>` : '<span style="color:#aaa; font-style:italic;">Not registered</span>';
         const phoneVal = m.phone || '';
         const nameVal = m.issuedto || '';
+        const actionCell = isWriteAdmin ? `
+          <button type="button" class="btn-remove-action" data-phone="${escapeHtml(phoneVal)}" data-name="${escapeHtml(nameVal)}" onclick="syncSingleMember('remove', this.dataset.phone, this.dataset.name)">
+            Remove
+          </button>
+        ` : '<span style="color:#aaa; font-style:italic;">Read Only</span>';
         row.innerHTML = `
           <td><strong>${escapeHtml(nameVal)}</strong></td>
           <td>${cardNoText}</td>
           <td>+${escapeHtml(phoneVal)}</td>
-          <td>
-            <button type="button" class="btn-remove-action" data-phone="${escapeHtml(phoneVal)}" data-name="${escapeHtml(nameVal)}" onclick="syncSingleMember('remove', this.dataset.phone, this.dataset.name)">
-              Remove
-            </button>
-          </td>
+          <td>${actionCell}</td>
         `;
         tbodyExtra.appendChild(row);
       });
     }
   }
 
+// Helper to enforce write permission on JS functions
+function checkWritePermission() {
+  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const isWriteAdmin = roles.includes('superAdmin') || roles.includes('utsavAdmin') || roles.includes('adhyayanAdmin') || roles.includes('officeAdmin');
+  if (!isWriteAdmin) {
+    showToast('Permission denied: Read-only accounts cannot perform action operations.', 'error');
+    return false;
+  }
+  return true;
+}
+
 // Sync a single member JID addition or removal
 async function syncSingleMember(actionType, phone, name) {
+  if (!checkWritePermission()) return;
   const groupJid = document.getElementById('auditGroupJidVal').textContent.trim();
   if (!confirm(`Are you sure you want to queue "${actionType}" action for ${name} (+${phone})?`)) return;
 
@@ -575,6 +596,7 @@ async function syncSingleMember(actionType, phone, name) {
 
 // Sync all extra members in one click
 async function syncAllExtra() {
+  if (!checkWritePermission()) return;
   const { extra } = reconciliationData;
   if (!extra || extra.length === 0) return;
 
@@ -638,6 +660,7 @@ function switchAuditTab(tab) {
 
 // Send single WhatsApp template reminder
 async function sendSingleReminder(phone, name) {
+  if (!checkWritePermission()) return;
   const urlParams = new URLSearchParams(window.location.search);
   const shibirId = urlParams.get('event_id');
   const rawType = urlParams.get('type') || 'adhyayan';
@@ -670,6 +693,7 @@ async function sendSingleReminder(phone, name) {
 
 // Send WhatsApp template reminder to ALL missing members
 async function sendTemplateReminderToMissing() {
+  if (!checkWritePermission()) return;
   const { missing } = reconciliationData || { missing: [] };
   if (!missing || missing.length === 0) return;
 
