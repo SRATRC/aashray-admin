@@ -1,0 +1,103 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Satshrut Audio Configuration</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="globalConfig.js" defer></script>
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Audio Configuration</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display:none;"></div>
+
+              <p style="color:#555; margin-bottom:1.5rem;">
+                Set the default meditation audio that plays in every session.
+                Individual sessions can override this with their own audio URL.
+              </p>
+
+              <form id="configForm">
+
+                <div class="form-group">
+                  <label for="default_audio1_youtube_url">Default Meditation Audio 1 (Phase 2) YouTube URL:</label>
+                  <input
+                    type="url"
+                    id="default_audio1_youtube_url"
+                    name="default_audio1_youtube_url"
+                    class="form-control"
+                    placeholder="https://youtu.be/..."
+                  />
+                  <small id="currentAudio1Info" style="color:#204060; font-weight:500;"></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="default_audio2_youtube_url">Default Meditation Audio 2 (Phase 4) YouTube URL:</label>
+                  <input
+                    type="url"
+                    id="default_audio2_youtube_url"
+                    name="default_audio2_youtube_url"
+                    class="form-control"
+                    placeholder="https://youtu.be/..."
+                  />
+                  <small id="currentAudio2Info" style="color:#204060; font-weight:500;"></small>
+                </div>
+
+                <div class="form-group">
+                  <label>No-Session Days:</label>
+                  <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+                    <label><input type="checkbox" class="no-session-day" value="0" /> Sunday</label>
+                    <label><input type="checkbox" class="no-session-day" value="1" /> Monday</label>
+                    <label><input type="checkbox" class="no-session-day" value="2" /> Tuesday</label>
+                    <label><input type="checkbox" class="no-session-day" value="3" /> Wednesday</label>
+                    <label><input type="checkbox" class="no-session-day" value="4" /> Thursday</label>
+                    <label><input type="checkbox" class="no-session-day" value="5" /> Friday</label>
+                    <label><input type="checkbox" class="no-session-day" value="6" /> Saturday</label>
+                  </div>
+                  <small style="color:#888;">Checked days will show a warning when creating a session on that day.</small>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary" id="saveBtn">Save Configuration</button>
+                </div>
+
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

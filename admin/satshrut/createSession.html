@@ -1,0 +1,126 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Satshrut Session</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="createSession.js" defer></script>
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+          &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Add Satshrut Session</h1>
+            </div>
+
+            <div class="form">
+              <div id="alert" class="alert" role="alert" style="display: none;"></div>
+
+              <form id="sessionForm">
+
+                <div class="form-group">
+                  <label for="session_date">Session Date:</label>
+                  <input type="date" id="session_date" name="session_date" class="form-control" required />
+                  <small id="day-warning" style="color: #c0392b; display: none;">
+                    ⚠️ Mondays and Thursdays are typically no-session days.
+                  </small>
+                </div>
+
+                <div class="form-group">
+                  <label for="youtube_url">YouTube Video URL:</label>
+                  <input
+                    type="url"
+                    id="youtube_url"
+                    name="youtube_url"
+                    class="form-control"
+                    placeholder="https://youtu.be/... or https://www.youtube.com/watch?v=..."
+                    required
+                  />
+                  <small style="color:#666;">Paste the full YouTube URL of the satshrut video.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="start_time">Video Start Time (HH:MM:SS):</label>
+                  <input
+                    type="text"
+                    id="start_time"
+                    name="start_time"
+                    class="form-control"
+                    placeholder="00:05:30"
+                    pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="end_time">Video End Time (HH:MM:SS):</label>
+                  <input
+                    type="text"
+                    id="end_time"
+                    name="end_time"
+                    class="form-control"
+                    placeholder="00:30:00"
+                    pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                    required
+                  />
+                  <small id="duration-display" style="color:#204060; font-weight:500;"></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="audio_youtube_url">
+                    Meditation Audio URL (optional — overrides default audio for this date):
+                  </label>
+                  <input
+                    type="url"
+                    id="audio_youtube_url"
+                    name="audio_youtube_url"
+                    class="form-control"
+                    placeholder="Leave blank to use the global default audio"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="notes">Notes (optional):</label>
+                  <textarea id="notes" name="notes" rows="3" class="form-control" placeholder="e.g. Morning satsang - Part 2"></textarea>
+                </div>
+
+                <div class="form-group form-submit">
+                  <button type="submit" class="btn btn-primary" id="submitBtn">Save Session</button>
+                </div>
+
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
