@@ -116,7 +116,6 @@ function populateSessionInfo() {
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
-  document.getElementById('chipSegment').textContent = `${s.start_time_display} – ${s.end_time_display}`;
   document.getElementById('chipVideoDur').textContent = formatMinSec(videoDur);
   document.getElementById('chipAudioDur').textContent = formatMinSec(audioDur);
   document.getElementById('chipTotal').textContent = formatMinSec(totalDur);
@@ -218,12 +217,12 @@ window.onYouTubeIframeAPIReady = function () {
     videoId: sessionData.youtube_video_id,
     playerVars: {
       autoplay: 0,
-      controls: 1,        // Show full native YouTube player controls (scrubber bar, CC captions, quality, fullscreen)
-      fs: 1,              // Enable fullscreen button
+      controls: 1,        // Native YouTube player controls with scrubber bar
+      fs: 1,              // Enable native fullscreen
       rel: 0,
       modestbranding: 1,
       enablejsapi: 1,
-      cc_load_policy: 1   // Allow toggling captions
+      cc_load_policy: 0   // Captions OFF by default
     },
     events: {
       onReady: onPlayerReady,
@@ -251,8 +250,17 @@ function updateAudioDurationFromPlayer() {
   }
 }
 
+function disableCaptions() {
+  if (!player) return;
+  try {
+    if (typeof player.unloadModule === 'function') player.unloadModule('captions');
+    if (typeof player.setOption === 'function') player.setOption('captions', 'track', {});
+  } catch (err) {}
+}
+
 function onPlayerReady() {
   playerReady = true;
+  disableCaptions();
   if (player && typeof player.getIframe === 'function') {
     const iframe = player.getIframe();
     if (iframe) {
@@ -264,6 +272,11 @@ function onPlayerReady() {
   const beginBtn = document.getElementById('begin-btn');
   beginBtn.textContent = '▶  Begin Session';
   beginBtn.disabled = false;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('play') === 'true' || params.get('autoplay') === 'true') {
+    beginSession();
+  }
 }
 
 // ── State change handler ─────────────────────────────────────────────────────
@@ -282,6 +295,7 @@ function handleVideoSegmentEnd() {
       startSeconds: s.video2_start_seconds,
       endSeconds: s.video2_end_seconds
     });
+    startTimerTick();
     return;
   }
 
@@ -297,6 +311,7 @@ function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PAUSED)  { pauseSession(); }
   if (event.data === YT.PlayerState.PLAYING) {
     phaseLoading = false; // Video is now actively playing
+    disableCaptions();
     if (currentPhase === 1 || currentPhase === 3) {
       updateAudioDurationFromPlayer();
     }
@@ -326,14 +341,78 @@ function resumeSession() {
   document.getElementById('countdown').style.opacity = '1';
 }
 
+function togglePlayPause() {
+  if (!sessionStarted) return;
+  if (isPaused) {
+    resumeSession();
+  } else {
+    pauseSession();
+  }
+}
+
+function seekBySeconds(delta) {
+  if (!player || typeof player.getCurrentTime !== 'function') return;
+  const cur = player.getCurrentTime();
+  const dur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
+  const s = sessionData;
+  const isVideoPhase = currentPhase === 0 || currentPhase === 2;
+
+  let minSec = 0;
+  let maxSec = dur;
+
+  if (isVideoPhase) {
+    if (currentSubPhase === 0) {
+      minSec = s.video_start_seconds;
+      maxSec = s.video_end_seconds;
+    } else {
+      minSec = s.video2_start_seconds;
+      maxSec = s.video2_end_seconds;
+    }
+  }
+
+  const target = Math.min(maxSec, Math.max(minSec, cur + delta));
+  player.seekTo(target, true);
+}
+
+function onSeekerClick(e) {
+  const track = document.getElementById('seekerTrack');
+  if (!track || !player || typeof player.getCurrentTime !== 'function') return;
+  const rect = track.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const pct = Math.max(0, Math.min(1, clickX / rect.width));
+
+  const isVideoPhase = currentPhase === 0 || currentPhase === 2;
+  const s = sessionData;
+
+  let startSec = 0;
+  let endSec = typeof player.getDuration === 'function' ? player.getDuration() : 0;
+
+  if (isVideoPhase) {
+    if (currentSubPhase === 0) {
+      startSec = s.video_start_seconds;
+      endSec = s.video_end_seconds;
+    } else {
+      startSec = s.video2_start_seconds;
+      endSec = s.video2_end_seconds;
+    }
+  }
+
+  const targetTime = startSec + pct * (endSec - startSec);
+  player.seekTo(targetTime, true);
+}
+
 // ── Fullscreen helper ─────────────────────────────────────────────────────────────
 
-function requestFullScreen() {
-  let el = null;
-  if (player && typeof player.getIframe === 'function') {
-    el = player.getIframe();
+function toggleFullScreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+    exitFullScreen();
+  } else {
+    requestFullScreen();
   }
-  if (!el) el = document.getElementById('video-container');
+}
+
+function requestFullScreen() {
+  const el = document.getElementById('video-container');
   if (!el) return;
 
   if (el.requestFullscreen) {
@@ -360,6 +439,21 @@ function exitFullScreen() {
 }
 
 // ── Session control ───────────────────────────────────────────────────────────
+
+function jumpToPhase(phaseIndex) {
+  if (!playerReady) {
+    alert('Player is still loading. Please wait a moment.');
+    return;
+  }
+
+  if (!sessionStarted) {
+    sessionStarted = true;
+    document.getElementById('begin-panel').style.display = 'none';
+    document.getElementById('running-panel').style.display = 'block';
+  }
+
+  startPhase(phaseIndex);
+}
 
 function beginSession() {
   if (!playerReady) {
@@ -467,6 +561,7 @@ function startTimerTick() {
 
     let endSecs = 0;
     let phaseRemaining = 0;
+    let currentSegmentRemaining = 0;
 
     if (isVideoPhase) {
       const v1Dur = s.video1_duration_seconds || (s.video_end_seconds - s.video_start_seconds);
@@ -476,16 +571,18 @@ function startTimerTick() {
 
       if (currentSubPhase === 0) {
         endSecs = s.video_end_seconds;
-        const v1Rem = Math.max(0, s.video_end_seconds - currentTime);
-        phaseRemaining = v1Rem + v2Dur;
+        currentSegmentRemaining = Math.max(0, s.video_end_seconds - currentTime);
+        phaseRemaining = currentSegmentRemaining + v2Dur;
       } else {
         endSecs = s.video2_end_seconds;
-        phaseRemaining = Math.max(0, s.video2_end_seconds - currentTime);
+        currentSegmentRemaining = Math.max(0, s.video2_end_seconds - currentTime);
+        phaseRemaining = currentSegmentRemaining;
       }
     } else {
       endSecs = (typeof player.getDuration === 'function' ? player.getDuration() : 0);
       const currentTime = player.getCurrentTime();
-      phaseRemaining = Math.max(0, endSecs - currentTime);
+      currentSegmentRemaining = Math.max(0, endSecs - currentTime);
+      phaseRemaining = currentSegmentRemaining;
     }
 
     // Countdown always reflects actual video/audio position
@@ -501,13 +598,34 @@ function startTimerTick() {
     document.getElementById('progressLabel').textContent  = `${Math.round(pct)}% complete`;
     document.getElementById('elapsedLabel').textContent   = `${formatMinSec(sessionElapsed)} elapsed`;
 
-    // Advance phase when actual position reaches the configured end (and not paused/loading)
-    if (phaseRemaining <= 0 && !isPaused && !phaseLoading && endSecs > 0) {
+    // Advance segment/phase when actual position reaches the configured end (and not paused/loading)
+    if (currentSegmentRemaining <= 0.5 && !isPaused && !phaseLoading && endSecs > 0) {
       clearInterval(timerInterval);
       handleVideoSegmentEnd();
     }
   }, 500);
 }
+
+// ── Keyboard Shortcuts ────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', function (e) {
+  if (!sessionStarted) return;
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    seekBySeconds(-10);
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    seekBySeconds(10);
+  } else if (e.code === 'Space' || e.key === 'k' || e.key === 'K') {
+    e.preventDefault();
+    togglePlayPause();
+  } else if (e.key === 'f' || e.key === 'F') {
+    e.preventDefault();
+    toggleFullScreen();
+  }
+});
 
 // ── Kick off ──────────────────────────────────────────────────────────────────
 

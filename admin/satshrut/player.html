@@ -76,7 +76,14 @@
       color: #888;
       font-size: 0.78rem;
       position: relative;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .phase-block:hover {
+      border-color: #204060;
+      background: #eef4fc;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(32, 64, 96, 0.15);
     }
 
     .phase-block.active {
@@ -181,6 +188,7 @@
       aspect-ratio: 16 / 9;
       border-radius: 8px;
       overflow: hidden;
+      position: relative;
       background: #000;
       margin: 1rem 0;
     }
@@ -188,7 +196,37 @@
     #video-container iframe {
       width: 100%;
       height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
       border: 0;
+    }
+
+    /* Container Fullscreen styling */
+    #video-container:fullscreen,
+    #video-container:-webkit-full-screen,
+    #video-container:-moz-full-screen,
+    #video-container:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #000 !important;
+      overflow: hidden !important;
+    }
+
+    #video-container:fullscreen iframe,
+    #video-container:-webkit-full-screen iframe,
+    #video-container:-moz-full-screen iframe,
+    #video-container:-ms-fullscreen iframe {
+      width: 100vw !important;
+      height: 100vh !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
     }
 
     #audio-container {
@@ -277,6 +315,25 @@
       color: #555;
       margin: 1rem 0;
     }
+
+    /* Responsive Mobile & Tablet Adjustments */
+    @media (max-width: 768px) {
+      .player-card { padding: 0.5rem; }
+      .session-info { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+      .info-chip { padding: 0.5rem 0.6rem; }
+      .info-chip .value { font-size: 0.92rem; }
+      .phase-timeline { gap: 2px; }
+      .phase-block { min-width: 75px; padding: 0.4rem 0.2rem; font-size: 0.72rem; }
+      .phase-status .countdown { font-size: 2rem; }
+      #begin-btn { width: 100%; padding: 0.85rem 1.5rem; font-size: 1rem; }
+    }
+
+    @media (max-width: 480px) {
+      .session-info { grid-template-columns: repeat(2, 1fr); }
+      .phase-block { min-width: 65px; font-size: 0.65rem; }
+      .phase-block .ph-type { font-size: 0.75rem; }
+      .phase-status .countdown { font-size: 1.7rem; }
+    }
   </style>
 </head>
 
@@ -319,10 +376,6 @@
                 <div class="value" id="chipDate">—</div>
               </div>
               <div class="info-chip">
-                <div class="label">Video Segment</div>
-                <div class="value" id="chipSegment">—</div>
-              </div>
-              <div class="info-chip">
                 <div class="label">Video Duration</div>
                 <div class="value" id="chipVideoDur">—</div>
               </div>
@@ -338,25 +391,25 @@
 
             <!-- Phase timeline -->
             <div class="phase-timeline" id="phaseTimeline">
-              <div class="phase-block" id="phase-0">
+              <div class="phase-block" id="phase-0" onclick="jumpToPhase(0)" title="Click to jump to Phase 1">
                 <div class="ph-label">Phase 1</div>
                 <div class="ph-type">▶ Video</div>
                 <div class="ph-dur" id="ph-dur-0"></div>
               </div>
               <div class="phase-arrow">›</div>
-              <div class="phase-block" id="phase-1">
+              <div class="phase-block" id="phase-1" onclick="jumpToPhase(1)" title="Click to jump to Phase 2">
                 <div class="ph-label">Phase 2</div>
                 <div class="ph-type">🎵 Audio</div>
                 <div class="ph-dur" id="ph-dur-1"></div>
               </div>
               <div class="phase-arrow">›</div>
-              <div class="phase-block" id="phase-2">
+              <div class="phase-block" id="phase-2" onclick="jumpToPhase(2)" title="Click to jump to Phase 3">
                 <div class="ph-label">Phase 3</div>
                 <div class="ph-type">▶ Video</div>
                 <div class="ph-dur" id="ph-dur-2"></div>
               </div>
               <div class="phase-arrow">›</div>
-              <div class="phase-block" id="phase-3">
+              <div class="phase-block" id="phase-3" onclick="jumpToPhase(3)" title="Click to jump to Phase 4">
                 <div class="ph-label">Phase 4</div>
                 <div class="ph-type">🎵 Audio</div>
                 <div class="ph-dur" id="ph-dur-3"></div>

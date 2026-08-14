@@ -104,7 +104,7 @@ function extractYouTubeId(url) {
   const t = url.trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return t;
   const m = t.match(
-    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i
+    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i
   );
   return m ? m[1] : null;
 }
@@ -129,18 +129,26 @@ async function loadAllSessions() {
   }
 }
 
+let allUtsavs = [];
+
 async function loadMonthSessions() {
   sessionsMap = {};
+  allUtsavs = [];
   try {
     const res = await fetch(
       `${CONFIG.basePath}/satshrut/sessions?month=${calMonth + 1}&year=${calYear}`,
       { headers: authHeaders() }
     );
     const json = await res.json();
-    if (res.ok && json.data) {
-      json.data.forEach((s) => {
-        sessionsMap[s.session_date] = s;
-      });
+    if (res.ok) {
+      if (json.data) {
+        json.data.forEach((s) => {
+          sessionsMap[s.session_date] = s;
+        });
+      }
+      if (json.utsavs) {
+        allUtsavs = json.utsavs;
+      }
     }
   } catch (e) {
     console.error('Could not load month sessions:', e);
@@ -162,7 +170,6 @@ function renderCalendar() {
 
   // Day-of-week headers
   DAY_NAMES_SHORT.forEach((name, i) => {
-    // Mon=index0 → getDay()=1, Thu=index3 → getDay()=4
     const jsDay = i === 6 ? 0 : i + 1;
     const isNoSession = NO_SESSION_DAYS.includes(jsDay);
     html += `<div class="cal-dh${isNoSession ? ' no-session-col' : ''}">${name}</div>`;
@@ -186,21 +193,35 @@ function renderCalendar() {
 
     let inner = `<span class="day-num">${d}</span>`;
 
-    if (session) {
-      cls += ' has-session clickable';
-      if (session.status === 'inactive') cls += ' inactive-session';
-      const durMin = session.duration_minutes || Math.round((session.video_duration_seconds || 0) / 60) || 0;
-      const sStart = session.start_time_display || '00:00:00';
-      const sEnd   = session.end2_time_display || session.end_time_display || '00:00:00';
+    const activeUtsav = allUtsavs.find(u => dateStr >= u.start_date && dateStr <= u.end_date);
+    const hasValidVideo = session && session.status === 'active' && session.youtube_video_id && session.youtube_video_id !== 'none' && (session.video_end_seconds > (session.video_start_seconds || 0));
 
-      inner += `<span class="session-badge">▶ ${durMin} min</span>`;
-      inner += `<span class="session-time-tag">${sStart} – ${sEnd}</span>`;
+    if (hasValidVideo) {
+      cls += ' has-session clickable';
+      const durMin = session.duration_minutes || Math.round((session.video_duration_seconds || 0) / 60) || 0;
+
+      inner += `<span class="session-badge" onclick="playSessionDate(event, '${dateStr}')" title="Play 4-phase session for ${dateStr}">▶ ${durMin} min</span>`;
       if (session.notes) {
         inner += `<span class="session-time-tag" style="font-style:italic;">${session.notes}</span>`;
       }
+    } else if (activeUtsav) {
+      cls += ' no-session-day clickable';
+      inner += `<div class="no-session-tag" title="Utsav: ${activeUtsav.name || ''}">No session — Utsav</div>`;
+    } else if (session && session.status === 'inactive') {
+      cls += ' no-session-day clickable';
+      let tagText = 'No session';
+      if (session.notes) {
+        tagText = `No session — ${session.notes}`;
+      } else if (jsDay === 1) {
+        tagText = 'No session — Bhakti';
+      } else if (jsDay === 4) {
+        tagText = 'No session — LGS';
+      }
+      inner += `<div class="no-session-tag" title="${session.notes || ''}">${tagText}</div>`;
     } else if (isNoSession) {
-      cls += ' no-session-day';
-      inner += `<div class="no-session-tag">No session</div>`;
+      cls += ' no-session-day clickable';
+      const dayTag = jsDay === 1 ? 'No session — Bhakti' : (jsDay === 4 ? 'No session — LGS' : 'No session');
+      inner += `<div class="no-session-tag">${dayTag}</div>`;
     } else {
       cls += ' empty-day clickable';
       inner += `<span class="add-hint">+</span>`;
@@ -211,6 +232,13 @@ function renderCalendar() {
 
   html += `</div>`; // /.cal-grid
   document.getElementById('calContainer').innerHTML = html;
+}
+
+function playSessionDate(e, dateStr) {
+  if (e && typeof e.stopPropagation === 'function') {
+    e.stopPropagation();
+  }
+  window.location.href = `player.html?date=${dateStr}&play=true`;
 }
 
 async function changeMonth(delta) {
@@ -237,9 +265,15 @@ function handleDayClick(dateStr) {
 
 // ── CREATE modal ──────────────────────────────────────────────────────────
 
+function openCreateModalManual(dateStr) {
+  const targetDate = dateStr || new Date().toISOString().split('T')[0];
+  const jsDay = new Date(targetDate + 'T12:00:00Z').getDay();
+  openCreateModal(targetDate, NO_SESSION_DAYS.includes(jsDay));
+}
+
 function openCreateModal(dateStr, isNoSessionDay = false) {
   document.getElementById('createDate').value = dateStr;
-  document.getElementById('createModalTitle').textContent = `Add Session — ${dateStr}`;
+  document.getElementById('createModalTitle').textContent = `Add Session`;
   document.getElementById('createDayWarning').style.display = isNoSessionDay ? 'block' : 'none';
   document.getElementById('createYoutubeUrl').value = '';
   document.getElementById('createStartTime').value = '';
@@ -258,8 +292,10 @@ function openCreateModal(dateStr, isNoSessionDay = false) {
   _hideDurationEl('create');
   previewDuration.create = 0;
   document.getElementById('createAlert').style.display = 'none';
-  document.getElementById('createSubmitBtn').disabled = false;
-  document.getElementById('createSubmitBtn').textContent = 'Save Session';
+  ['createSubmitBtn', 'createSubmitBtnTop'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Session'; }
+  });
   document.getElementById('createModal').classList.add('open');
 }
 
@@ -510,7 +546,9 @@ function openEditModal(session) {
   document.getElementById('editModalTitle').textContent = `Edit Session — ${session.session_date}`;
   document.getElementById('editId').value = session.id;
   document.getElementById('editDate').value = session.session_date;
-  document.getElementById('editYoutubeUrl').value = `https://youtu.be/${session.youtube_video_id}`;
+
+  const url1 = session.youtube_url || (session.youtube_video_id ? `https://youtu.be/${session.youtube_video_id}` : '');
+  document.getElementById('editYoutubeUrl').value = url1;
 
   const v1Start = (session.video_start_seconds !== null && session.video_start_seconds !== undefined)
     ? secondsToHMS(session.video_start_seconds)
@@ -524,7 +562,8 @@ function openEditModal(session) {
   document.getElementById('editEndTime').value   = v1End;
   document.getElementById('editNotes').value     = session.notes || '';
 
-  document.getElementById('editYoutube2Url').value = session.youtube2_video_id ? `https://youtu.be/${session.youtube2_video_id}` : '';
+  const url2 = session.youtube2_url || (session.youtube2_video_id ? `https://youtu.be/${session.youtube2_video_id}` : '');
+  document.getElementById('editYoutube2Url').value = url2;
 
   const v2Start = (session.video2_start_seconds !== null && session.video2_start_seconds !== undefined)
     ? secondsToHMS(session.video2_start_seconds)
@@ -537,14 +576,23 @@ function openEditModal(session) {
   document.getElementById('editStart2Time').value  = v2Start;
   document.getElementById('editEnd2Time').value    = v2End;
   document.getElementById('editNotes2').value     = session.notes2 || '';
-  document.getElementById('editAudio1Url').value = session.audio1_youtube_id
-    ? `https://youtu.be/${session.audio1_youtube_id}` : '';
-  document.getElementById('editAudio2Url').value = session.audio2_youtube_id
-    ? `https://youtu.be/${session.audio2_youtube_id}` : '';
+
+  const aUrl1 = session.audio1_youtube_url || (session.audio1_youtube_id ? `https://youtu.be/${session.audio1_youtube_id}` : '');
+  const aUrl2 = session.audio2_youtube_url || (session.audio2_youtube_id ? `https://youtu.be/${session.audio2_youtube_id}` : '');
+
+  document.getElementById('editAudio1Url').value = aUrl1;
+  document.getElementById('editAudio2Url').value = aUrl2;
   document.getElementById('editStatus').value = session.status;
+  const btnText = session.status === 'inactive' ? '✅ Enable Session' : '🚫 Mark as No-Session Day';
+  ['toggleNoSessionBtn', 'toggleNoSessionBtnTop'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.textContent = btnText;
+  });
   document.getElementById('editAlert').style.display = 'none';
-  document.getElementById('editSubmitBtn').disabled = false;
-  document.getElementById('editSubmitBtn').textContent = 'Save Changes';
+  ['editSubmitBtn', 'editSubmitBtnTop'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+  });
 
   // Show current duration
   const dur = session.video_end_seconds - session.video_start_seconds;
@@ -558,10 +606,102 @@ function openEditModal(session) {
   document.getElementById('editModal').classList.add('open');
 }
 
+async function markAsNoSessionFromCreate() {
+  const dateVal = document.getElementById('createDate').value;
+  if (!dateVal) return alert('Please select a session date.');
+
+  const reason = prompt('Reason for no session (optional, e.g. Utsav, Holiday, Maintenance):', '');
+  if (reason === null) return;
+
+  const submitBtn = document.getElementById('createSubmitBtn');
+  submitBtn.disabled = true;
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/satshrut/session`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        session_date: dateVal,
+        status: 'inactive',
+        notes: reason.trim() || null
+      })
+    });
+    const json = await res.json();
+    if (res.ok) {
+      closeCreate();
+      await refreshAll();
+    } else {
+      alert(json.message || 'Failed to mark date as no-session day.');
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+async function toggleNoSessionFromEdit() {
+  if (!editingId) return;
+  const currentStatus = document.getElementById('editStatus').value;
+
+  // If enabling a dummy placeholder session (no valid YouTube URL), delete the placeholder record so the cell becomes completely blank!
+  const urlVal = document.getElementById('editYoutubeUrl').value.trim();
+  if (currentStatus === 'inactive' && (!urlVal || urlVal.includes('none') || urlVal === '')) {
+    return deleteSession();
+  }
+
+  const newStatus = currentStatus === 'inactive' ? 'active' : 'inactive';
+  const payload = { status: newStatus };
+
+  if (newStatus === 'inactive') {
+    const existingNotes = document.getElementById('editNotes').value.trim();
+    const reason = prompt('Reason for no session (optional, e.g. Utsav, Holiday, Maintenance):', existingNotes);
+    if (reason === null) return;
+    payload.notes = reason.trim() || null;
+  }
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/satshrut/session/${editingId}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (res.ok) {
+      closeEdit();
+      await refreshAll();
+    } else {
+      alert(json.message || 'Failed to update session status.');
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+  }
+}
+
 function closeEdit() {
   document.getElementById('editModal').classList.remove('open');
   editingId = null;
 }
+
+// ── Keyboard & Backdrop Modal Dismissal ──────────────────────────────────
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    closeCreate();
+    closeEdit();
+  }
+});
+
+['createModal', 'editModal'].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('click', function (e) {
+      if (e.target === this) {
+        if (id === 'createModal') closeCreate();
+        if (id === 'editModal') closeEdit();
+      }
+    });
+  }
+});
 
 async function deleteSession() {
   const dateEl = document.getElementById('editDate').value;
@@ -606,6 +746,10 @@ async function init() {
   await loadAllSessions();
   await loadMonthSessions();
   renderCalendar();
+
+  if (window.location.search.includes('open=add') || window.location.search.includes('action=create')) {
+    openCreateModalManual();
+  }
 }
 
 // ── CSV Import ────────────────────────────────────────────────────────────
@@ -615,14 +759,22 @@ let parsedCSVRows = [];
 function parseCSV(text) {
   const lines = text.split('\n').map((l) => l.trim()).filter((l) => l);
   if (lines.length < 2) return [];
-  return lines.slice(1).map((line) => {
+  const headerLine = lines[0].toLowerCase();
+  const hasHeader = headerLine.includes('date') || headerLine.includes('youtube');
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  return dataLines.map((line) => {
     const cols = line.split(',');
     return {
       session_date: (cols[0] || '').trim(),
       youtube_url:  (cols[1] || '').trim(),
       start_time:   (cols[2] || '').trim(),
       end_time:     (cols[3] || '').trim(),
-      notes:        cols.slice(4).join(',').trim() || null
+      notes:        (cols[4] || '').trim() || null,
+      youtube2_url: (cols[5] || '').trim() || null,
+      start2_time:  (cols[6] || '').trim() || null,
+      end2_time:    (cols[7] || '').trim() || null,
+      notes2:       (cols[8] || '').trim() || null
     };
   });
 }
@@ -660,8 +812,10 @@ function renderCSVPreview(rows) {
 
   const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   let html = `<table class="preview-table"><thead><tr>
-    <th>#</th><th>Date</th><th>Day</th><th>YouTube URL</th>
-    <th>Start</th><th>End</th><th>Notes</th><th>Status</th>
+    <th>#</th><th>Date</th><th>Day</th>
+    <th>Video 1 URL</th><th>Start 1</th><th>End 1</th><th>Notes 1</th>
+    <th>Video 2 URL</th><th>Start 2</th><th>End 2</th><th>Notes 2</th>
+    <th>Status</th>
   </tr></thead><tbody>`;
 
   rows.forEach((row, i) => {
@@ -669,11 +823,15 @@ function renderCSVPreview(rows) {
     const day = row.session_date ? DAY[new Date(row.session_date + 'T12:00:00Z').getDay()] : '—';
 
     if (!row.session_date || !row.youtube_url || !row.start_time || !row.end_time) {
-      cls = 'row-error'; status = '❌ Missing fields';
+      cls = 'row-error'; status = '❌ Missing Video 1';
     } else if (!isValidTimestamp(row.start_time) || !isValidTimestamp(row.end_time)) {
-      cls = 'row-error'; status = '❌ Bad timestamp';
+      cls = 'row-error'; status = '❌ Bad Video 1 time';
     } else if (toSeconds(row.end_time) <= toSeconds(row.start_time)) {
-      cls = 'row-error'; status = '❌ End ≤ Start';
+      cls = 'row-error'; status = '❌ End 1 ≤ Start 1';
+    } else if (row.youtube2_url && (!isValidTimestamp(row.start2_time) || !isValidTimestamp(row.end2_time))) {
+      cls = 'row-error'; status = '❌ Bad Video 2 time';
+    } else if (row.youtube2_url && toSeconds(row.end2_time) <= toSeconds(row.start2_time)) {
+      cls = 'row-error'; status = '❌ End 2 ≤ Start 2';
     } else if (isNoSessionDayStr(row.session_date)) {
       cls = 'row-skip'; status = '⚠️ Mon/Thu (skip)';
     }
@@ -682,10 +840,14 @@ function renderCSVPreview(rows) {
       <td>${i + 1}</td>
       <td>${row.session_date || '—'}</td>
       <td>${day}</td>
-      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.youtube_url || '—'}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.youtube_url || '—'}</td>
       <td>${row.start_time || '—'}</td>
       <td>${row.end_time || '—'}</td>
       <td>${row.notes || '—'}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.youtube2_url || '—'}</td>
+      <td>${row.start2_time || '—'}</td>
+      <td>${row.end2_time || '—'}</td>
+      <td>${row.notes2 || '—'}</td>
       <td>${status}</td>
     </tr>`;
   });
@@ -735,8 +897,8 @@ async function confirmImport() {
 }
 
 function downloadSampleCSV() {
-  // Generate sample rows for the next 5 non-Mon/Thu weekdays from today
-  const rows = ['date,youtube_url,start_time,end_time,notes'];
+  // Generate sample rows with 2 video segments supported
+  const rows = ['date,youtube_url,start_time,end_time,notes,youtube2_url,start2_time,end2_time,notes2'];
   const d = new Date();
   let count = 0;
 
@@ -746,13 +908,19 @@ function downloadSampleCSV() {
     if (NO_SESSION_DAYS.includes(day)) continue;
 
     const dateStr = d.toISOString().split('T')[0];
-    // Alternate between two example videos for realism
-    const videoUrl = count % 2 === 0
-      ? 'https://youtu.be/EXAMPLE_ID_1'
-      : 'https://youtu.be/EXAMPLE_ID_2';
-    const start = `00:${String(count * 5).padStart(2,'0')}:00`;
-    const end   = `00:${String(count * 5 + 25).padStart(2,'0')}:00`;
-    rows.push(`${dateStr},${videoUrl},${start},${end},Sample session ${count + 1}`);
+    const video1Url = 'https://youtu.be/GioGmSUdAIQ';
+    const start1 = `00:${String(count * 5).padStart(2,'0')}:00`;
+    const end1   = `00:${String(count * 5 + 15).padStart(2,'0')}:00`;
+    const notes1 = `Part ${count + 1} Segment 1`;
+
+    // Demonstrate optional second video in sample CSV
+    const hasV2 = count % 2 === 1;
+    const video2Url = hasV2 ? 'https://youtu.be/pwprVcIYXcM' : '';
+    const start2 = hasV2 ? '00:00:00' : '';
+    const end2   = hasV2 ? '00:10:30' : '';
+    const notes2 = hasV2 ? `Part ${count + 1} Segment 2` : '';
+
+    rows.push(`${dateStr},${video1Url},${start1},${end1},${notes1},${video2Url},${start2},${end2},${notes2}`);
     count++;
   }
 
