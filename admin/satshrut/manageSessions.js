@@ -730,12 +730,20 @@ async function handleMoveSubmit(e) {
   const submitBtn = document.getElementById('moveSubmitBtn');
 
   if (!sourceDate || !targetDate) {
-    showAlert(alertEl, 'Please specify both source and target dates.');
+    showModalAlert(alertEl, 'Please specify both source and target dates.');
     return;
   }
   if (sourceDate === targetDate) {
-    showAlert(alertEl, 'Source and target dates must be different.');
+    showModalAlert(alertEl, 'Source and target dates must be different.');
     return;
+  }
+
+  let overwrite = false;
+  if (mode === 'move' && sessionsMap[targetDate]) {
+    if (!confirm(`A session is already scheduled on ${targetDate}. Do you want to overwrite it?`)) {
+      return;
+    }
+    overwrite = true;
   }
 
   submitBtn.disabled = true;
@@ -749,7 +757,8 @@ async function handleMoveSubmit(e) {
       body: JSON.stringify({
         source_date: sourceDate,
         target_date: targetDate,
-        mode: mode
+        mode: mode,
+        overwrite: overwrite
       })
     });
     const json = await res.json();
@@ -757,10 +766,10 @@ async function handleMoveSubmit(e) {
       closeMove();
       await refreshAll();
     } else {
-      showAlert(alertEl, json.message || 'Failed to move session.');
+      showModalAlert(alertEl, json.message || 'Failed to move session.');
     }
   } catch (err) {
-    showAlert(alertEl, 'Network error. Please try again.');
+    showModalAlert(alertEl, 'Network error. Please try again.');
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Apply Move';
@@ -795,7 +804,7 @@ async function handleShiftSubmit(e) {
   const submitBtn = document.getElementById('shiftSubmitBtn');
 
   if (!fromDate) {
-    showAlert(alertEl, 'Please select a starting date.');
+    showModalAlert(alertEl, 'Please select a starting date.');
     return;
   }
 
@@ -822,10 +831,10 @@ async function handleShiftSubmit(e) {
       closeShift();
       await refreshAll();
     } else {
-      showAlert(alertEl, json.message || 'Failed to shift sessions.');
+      showModalAlert(alertEl, json.message || 'Failed to shift sessions.');
     }
   } catch (err) {
-    showAlert(alertEl, 'Network error. Please try again.');
+    showModalAlert(alertEl, 'Network error. Please try again.');
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Shift Sessions';
