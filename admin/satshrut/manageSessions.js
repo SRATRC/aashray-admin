@@ -9,7 +9,17 @@ const MONTH_NAMES = [
 const DAY_NAMES_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // JS getDay(): 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
 // Mon-Sun grid offset: convert getDay() → Mon-based index
-const NO_SESSION_DAYS = [1, 4]; // Mon, Thu — mirrors backend config
+let NO_SESSION_DAYS = [1, 4]; // default: Mon, Thu — dynamically refreshed from backend config
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth(); // 0-indexed
@@ -202,11 +212,11 @@ function renderCalendar() {
 
       inner += `<span class="session-badge" onclick="playSessionDate(event, '${dateStr}')" title="Play 4-phase session for ${dateStr}">▶ ${durMin} min</span>`;
       if (session.notes) {
-        inner += `<span class="session-time-tag" style="font-style:italic;">${session.notes}</span>`;
+        inner += `<span class="session-time-tag" style="font-style:italic;">${escapeHtml(session.notes)}</span>`;
       }
     } else if (activeUtsav) {
       cls += ' no-session-day clickable';
-      inner += `<div class="no-session-tag" title="Utsav: ${activeUtsav.name || ''}">No session — Utsav</div>`;
+      inner += `<div class="no-session-tag" title="Utsav: ${escapeHtml(activeUtsav.name || '')}">No session — Utsav</div>`;
     } else if (session && session.status === 'inactive') {
       cls += ' no-session-day clickable';
       let tagText = 'No session';
@@ -217,11 +227,11 @@ function renderCalendar() {
       } else if (jsDay === 4) {
         tagText = 'No session — LGS';
       }
-      inner += `<div class="no-session-tag" title="${session.notes || ''}">${tagText}</div>`;
+      inner += `<div class="no-session-tag" title="${escapeHtml(session.notes || '')}">${escapeHtml(tagText)}</div>`;
     } else if (isNoSession) {
       cls += ' no-session-day clickable';
       const dayTag = jsDay === 1 ? 'No session — Bhakti' : (jsDay === 4 ? 'No session — LGS' : 'No session');
-      inner += `<div class="no-session-tag">${dayTag}</div>`;
+      inner += `<div class="no-session-tag">${escapeHtml(dayTag)}</div>`;
     } else {
       cls += ' empty-day clickable';
       inner += `<span class="add-hint">+</span>`;
@@ -683,21 +693,164 @@ function closeEdit() {
   editingId = null;
 }
 
+function openMoveFromEdit() {
+  const currentDate = document.getElementById('editDate')?.value;
+  closeEdit();
+  openMoveModal(currentDate);
+}
+
+// ── Move / Swap Session Modal ─────────────────────────────────────────────
+
+function openMoveModal(defaultSourceDate) {
+  const sourceInput = document.getElementById('moveSourceDate');
+  const targetInput = document.getElementById('moveTargetDate');
+  const alertEl = document.getElementById('moveAlert');
+  alertEl.style.display = 'none';
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  sourceInput.value = defaultSourceDate || todayStr;
+  targetInput.value = '';
+  document.querySelector('input[name="moveMode"][value="move"]').checked = true;
+
+  document.getElementById('moveSubmitBtn').disabled = false;
+  document.getElementById('moveSubmitBtn').textContent = 'Apply Move';
+  document.getElementById('moveModal').classList.add('open');
+}
+
+function closeMove() {
+  document.getElementById('moveModal').classList.remove('open');
+}
+
+async function handleMoveSubmit(e) {
+  e.preventDefault();
+  const sourceDate = document.getElementById('moveSourceDate').value;
+  const targetDate = document.getElementById('moveTargetDate').value;
+  const mode = document.querySelector('input[name="moveMode"]:checked')?.value || 'move';
+  const alertEl = document.getElementById('moveAlert');
+  const submitBtn = document.getElementById('moveSubmitBtn');
+
+  if (!sourceDate || !targetDate) {
+    showAlert(alertEl, 'Please specify both source and target dates.');
+    return;
+  }
+  if (sourceDate === targetDate) {
+    showAlert(alertEl, 'Source and target dates must be different.');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Moving...';
+  alertEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/satshrut/session/move`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        source_date: sourceDate,
+        target_date: targetDate,
+        mode: mode
+      })
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      closeMove();
+      await refreshAll();
+    } else {
+      showAlert(alertEl, json.message || 'Failed to move session.');
+    }
+  } catch (err) {
+    showAlert(alertEl, 'Network error. Please try again.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Apply Move';
+  }
+}
+
+// ── Shift Schedule Modal ──────────────────────────────────────────────────
+
+function openShiftModal(defaultFromDate) {
+  const fromInput = document.getElementById('shiftFromDate');
+  const alertEl = document.getElementById('shiftAlert');
+  alertEl.style.display = 'none';
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  fromInput.value = defaultFromDate || todayStr;
+  document.querySelector('input[name="shiftDirection"][value="forward"]').checked = true;
+
+  document.getElementById('shiftSubmitBtn').disabled = false;
+  document.getElementById('shiftSubmitBtn').textContent = 'Shift Sessions';
+  document.getElementById('shiftModal').classList.add('open');
+}
+
+function closeShift() {
+  document.getElementById('shiftModal').classList.remove('open');
+}
+
+async function handleShiftSubmit(e) {
+  e.preventDefault();
+  const fromDate = document.getElementById('shiftFromDate').value;
+  const direction = document.querySelector('input[name="shiftDirection"]:checked')?.value || 'forward';
+  const alertEl = document.getElementById('shiftAlert');
+  const submitBtn = document.getElementById('shiftSubmitBtn');
+
+  if (!fromDate) {
+    showAlert(alertEl, 'Please select a starting date.');
+    return;
+  }
+
+  const dirLabel = direction === 'forward' ? 'forward (+1 day)' : 'backward (-1 day)';
+  if (!confirm(`Are you sure you want to shift all scheduled sessions on or after ${fromDate} ${dirLabel}? (Mon, Thu, and Utsavs will be skipped).`)) {
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Shifting...';
+  alertEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${CONFIG.basePath}/satshrut/session/shift`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        from_date: fromDate,
+        direction: direction
+      })
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      closeShift();
+      await refreshAll();
+    } else {
+      showAlert(alertEl, json.message || 'Failed to shift sessions.');
+    }
+  } catch (err) {
+    showAlert(alertEl, 'Network error. Please try again.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Shift Sessions';
+  }
+}
+
 // ── Keyboard & Backdrop Modal Dismissal ──────────────────────────────────
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     closeCreate();
     closeEdit();
+    closeMove();
+    closeShift();
   }
 });
 
-['createModal', 'editModal'].forEach((id) => {
+['createModal', 'editModal', 'moveModal', 'shiftModal'].forEach((id) => {
   const el = document.getElementById(id);
   if (el) {
     el.addEventListener('click', function (e) {
       if (e.target === this) {
         if (id === 'createModal') closeCreate();
         if (id === 'editModal') closeEdit();
+        if (id === 'moveModal') closeMove();
+        if (id === 'shiftModal') closeShift();
       }
     });
   }
@@ -724,9 +877,24 @@ async function deleteSession() {
   }
 }
 
+// ── Config loading ───────────────────────────────────────────────────────
+
+async function loadConfig() {
+  try {
+    const res = await fetch(`${CONFIG.basePath}/satshrut/config`, { headers: authHeaders() });
+    const json = await res.json();
+    if (res.ok && json.data && Array.isArray(json.data.no_session_days)) {
+      NO_SESSION_DAYS = json.data.no_session_days;
+    }
+  } catch (e) {
+    console.warn('Could not load satshrut config:', e);
+  }
+}
+
 // ── Refresh ───────────────────────────────────────────────────────────────
 
 async function refreshAll() {
+  await loadConfig();
   await loadAllSessions();
   await loadMonthSessions();
   renderCalendar();
@@ -743,6 +911,7 @@ async function init() {
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
   }
+  await loadConfig();
   await loadAllSessions();
   await loadMonthSessions();
   renderCalendar();
@@ -756,6 +925,25 @@ async function init() {
 
 let parsedCSVRows = [];
 
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result.map(s => s.replace(/^["']|["']$/g, ''));
+}
+
 function parseCSV(text) {
   const lines = text.split('\n').map((l) => l.trim()).filter((l) => l);
   if (lines.length < 2) return [];
@@ -764,7 +952,7 @@ function parseCSV(text) {
   const dataLines = hasHeader ? lines.slice(1) : lines;
 
   return dataLines.map((line) => {
-    const cols = line.split(',');
+    const cols = parseCSVLine(line);
     return {
       session_date: (cols[0] || '').trim(),
       youtube_url:  (cols[1] || '').trim(),
@@ -838,17 +1026,17 @@ function renderCSVPreview(rows) {
 
     html += `<tr class="${cls}">
       <td>${i + 1}</td>
-      <td>${row.session_date || '—'}</td>
-      <td>${day}</td>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.youtube_url || '—'}</td>
-      <td>${row.start_time || '—'}</td>
-      <td>${row.end_time || '—'}</td>
-      <td>${row.notes || '—'}</td>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.youtube2_url || '—'}</td>
-      <td>${row.start2_time || '—'}</td>
-      <td>${row.end2_time || '—'}</td>
-      <td>${row.notes2 || '—'}</td>
-      <td>${status}</td>
+      <td>${escapeHtml(row.session_date || '—')}</td>
+      <td>${escapeHtml(day)}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(row.youtube_url || '—')}</td>
+      <td>${escapeHtml(row.start_time || '—')}</td>
+      <td>${escapeHtml(row.end_time || '—')}</td>
+      <td>${escapeHtml(row.notes || '—')}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(row.youtube2_url || '—')}</td>
+      <td>${escapeHtml(row.start2_time || '—')}</td>
+      <td>${escapeHtml(row.end2_time || '—')}</td>
+      <td>${escapeHtml(row.notes2 || '—')}</td>
+      <td>${escapeHtml(status)}</td>
     </tr>`;
   });
 

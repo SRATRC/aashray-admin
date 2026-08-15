@@ -424,9 +424,17 @@
 
             <div class="frm-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
               <h1 style="margin:0;">Session Calendar</h1>
-              <button class="btn btn-primary" onclick="openCreateModalManual()" style="font-size:0.9rem; padding:0.5rem 1.2rem; display:inline-flex; align-items:center; gap:0.4rem;">
-                ➕ Add Session
-              </button>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="openMoveModal()" style="font-size:0.9rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                  ↔ Move Session
+                </button>
+                <button class="btn btn-secondary" onclick="openShiftModal()" style="font-size:0.9rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                  ⏩ Shift Schedule
+                </button>
+                <button class="btn btn-primary" onclick="openCreateModalManual()" style="font-size:0.9rem; padding:0.5rem 1.2rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                  ➕ Add Session
+                </button>
+              </div>
             </div>
 
             <div class="cal-wrap">
@@ -605,6 +613,7 @@
 
         <div class="modal-actions" style="margin-bottom: 1rem; margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
           <button type="button" class="btn-danger-outline" onclick="deleteSession()">🗑 Delete</button>
+          <button type="button" class="btn btn-secondary" onclick="openMoveFromEdit()">↔ Move Date</button>
           <button type="button" class="btn btn-secondary" id="toggleNoSessionBtnTop" onclick="toggleNoSessionFromEdit()">🚫 Mark as No-Session Day</button>
           <button type="button" class="btn btn-secondary" onclick="closeEdit()">Cancel</button>
           <button type="submit" form="editForm" class="btn btn-primary" id="editSubmitBtnTop">Save Changes</button>
@@ -691,9 +700,97 @@
 
           <div class="modal-actions">
             <button type="button" class="btn-danger-outline" onclick="deleteSession()">🗑 Delete</button>
+            <button type="button" class="btn btn-secondary" onclick="openMoveFromEdit()">↔ Move Date</button>
             <button type="button" class="btn btn-secondary" id="toggleNoSessionBtn" onclick="toggleNoSessionFromEdit()">🚫 Mark as No-Session Day</button>
             <button type="button" class="btn btn-secondary" onclick="closeEdit()">Cancel</button>
             <button type="submit" class="btn btn-primary" id="editSubmitBtn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Move / Swap Session Modal -->
+    <div class="modal-overlay" id="moveModal" onclick="if(event.target===this)closeMove()">
+      <div class="modal-box" style="max-width:480px;">
+        <button class="modal-close-btn" onclick="closeMove()" aria-label="Close">×</button>
+        <h3>↔ Move / Reassign Session</h3>
+        <p style="color:#666; font-size:0.88rem; margin-top:-0.5rem; margin-bottom:1rem;">
+          Assign a session's details to another date. (Mon / Thu restrictions do not apply for manual moves).
+        </p>
+
+        <div id="moveAlert" class="alert-box" style="display:none;"></div>
+
+        <form id="moveForm" onsubmit="handleMoveSubmit(event)">
+          <div class="form-group">
+            <label for="moveSourceDate">Source Date (Current Session Date) <span class="required">*</span></label>
+            <input type="date" id="moveSourceDate" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label for="moveTargetDate">Target Date (Destination Date) <span class="required">*</span></label>
+            <input type="date" id="moveTargetDate" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label>Action Mode</label>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.3rem;">
+              <label style="font-weight:normal; cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+                <input type="radio" name="moveMode" value="move" checked />
+                <span><strong>Move &amp; Clear Source</strong> (copies to target, removes source)</span>
+              </label>
+              <label style="font-weight:normal; cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+                <input type="radio" name="moveMode" value="swap" />
+                <span><strong>Swap Sessions</strong> (exchanges sessions between both dates)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions" style="margin-top:1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeMove()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="moveSubmitBtn">Apply Move</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Shift Schedule Modal -->
+    <div class="modal-overlay" id="shiftModal" onclick="if(event.target===this)closeShift()">
+      <div class="modal-box" style="max-width:500px;">
+        <button class="modal-close-btn" onclick="closeShift()" aria-label="Close">×</button>
+        <h3>⏩ Shift Scheduled Sessions</h3>
+        <p style="color:#666; font-size:0.88rem; margin-top:-0.5rem; margin-bottom:1rem;">
+          Shift all sessions starting from a specific date forward or backward by 1 valid session day.
+        </p>
+
+        <div style="background:#eaf2f8; border-left:4px solid #2980b9; padding:0.6rem 0.8rem; border-radius:4px; font-size:0.82rem; color:#2c3e50; margin-bottom:1rem;">
+          ℹ️ <strong>Auto-skip rule:</strong> Mondays, Thursdays, and Utsav days are automatically skipped during shifting.
+        </div>
+
+        <div id="shiftAlert" class="alert-box" style="display:none;"></div>
+
+        <form id="shiftForm" onsubmit="handleShiftSubmit(event)">
+          <div class="form-group">
+            <label for="shiftFromDate">Shift all sessions on or after <span class="required">*</span></label>
+            <input type="date" id="shiftFromDate" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label>Shift Direction</label>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.3rem;">
+              <label style="font-weight:normal; cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+                <input type="radio" name="shiftDirection" value="forward" checked />
+                <span>⏩ <strong>+1 Day Forward</strong> (Postpone/delay all upcoming sessions)</span>
+              </label>
+              <label style="font-weight:normal; cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+                <input type="radio" name="shiftDirection" value="backward" />
+                <span>⏪ <strong>-1 Day Backward</strong> (Pre-pone/advance all upcoming sessions)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions" style="margin-top:1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeShift()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="shiftSubmitBtn">Shift Sessions</button>
           </div>
         </form>
       </div>
