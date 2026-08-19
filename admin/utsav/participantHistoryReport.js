@@ -30,6 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageSize = 15;
 
   // Sorting State
+    const escapeHtml = (str) => {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
   let currentSortColumn = 'stay_days';
   let currentSortOrder = 'desc'; // 'asc' or 'desc'
 
@@ -76,12 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Fetch Participant History Report Data
   const fetchHistoryReport = async (utsavId) => {
     if (!utsavId) {
-      reportTableBody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Please select an Utsav event.</td></tr>';
+      reportTableBody.innerHTML = '<tr><td colspan="14" style="text-align:center;">Please select an Utsav event.</td></tr>';
       resetDashboardCards();
       return;
     }
 
-    reportTableBody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Loading 1-Year History Data...</td></tr>';
+    reportTableBody.innerHTML = '<tr><td colspan="14" style="text-align:center;">Loading 1-Year History Data...</td></tr>';
 
     try {
       const tag = tagFilter.value;
@@ -110,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
       applyFiltersAndSort();
     } catch (err) {
       console.error('Error fetching participant history report:', err);
-      reportTableBody.innerHTML = `<tr><td colspan="13" style="text-align:center; color:red;">Error: ${err.message}</td></tr>`;
+      reportTableBody.innerHTML = `<tr><td colspan="14" style="text-align:center; color:red;">Error: ${err.message}</td></tr>`;
       resetDashboardCards();
     }
   };
@@ -174,13 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
       filteredData = filteredData.filter((item) => item.package_name === selectedPkg);
     }
 
-    // Filter by Devotee Type (PR / Flat Owner exclusions)
+    // Filter by Devotee Type (PR / Flat Owner / NRI exclusions)
     if (residentVal === 'exclude_pr') {
       filteredData = filteredData.filter((item) => item.res_status !== 'PR');
     } else if (residentVal === 'exclude_flat_owner') {
       filteredData = filteredData.filter((item) => !item.is_flat_owner);
+    } else if (residentVal === 'exclude_nri') {
+      filteredData = filteredData.filter((item) => !item.is_nri);
     } else if (residentVal === 'exclude_both') {
       filteredData = filteredData.filter((item) => item.res_status !== 'PR' && !item.is_flat_owner);
+    } else if (residentVal === 'exclude_all') {
+      filteredData = filteredData.filter((item) => item.res_status !== 'PR' && !item.is_flat_owner && !item.is_nri);
     }
 
     // Sort Data based on currentSortColumn and currentSortOrder
@@ -310,30 +324,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const row = document.createElement('tr');
 
       const badgesHtml = (item.tags || []).map((t) => {
+        const escapedTag = escapeHtml(t);
         if (t === 'first_timer') return '<span class="badge-pill badge-first-timer">First-Timer</span>';
         if (t === 'regular_stay') return '<span class="badge-pill badge-regular-stay">Regular Stay</span>';
         if (t === 'pgs_regular') return '<span class="badge-pill badge-pgs-regular">PGS Regular</span>';
         if (t === 'active_adhyayan') return '<span class="badge-pill badge-active-adhyayan">Active Learner</span>';
         if (t === 'frequent_visitor') return '<span class="badge-pill badge-frequent-visitor">Frequent Visitor</span>';
-        return `<span class="badge-pill badge-frequent-visitor">${t}</span>`;
+        return `<span class="badge-pill badge-frequent-visitor">${escapedTag}</span>`;
       }).join(' ');
 
       const h = item.history_1yr || {};
 
       row.innerHTML = `
         <td style="text-align:center;">${startIdx + index + 1}</td>
-        <td style="text-align:center; font-weight:600;">${item.cardno || '-'}</td>
-        <td>${item.issuedto || '-'}</td>
-        <td style="font-weight: 500; color: #1e293b;">${item.package_name || '-'}</td>
-        <td>${item.mobno || '-'}</td>
-        <td style="text-align:center;">${item.gender || '-'}${item.age ? ` (${item.age}y)` : ''}</td>
-        <td>${item.center || '-'}</td>
-        <td style="text-align:center;">${item.roomno || '-'}</td>
-        <td style="text-align:center; font-weight:700; color:#2e7d32; font-size: 14px;">${h.stay_days || 0}</td>
-        <td style="text-align:center; font-weight:700; color:#d97706; font-size: 14px;">${h.single_day_visits || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#7b1fa2;">${h.pgs_adhyayan_count || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#1976d2;">${h.non_pgs_adhyayan_count || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#e67e22;">${h.utsav_count || 0}</td>
+        <td style="text-align:center; font-weight:600;">${escapeHtml(item.cardno || '-')}</td>
+        <td>${escapeHtml(item.issuedto || '-')}</td>
+        <td style="font-weight: 500; color: #1e293b;">${escapeHtml(item.package_name || '-')}</td>
+        <td>${escapeHtml(item.mobno || '-')}</td>
+        <td style="text-align:center;">${escapeHtml(item.gender || '-')}${item.age ? ` (${Number(item.age)}y)` : ''}</td>
+        <td>${escapeHtml(item.center || '-')}</td>
+        <td style="text-align:center;">${escapeHtml(item.roomno || '-')}</td>
+        <td style="text-align:center; font-weight:700; color:#2e7d32; font-size: 14px;">${Number(h.stay_days) || 0}</td>
+        <td style="text-align:center; font-weight:700; color:#d97706; font-size: 14px;">${Number(h.single_day_visits) || 0}</td>
+        <td style="text-align:center; font-weight:600; color:#7b1fa2;">${Number(h.pgs_adhyayan_count) || 0}</td>
+        <td style="text-align:center; font-weight:600; color:#1976d2;">${Number(h.non_pgs_adhyayan_count) || 0}</td>
+        <td style="text-align:center; font-weight:600; color:#e67e22;">${Number(h.utsav_count) || 0}</td>
         <td>${badgesHtml || '<span style="color:#94a3b8; font-size:12px;">Standard</span>'}</td>
       `;
 
@@ -356,9 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const tag = tagFilter.value;
     const search = searchInput.value.trim();
 
+    const residentVal = residentFilter.value;
+    const pkg = packageFilter.value;
+
     let exportUrl = `${CONFIG.basePath}/utsav/participantHistoryReport?utsavid=${utsavId}&format=excel`;
     if (tag) exportUrl += `&tag=${encodeURIComponent(tag)}`;
     if (search) exportUrl += `&search=${encodeURIComponent(search)}`;
+    if (residentVal) exportUrl += `&devotee_type=${encodeURIComponent(residentVal)}`;
+    if (pkg) exportUrl += `&package_name=${encodeURIComponent(pkg)}`;
 
     try {
       const response = await fetch(exportUrl, authOptions());
@@ -383,7 +403,13 @@ document.addEventListener('DOMContentLoaded', () => {
   packageFilter.addEventListener('change', () => applyFiltersAndSort());
   residentFilter.addEventListener('change', () => applyFiltersAndSort());
   tagFilter.addEventListener('change', () => fetchHistoryReport(utsavSelect.value));
-  searchInput.addEventListener('input', () => fetchHistoryReport(utsavSelect.value));
+  let searchDebounceTimer = null;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      fetchHistoryReport(utsavSelect.value);
+    }, 400);
+  });
   excelExportBtn.addEventListener('click', exportToExcel);
 
   // Table Column Header Click Listener for Sorting

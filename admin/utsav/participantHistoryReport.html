@@ -206,10 +206,12 @@
             <div class="form-group">
               <label for="residentFilter">Devotee Type Filter:</label>
               <select id="residentFilter" class="form-control">
-                <option value="">All Devotees (Include PR & Flat Owners)</option>
+                <option value="">All Devotees (Include PR, Flat Owners & NRIs)</option>
                 <option value="exclude_pr">Exclude PR (Permanent Residents)</option>
                 <option value="exclude_flat_owner">Exclude Flat Owners</option>
+                <option value="exclude_nri">Exclude NRIs (Country other than India)</option>
                 <option value="exclude_both">Exclude PR & Flat Owners</option>
+                <option value="exclude_all">Exclude PR, Flat Owners & NRIs</option>
               </select>
             </div>
 
@@ -261,7 +263,7 @@
               </thead>
               <tbody id="reportTableBody">
                 <tr>
-                  <td colspan="13" style="text-align:center;">Select an Utsav to load report...</td>
+                  <td colspan="14" style="text-align:center;">Select an Utsav to load report...</td>
                 </tr>
               </tbody>
             </table>
