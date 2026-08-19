@@ -1,0 +1,482 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Satshrut Player</title>
+
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <style>
+    /* ── Player-specific styles ───────────────────── */
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .player-card {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Session info panel */
+    .session-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+
+    .info-chip {
+      background: #f0f4f8;
+      border: 1px solid #c9d8e8;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+    }
+
+    .info-chip .label {
+      font-size: 0.72rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .info-chip .value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #204060;
+      margin-top: 2px;
+    }
+
+    /* Phase timeline */
+    .phase-timeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+    }
+
+    .phase-block {
+      flex: 1;
+      min-width: 90px;
+      text-align: center;
+      padding: 0.5rem 0.3rem;
+      border-radius: 6px;
+      border: 2px solid #c9d8e8;
+      background: #f7f9fc;
+      color: #888;
+      font-size: 0.78rem;
+      position: relative;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .phase-block:hover {
+      border-color: #204060;
+      background: #eef4fc;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(32, 64, 96, 0.15);
+    }
+
+    .phase-block.active {
+      background: #204060;
+      border-color: #204060;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(32, 64, 96, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .phase-block.done {
+      background: #27ae60;
+      border-color: #27ae60;
+      color: #fff;
+    }
+
+    .phase-arrow {
+      color: #bbb;
+      font-size: 1.2rem;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .phase-block .ph-label {
+      font-size: 0.65rem;
+      opacity: 0.8;
+      margin-bottom: 2px;
+    }
+
+    .phase-block .ph-type {
+      font-size: 0.85rem;
+    }
+
+    .phase-block .ph-dur {
+      font-size: 0.68rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      margin: 1rem 0;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .progress-bar-bg {
+      background: #e0e8f0;
+      border-radius: 99px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #204060, #4c86b0);
+      width: 0%;
+      transition: width 1s linear;
+    }
+
+    /* Phase indicator + timer */
+    .phase-status {
+      text-align: center;
+      margin: 1.2rem 0 0.5rem;
+    }
+
+    .phase-status .phase-name {
+      font-size: 1rem;
+      color: #204060;
+      font-weight: 600;
+    }
+
+    .phase-status .countdown {
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #204060;
+      letter-spacing: 0.05em;
+      margin: 0.2rem 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .phase-status .countdown.audio-phase {
+      color: #27ae60;
+    }
+
+    .phase-status .phase-desc {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    /* Video containers */
+    #video-container {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #000;
+      margin: 1rem 0;
+    }
+
+    #video-container iframe {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      border: 0;
+    }
+
+    /* Container Fullscreen styling */
+    #video-container:fullscreen,
+    #video-container:-webkit-full-screen,
+    #video-container:-moz-full-screen,
+    #video-container:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #000 !important;
+      overflow: hidden !important;
+    }
+
+    #video-container:fullscreen iframe,
+    #video-container:-webkit-full-screen iframe,
+    #video-container:-moz-full-screen iframe,
+    #video-container:-ms-fullscreen iframe {
+      width: 100vw !important;
+      height: 100vh !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    #audio-container {
+      display: none;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      margin: 1rem 0;
+    }
+
+    #audio-container iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    /* Start / Complete */
+    #begin-panel {
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    #begin-panel .begin-title {
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 1rem;
+    }
+
+    #begin-btn {
+      background: linear-gradient(135deg, #204060, #4c86b0);
+      color: #fff;
+      border: none;
+      padding: 1rem 3rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(32, 64, 96, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    #begin-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(32, 64, 96, 0.4);
+    }
+
+    #begin-btn:active {
+      transform: translateY(0);
+    }
+
+    #complete-panel {
+      text-align: center;
+      padding: 2rem 0;
+      display: none;
+    }
+
+    .complete-icon {
+      font-size: 3rem;
+    }
+
+    .complete-title {
+      font-size: 1.5rem;
+      color: #204060;
+      font-weight: 700;
+      margin: 0.5rem 0;
+    }
+
+    .complete-subtitle {
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+
+    #no-session-panel {
+      text-align: center;
+      padding: 3rem 0;
+    }
+
+    .no-session-icon {
+      font-size: 3rem;
+    }
+
+    .no-session-msg {
+      font-size: 1.1rem;
+      color: #555;
+      margin: 1rem 0;
+    }
+
+    /* Responsive Mobile & Tablet Adjustments */
+    @media (max-width: 768px) {
+      .player-card { padding: 0.5rem; }
+      .session-info { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+      .info-chip { padding: 0.5rem 0.6rem; }
+      .info-chip .value { font-size: 0.92rem; }
+      .phase-timeline { gap: 2px; }
+      .phase-block { min-width: 75px; padding: 0.4rem 0.2rem; font-size: 0.72rem; }
+      .phase-status .countdown { font-size: 2rem; }
+      #begin-btn { width: 100%; padding: 0.85rem 1.5rem; font-size: 1rem; }
+    }
+
+    @media (max-width: 480px) {
+      .session-info { grid-template-columns: repeat(2, 1fr); }
+      .phase-block { min-width: 65px; font-size: 0.65rem; }
+      .phase-block .ph-type { font-size: 0.75rem; }
+      .phase-status .countdown { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding player-card">
+
+          <div class="frm-head">
+            <h1 id="pageTitle">Satshrut Session Player</h1>
+          </div>
+
+          <!-- No session message -->
+          <div id="no-session-panel" style="display:none;">
+            <div class="no-session-icon">🙏</div>
+            <p class="no-session-msg" id="noSessionMsg">No session scheduled for today.</p>
+            <a href="manageSessions.html" class="btn btn-primary">Manage Sessions</a>
+          </div>
+
+          <!-- Main player -->
+          <div id="player-panel" style="display:none;">
+
+            <!-- Session info chips -->
+            <div class="session-info">
+              <div class="info-chip">
+                <div class="label">Date</div>
+                <div class="value" id="chipDate">—</div>
+              </div>
+              <div class="info-chip">
+                <div class="label">Video Duration</div>
+                <div class="value" id="chipVideoDur">—</div>
+              </div>
+              <div class="info-chip">
+                <div class="label">Audio Duration</div>
+                <div class="value" id="chipAudioDur">—</div>
+              </div>
+              <div class="info-chip">
+                <div class="label">Total Session</div>
+                <div class="value" id="chipTotal">—</div>
+              </div>
+            </div>
+
+            <!-- Phase timeline -->
+            <div class="phase-timeline" id="phaseTimeline">
+              <div class="phase-block" id="phase-0" onclick="jumpToPhase(0)" title="Click to jump to Phase 1">
+                <div class="ph-label">Phase 1</div>
+                <div class="ph-type">▶ Video</div>
+                <div class="ph-dur" id="ph-dur-0"></div>
+              </div>
+              <div class="phase-arrow">›</div>
+              <div class="phase-block" id="phase-1" onclick="jumpToPhase(1)" title="Click to jump to Phase 2">
+                <div class="ph-label">Phase 2</div>
+                <div class="ph-type">🎵 Audio</div>
+                <div class="ph-dur" id="ph-dur-1"></div>
+              </div>
+              <div class="phase-arrow">›</div>
+              <div class="phase-block" id="phase-2" onclick="jumpToPhase(2)" title="Click to jump to Phase 3">
+                <div class="ph-label">Phase 3</div>
+                <div class="ph-type">▶ Video</div>
+                <div class="ph-dur" id="ph-dur-2"></div>
+              </div>
+              <div class="phase-arrow">›</div>
+              <div class="phase-block" id="phase-3" onclick="jumpToPhase(3)" title="Click to jump to Phase 4">
+                <div class="ph-label">Phase 4</div>
+                <div class="ph-type">🎵 Audio</div>
+                <div class="ph-dur" id="ph-dur-3"></div>
+              </div>
+            </div>
+
+            <!-- Begin panel -->
+            <div id="begin-panel">
+              <p class="begin-title">Ready to begin today's Satshrut session?</p>
+              <button id="begin-btn" onclick="beginSession()">▶&nbsp; Begin Session</button>
+            </div>
+
+            <!-- Running player UI -->
+            <div id="running-panel" style="display:none;">
+              <!-- Phase status + timer -->
+              <div class="phase-status">
+                <div class="phase-name" id="phaseLabel">Phase 1 — Video Playing</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+                  <div class="countdown" id="countdown">00:00:00</div>
+                  <span id="pauseBadge"
+                    style="display:none;background:#e67e22;color:#fff;font-size:0.8rem;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.05em;">⏸
+                    PAUSED</span>
+                </div>
+                <div class="phase-desc" id="phaseDesc">Remaining in this phase</div>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="progress-wrap">
+                <div class="progress-label">
+                  <span id="progressLabel">0% complete</span>
+                  <span id="elapsedLabel">0:00 elapsed</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+              </div>
+
+              <!-- Unified YouTube player -->
+              <div id="video-container">
+                <div id="yt-player"></div>
+              </div>
+            </div>
+
+            <!-- Complete panel -->
+            <div id="complete-panel">
+              <div class="complete-icon">🙏</div>
+              <div class="complete-title">Session Complete</div>
+              <p class="complete-subtitle">Jai Sadgurudev Vandan! The Satshrut session has finished.</p>
+              <button class="btn btn-primary" onclick="location.reload()">↩ Start Again</button>
+            </div>
+
+            <!-- Hidden preview elements for pre-calculating Audio 1 & Audio 2 durations -->
+            <div id="yt-audio1-preview"
+              style="position:fixed;bottom:-500px;left:-500px;width:1px;height:1px;overflow:hidden;pointer-events:none;visibility:hidden;">
+            </div>
+            <div id="yt-audio2-preview"
+              style="position:fixed;bottom:-500px;left:-500px;width:1px;height:1px;overflow:hidden;pointer-events:none;visibility:hidden;">
+            </div>
+
+          </div><!-- /player-panel -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="player.js"></script>
+</body>
+
+</html>
