@@ -342,6 +342,115 @@
           grid-template-columns: 1fr;
         }
       }
+    
+      /* Toast Notifications */
+      #toastContainer {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .custom-toast {
+        min-width: 280px;
+        max-width: 420px;
+        padding: 14px 18px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: toastSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        pointer-events: auto;
+      }
+      .custom-toast.toast-success {
+        background: #28a745;
+        color: #ffffff;
+      }
+      .custom-toast.toast-error {
+        background: #dc3545;
+        color: #ffffff;
+      }
+      .custom-toast.toast-info {
+        background: #204060;
+        color: #ffffff;
+      }
+      @keyframes toastSlideIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes toastFadeOut {
+        from { transform: translateY(0); opacity: 1; }
+        to { transform: translateY(20px); opacity: 0; }
+      }
+
+    
+      .floating-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 950px;
+        z-index: 9999;
+        background: #ffffff;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid #d0d7de;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.12);
+        padding: 0.85rem 1.5rem;
+        box-sizing: border-box;
+      }
+      .floating-action-bar-inner {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .form-builder-container {
+        padding-bottom: 90px;
+      }
+
+    
+      /* Enable sticky positioning inside whitesec */
+      .whitesec {
+        overflow: visible !important;
+      }
+      .collapsible-header {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 60px !important; /* Docks right below the top sticky blue navbar */
+        z-index: 95 !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid #b8d0e5 !important;
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        box-shadow: 0 6px 18px rgba(32, 64, 96, 0.12) !important;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+      .collapsible-header:hover {
+        background: #f0f6fc !important;
+        border-color: #204060 !important;
+      }
+
     </style>
   </head>
 
@@ -372,7 +481,7 @@
             <div class="form-builder-container">
               <div class="top-bar">
                 <h1 id="pageTitle"><i class="fas fa-tools"></i> Create New Form</h1>
-                <button class="btn btn-info" onclick="previewForm()" type="button"><i class="fas fa-eye"></i> Preview Form</button>
+                <button class="btn btn-info" onclick="previewForm()" type="button" style="display:none;"><i class="fas fa-eye"></i> Preview Form</button>
               </div>
 
               <!-- Draft Recovery Banner -->
@@ -386,10 +495,19 @@
 
               <div id="alert"></div>
 
-              <!-- Form Settings -->
-              <div class="settings-section">
-                <h3><i class="fas fa-cog"></i> Form Settings</h3>
-                <div class="settings-grid">
+              <!-- Form Settings (Collapsible) -->
+              <div class="settings-section" style="padding-bottom:1.25rem;">
+                <div class="collapsible-header" onclick="toggleSectionCollapse('settings')">
+                  <h3 style="margin:0; border-bottom:none; padding-bottom:0; display:flex; align-items:center; gap:0.5rem; font-size:1.2rem; font-weight:700; color:#204060;">
+                    <i class="fas fa-cog"></i> Form Settings
+                  </h3>
+                  <div style="display:flex; align-items:center; gap:0.5rem; color:#204060; font-size:0.9rem; font-weight:600;">
+                    <span style="font-size:0.8rem; color:#6c757d;">(Click to collapse/expand)</span>
+                    <i id="settingsCollapseIcon" class="fas fa-chevron-down" style="font-size:1rem; transition:transform 0.25s ease;"></i>
+                  </div>
+                </div>
+                <div id="settingsCollapseBody" style="display:none;">
+                  <div class="settings-grid">
                   <div class="full-width">
                     <label for="formTitle">Form Title *</label>
                     <input type="text" id="formTitle" class="form-control" placeholder="e.g. Food Preference Survey" />
@@ -400,7 +518,7 @@
                   </div>
                   <div>
                     <label for="formDept">Department *</label>
-                    <select id="formDept" class="form-control">
+                    <select id="formDept" class="form-control" onchange="handleDeptChange()">
                       <option value="">-- Select Department --</option>
                       <option value="accounts">Accounts</option>
                       <option value="office">Office</option>
@@ -414,17 +532,32 @@
                       <option value="smilestone">Smilestone</option>
                     </select>
                   </div>
+                  <div id="deptEventContainer" style="display:none;">
+                    <label id="deptEventLabel" for="deptEventSelect" style="font-weight:700; color:#204060;">Event *</label>
+                    <select id="deptEventSelect" class="form-control" style="font-weight:600; color:#204060;">
+                      <option value="">-- Select Event --</option>
+                    </select>
+                  </div>
                   <div>
                     <label for="formType">Access Type</label>
-                    <select id="formType" class="form-control">
+                    <select id="formType" class="form-control" onchange="handleFormTypeChange()">
                       <option value="public">Public (anyone can fill)</option>
                       <option value="cardno">Authenticated (requires Card No.)</option>
                       <option value="mobno">Authenticated (requires Mobile No.)</option>
+                      <option value="reg_cardno">Registered Participants Only (requires Card No.)</option>
+                      <option value="reg_mobno">Registered Participants Only (requires Mobile No.)</option>
                     </select>
                     <!-- OTP Verification option: only visible when authType = mobno -->
-                    <div id="requireOtpRow" style="display:none; align-items:center; gap:0.5rem; margin-top:0.5rem;">
-                      <input type="checkbox" id="requireOtp" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
-                      <label for="requireOtp" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Require OTP Verification</label>
+                    <div id="requireOtpRow" style="display:none; flex-direction:column; gap:0.35rem; margin-top:0.6rem;">
+                      <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <input type="checkbox" id="requireOtp" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" onchange="handleRequireOtpChange()" />
+                        <label for="requireOtp" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Require OTP Verification</label>
+                      </div>
+                      <div id="manageAllowlistWrap" style="display:none; margin-top:0.35rem;">
+                        <button type="button" onclick="openAllowlistModal()" class="btn btn-sm" style="background:#eef4f9; border:1px solid #b8d0e5; color:#204060; font-weight:700; font-size:0.85rem; padding:0.4rem 0.85rem; border-radius:6px; display:inline-flex; align-items:center; gap:0.45rem; cursor:pointer;">
+                          <i class="fas fa-users-cog"></i> Allowed Phone Numbers <span id="allowlistBadge" style="background:#204060; color:#fff; font-size:0.75rem; padding:2px 7px; border-radius:10px; font-weight:700;">0</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -514,21 +647,32 @@
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Fields Section -->
-              <div class="fields-section">
-                <h3><i class="fas fa-list-ol"></i> Form Fields</h3>
-                <div id="fieldsContainer"></div>
-                <div class="action-buttons-row">
-                  <button id="addFieldBtn" type="button" onclick="addField()"><i class="fas fa-plus-circle"></i> Add Question</button>
-                  <button id="addSectionBtn" type="button" onclick="addField({type: 'section'})"><i class="fas fa-folder-plus"></i> Add Section Break</button>
                 </div>
               </div>
 
-              <div class="submit-bar">
-                <a href="index.html" class="btn btn-secondary">Cancel</a>
-                <button class="btn" onclick="saveForm()"><i class="fas fa-save"></i> Save Form</button>
+              <!-- Fields Section (Collapsible) -->
+              <div class="fields-section">
+                <div class="collapsible-header" onclick="toggleSectionCollapse('fields')">
+                  <h3 style="margin:0; display:flex; align-items:center; gap:0.6rem; font-size:1.2rem; font-weight:700; color:#204060;">
+                    <i class="fas fa-list-ol"></i> Form Fields 
+                    <span id="fieldsCountBadge" style="background:#eef4f9; color:#204060; font-size:0.82rem; font-weight:700; padding:3px 10px; border-radius:12px; border:1px solid #b8d0e5;">0 questions</span>
+                  </h3>
+                  <div style="display:flex; align-items:center; gap:0.5rem; color:#204060; font-size:0.9rem; font-weight:600;">
+                    <span style="font-size:0.8rem; color:#6c757d;">(Click to collapse/expand)</span>
+                    <i id="fieldsCollapseIcon" class="fas fa-chevron-down" style="font-size:1rem; transition:transform 0.25s ease;"></i>
+                  </div>
+                </div>
+                <div id="fieldsCollapseBody" style="display:none;">
+                  <div id="fieldsContainer"></div>
+                  <div class="action-buttons-row">
+                    <button id="addFieldBtn" type="button" onclick="addField()"><i class="fas fa-plus-circle"></i> Add Question</button>
+                    <button id="addSectionBtn" type="button" onclick="addField({type: 'section'})"><i class="fas fa-folder-plus"></i> Add Section Break</button>
+                  </div>
+                </div>
+              </div>
+
+              
+                
               </div>
             </div>
           </div>
@@ -537,9 +681,123 @@
     </div>
 
     <script>
-      const token = sessionStorage.getItem('token');
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      
+      function showToast(message, type = 'success', duration = 3500) {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toastContainer';
+          document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `custom-toast toast-${type}`;
+        
+        let icon = 'fas fa-check-circle';
+        if (type === 'error') icon = 'fas fa-exclamation-circle';
+        if (type === 'info') icon = 'fas fa-info-circle';
+
+        toast.innerHTML = `<i class="${icon}" style="font-size:1.2rem;"></i> <span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.animation = 'toastFadeOut 0.4s forwards';
+          setTimeout(() => toast.remove(), 400);
+        }, duration);
+      }
+
+      function showSuccess(message) {
+        const alertEl = document.getElementById('alert');
+        if (alertEl) {
+          alertEl.className = 'alert alert-success';
+          alertEl.innerHTML = `<i class="fas fa-check-circle"></i> ${escapeHtml(message)}`;
+          alertEl.style.display = 'block';
+        }
+        showToast(message, 'success');
+      }
+
+      function showError(message) {
+        const alertEl = document.getElementById('alert');
+        if (alertEl) {
+          alertEl.className = 'alert alert-danger';
+          alertEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(message)}`;
+          alertEl.style.display = 'block';
+        }
+        showToast(message, 'error', 4500);
+      }
+
+      const getToken = () => sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = getToken();
       const urlParams = new URLSearchParams(window.location.search);
-      const editId = urlParams.get('id');
+      // editId initialized above
+      
+      let isFormDirty = false;
+      let isLoadingForm = false;
+      let editId = urlParams.get('id');
+
+      function markDirty() {
+        if (isLoadingForm) return;
+        if (!isFormDirty) {
+          isFormDirty = true;
+          updateSaveButtonState();
+        }
+      }
+
+      function markClean() {
+        isFormDirty = false;
+        updateSaveButtonState();
+      }
+
+      function updateSaveButtonState() {
+        const saveBtn = document.getElementById('saveFormBtn');
+        const statusEl = document.getElementById('saveStatusIndicator');
+        if (!saveBtn) return;
+
+        if (isFormDirty) {
+          saveBtn.disabled = false;
+          saveBtn.style.opacity = '1';
+          saveBtn.style.cursor = 'pointer';
+          saveBtn.style.background = '#204060';
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Form';
+          if (statusEl) {
+            statusEl.style.color = '#fd7e14';
+            statusEl.innerHTML = '<i class="fas fa-dot-circle"></i> Unsaved changes';
+          }
+        } else {
+          saveBtn.disabled = true;
+          saveBtn.style.opacity = '0.5';
+          saveBtn.style.cursor = 'not-allowed';
+          saveBtn.style.background = '#6c757d';
+          saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+          if (statusEl) {
+            statusEl.style.color = '#28a745';
+            statusEl.innerHTML = '<i class="fas fa-check-circle"></i> All changes saved';
+          }
+        }
+      }
+
+      // Automatically track dirty state on any user interaction
+      $(document).on('input change', 'input, textarea, select', function() {
+        markDirty();
+      });
+
       let fieldCounter = 0;
       let activeFormatInput = null;
 
@@ -563,6 +821,7 @@
         { value: 'checkbox', label: 'Checkboxes' },
         { value: 'grid_radio', label: 'Multiple Choice Grid' },
         { value: 'grid_checkbox', label: 'Checkbox Grid' },
+        { value: 'grid_number', label: 'Matrix Table (Dropdown Grid)' },
         { value: 'section', label: 'Section Divider' }
       ];
 
@@ -622,6 +881,7 @@
       }
 
       function addField(fieldData) {
+        markDirty();
         fieldCounter++;
         const idx = fieldCounter;
         const container = document.getElementById('fieldsContainer');
@@ -792,7 +1052,12 @@
           </div>
 
           <div class="options-container" id="optionsContainer_${idx}" style="display: ${OPTION_TYPES.includes(fieldType) ? 'block' : 'none'}">
-            <label>Options</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <label style="margin:0; font-weight:700; color:#204060;">Options</label>
+              <button type="button" class="btn btn-sm" onclick="populateEventDatesToOptions(${idx})" style="padding:2px 9px; font-size:0.78rem; background:#eef4f9; border:1px solid #b8d0e5; color:#204060; border-radius:4px; font-weight:700; cursor:pointer;" title="Auto-fill options with all event dates">
+                <i class="fas fa-calendar-alt"></i> Fill Event Dates
+              </button>
+            </div>
             <div id="optionsList_${idx}">
               ${fieldOptions.length > 0
                 ? fieldOptions.map((opt, oi) => createOptionRowHtml(idx, opt)).join('')
@@ -803,7 +1068,7 @@
           </div>
 
           <!-- Matrix Grid editor -->
-          <div class="options-container" id="gridContainer_${idx}" style="display: ${['grid_radio', 'grid_checkbox'].includes(fieldType) ? 'block' : 'none'}; border-color: #ced4da;">
+          <div class="options-container" id="gridContainer_${idx}" style="display: ${['grid_radio', 'grid_checkbox', 'grid_number'].includes(fieldType) ? 'block' : 'none'}; border-color: #ced4da;">
             <div class="vendor-dynamic-rows-wrapper" style="display:none; margin-bottom:0.75rem; padding-bottom:0.75rem; border-bottom:1px dashed #ced4da;">
               <div style="display:flex; align-items:center; gap:0.5rem;">
                 <input type="checkbox" class="field-dynamic-rows" id="dynrows_${idx}" ${fieldData?.dynamicRows === 'utsav' ? 'checked' : ''} onchange="toggleDynamicRows(${idx})" />
@@ -821,7 +1086,12 @@
             </div>
             <div class="grid-manual-rows-wrapper" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
               <div>
-                <label style="color:#204060; font-weight:600; font-size:0.85rem;">Rows</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <label style="color:#204060; font-weight:700; font-size:0.85rem; margin:0;">Rows</label>
+                  <button type="button" class="btn btn-sm" onclick="populateEventDatesToGrid(${idx}, 'row')" style="padding:2px 8px; font-size:0.75rem; background:#eef4f9; border:1px solid #b8d0e5; color:#204060; border-radius:4px; font-weight:700; cursor:pointer;" title="Auto-fill rows with all event dates">
+                    <i class="fas fa-calendar-alt"></i> Fill Dates
+                  </button>
+                </div>
                 <div id="gridRowsList_${idx}">
                   ${fieldRows.length > 0
                     ? fieldRows.map(r => createGridRowHtml(idx, 'row', r)).join('')
@@ -831,7 +1101,12 @@
                 <button type="button" class="add-option-btn" onclick="addGridItem(${idx}, 'row')"><i class="fas fa-plus"></i> Add Row</button>
               </div>
               <div>
-                <label style="color:#204060; font-weight:600; font-size:0.85rem;">Columns</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <label style="color:#204060; font-weight:700; font-size:0.85rem; margin:0;">Columns</label>
+                  <button type="button" class="btn btn-sm" onclick="populateEventDatesToGrid(${idx}, 'col')" style="padding:2px 8px; font-size:0.75rem; background:#eef4f9; border:1px solid #b8d0e5; color:#204060; border-radius:4px; font-weight:700; cursor:pointer;" title="Auto-fill columns with all event dates">
+                    <i class="fas fa-calendar-alt"></i> Fill Dates
+                  </button>
+                </div>
                 <div id="gridColsList_${idx}">
                   ${fieldCols.length > 0
                     ? fieldCols.map(c => createGridRowHtml(idx, 'col', c)).join('')
@@ -891,7 +1166,7 @@
 
         // Apply visual layout rules based on initial type (handles sections)
         onTypeChange(idx);
-        if (['grid_radio', 'grid_checkbox'].includes(fieldType)) {
+        if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(fieldType)) {
           toggleDynamicRows(idx);
         }
 
@@ -919,6 +1194,136 @@
         renumberFields();
       }
 
+      
+      function getOrdinalSuffix(day) {
+        if (day > 3 && day < 21) return 'th';
+        switch (day % 10) {
+          case 1: return 'st';
+          case 2: return 'nd';
+          case 3: return 'rd';
+          default: return 'th';
+        }
+      }
+
+      function generateEventDateLabels(startDateStr, endDateStr) {
+        if (!startDateStr || !endDateStr) return [];
+        const start = new Date(startDateStr + 'T00:00:00');
+        const end = new Date(endDateStr + 'T00:00:00');
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const labels = [];
+        const curr = new Date(start);
+
+        while (curr <= end) {
+          const day = curr.getDate();
+          const month = months[curr.getMonth()];
+          labels.push(`${day}${getOrdinalSuffix(day)} ${month}`);
+          curr.setDate(curr.getDate() + 1);
+        }
+        return labels;
+      }
+
+      function getCurrentEventDates() {
+        const select = document.getElementById('deptEventSelect');
+        if (!select || !select.value) {
+          const dept = document.getElementById('formDept')?.value;
+          if (dept === 'utsav' || dept === 'adhyayan') {
+            alert('Please select an event from the Event dropdown in Form Settings first.');
+          } else {
+            alert('Please set Department to Utsav or Adhyayan and select an event in Form Settings first.');
+          }
+          return null;
+        }
+
+        const selectedOpt = select.options[select.selectedIndex];
+        let start = selectedOpt ? selectedOpt.getAttribute('data-start') : null;
+        let end = selectedOpt ? selectedOpt.getAttribute('data-end') : null;
+
+        if (!start || !end) {
+          if (window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
+            const ev = window.currentDeptEvents.find(e => String(e.id) === String(select.value));
+            if (ev) {
+              start = ev.start_date;
+              end = ev.end_date;
+            }
+          }
+        }
+
+        if (!start || !end) {
+          alert('Could not find start and end dates for the selected event.');
+          return null;
+        }
+
+        return generateEventDateLabels(start, end);
+      }
+
+      function populateEventDatesToGrid(fieldIdx, type) {
+        const dates = getCurrentEventDates();
+        if (!dates || dates.length === 0) return;
+
+        const containerId = type === 'row' ? `gridRowsList_${fieldIdx}` : `gridColsList_${fieldIdx}`;
+        const listEl = document.getElementById(containerId);
+        if (!listEl) return;
+
+        listEl.innerHTML = dates.map(dateLabel => createGridRowHtml(fieldIdx, type, dateLabel)).join('');
+        markDirty();
+        showSuccess(`Populated ${dates.length} event dates (${dates[0]} to ${dates[dates.length - 1]}) as ${type === 'row' ? 'Rows' : 'Columns'}!`);
+      }
+
+      function populateEventDatesToOptions(fieldIdx) {
+        const dates = getCurrentEventDates();
+        if (!dates || dates.length === 0) return;
+
+        const listEl = document.getElementById(`optionsList_${fieldIdx}`);
+        if (!listEl) return;
+
+        listEl.innerHTML = dates.map(dateLabel => createOptionRowHtml(fieldIdx, dateLabel)).join('');
+        markDirty();
+        showSuccess(`Populated ${dates.length} event dates (${dates[0]} to ${dates[dates.length - 1]}) as Options!`);
+      }
+
+      
+      function toggleSectionCollapse(section) {
+        const settingsBody = document.getElementById('settingsCollapseBody');
+        const settingsIcon = document.getElementById('settingsCollapseIcon');
+        const fieldsBody = document.getElementById('fieldsCollapseBody');
+        const fieldsIcon = document.getElementById('fieldsCollapseIcon');
+
+        if (section === 'settings') {
+          const isCurrentlyHidden = !settingsBody || settingsBody.style.display === 'none';
+          if (isCurrentlyHidden) {
+            if (settingsBody) settingsBody.style.display = 'block';
+            if (settingsIcon) settingsIcon.className = 'fas fa-chevron-up';
+            if (fieldsBody) fieldsBody.style.display = 'none';
+            if (fieldsIcon) fieldsIcon.className = 'fas fa-chevron-down';
+          } else {
+            if (settingsBody) settingsBody.style.display = 'none';
+            if (settingsIcon) settingsIcon.className = 'fas fa-chevron-down';
+          }
+        } else if (section === 'fields') {
+          const isCurrentlyHidden = !fieldsBody || fieldsBody.style.display === 'none';
+          if (isCurrentlyHidden) {
+            if (fieldsBody) fieldsBody.style.display = 'block';
+            if (fieldsIcon) fieldsIcon.className = 'fas fa-chevron-up';
+            if (settingsBody) settingsBody.style.display = 'none';
+            if (settingsIcon) settingsIcon.className = 'fas fa-chevron-down';
+          } else {
+            if (fieldsBody) fieldsBody.style.display = 'none';
+            if (fieldsIcon) fieldsIcon.className = 'fas fa-chevron-down';
+          }
+        }
+      }
+
+      function updateFieldsCountBadge() {
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        const badge = document.getElementById('fieldsCountBadge');
+        if (badge) {
+          const count = cards.length;
+          badge.textContent = count === 1 ? '1 field' : `${count} fields`;
+        }
+      }
+
       function updateCardAccent(card, type) {
         const colors = {
           text: '#204060',
@@ -931,6 +1336,7 @@
           radio: '#fd7e14',
           checkbox: '#e83e8c',
           grid_radio: '#20c997',
+          grid_number: '#204060',
           grid_checkbox: '#e83e8c',
           section: '#6f42c1'
         };
@@ -963,11 +1369,13 @@
       }
 
       function addOption(fieldIdx) {
+        markDirty();
         const list = document.getElementById(`optionsList_${fieldIdx}`);
         list.insertAdjacentHTML('beforeend', createOptionRowHtml(fieldIdx, ''));
       }
 
       function addGridItem(fieldIdx, type) {
+        markDirty();
         const list = document.getElementById(`grid${type === 'row' ? 'Rows' : 'Cols'}List_${fieldIdx}`);
         const count = list.children.length + 1;
         list.insertAdjacentHTML('beforeend', createGridRowHtml(fieldIdx, type, `${type === 'row' ? 'Row' : 'Column'} ${count}`));
@@ -975,7 +1383,9 @@
 
       function onTypeChange(idx) {
         const card = document.getElementById(`fieldCard_${idx}`);
-        const type = card.querySelector('.field-type').value;
+        if (!card) return;
+        const typeEl = card.querySelector('.field-type');
+        const type = typeEl ? typeEl.value : 'text';
         
         const optContainer = document.getElementById(`optionsContainer_${idx}`);
         const gridContainer = document.getElementById(`gridContainer_${idx}`);
@@ -985,8 +1395,8 @@
         const labelTitle = card.querySelector('.label-title');
         const labelDesc = card.querySelector('.label-desc');
 
-        optContainer.style.display = OPTION_TYPES.includes(type) ? 'block' : 'none';
-        gridContainer.style.display = ['grid_radio', 'grid_checkbox'].includes(type) ? 'block' : 'none';
+        if (optContainer) optContainer.style.display = OPTION_TYPES.includes(type) ? 'block' : 'none';
+        if (gridContainer) gridContainer.style.display = ['grid_radio', 'grid_checkbox', 'grid_number'].includes(type) ? 'block' : 'none';
         
         const dateConstraintsWrapper = card.querySelector('.date-constraints-wrapper');
         if (dateConstraintsWrapper) {
@@ -999,17 +1409,17 @@
         }
         
         if (type === 'section') {
-          reqToggle.style.display = 'none';
-          logicContainer.style.display = 'none';
-          actionRow.style.display = 'block';
-          labelTitle.textContent = 'Section Title *';
-          labelDesc.textContent = 'Section Description (optional)';
+          if (reqToggle) reqToggle.style.display = 'none';
+          if (logicContainer) logicContainer.style.display = 'none';
+          if (actionRow) actionRow.style.display = 'block';
+          if (labelTitle) labelTitle.textContent = 'Section Title *';
+          if (labelDesc) labelDesc.textContent = 'Section Description (optional)';
         } else {
-          reqToggle.style.display = 'block';
-          logicContainer.style.display = 'block';
-          actionRow.style.display = 'none';
-          labelTitle.textContent = 'Field Label *';
-          labelDesc.textContent = 'Description / Help Text (optional)';
+          if (reqToggle) reqToggle.style.display = 'block';
+          if (logicContainer) logicContainer.style.display = 'block';
+          if (actionRow) actionRow.style.display = 'none';
+          if (labelTitle) labelTitle.textContent = 'Field Label *';
+          if (labelDesc) labelDesc.textContent = 'Description / Help Text (optional)';
         }
 
         const limitColWrapper = card.querySelector('.grid-limit-column-wrapper');
@@ -1029,9 +1439,10 @@
       function updateVendorFieldUI(idx) {
         const card = document.getElementById(`fieldCard_${idx}`);
         if (!card) return;
-        const type = card.querySelector('.field-type').value;
+        const typeEl = card.querySelector('.field-type');
+        const type = typeEl ? typeEl.value : 'text';
         const isVendorForm = document.getElementById('formCategory')?.value === 'vendor';
-        const isGrid = ['grid_radio', 'grid_checkbox'].includes(type);
+        const isGrid = ['grid_radio', 'grid_checkbox', 'grid_number'].includes(type);
 
         const roleWrapper = card.querySelector('.vendor-field-role-wrapper');
         if (roleWrapper) {
@@ -1071,7 +1482,8 @@
           insertVendorFieldTemplate();
         }
         onFormCategoryChange();
-        renderOtpAllowlistPanel();
+        setTimeout(markClean, 200);
+        // allowlist managed via modal
       }
 
       // Mirrors the field structure of the existing production "Vendors List"
@@ -1142,9 +1554,12 @@
       function toggleDynamicRows(idx) {
         const card = document.getElementById(`fieldCard_${idx}`);
         if (!card) return;
-        const checked = card.querySelector('.field-dynamic-rows').checked;
-        card.querySelector('.dynamic-rows-role-wrapper').style.display = checked ? 'block' : 'none';
-        card.querySelector('.grid-manual-rows-wrapper').style.display = checked ? 'none' : 'grid';
+        const dynInput = card.querySelector('.field-dynamic-rows');
+        const checked = dynInput ? dynInput.checked : false;
+        const roleWrapper = card.querySelector('.dynamic-rows-role-wrapper');
+        const manualWrapper = card.querySelector('.grid-manual-rows-wrapper');
+        if (roleWrapper) roleWrapper.style.display = checked ? 'block' : 'none';
+        if (manualWrapper) manualWrapper.style.display = checked ? 'none' : 'grid';
       }
 
       function removeField(idx) {
@@ -1188,6 +1603,7 @@
       }
 
       function renumberFields() {
+        updateFieldsCountBadge();
         try {
           const cards = document.querySelectorAll('#fieldsContainer .field-card');
           cards.forEach((card, i) => {
@@ -1564,7 +1980,7 @@
               .filter(v => v.length > 0);
           }
 
-          if (['grid_radio', 'grid_checkbox'].includes(type)) {
+          if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(type)) {
             const rowInputs = card.querySelectorAll('.grid-row-value');
             const colInputs = card.querySelectorAll('.grid-col-value');
             field.rows = Array.from(rowInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
@@ -1657,14 +2073,39 @@
         return fields;
       }
 
+      async       function handleRequireOtpChange() {
+        const isChecked = document.getElementById('requireOtp')?.checked;
+        const isMob = document.getElementById('formType')?.value === 'mobno';
+        const wrap = document.getElementById('manageAllowlistWrap');
+        if (wrap) {
+          wrap.style.display = (isChecked && isMob) ? 'block' : 'none';
+        }
+        updateAllowlistBadge();
+      }
+
       async function saveForm() {
+        const saveBtn = document.getElementById('saveFormBtn');
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Form...';
+        }
+
+        const resetBtn = () => {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.background = '';
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Form';
+          }
+        };
+
         const title = document.getElementById('formTitle').value.trim();
         const description = document.getElementById('formDescription').value.trim();
         const dept_name = document.getElementById('formDept').value.trim();
         
         const accessVal = document.getElementById('formType').value;
         const isPublic = accessVal === 'public';
-        const authType = accessVal === 'public' ? 'cardno' : accessVal;
+        const requireRegistration = (accessVal === 'reg_cardno' || accessVal === 'reg_mobno');
+        const authType = (accessVal === 'mobno' || accessVal === 'reg_mobno') ? 'mobno' : (isPublic ? 'public' : 'cardno');
 
         const limitOneResponse = document.getElementById('limitOneResponse').checked;
         const allowEdit = document.getElementById('allowEdit').checked;
@@ -1685,33 +2126,51 @@
         const slug = document.getElementById('formSlug').value.trim();
         const fields = collectFields();
 
-        if (!title) { showError('Form title is required'); return; }
-        if (!dept_name) { showError('Department is required'); return; }
-        if (fields.length === 0) { showError('At least one field is required'); return; }
+        if (!title) { showError('Form title is required'); resetBtn(); return; }
+        if (!dept_name) { showError('Department is required'); resetBtn(); return; }
+        if (fields.length === 0) { showError('At least one field is required'); resetBtn(); return; }
 
         // Validate that option/grid fields have items
         for (const f of fields) {
           if (OPTION_TYPES.includes(f.type) && (!f.options || f.options.length === 0)) {
             showError(`Field "${f.label}" needs at least one option`);
+            resetBtn();
             return;
           }
-          if (['grid_radio', 'grid_checkbox'].includes(f.type) && f.dynamicRows !== 'utsav' && (!f.rows || f.rows.length === 0 || !f.columns || f.columns.length === 0)) {
+          if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(f.type) && f.dynamicRows !== 'utsav' && (!f.rows || f.rows.length === 0 || !f.columns || f.columns.length === 0)) {
             showError(`Grid field "${f.label}" needs at least one row and one column`);
+            resetBtn();
             return;
           }
-          if (['grid_radio', 'grid_checkbox'].includes(f.type) && f.dynamicRows === 'utsav' && (!f.columns || f.columns.length === 0)) {
+          if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(f.type) && f.dynamicRows === 'utsav' && (!f.columns || f.columns.length === 0)) {
             showError(`Grid field "${f.label}" needs at least one column`);
+            resetBtn();
             return;
           }
         }
 
         const requireOtp = document.getElementById('requireOtp').checked;
-        const formCategory = document.getElementById('formCategory').value;
+                const formCategory = document.getElementById('formCategory').value;
+
+        const deptEventSelect = document.getElementById('deptEventSelect');
+        let event_id = null;
+        let event_name = null;
+        let event_type = null;
+        if (dept_name === 'utsav' || dept_name === 'adhyayan') {
+          if (deptEventSelect && deptEventSelect.value) {
+            event_id = parseInt(deptEventSelect.value, 10);
+            const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
+            event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
+            event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+          }
+        }
 
         const body = { 
           title, description, dept_name, fields, isPublic, authType, slug, 
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses, requireOtp, formCategory
+          expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
+          event_id, event_name, event_type,
+          otpAllowlist: window.stagedOtpAllowlist || []
         };
 
         try {
@@ -1724,7 +2183,7 @@
             method,
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${getToken()}`
             },
             body: JSON.stringify(body)
           });
@@ -1735,19 +2194,30 @@
             isFormSaved = true;
             localStorage.removeItem('form_builder_draft');
 
+            // If a new form was just created, smoothly switch to edit mode without leaving
+            if (!editId && data.data && data.data.id) {
+              const newId = data.data.id;
+              editId = String(newId);
+              urlParams.set('id', newId);
+              const newUrl = `create.html?id=${newId}`;
+              window.history.replaceState({ path: newUrl }, '', newUrl);
+              const pageTitleEl = document.getElementById('pageTitle');
+              if (pageTitleEl) pageTitleEl.innerHTML = '<i class="fas fa-edit"></i> Edit Form';
+            }
+
             let allowlistWarning = '';
-            if (!editId && pendingOtpAllowlist.length > 0) {
+            if (pendingOtpAllowlist.length > 0 && data.data?.id) {
               allowlistWarning = await flushPendingOtpAllowlist(data.data.id);
             }
 
-            showSuccess((editId ? 'Form updated successfully!' : 'Form created successfully!') + allowlistWarning);
-            setTimeout(() => {
-              window.location.href = 'index.html';
-            }, allowlistWarning ? 2500 : 1000);
+            showSuccess((editId ? 'Form saved successfully!' : 'Form created successfully!') + allowlistWarning);
+            markClean();
           } else {
+            resetBtn();
             showError(data.message || 'Failed to save form');
           }
         } catch (err) {
+          resetBtn();
           showError('Error saving form: ' + err.message);
         }
       }
@@ -1777,245 +2247,67 @@
       // id. Runs sequentially so a duplicate/failed entry doesn't abort the
       // rest. Returns a short warning suffix (empty string if everything saved).
       async function flushPendingOtpAllowlist(newFormId) {
-        const failures = [];
-        for (const entry of pendingOtpAllowlist) {
-          try {
-            const res = await fetch(`${CONFIG.basePath}/forms/${newFormId}/otp-allowlist`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({ mobno: entry.mobno, department: entry.department })
-            });
-            const data = await res.json();
-            if (!data.success) {
-              failures.push(`${entry.mobno} (${data.message || 'failed'})`);
-            }
-          } catch (err) {
-            failures.push(`${entry.mobno} (${err.message})`);
-          }
-        }
-        return failures.length > 0
-          ? ` Note: could not save allowlist number(s): ${failures.join(', ')} — add them from the Edit Form page.`
-          : '';
-      }
-
-      function updateOtpAllowlistVisibility() {
-        const section = document.getElementById('otpAllowlistSection');
-        const accessVal = document.getElementById('formType').value;
-        const isVendorForm = document.getElementById('formCategory').value === 'vendor';
-        section.style.display = (accessVal === 'mobno' && isVendorForm) ? 'block' : 'none';
-      }
-
-      function renderPendingOtpAllowlist() {
-        const listEl = document.getElementById('otpAllowlistList');
-        if (pendingOtpAllowlist.length === 0) {
-          listEl.innerHTML = '<small style="color:#6c757d;">No numbers added yet — any registered member can OTP-auth on this form.</small>';
-          return;
-        }
-        listEl.innerHTML = pendingOtpAllowlist.map(e => `
-          <div style="display:flex; align-items:center; gap:0.5rem; padding:0.35rem 0; border-bottom:1px solid #f0f0f0;">
-            <span style="font-weight:600; color:#204060; min-width:110px;">${escapeHtml(e.mobno)}</span>
-            <span style="color:#6c757d;">${escapeHtml(e.department)}</span>
-            <span style="color:#f0ad4e; font-size:0.75rem;">(saved once the form is created)</span>
-            <button type="button" onclick="deleteOtpAllowlistEntry(${e.id})" style="margin-left:auto; background:none; border:none; color:#dc3545; cursor:pointer;" title="Remove"><i class="fas fa-trash-alt"></i></button>
-          </div>
-        `).join('');
-      }
-
-      async function renderOtpAllowlistPanel() {
-        updateOtpAllowlistVisibility();
-        if (!editId) {
-          renderPendingOtpAllowlist();
-          return;
-        }
-
-        const listEl = document.getElementById('otpAllowlistList');
-        listEl.innerHTML = '<small style="color:#6c757d;">Loading...</small>';
-
-        try {
-          const res = await fetch(`${CONFIG.basePath}/forms/${editId}/otp-allowlist`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (!data.success) {
-            listEl.innerHTML = `<small style="color:#dc3545;">${data.message || 'Failed to load allowlist'}</small>`;
-            return;
-          }
-
-          const entries = data.data || [];
-          if (entries.length === 0) {
-            listEl.innerHTML = '<small style="color:#6c757d;">No numbers added yet — any registered member can OTP-auth on this form.</small>';
-            return;
-          }
-
-          listEl.innerHTML = entries.map(e => `
-            <div style="display:flex; align-items:center; gap:0.5rem; padding:0.35rem 0; border-bottom:1px solid #f0f0f0;">
-              <span style="font-weight:600; color:#204060; min-width:110px;">${escapeHtml(e.mobno)}</span>
-              <span style="color:#6c757d;">${escapeHtml(e.department)}</span>
-              <button type="button" onclick="deleteOtpAllowlistEntry(${e.id})" style="margin-left:auto; background:none; border:none; color:#dc3545; cursor:pointer;" title="Remove"><i class="fas fa-trash-alt"></i></button>
-            </div>
-          `).join('');
-        } catch (err) {
-          listEl.innerHTML = `<small style="color:#dc3545;">Error loading allowlist: ${err.message}</small>`;
-        }
-      }
-
-      async function addOtpAllowlistEntry() {
-        const mobno = document.getElementById('allowlistMobno').value.trim();
-        const department = document.getElementById('allowlistDepartment').value.trim();
-
-        if (!mobno || !department) {
-          showError('Mobile number and department are both required');
-          return;
-        }
-
-        if (!editId) {
-          const cleanMob = mobno.replace(/\D/g, '').slice(-10);
-          if (cleanMob.length !== 10) {
-            showError('Invalid mobile number format. Please enter a 10-digit number.');
-            return;
-          }
-          if (pendingOtpAllowlist.some(e => e.mobno === cleanMob)) {
-            showError('This mobile number is already on the allowlist for this form');
-            return;
-          }
-          // Mirror the backend's own check (addOtpAllowlistEntry requires a
-          // registered member) using the public resolve-identity lookup,
-          // since the real allowlist endpoint needs a form_id we don't have yet.
-          try {
-            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${encodeURIComponent(cleanMob)}`);
-            const data = await res.json();
-            if (!data.success) {
-              showError('This mobile number is not a registered member and cannot be OTP-authenticated');
-              return;
-            }
-          } catch (err) {
-            showError('Error checking registration: ' + err.message);
-            return;
-          }
-
-          pendingOtpAllowlist.push({ id: pendingOtpAllowlistNextId++, mobno: cleanMob, department });
-          document.getElementById('allowlistMobno').value = '';
-          document.getElementById('allowlistDepartment').value = '';
-          renderPendingOtpAllowlist();
-          return;
-        }
-
-        try {
-          const res = await fetch(`${CONFIG.basePath}/forms/${editId}/otp-allowlist`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ mobno, department })
-          });
-          const data = await res.json();
-          if (!data.success) {
-            showError(data.message || 'Failed to add allowlist entry');
-            return;
-          }
-          document.getElementById('allowlistMobno').value = '';
-          document.getElementById('allowlistDepartment').value = '';
-          renderOtpAllowlistPanel();
-        } catch (err) {
-          showError('Error adding allowlist entry: ' + err.message);
-        }
-      }
-
-      async function deleteOtpAllowlistEntry(entryId) {
-        if (!confirm('Remove this number from the allowlist?')) return;
-
-        if (!editId) {
-          pendingOtpAllowlist = pendingOtpAllowlist.filter(e => e.id !== entryId);
-          renderPendingOtpAllowlist();
-          return;
-        }
-
-        try {
-          const res = await fetch(`${CONFIG.basePath}/forms/${editId}/otp-allowlist/${entryId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (!data.success) {
-            showError(data.message || 'Failed to remove allowlist entry');
-            return;
-          }
-          renderOtpAllowlistPanel();
-        } catch (err) {
-          showError('Error removing allowlist entry: ' + err.message);
-        }
-      }
-
-      function escapeAttr(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      }
-
-      function escapeHtml(str) {
-        if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-      }
-
-      function showSuccess(msg) {
-        const alert = document.getElementById('alert');
-        alert.className = 'alert-success';
-        alert.textContent = msg;
-        alert.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-
-      function showError(msg) {
-        const alert = document.getElementById('alert');
-        alert.className = 'alert-danger';
-        alert.textContent = msg;
-        alert.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return '';
       }
 
       function previewForm() {
-        const title = document.getElementById('formTitle').value.trim() || 'Untitled Form';
-        const description = document.getElementById('formDescription').value.trim();
-        const dept_name = document.getElementById('formDept').value.trim();
-        
-        const accessVal = document.getElementById('formType').value;
-        const isPublic = accessVal === 'public';
-        const authType = accessVal === 'public' ? 'cardno' : accessVal;
+        try {
+          const title = document.getElementById('formTitle')?.value?.trim() || 'Untitled Form';
+          const description = document.getElementById('formDescription')?.value?.trim() || '';
+          const dept_name = document.getElementById('formDept')?.value?.trim() || '';
+          
+          const accessVal = document.getElementById('formType')?.value || 'public';
+          const isPublic = accessVal === 'public';
+          const authType = accessVal === 'public' ? 'cardno' : accessVal;
 
-        const limitOneResponse = document.getElementById('limitOneResponse').checked;
-        const allowEdit = document.getElementById('allowEdit').checked;
-        const showProgressBar = document.getElementById('showProgressBar').checked;
-        const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
-        const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
-        
-        let section1Action = 'next';
-        const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
-        if (firstSectionCard) {
-          section1Action = firstSectionCard.value;
+          const limitOneResponse = document.getElementById('limitOneResponse')?.checked || false;
+          const allowEdit = document.getElementById('allowEdit')?.checked || false;
+          const showProgressBar = document.getElementById('showProgressBar')?.checked !== false;
+          const showSubmitAnother = document.getElementById('showSubmitAnother')?.checked !== false;
+          const confirmationMessage = document.getElementById('confirmationMessage')?.value?.trim() || 'Thank you, your response has been recorded.';
+          
+          let section1Action = 'next';
+          const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+          if (firstSectionCard) {
+            section1Action = firstSectionCard.value;
+          }
+
+          const themeColor = document.getElementById('themeColor')?.value || '#204060';
+          const expiresAt = document.getElementById('expiresAt')?.value || null;
+          const maxResponses = document.getElementById('maxResponses')?.value || null;
+          const closeMessage = document.getElementById('closeMessage')?.value?.trim() || null;
+          const slug = document.getElementById('formSlug')?.value?.trim() || '';
+          const fields = collectFields();
+
+          const requireOtp = document.getElementById('requireOtp')?.checked || false;
+          const formCategory = document.getElementById('formCategory')?.value || 'generic';
+
+          const deptEventSelect = document.getElementById('deptEventSelect');
+          let event_id = null;
+          let event_name = null;
+          let event_type = null;
+          if (dept_name === 'utsav' || dept_name === 'adhyayan') {
+            if (deptEventSelect && deptEventSelect.value) {
+              event_id = parseInt(deptEventSelect.value, 10);
+              const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
+              event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
+              event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+            }
+          }
+
+          const previewData = { 
+            id: editId ? parseInt(editId, 10) : undefined,
+            title, description, dept_name, fields, isPublic, authType, slug, 
+            limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+            expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
+            event_id, event_name, event_type
+          };
+          sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
+          window.open('view.html?preview=true' + (editId ? '&id=' + editId : ''), '_blank');
+        } catch (e) {
+          console.error('Error in previewForm:', e);
+          showError('Preview error: ' + e.message);
         }
-
-        const themeColor = document.getElementById('themeColor').value;
-        const expiresAt = document.getElementById('expiresAt').value || null;
-        const maxResponses = document.getElementById('maxResponses').value || null;
-        const closeMessage = document.getElementById('closeMessage').value.trim() || null;
-        const slug = document.getElementById('formSlug').value.trim();
-        const fields = collectFields();
-
-        const requireOtp = document.getElementById('requireOtp').checked;
-        const formCategory = document.getElementById('formCategory').value;
-
-        const previewData = { 
-          title, description, dept_name, fields, isPublic, authType, slug, 
-          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
-          expiresAt, closeMessage, maxResponses, requireOtp, formCategory
-        };
-        sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
-        window.open('view.html?preview=true', '_blank');
       }
 
       // Keep track of draft state and page unload confirmation
@@ -2039,7 +2331,8 @@
         
         const accessVal = document.getElementById('formType').value;
         const isPublic = accessVal === 'public';
-        const authType = accessVal === 'public' ? 'cardno' : accessVal;
+        const requireRegistration = (accessVal === 'reg_cardno' || accessVal === 'reg_mobno');
+        const authType = (accessVal === 'mobno' || accessVal === 'reg_mobno') ? 'mobno' : (isPublic ? 'public' : 'cardno');
 
         const limitOneResponse = document.getElementById('limitOneResponse').checked;
         const allowEdit = document.getElementById('allowEdit').checked;
@@ -2115,14 +2408,382 @@
         addField();
       }
 
+      // ── OTP Allowlist State & Modal Handlers ────────────────────────────────
+      window.stagedOtpAllowlist = [];
+
+      function handleRequireOtpChange() {
+        const isChecked = document.getElementById('requireOtp')?.checked;
+        const isMob = document.getElementById('formType')?.value === 'mobno';
+        const wrap = document.getElementById('manageAllowlistWrap');
+        if (wrap) {
+          wrap.style.display = (isChecked && isMob) ? 'block' : 'none';
+        }
+        updateAllowlistBadge();
+      }
+
+      function getDepartmentOptionsFromForm() {
+        const departments = new Set([
+          'Ashram Staff', 'Camera', 'Decor', 'Infra (Generator)', 'Infra (Labour)',
+          'Infra (Mandap)', 'Infra (Shoe)', 'Kitchen', 'LED', 'Light',
+          'Logistics (Echo & Rickshaw)', 'Logistics (Tempo Traveler)', 'Medical Staff',
+          'Musician', 'RC Kitchen Staff', 'School Staff', 'Sound'
+        ]);
+
+        // Extract from actual form cards if present
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        cards.forEach(card => {
+          const label = card.querySelector('.field-label')?.value?.toLowerCase() || '';
+          if (label.includes('department') || label.includes('seva')) {
+            card.querySelectorAll('.option-value').forEach(opt => {
+              const val = opt.value.trim();
+              if (val && val.toLowerCase() !== 'others') departments.add(val);
+            });
+          }
+        });
+
+        return Array.from(departments);
+      }
+
+      function populateAllowlistDepartmentDropdown() {
+        const select = document.getElementById('allowlistDeptSelect');
+        if (!select) return;
+        const currentVal = select.value;
+        const depts = getDepartmentOptionsFromForm();
+
+        let html = '<option value="">-- Select Department --</option>';
+        depts.forEach(d => {
+          html += `<option value="${escapeAttr(d)}">${escapeHtml(d)}</option>`;
+        });
+        html += '<option value="__other__">+ Other (Type custom)...</option>';
+        select.innerHTML = html;
+        if (currentVal) select.value = currentVal;
+      }
+
+      function handleAllowlistDeptSelectChange(select) {
+        const customInput = document.getElementById('allowlistDeptCustomInput');
+        if (!customInput) return;
+        if (select.value === '__other__') {
+          customInput.style.display = 'block';
+          customInput.focus();
+        } else {
+          customInput.style.display = 'none';
+          customInput.value = '';
+        }
+      }
+
+      function openAllowlistModal() {
+        populateAllowlistDepartmentDropdown();
+        renderAllowlistTable();
+        const modal = document.getElementById('allowlistModal');
+        if (modal) modal.style.display = 'flex';
+      }
+
+      async function closeAllowlistModal() {
+        const modal = document.getElementById('allowlistModal');
+        if (modal) modal.style.display = 'none';
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      function updateAllowlistBadge() {
+        const list = window.stagedOtpAllowlist || [];
+        const configuredCount = list.filter(e => e.mobno && String(e.mobno).length === 10).length;
+        const badge = document.getElementById('allowlistBadge');
+        if (badge) badge.textContent = configuredCount;
+        const countText = document.getElementById('allowlistModalCountText');
+        if (countText) {
+          countText.textContent = `${configuredCount} number${configuredCount === 1 ? '' : 's'} assigned (${list.length} total departments)`;
+        }
+      }
+
+      let allowlistLookupTimeout = null;
+      $(document).on('input', '#allowlistMobInput', function() {
+        const val = this.value.trim().replace(/\D/g, '');
+        const lookupEl = document.getElementById('allowlistMobLookup');
+        if (!lookupEl) return;
+        
+        if (val.length !== 10) {
+          lookupEl.innerHTML = '';
+          return;
+        }
+
+        lookupEl.innerHTML = '<span style="color:#6c757d;"><i class="fas fa-spinner fa-spin"></i> Looking up member...</span>';
+        clearTimeout(allowlistLookupTimeout);
+        allowlistLookupTimeout = setTimeout(async () => {
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${val}`);
+            const data = await res.json();
+            if (data.success) {
+              const cardStr = data.data.cardno ? ` (Card: ${escapeHtml(data.data.cardno)})` : '';
+              const centerStr = data.data.center ? `, ${escapeHtml(data.data.center)}` : '';
+              lookupEl.innerHTML = `<span style="color:#28a745; font-weight:700;"><i class="fas fa-check-circle"></i> ${escapeHtml(data.data.name)}${cardStr}${centerStr}</span>`;
+            } else {
+              lookupEl.innerHTML = '<span style="color:#dc3545; font-weight:600;"><i class="fas fa-exclamation-circle"></i> Not registered in Ashram DB</span>';
+            }
+          } catch (e) {
+            lookupEl.innerHTML = '';
+          }
+        }, 250);
+      });
+
+      async function addAllowedNumber() {
+        const deptSelect = document.getElementById('allowlistDeptSelect');
+        const customDeptInput = document.getElementById('allowlistDeptCustomInput');
+        const mobInput = document.getElementById('allowlistMobInput');
+
+        let deptVal = deptSelect ? deptSelect.value.trim() : '';
+        if (deptVal === '__other__') {
+          deptVal = customDeptInput ? customDeptInput.value.trim() : '';
+        }
+
+        if (!deptVal) {
+          alert('Please select or enter a department');
+          return;
+        }
+
+        const mobVal = mobInput ? mobInput.value.trim().replace(/\D/g, '') : '';
+        if (mobVal && mobVal.length !== 10) {
+          alert('Please enter a valid 10-digit mobile number or leave blank to assign later');
+          return;
+        }
+
+        let memberName = mobVal ? 'Ashram Member' : '— (Pending assignment)';
+        let cardno = null;
+        if (mobVal) {
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${mobVal}`);
+            const data = await res.json();
+            if (data.success && data.data) {
+              memberName = data.data.name || memberName;
+              cardno = data.data.cardno || null;
+            }
+          } catch (e) {}
+        }
+
+        // Check if department already exists in list
+        const existingIdx = window.stagedOtpAllowlist.findIndex(e => (e.department || '').toLowerCase() === deptVal.toLowerCase());
+        if (existingIdx !== -1) {
+          window.stagedOtpAllowlist[existingIdx].mobno = mobVal || null;
+          window.stagedOtpAllowlist[existingIdx].name = memberName;
+          window.stagedOtpAllowlist[existingIdx].cardno = cardno;
+        } else {
+          window.stagedOtpAllowlist.push({
+            department: deptVal,
+            mobno: mobVal || null,
+            cardno: cardno,
+            name: memberName
+          });
+        }
+
+        if (deptSelect) deptSelect.value = '';
+        if (customDeptInput) { customDeptInput.value = ''; customDeptInput.style.display = 'none'; }
+        if (mobInput) mobInput.value = '';
+        const lookup = document.getElementById('allowlistMobLookup');
+        if (lookup) lookup.innerHTML = '';
+
+        renderAllowlistTable();
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      async function syncAllowlistToBackend() {
+        if (!editId) return;
+        try {
+          await fetch(`${CONFIG.basePath}/forms/${editId}/allowlist`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ entries: window.stagedOtpAllowlist || [] })
+          });
+        } catch (e) {
+          console.error('Error syncing allowlist to backend:', e);
+        }
+      }
+
+      async function removeAllowedNumber(index) {
+        window.stagedOtpAllowlist.splice(index, 1);
+        renderAllowlistTable();
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      async function saveInlineMobno(index) {
+        const input = document.getElementById(`inline_mob_${index}`);
+        if (!input) return;
+        const val = input.value.trim().replace(/\D/g, '');
+        if (val && val.length !== 10) {
+          alert('Please enter a valid 10-digit mobile number');
+          return;
+        }
+
+        let memberName = val ? 'Ashram Member' : '— (Pending assignment)';
+        let cardno = null;
+        if (val) {
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${val}`);
+            const data = await res.json();
+            if (data.success && data.data) {
+              memberName = data.data.name || memberName;
+              cardno = data.data.cardno || null;
+            }
+          } catch (e) {}
+        }
+
+        window.stagedOtpAllowlist[index].mobno = val || null;
+        window.stagedOtpAllowlist[index].name = memberName;
+        window.stagedOtpAllowlist[index].cardno = cardno;
+        renderAllowlistTable();
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      function renderAllowlistTable() {
+        const tbody = document.getElementById('allowlistTableBody');
+        if (!tbody) return;
+
+        if (!window.stagedOtpAllowlist || window.stagedOtpAllowlist.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align:center; padding:1.5rem; color:#6c757d;">
+                <i class="fas fa-info-circle"></i> No departments configured yet.
+              </td>
+            </tr>
+          `;
+          updateAllowlistBadge();
+          return;
+        }
+
+        tbody.innerHTML = window.stagedOtpAllowlist.map((item, idx) => {
+          const hasMob = item.mobno && String(item.mobno).length === 10;
+          const mobCell = hasMob
+            ? `<div style="display:flex; align-items:center; gap:0.4rem;"><strong style="color:#204060;">${escapeHtml(item.mobno)}</strong> <a href="javascript:void(0)" onclick="editInlineMobno(${idx})" style="font-size:0.75rem; color:#4c86b0;"><i class="fas fa-pencil-alt"></i></a></div>`
+            : `<div style="display:flex; align-items:center; gap:0.35rem;">
+                <input type="tel" id="inline_mob_${idx}" maxlength="10" placeholder="10-digit no." value="" style="width:110px; height:28px; padding:2px 6px; font-size:0.82rem; border:1px solid #ced4da; border-radius:4px; font-weight:600;" />
+                <button type="button" onclick="saveInlineMobno(${idx})" class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:#204060; color:#fff; border-radius:4px; border:none; cursor:pointer;">Save</button>
+              </div>`;
+
+          const cardCell = item.cardno
+            ? `<span style="color:#495057; font-family:monospace; font-weight:600;">${escapeHtml(item.cardno)}</span>`
+            : `<span style="color:#adb5bd;">—</span>`;
+
+          const nameCell = hasMob
+            ? `<span style="color:#204060; font-weight:600;">${escapeHtml(item.name || 'Ashram Member')}</span>`
+            : `<span style="color:#adb5bd; font-style:italic;">Pending assignment</span>`;
+
+          return `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:0.6rem 0.85rem;"><span class="badge" style="background:#eef4f9; color:#204060; border:1px solid #c8daf0; font-weight:700; padding:4px 8px; border-radius:4px; font-size:0.84rem;">${escapeHtml(item.department || 'General')}</span></td>
+              <td style="padding:0.6rem 0.85rem;">${mobCell}</td>
+              <td style="padding:0.6rem 0.85rem;">${cardCell}</td>
+              <td style="padding:0.6rem 0.85rem;">${nameCell}</td>
+              <td style="padding:0.6rem 0.85rem; text-align:center;">
+                <button type="button" onclick="removeAllowedNumber(${idx})" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:0.95rem; padding:2px 6px;" title="Remove">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        updateAllowlistBadge();
+      }
+
+      function editInlineMobno(idx) {
+        const item = window.stagedOtpAllowlist[idx];
+        const tbody = document.getElementById('allowlistTableBody');
+        const rows = tbody.querySelectorAll('tr');
+        if (rows[idx]) {
+          const cells = rows[idx].querySelectorAll('td');
+          cells[1].innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.35rem;">
+              <input type="tel" id="inline_mob_${idx}" maxlength="10" placeholder="10-digit no." value="${escapeAttr(item.mobno || '')}" style="width:115px; height:28px; padding:2px 6px; font-size:0.82rem; border:1px solid #ced4da; border-radius:4px; font-weight:600;" />
+              <button type="button" onclick="saveInlineMobno(${idx})" class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:#28a745; color:#fff; border-radius:4px; border:none; cursor:pointer;">Update</button>
+            </div>
+          `;
+          const input = document.getElementById(`inline_mob_${idx}`);
+          if (input) input.focus();
+        }
+      }
+
+      
+      async function handleDeptChange(selectedEventId = null) {
+        const deptEl = document.getElementById('formDept');
+        const dept = deptEl ? deptEl.value : '';
+        const container = document.getElementById('deptEventContainer');
+        const label = document.getElementById('deptEventLabel');
+        const select = document.getElementById('deptEventSelect');
+
+        if (!container || !select) return;
+
+        if (dept === 'utsav' || dept === 'adhyayan') {
+          label.innerHTML = dept === 'utsav' 
+            ? '<i class="fas fa-calendar-alt"></i> Utsav Event (Ongoing & Upcoming) *' 
+            : '<i class="fas fa-book-reader"></i> Adhyayan Event (Ongoing & Upcoming) *';
+          select.innerHTML = '<option value="">Loading events from database...</option>';
+          container.style.display = 'block';
+
+          try {
+            const res = await fetch(`${CONFIG.basePath}/forms/events?dept=${dept}`, {
+              headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            const data = await res.json();
+            if (data.success && data.data && data.data.length > 0) {
+              window.currentDeptEvents = data.data;
+              select.innerHTML = `<option value="">-- Select ${dept === 'utsav' ? 'Utsav' : 'Adhyayan'} Event --</option>` +
+                data.data.map(ev => {
+                  const dates = ev.start_date && ev.end_date ? ` (${ev.start_date} to ${ev.end_date})` : '';
+                  return `<option value="${ev.id}" data-name="${escapeAttr(ev.name)}" data-start="${escapeAttr(ev.start_date || '')}" data-end="${escapeAttr(ev.end_date || '')}" data-type="${escapeAttr(data.eventType || dept)}">${escapeHtml(ev.name)}${dates}</option>`;
+                }).join('');
+
+              if (selectedEventId) {
+                select.value = String(selectedEventId);
+              }
+            } else {
+              select.innerHTML = `<option value="">No ongoing or upcoming ${dept} events found</option>`;
+            }
+          } catch (err) {
+            console.error('Error fetching department events:', err);
+            select.innerHTML = `<option value="">Error loading events</option>`;
+          }
+        } else {
+          container.style.display = 'none';
+          select.innerHTML = '<option value="">-- Select Event --</option>';
+        }
+      }
+
+      
+      function formatDateTimeLocal(dt) {
+        if (!dt) return '';
+        const d = new Date(dt);
+        if (isNaN(d.getTime())) return '';
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${mins}`;
+      }
+
       function populateFormBuilder(form) {
         document.getElementById('formTitle').value = form.title || '';
         document.getElementById('formDescription').value = form.description || '';
         document.getElementById('formDept').value = form.dept_name || '';
+        if (form.dept_name === 'utsav' || form.dept_name === 'adhyayan') {
+          handleDeptChange(form.event_id);
+        } else {
+          const evtCont = document.getElementById('deptEventContainer');
+          if (evtCont) evtCont.style.display = 'none';
+        }
 
         let accessVal = 'public';
-        if (form.isPublic === false || form.accessVal !== 'public') {
-          accessVal = form.accessVal || (form.authType === 'mobno' ? 'mobno' : 'cardno');
+        if (form.isPublic === false) {
+          if (form.requireRegistration) {
+            accessVal = (form.authType === 'mobno') ? 'reg_mobno' : 'reg_cardno';
+          } else {
+            accessVal = (form.authType === 'mobno') ? 'mobno' : 'cardno';
+          }
         }
         document.getElementById('formType').value = accessVal;
 
@@ -2136,27 +2797,39 @@
         $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
         $(`.theme-swatch[data-color="${themeColorVal}"]`).addClass('active').css('box-shadow', `0 0 0 2px ${themeColorVal}`);
         
-        document.getElementById('expiresAt').value = form.expiresAt ? (form.expiresAt.includes('T') ? form.expiresAt : new Date(form.expiresAt).toISOString().substring(0, 16)) : '';
+        document.getElementById('expiresAt').value = formatDateTimeLocal(form.expiresAt);
         document.getElementById('maxResponses').value = form.maxResponses || '';
         document.getElementById('closeMessage').value = form.closeMessage || '';
         
         document.getElementById('formSlug').value = form.slug || '';
         document.getElementById('requireOtp').checked = form.requireOtp || false;
+        const reqRegEl = document.getElementById('requireRegistration');
+        if (reqRegEl) reqRegEl.checked = form.requireRegistration || false;
         const accessValNow = document.getElementById('formType').value;
-        document.getElementById('requireOtpRow').style.display = accessValNow === 'mobno' ? 'flex' : 'none';
+        document.getElementById('requireOtpRow').style.display = (accessValNow === 'mobno' || accessValNow === 'reg_mobno') ? 'flex' : 'none';
         document.getElementById('formCategory').value = form.formCategory || 'generic';
+
+        // Load allowlist
+        window.stagedOtpAllowlist = form.otpAllowlist || [];
+        handleRequireOtpChange();
 
         // Load fields
         if (form.fields && Array.isArray(form.fields)) {
           document.getElementById('fieldsContainer').innerHTML = '';
-          form.fields.forEach(f => addField(f));
+          form.fields.forEach((f, fi) => {
+            try {
+              addField(f);
+            } catch (err) {
+              console.error('Error adding field #' + fi, err);
+            }
+          });
         }
 
         onFormCategoryChange();
-        renderOtpAllowlistPanel();
+        
       }
 
-      // Listen for formType changes to toggle OTP option
+      // Listen for formType and requireOtp changes
       $(document).on('change', '#formType', function() {
         const val = this.value;
         const row = document.getElementById('requireOtpRow');
@@ -2166,7 +2839,12 @@
           row.style.display = 'none';
           document.getElementById('requireOtp').checked = false;
         }
-        renderOtpAllowlistPanel();
+        handleRequireOtpChange();
+        
+      });
+
+      $(document).on('change', '#requireOtp', function() {
+        handleRequireOtpChange();
       });
 
       // Bind input changes to save draft
@@ -2181,5 +2859,91 @@
         checkAndShowDraftRecovery();
       }
     </script>
-  </body>
+  
+    <!-- Modal: Allowed Phone Numbers (OTP Allowlist) -->
+    <div id="allowlistModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.55); z-index:10050; align-items:center; justify-content:center; padding:1rem;">
+      <div style="background:#fff; border-radius:12px; width:100%; max-width:680px; box-shadow:0 10px 35px rgba(0,0,0,0.25); overflow:hidden; display:flex; flex-direction:column; max-height:90vh;">
+        <div style="background:#204060; color:#fff; padding:1.1rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0; font-weight:700; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fas fa-user-shield"></i> Allowed Phone Numbers (OTP Allowlist)
+          </h4>
+          <button type="button" onclick="closeAllowlistModal()" style="color:#fff; opacity:0.85; font-size:1.5rem; border:none; background:none; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <div style="padding:1.5rem; overflow-y:auto; flex:1;">
+          <p style="color:#495057; font-size:0.88rem; margin-top:0; margin-bottom:1.25rem; line-height:1.5;">
+            Only phone numbers added here will be permitted to receive an OTP and fill out this form.
+            <br><span style="color:#6c757d; font-size:0.82rem;">(If list is empty, any registered Ashram member can receive OTP and fill the form).</span>
+          </p>
+
+          <!-- Add / Configure Department Entry Box -->
+          <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1rem; margin-bottom:1.25rem;">
+            <div style="font-weight:700; font-size:0.88rem; color:#204060; margin-bottom:0.5rem;"><i class="fas fa-user-plus"></i> Add / Link Authorized Department</div>
+            <div style="display:flex; gap:0.6rem; align-items:flex-start; flex-wrap:wrap;">
+              <div style="flex:1; min-width:200px;">
+                <select id="allowlistDeptSelect" onchange="handleAllowlistDeptSelectChange(this)" style="width:100%; height:38px; padding:0 0.75rem; border:1px solid #ced4da; border-radius:5px; font-size:0.9rem; font-weight:600; color:#204060; box-sizing:border-box; background:#fff; cursor:pointer;">
+                  <option value="">-- Select Department --</option>
+                  <option value="__other__">+ Other (Type below)...</option>
+                </select>
+                <input type="text" id="allowlistDeptCustomInput" placeholder="Type custom department name" style="display:none; width:100%; height:34px; margin-top:0.4rem; padding:0 0.75rem; border:1px solid #ced4da; border-radius:5px; font-size:0.85rem; box-sizing:border-box;" />
+              </div>
+              <div style="flex:1; min-width:180px;">
+                <input type="tel" id="allowlistMobInput" maxlength="10" placeholder="10-digit mobile no. (optional)" style="width:100%; height:38px; padding:0 0.75rem; border:1px solid #ced4da; border-radius:5px; font-weight:600; font-size:0.92rem; box-sizing:border-box;" />
+                <div id="allowlistMobLookup" style="font-size:0.8rem; min-height:18px; margin-top:0.25rem;"></div>
+              </div>
+              <button type="button" onclick="addAllowedNumber()" style="height:38px; background:#204060; border:none; color:#fff; border-radius:5px; padding:0 1.25rem; font-weight:700; font-size:0.88rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;">
+                <i class="fas fa-plus"></i> Save
+              </button>
+            </div>
+          </div>
+
+          <!-- Table of Allowed Numbers -->
+          <div style="max-height:240px; overflow-y:auto; border:1px solid #dee2e6; border-radius:6px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+              <thead style="background:#204060; position:sticky; top:0; z-index:2;">
+                <tr style="background:#204060;">
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; width:150px; font-size:0.85rem;">Department</th>
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; width:160px; font-size:0.85rem;">Mobile Number</th>
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; width:110px; font-size:0.85rem;">Card No</th>
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; font-size:0.85rem;">Member Name</th>
+                  <th style="padding:0.65rem 0.85rem; text-align:center; color:#ffffff !important; background:#204060 !important; font-weight:700; width:55px; font-size:0.85rem;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="allowlistTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="background:#f8f9fa; border-top:1px solid #dee2e6; padding:0.85rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+          <span id="allowlistModalCountText" style="font-size:0.88rem; font-weight:600; color:#6c757d;">0 numbers configured</span>
+          <button type="button" onclick="closeAllowlistModal()" style="background:#28a745; border:none; color:#fff; padding:0.5rem 1.5rem; border-radius:6px; font-weight:700; font-size:0.9rem; cursor:pointer;">
+            <i class="fas fa-check"></i> Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+<div id="toastContainer"></div>
+  
+    <!-- Fixed Floating Action Bar (Stays on screen while scrolling) -->
+    <div class="floating-action-bar">
+      <div class="floating-action-bar-inner">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span id="saveStatusIndicator" style="font-size:0.9rem; font-weight:600; color:#28a745; display:inline-flex; align-items:center; gap:0.45rem;">
+            <i class="fas fa-check-circle"></i> All changes saved
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+          <button class="btn btn-info" onclick="previewForm()" type="button" style="background:#17a2b8; border:none; color:#fff; font-weight:600; padding:0.5rem 1.25rem; font-size:0.9rem; border-radius:6px; cursor:pointer;">
+            <i class="fas fa-eye"></i> Preview Form
+          </button>
+          <a href="index.html" class="btn btn-secondary" style="font-weight:600; padding:0.5rem 1.25rem; font-size:0.9rem; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center;">Cancel</a>
+          <button id="saveFormBtn" class="btn" onclick="saveForm()" style="font-weight:700; opacity:0.5; cursor:not-allowed; background:#6c757d; padding:0.5rem 1.5rem; font-size:0.9rem; border-radius:6px; border:none; color:#fff;" disabled>
+            <i class="fas fa-save"></i> Save Form
+          </button>
+        </div>
+      </div>
+    </div>
+
+</body>
 </html>

@@ -19,7 +19,7 @@
       ]);
     </script>
     <script src="../../style/js/exportToExcel.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <!-- Include Chart.js for visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Include FontAwesome for icons -->
@@ -445,7 +445,7 @@
 
           fields.forEach(f => {
             const answer = resp.responses ? resp.responses[f.id] : '';
-            rowsHtml += `<td>${escapeHtml(formatAnswerForDisplay(answer))}</td>`;
+            rowsHtml += `<td style="vertical-align:top;">${formatAnswerForDisplayHtml(answer)}</td>`;
           });
 
           rowsHtml += `<td>${new Date(resp.submittedAt).toLocaleString()}</td>`;
@@ -756,7 +756,7 @@
 
           cachedForm.fields.forEach(f => {
             const answer = resp.responses ? resp.responses[f.id] : '';
-            row[f.label] = formatAnswerForDisplay(answer);
+            row[f.label] = formatAnswerForExcel(answer);
           });
 
           row['Submitted At'] = new Date(resp.submittedAt).toLocaleString();
@@ -767,19 +767,79 @@
         downloadExcelFromJSON(dataArray, fileName, 'Responses');
       }
 
-      // Grid-type answers (accommodation/food date grids etc.) are stored as
-      // { date: value } or { date: [values] } objects, not plain scalars —
-      // format them into a readable "date: value" list instead of letting
-      // them fall through to JS's default "[object Object]" stringification.
-      function formatAnswerForDisplay(answer) {
+      // Formats nested matrix / grid answers cleanly for the web table UI
+      function formatAnswerForDisplayHtml(answer) {
+        if (answer === null || answer === undefined || answer === '') return '<span style="color:#adb5bd;">—</span>';
+        if (Array.isArray(answer)) return escapeHtml(answer.join(', '));
+        if (typeof answer === 'object') {
+          const entries = Object.entries(answer);
+          if (entries.length === 0) return '<span style="color:#adb5bd;">—</span>';
+
+          const rows = entries.map(([date, val]) => {
+            if (val === null || val === undefined) return `<div><strong>${escapeHtml(date)}:</strong> —</div>`;
+            
+            // Nested object (e.g. grid_number: { "Stay (Count)": 5 } or { "Breakfast": 2, "Lunch": 5, "Dinner": 5 })
+            if (typeof val === 'object' && !Array.isArray(val)) {
+              const subEntries = Object.entries(val);
+              // Single column (e.g. Stay)
+              if (subEntries.length === 1) {
+                return `<div style="padding:1px 0;"><span style="color:#204060; font-weight:600;">${escapeHtml(date)}:</span> <span style="font-weight:700;">${escapeHtml(String(subEntries[0][1]))}</span></div>`;
+              }
+              // Multi-column (e.g. Breakfast, Lunch, Dinner)
+              const breakdown = subEntries.map(([col, count]) => {
+                const shortCol = col.length > 4 ? col.substring(0, 1).toUpperCase() : col;
+                return `<span title="${escapeAttr(col)}">${escapeHtml(shortCol)}: <strong>${escapeHtml(String(count))}</strong></span>`;
+              }).join(', ');
+              return `<div style="padding:1px 0;"><span style="color:#204060; font-weight:600;">${escapeHtml(date)}:</span> ${breakdown}</div>`;
+            }
+
+            // Array of options
+            if (Array.isArray(val)) {
+              return `<div style="padding:1px 0;"><span style="color:#204060; font-weight:600;">${escapeHtml(date)}:</span> ${escapeHtml(val.join(', '))}</div>`;
+            }
+
+            // Scalar value
+            return `<div style="padding:1px 0;"><span style="color:#204060; font-weight:600;">${escapeHtml(date)}:</span> ${escapeHtml(String(val))}</div>`;
+          });
+
+          return `<div style="display:flex; flex-direction:column; gap:2px; font-size:0.83rem; text-align:left; min-width:130px;">${rows.join('')}</div>`;
+        }
+        return escapeHtml(String(answer));
+      }
+
+      // Formats nested matrix / grid answers cleanly for Excel spreadsheet export
+      function formatAnswerForExcel(answer) {
         if (answer === null || answer === undefined || answer === '') return '';
         if (Array.isArray(answer)) return answer.join(', ');
         if (typeof answer === 'object') {
-          return Object.entries(answer)
-            .map(([date, val]) => `${date}: ${Array.isArray(val) ? val.join('/') : val}`)
-            .join('; ');
+          const entries = Object.entries(answer);
+          if (entries.length === 0) return '';
+
+          return entries.map(([date, val]) => {
+            if (val === null || val === undefined) return `${date}: -`;
+            
+            // Nested object (e.g. grid_number: { "Stay (Count)": 5 } or { "Breakfast": 2, "Lunch": 5, "Dinner": 5 })
+            if (typeof val === 'object' && !Array.isArray(val)) {
+              const subEntries = Object.entries(val);
+              if (subEntries.length === 1) {
+                return `${date}: ${subEntries[0][1]}`;
+              }
+              const breakdown = subEntries.map(([col, count]) => `${col} (${count})`).join(', ');
+              return `${date}: ${breakdown}`;
+            }
+
+            if (Array.isArray(val)) {
+              return `${date}: ${val.join(', ')}`;
+            }
+
+            return `${date}: ${val}`;
+          }).join('\n');
         }
         return String(answer);
+      }
+
+      function formatAnswerForDisplay(answer) {
+        return formatAnswerForExcel(answer);
       }
 
       function escapeHtml(str) {

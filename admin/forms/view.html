@@ -340,21 +340,40 @@
       }
 
       @media (max-width: 600px) {
-      body {
-        padding: 1rem 0.5rem;
-      }
+        body {
+          padding: 0.75rem 0.25rem;
+        }
 
-      .form-header {
-        padding: 1.5rem;
-      }
+        .form-header {
+          padding: 1.25rem 1rem;
+        }
 
-      .form-body {
-        padding: 1.5rem;
-      }
+        .form-body {
+          padding: 1.25rem 0.75rem;
+        }
 
-      .form-header h1 {
-        font-size: 1.5rem;
-      }
+        .form-header h1 {
+          font-size: 1.35rem;
+        }
+
+        .matrix-table th, .matrix-table td {
+          padding: 0.35rem 0.2rem !important;
+          font-size: 0.8rem !important;
+        }
+
+        .matrix-table input.grid-number-cell {
+          max-width: 52px !important;
+          padding: 0.3rem 0.15rem !important;
+          font-size: 0.85rem !important;
+        }
+
+        .matrix-table input[placeholder="Set all"] {
+          max-width: 58px !important;
+          height: 26px !important;
+          font-size: 0.74rem !important;
+          padding: 0.15rem 0.2rem !important;
+          box-sizing: border-box !important;
+        }
       }
     </style>
   </head>
@@ -575,28 +594,20 @@
           
           if (pi === 0 && isAuth) {
             const isMobAuth = form.authType === 'mobno';
-            if (isMobAuth && form.requireOtp) {
+            if (isMobAuth && !form.requireOtp) {
               fieldsHtml += `
                 <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
-                  <label for="input_mobno" style="font-weight: 700; color: var(--theme-color);">Mobile Number *</label>
-                  <div style="display:flex; gap:0.5rem; align-items:stretch;">
-                    <input type="tel" id="input_mobno" autocomplete="off" placeholder="Enter your registered mobile number" required style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
-                    <button type="button" id="sendOtpBtn" class="submit-btn" style="width: auto; padding: 0 1rem; font-size: 0.85rem; display:none; background-color: var(--theme-color);">Send OTP</button>
-                  </div>
-                  <div id="otpInputSection" style="display:none; margin-top: 1rem; border-top: 1px dashed #ced4da; padding-top: 1rem;">
-                    <label for="input_otp" style="font-weight: 700; color: var(--theme-color);">Verification OTP *</label>
-                    <div style="display:flex; gap:0.5rem; align-items:stretch;">
-                      <input type="text" id="input_otp" autocomplete="off" placeholder="Enter 6-digit OTP" maxLength="6" style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
-                      <button type="button" id="verifyOtpBtn" class="submit-btn" style="width: auto; padding: 0 1rem; font-size: 0.85rem; background-color: #28a745;">Verify</button>
-                    </div>
-                  </div>
+                  <label for="input_mobno" style="font-weight: 700; color: var(--theme-color); display:block; margin-bottom:0.4rem;">Mobile Number *</label>
+                  <input type="tel" id="input_mobno" maxlength="10" autocomplete="off" placeholder="Enter your registered 10-digit mobile number" required style="width: 100%; height:42px; padding: 0 0.85rem; border: 1.5px solid #ced4da; border-radius: 6px; font-size: 1rem; font-weight:600; background-color: #fff; box-sizing:border-box;" />
+                  <div id="info_mobno" style="min-height: 22px; font-size: 0.88rem; margin-top: 0.5rem;"></div>
                 </div>
               `;
-            } else {
+            } else if (!isMobAuth) {
               fieldsHtml += `
                 <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
-                  <label for="${isMobAuth ? 'input_mobno' : 'input_cardno'}" style="font-weight: 700; color: var(--theme-color);">${isMobAuth ? 'Mobile Number *' : 'Card Number *'}</label>
-                  <input type="${isMobAuth ? 'tel' : 'text'}" id="${isMobAuth ? 'input_mobno' : 'input_cardno'}" autocomplete="off" placeholder="${isMobAuth ? 'Enter your registered mobile number' : 'Enter your card number'}" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+                  <label for="input_cardno" style="font-weight: 700; color: var(--theme-color); display:block; margin-bottom:0.4rem;">Card Number *</label>
+                  <input type="text" id="input_cardno" autocomplete="off" placeholder="Enter your card number" required style="width: 100%; height:42px; padding: 0 0.85rem; border: 1.5px solid #ced4da; border-radius: 6px; font-size: 1rem; font-weight:600; background-color: #fff; box-sizing:border-box;" />
+                  <div id="info_cardno" style="min-height: 22px; font-size: 0.88rem; margin-top: 0.5rem;"></div>
                 </div>
               `;
             }
@@ -676,10 +687,60 @@
           `;
         }
 
+        const requiresOtpGate = isAuth && form.authType === 'mobno' && form.requireOtp && !isOtpVerified;
+
+        const otpGateHtml = !form.requireOtp ? '' : `
+          <div id="otpGateContainer" style="display: ${requiresOtpGate ? 'block' : 'none'}; max-width:540px; margin:0 auto 2rem auto; background:#fff; border-radius:10px; border:1px solid #dee2e6; box-shadow:0 4px 16px rgba(0,0,0,0.06); padding:2.5rem 2rem; text-align:center;">
+            <div style="width:58px; height:58px; border-radius:50%; background:#eef4f9; color:var(--theme-color); display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:1rem;">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2 style="font-size:1.35rem; font-weight:800; color:#204060; margin:0 0 0.4rem 0;">Sign In with Mobile Number</h2>
+            <p style="color:#6c757d; font-size:0.9rem; margin:0 0 1.75rem 0;">Please enter your registered 10-digit mobile number to verify and open the form.</p>
+            
+            <div style="max-width:380px; margin:0 auto; text-align:left;">
+              <div id="mobInputWrapper">
+                <label for="input_mobno" style="font-size:0.85rem; font-weight:700; color:#204060; display:block; margin-bottom:0.4rem;">Mobile Number *</label>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <input type="tel" id="input_mobno" maxlength="10" placeholder="10-digit number" style="flex:1; height:44px; padding:0 0.85rem; border:1.5px solid #ced4da; border-radius:6px; font-size:1rem; font-weight:600; box-sizing:border-box;" />
+                  <button type="button" id="sendOtpBtn" class="submit-btn" style="width:auto; height:44px; padding:0 1.25rem; font-size:0.9rem; font-weight:600; white-space:nowrap; background-color:var(--theme-color); margin:0; border-radius:6px; display:inline-flex; align-items:center; justify-content:center;">Send OTP</button>
+                </div>
+                <div id="info_mobno" style="min-height:22px; font-size:0.85rem; margin-top:0.45rem;"></div>
+              </div>
+
+              <div id="otpInputSection" style="display:none; margin-top:1rem; border-top:1px dashed #ced4da; padding-top:1.25rem;">
+                <label for="input_otp" style="font-size:0.85rem; font-weight:700; color:#204060; display:block; margin-bottom:0.4rem;">Enter 6-Digit OTP *</label>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <input type="text" id="input_otp" maxlength="6" placeholder="• • • • • •" style="flex:1; height:44px; padding:0 0.85rem; border:1.5px solid #ced4da; border-radius:6px; font-size:1.15rem; font-weight:700; letter-spacing:4px; text-align:center; box-sizing:border-box;" />
+                  <button type="button" id="verifyOtpBtn" class="submit-btn" style="width:auto; height:44px; padding:0 1.25rem; font-size:0.9rem; font-weight:600; background-color:#28a745; margin:0; border-radius:6px; white-space:nowrap;">Verify & Open</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                  <span id="otpTimerText" style="font-size:0.8rem; color:#6c757d;"></span>
+                  <button type="button" id="resendOtpBtn" style="display:none; background:none; border:none; color:var(--theme-color); font-weight:700; font-size:0.82rem; cursor:pointer; text-decoration:underline;">Resend OTP</button>
+                </div>
+                <div id="otpErrorMsg" style="color:#dc3545; font-size:0.85rem; margin-top:0.4rem; display:none; font-weight:500;"></div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const verifiedBannerHtml = `
+          <div id="verifiedUserBanner" style="display:${isOtpVerified ? 'flex' : 'none'}; max-width:680px; margin:0 auto 1.5rem auto; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:0.85rem 1.25rem; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:0.5rem; color:#2e7d32; font-weight:700; font-size:0.92rem;">
+              <i class="fas fa-check-circle" style="font-size:1.1rem;"></i>
+              <span>Signed in as: <span id="verifiedUserName">Registered Member</span> (<span id="verifiedUserMob"></span>)</span>
+            </div>
+            <button type="button" onclick="signOutOtp()" style="background:none; border:none; color:#6c757d; font-size:0.8rem; text-decoration:underline; cursor:pointer;">Sign Out</button>
+          </div>
+        `;
+
         container.innerHTML = `
-          ${saveProgressHtml}
-          <div id="pagesContainer">${pagesHtml}</div>
-          ${progressHtml}
+          ${otpGateHtml}
+          <div id="formContentWrapper" style="display: ${requiresOtpGate ? 'none' : 'block'};">
+            ${verifiedBannerHtml}
+            ${saveProgressHtml}
+            <div id="pagesContainer">${pagesHtml}</div>
+            ${progressHtml}
+          </div>
         `;
 
         window.totalPagesCount = pages.length;
@@ -747,6 +808,18 @@
               const rowVals = gridAns[r] || [];
               rowVals.forEach(v => {
                 $(`input[name="response_${field.id}_${ri}"][value="${v}"]`).prop('checked', true);
+              });
+            });
+          } else if (field.type === 'grid_number') {
+            const gridAns = ans || {};
+            (field.rows || []).forEach((r, ri) => {
+              const rowObj = gridAns[r] || {};
+              (field.columns || []).forEach((c, ci) => {
+                const input = document.querySelector(`input[name="response_${field.id}_${ri}_${ci}"]`);
+                if (input) {
+                  const val = typeof rowObj === 'object' ? (rowObj[c] !== undefined ? rowObj[c] : '') : rowObj;
+                  input.value = (val !== null && val !== undefined && val !== '') ? val : '0';
+                }
               });
             });
           } else {
@@ -1073,6 +1146,16 @@
       // click-reduction for multi-day Accommodation/Food grids. For checkbox
       // grids this toggles: if every row already has that column checked, it
       // clears them all; otherwise it checks them all.
+      function applyNumberToAllRows(fieldId, colIndex, value) {
+        const cleanVal = (value === '' || value === null || value === undefined) ? '' : String(Math.max(0, parseInt(value, 10) || 0));
+        const inputs = document.querySelectorAll(`.grid-number-cell[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
+        inputs.forEach(input => {
+          input.value = cleanVal;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+
       function applyColumnToAllRows(fieldId, colIndex, isRadio) {
         const inputs = document.querySelectorAll(`input[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
         if (inputs.length === 0) return;
@@ -1163,6 +1246,35 @@
             clearInlineError(field.id);
             return { isValid: true };
           }
+        } else if (field.type === 'grid_number') {
+          let hasEmpty = false;
+          let hasNegative = false;
+          (field.rows || []).forEach((r, ri) => {
+            (field.columns || []).forEach((c, ci) => {
+              const input = document.querySelector(`input[name="response_${field.id}_${ri}_${ci}"]`);
+              if (input) {
+                const val = input.value.trim();
+                if (val === '') {
+                  hasEmpty = true;
+                } else if (parseInt(val, 10) < 0) {
+                  hasNegative = true;
+                }
+              }
+            });
+          });
+
+          if (hasNegative) {
+            const errMsg = 'Counts cannot be negative';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
+          if (field.required && hasEmpty) {
+            const errMsg = 'Please enter a number for each date';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
+          clearInlineError(field.id);
+          return { isValid: true };
         } else {
           const el = document.getElementById(`input_${field.id}`);
           answerVal = el ? el.value.trim() : '';
@@ -1298,134 +1410,88 @@
       let isOtpVerified = urlParams.get('responseId') ? true : false;
       let lastCheckedAuthVal = '';
       let lookupTimeout = null;
+      window.isAuthVerified = false;
+      window.lastAuthErrorMessage = '';
 
-      function checkAuthInputValidation(inputEl) {
+      async function performAuthLookup(inputEl) {
+        if (!inputEl) return false;
         const id = $(inputEl).attr('id');
         const val = inputEl.value.trim();
         const isMob = id === 'input_mobno';
         const errorId = isMob ? 'mobno' : 'cardno';
-        const infoId = `info_${errorId}`;
-        
+        const infoEl = document.getElementById(`info_${errorId}`);
+
         if (!val) {
-          showInlineError(errorId, `${isMob ? 'Mobile Number' : 'Card Number'} is required`);
-          $(`#${infoId}`).remove();
+          if (infoEl) infoEl.innerHTML = `<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> ${isMob ? 'Mobile Number' : 'Card Number'} is required</span>`;
           $(inputEl).css('border-color', '#dc3545');
-          if (formData.requireOtp && isMob) {
-            $('#sendOtpBtn').hide();
-            $('#otpInputSection').hide();
-            isOtpVerified = false;
-          }
+          window.isAuthVerified = false;
+          window.lastAuthErrorMessage = `${isMob ? 'Mobile Number' : 'Card Number'} is required`;
           return false;
         }
 
         if (isMob) {
           const clean = val.replace(/\D/g, '');
           if (clean.length !== 10) {
-            showInlineError(errorId, `Invalid format. Please enter a 10-digit number.`);
-            $(`#${infoId}`).remove();
+            if (infoEl) infoEl.innerHTML = '<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> Mobile Number must be 10 digits</span>';
             $(inputEl).css('border-color', '#dc3545');
-            if (formData.requireOtp) {
-              $('#sendOtpBtn').hide();
-              $('#otpInputSection').hide();
-              isOtpVerified = false;
-            }
+            window.isAuthVerified = false;
+            window.lastAuthErrorMessage = 'Mobile Number must be 10 digits';
             return false;
           }
         }
 
-        clearInlineError(errorId);
-        $(inputEl).css('border-color', '#ced4da');
-        if (formData.requireOtp && isMob && val !== lastCheckedAuthVal) {
-          $('#sendOtpBtn').hide();
-          $('#otpInputSection').hide();
-          isOtpVerified = false;
+        if (infoEl) {
+          infoEl.innerHTML = '<span style="color:#6c757d;"><i class="fas fa-spinner fa-spin"></i> Checking registration...</span>';
         }
 
-        // Debounced identity resolution
-        clearTimeout(lookupTimeout);
-        lookupTimeout = setTimeout(async () => {
-          if (val === lastCheckedAuthVal) return;
-          lastCheckedAuthVal = val;
+        try {
+          const type = isMob ? 'mobno' : 'cardno';
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=${type}&value=${encodeURIComponent(val)}&formId=${formData.id}`);
+          const data = await res.json();
           
-          $(`#${infoId}`).remove();
-          
-          try {
-            // Renders loading label
-            $(inputEl).after(`
-              <div id="${infoId}" style="color: #6c757d; font-size: 0.85rem; margin-top: 0.35rem;">
-                <i class="fas fa-spinner fa-spin"></i> Checking registration...
-              </div>
-            `);
-            
-            const type = isMob ? 'mobno' : 'cardno';
-            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=${type}&value=${encodeURIComponent(val)}&formId=${formData.id}`);
-            const data = await res.json();
-            
-            $(`#${infoId}`).remove();
-            
-            if (data.success) {
-              $(inputEl).css('border-color', '#28a745');
-              $(inputEl).after(`
-                <div id="${infoId}" style="color: #28a745; font-size: 0.88rem; margin-top: 0.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
-                  <i class="fas fa-check-circle"></i> Registered to: ${data.data.name} (${data.data.center || 'No Center'})
-                </div>
-              `);
-              
-              if (formData.requireOtp && isMob) {
-                $('#sendOtpBtn').show();
-              }
+          window.isAuthVerified = data.success;
+          window.lastAuthErrorMessage = data.message || '';
 
-              // If this number is a department head on this form's OTP allowlist,
-              // pre-fill (but don't lock) the Department field — it's a helpful
-              // default, not a verified fact yet, so the submitter can still
-              // correct it. If OTP verification later confirms it, that flow
-              // re-sets and locks the field with the stronger guarantee.
-              if (data.data.department) {
-                const deptField = (formData.fields || []).find(f => f.vendorRole === 'department');
-                if (deptField) {
-                  const deptEl = document.getElementById(`input_${deptField.id}`);
-                  if (deptEl && !deptEl.disabled) {
-                    deptEl.value = data.data.department;
-                    deptEl.dispatchEvent(new Event('change'));
-                  }
+          if (data.success) {
+            $(inputEl).css('border-color', '#28a745');
+            if (infoEl) {
+              infoEl.innerHTML = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
+            }
+
+            if (data.data.department) {
+              const deptField = (formData.fields || []).find(f => f.vendorRole === 'department');
+              if (deptField) {
+                const deptEl = document.getElementById(`input_${deptField.id}`);
+                if (deptEl && !deptEl.disabled) {
+                  deptEl.value = data.data.department;
+                  deptEl.dispatchEvent(new Event('change'));
                 }
               }
-
-              const saveEmailInput = document.getElementById('saveProgressEmail');
-              if (data.data.email && saveEmailInput && !saveEmailInput.value.trim()) {
-                saveEmailInput.value = data.data.email;
-              }
-              const copyEmailInput = document.getElementById('emailCopyEmail');
-              if (data.data.email && copyEmailInput && !copyEmailInput.value.trim()) {
-                copyEmailInput.value = data.data.email;
-              }
-
-              // Resolving a registered mobile/card number is itself a real
-              // identity check, so it's safe to auto-restore a saved draft —
-              // UNLESS this form also requires OTP, in which case we wait for
-              // that stronger verification before pulling anything back.
-              if (data.data.email && !(formData.requireOtp && isMob)) {
-                attemptRestoreDraft(data.data.email);
-              }
-            } else {
-              showInlineError(errorId, data.message || 'Not registered');
-              $(inputEl).css('border-color', '#dc3545');
-              if (formData.requireOtp && isMob) {
-                $('#sendOtpBtn').hide();
-                $('#otpInputSection').hide();
-                isOtpVerified = false;
-              }
             }
-          } catch (err) {
-            console.error('Error checking registration:', err);
-            $(`#${infoId}`).remove();
+            return true;
+          } else {
+            $(inputEl).css('border-color', '#dc3545');
+            if (infoEl) {
+              infoEl.innerHTML = `<span style="color:#dc3545; font-weight:600;"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.message || 'Not registered')}</span>`;
+            }
+            return false;
           }
-        }, 400);
+        } catch (err) {
+          console.error('Error checking registration:', err);
+          if (infoEl) infoEl.innerHTML = '';
+          return false;
+        }
+      }
 
+      function checkAuthInputValidation(inputEl) {
+        clearTimeout(lookupTimeout);
+        lookupTimeout = setTimeout(() => {
+          performAuthLookup(inputEl);
+        }, 200);
         return true;
       }
 
-      function validateAndGoToPage(from, to) {
+      async function validateAndGoToPage(from, to) {
         const pageContainer = document.getElementById(`formPage_${from}`);
         
         let isValid = true;
@@ -1434,10 +1500,10 @@
         if (from === 0 && !formData.isPublic) {
           const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
           if (authInput) {
-            const isAuthValid = checkAuthInputValidation(authInput);
-            if (!isAuthValid) {
+            const authOk = await performAuthLookup(authInput);
+            if (!authOk || window.isAuthVerified === false) {
               isValid = false;
-              firstInvalidMsg = document.getElementById('input_mobno') ? 'Mobile Number is required' : 'Card Number is required';
+              firstInvalidMsg = window.lastAuthErrorMessage || (document.getElementById('input_mobno') ? 'Please enter a valid registered mobile number' : 'Please enter a valid card number');
             } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
               isValid = false;
               firstInvalidMsg = 'Please verify your mobile number using OTP first';
@@ -1618,6 +1684,71 @@
             `;
             inputHtml = tableHtml;
           }
+        } else if (field.type === 'grid_number') {
+          const rows = field.rows || [];
+          const cols = field.columns || [];
+          const showQuickfill = rows.length > 1;
+
+          let tableHtml = `
+            <div style="overflow-x: auto; margin-top: 0.5rem; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); background: #fff;">
+              <table class="grid-table matrix-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background: #f1f4f8; border-bottom: 2px solid #ced4da;">
+                    <th style="padding: 0.5rem 0.5rem; text-align: left; font-weight: 700; color: #204060; font-size: 0.85rem;">Date</th>
+                    ${cols.map((c, ci) => `
+                      <th style="padding: 0.5rem 0.35rem; text-align: center; font-weight: 700; color: #204060; border-left: 1px solid #e9ecef;">
+                        <div style="font-size: 0.85rem; margin-bottom: 0.25rem;">${escapeHtml(c)}</div>
+                        ${showQuickfill ? `
+                          <div style="display: flex; align-items: center; justify-content: center;">
+                            <input type="number"
+                              min="0"
+                              step="1"
+                              placeholder="Set all"
+                              title="Set count for all dates in ${escapeAttr(c)}"
+                              oninput="applyNumberToAllRows('${field.id}', ${ci}, this.value)"
+                              style="width: 100%; max-width: 68px; height: 28px; padding: 0.2rem 0.3rem; font-size: 0.78rem; font-weight: 600; text-align: center; border: 1px dashed #204060; border-radius: 4px; background: #fff; color: #204060; box-sizing: border-box;" />
+                          </div>
+                        ` : ''}
+                      </th>
+                    `).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          rows.forEach((r, ri) => {
+            const isAlt = ri % 2 === 1;
+            tableHtml += `
+              <tr style="background: ${isAlt ? '#fbfcfe' : '#fff'}; border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 0.45rem 0.5rem; font-weight: 600; color: #204060; font-size: 0.85rem; white-space: nowrap;">${escapeHtml(r)}</td>
+                ${cols.map((c, ci) => `
+                  <td style="padding: 0.35rem 0.25rem; text-align: center; border-left: 1px solid #f0f0f0;">
+                    <input type="number"
+                      min="0"
+                      step="1"
+                      name="response_${field.id}_${ri}_${ci}"
+                      id="input_${field.id}_${ri}_${ci}"
+                      data-field-id="${field.id}"
+                      data-row-index="${ri}"
+                      data-col-index="${ci}"
+                      data-row="${escapeAttr(r)}"
+                      data-col="${escapeAttr(c)}"
+                      placeholder="0"
+                      value="0"
+                      class="grid-number-cell"
+                      style="width: 100%; max-width: 62px; padding: 0.35rem 0.2rem; text-align: center; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9rem; font-weight: 600; color: #204060; background: #fff;" />
+                  </td>
+                `).join('')}
+              </tr>
+            `;
+          });
+
+          tableHtml += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          inputHtml = tableHtml;
         }
 
         return `
@@ -1839,132 +1970,6 @@
         scheduleDraftSave();
       });
 
-      $(document).on('click', '#sendOtpBtn', async function() {
-        const mobno = document.getElementById('input_mobno').value.trim();
-        const sendBtn = this;
-        sendBtn.disabled = true;
-        sendBtn.textContent = 'Sending...';
-
-        try {
-          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobno, formId: formData.id })
-          });
-          const data = await res.json();
-          if (data.success) {
-            if (data.devOtp) {
-              // Dev-only bypass: WhatsApp isn't configured, so the backend handed
-              // the OTP back directly instead of sending it. Autofill it so local
-              // testing doesn't require digging it out of the database/logs.
-              alert(`[DEV MODE] WhatsApp isn't configured, so here's the OTP directly: ${data.devOtp}`);
-              const otpInput = document.getElementById('input_otp');
-              otpInput.value = data.devOtp;
-              otpInput.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-              alert('OTP sent successfully to your WhatsApp!');
-            }
-            $('#otpInputSection').slideDown();
-            sendBtn.textContent = 'Resend OTP';
-          } else {
-            alert(data.message || 'Failed to send OTP. Please try again.');
-            sendBtn.textContent = 'Send OTP';
-          }
-        } catch (e) {
-          console.error(e);
-          alert('Error sending OTP. Please check your network connection.');
-          sendBtn.textContent = 'Send OTP';
-        } finally {
-          sendBtn.disabled = false;
-        }
-      });
-
-      let otpVerifyInFlight = false;
-
-      // Shared by the Verify button and the auto-verify-on-6-digits trigger,
-      // so typing the OTP is enough on its own — no extra click needed.
-      async function verifyOtp() {
-        if (isOtpVerified || otpVerifyInFlight) return;
-
-        const mobno = document.getElementById('input_mobno').value.trim();
-        const otp = document.getElementById('input_otp').value.trim();
-        const verifyBtn = document.getElementById('verifyOtpBtn');
-
-        if (!otp || otp.length !== 6) {
-          return;
-        }
-
-        otpVerifyInFlight = true;
-        verifyBtn.disabled = true;
-        verifyBtn.textContent = 'Verifying...';
-
-        try {
-          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobno, otp, formId: formData.id })
-          });
-          const data = await res.json();
-          if (data.success) {
-            isOtpVerified = true;
-            $('#input_mobno').prop('readonly', true).css('background-color', '#e9ecef');
-            $('#input_otp').prop('readonly', true).css('background-color', '#e9ecef');
-            $('#sendOtpBtn').hide();
-            verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Verified ✓';
-            verifyBtn.style.backgroundColor = '#28a745';
-
-            // If this number is on the form's OTP allowlist, pre-select the
-            // Department field (if present) to the department it's authorized
-            // for. Left editable in case the submitter needs to correct it.
-            if (data.department) {
-              const deptField = (formData.fields || []).find(f => f.vendorRole === 'department');
-              if (deptField) {
-                const deptEl = document.getElementById(`input_${deptField.id}`);
-                if (deptEl) {
-                  deptEl.value = data.department;
-                  deptEl.dispatchEvent(new Event('change'));
-                }
-              }
-            }
-
-            const saveEmailInput = document.getElementById('saveProgressEmail');
-            const knownEmail = saveEmailInput ? saveEmailInput.value.trim() : '';
-            if (knownEmail) {
-              attemptRestoreDraft(knownEmail);
-            }
-          } else {
-            alert(data.message || 'Invalid OTP. Please try again.');
-            verifyBtn.textContent = 'Verify';
-            verifyBtn.disabled = false;
-          }
-        } catch (e) {
-          console.error(e);
-          alert('Error verifying OTP.');
-          verifyBtn.textContent = 'Verify';
-          verifyBtn.disabled = false;
-        } finally {
-          otpVerifyInFlight = false;
-        }
-      }
-
-      $(document).on('click', '#verifyOtpBtn', function() {
-        const otp = document.getElementById('input_otp').value.trim();
-        if (!otp || otp.length !== 6) {
-          alert('Please enter a valid 6-digit OTP');
-          return;
-        }
-        verifyOtp();
-      });
-
-      // Auto-verify as soon as a 6-digit OTP is typed/pasted in — saves the
-      // extra click on the Verify button for the common case.
-      $(document).on('input', '#input_otp', function() {
-        if (this.value.trim().length === 6) {
-          verifyOtp();
-        }
-      });
-
       // Collects current answers from every visible field across all pages.
       // Shared by the final submit and the in-progress draft autosave.
       function collectResponses() {
@@ -1995,6 +2000,16 @@
               rowAnswers[r] = Array.from(checked).map(c => c.value);
             });
             responses[field.id] = rowAnswers;
+          } else if (field.type === 'grid_number') {
+            const rowAnswers = {};
+            (field.rows || []).forEach((r, ri) => {
+              rowAnswers[r] = {};
+              (field.columns || []).forEach((c, ci) => {
+                const input = document.querySelector(`input[name="response_${field.id}_${ri}_${ci}"]`);
+                rowAnswers[r][c] = input && input.value.trim() !== '' ? input.value.trim() : '0';
+              });
+            });
+            responses[field.id] = rowAnswers;
           } else {
             const el = document.getElementById(`input_${field.id}`);
             responses[field.id] = el ? el.value.trim() : '';
@@ -2006,7 +2021,7 @@
       async function submitForm(e) {
         e.preventDefault();
 
-        const currentPageIdx = window.currentPageIdx;
+        const currentPageIdx = window.currentPageIdx || 0;
         const submitBtn = document.querySelector(`#formPage_${currentPageIdx} #submitBtn`) || document.getElementById('submitBtn');
         if (submitBtn) {
           submitBtn.disabled = true;
@@ -2021,10 +2036,10 @@
         if (currentPageIdx === 0 && !formData.isPublic) {
           const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
           if (authInput) {
-            const isAuthValid = checkAuthInputValidation(authInput);
-            if (!isAuthValid) {
+            const authOk = await performAuthLookup(authInput);
+            if (!authOk || window.isAuthVerified === false) {
               isValid = false;
-              firstInvalidMsg = document.getElementById('input_mobno') ? 'Mobile Number is required' : 'Card Number is required';
+              firstInvalidMsg = window.lastAuthErrorMessage || (document.getElementById('input_mobno') ? 'Please enter a valid registered mobile number' : 'Please enter a valid card number');
             } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
               isValid = false;
               firstInvalidMsg = 'Please verify your mobile number using OTP first';
@@ -2303,6 +2318,175 @@
         div.textContent = str;
         return div.innerHTML;
       }
+
+      let otpCountdownTimer = null;
+
+      async function handleSendOtp() {
+        const mobInput = document.getElementById('input_mobno');
+        const mobVal = mobInput ? mobInput.value.trim().replace(/\D/g, '') : '';
+        const infoEl = document.getElementById('info_mobno');
+        const btn = document.getElementById('sendOtpBtn');
+
+        if (mobVal.length !== 10) {
+          infoEl.innerHTML = '<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> Please enter a valid 10-digit mobile number</span>';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        infoEl.innerHTML = '<span style="color:#6c757d;"><i class="fas fa-spinner fa-spin"></i> Checking authorization...</span>';
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobno: mobVal, formId: formData.id })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            infoEl.innerHTML = '<span style="color:#28a745; font-weight:600;"><i class="fas fa-check-circle"></i> OTP sent to your WhatsApp/SMS!</span>';
+            $('#otpInputSection').slideDown();
+            $('#input_otp').focus();
+            startOtpTimer(60);
+          } else {
+            infoEl.innerHTML = `<span style="color:#dc3545; font-weight:600;"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.message || 'Failed to send OTP')}</span>`;
+          }
+        } catch (err) {
+          infoEl.innerHTML = '<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> Network error. Please try again.</span>';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Send OTP';
+        }
+      }
+
+      function startOtpTimer(seconds) {
+        clearInterval(otpCountdownTimer);
+        $('#resendOtpBtn').hide();
+        let remaining = seconds;
+        const timerText = document.getElementById('otpTimerText');
+        timerText.textContent = `Resend OTP in ${remaining}s`;
+
+        otpCountdownTimer = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) {
+            clearInterval(otpCountdownTimer);
+            timerText.textContent = '';
+            $('#resendOtpBtn').show();
+          } else {
+            timerText.textContent = `Resend OTP in ${remaining}s`;
+          }
+        }, 1000);
+      }
+
+      async function handleVerifyOtp() {
+        const mobInput = document.getElementById('input_mobno');
+        const mobVal = mobInput ? mobInput.value.trim().replace(/\D/g, '') : '';
+        const otpInput = document.getElementById('input_otp');
+        const otpVal = otpInput ? otpInput.value.trim() : '';
+        const errEl = document.getElementById('otpErrorMsg');
+        const btn = document.getElementById('verifyOtpBtn');
+
+        if (otpVal.length !== 6) {
+          errEl.textContent = 'Please enter the complete 6-digit OTP';
+          errEl.style.display = 'block';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+        errEl.style.display = 'none';
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobno: mobVal, otp: otpVal })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            isOtpVerified = true;
+            clearInterval(otpCountdownTimer);
+
+            // Fetch member info & allowlist department
+            const identRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${mobVal}&formId=${formData.id}`);
+            const identData = await identRes.json();
+
+            const memberName = identData.data?.name || 'Registered Member';
+            const nameEl = document.getElementById('verifiedUserName');
+            const mobEl = document.getElementById('verifiedUserMob');
+            if (nameEl) nameEl.textContent = memberName;
+            if (mobEl) mobEl.textContent = mobVal;
+
+            $('#otpGateContainer').hide();
+            $('#verifiedUserBanner').css('display', 'flex');
+            $('#formContentWrapper').show();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Pre-fill and lock Department if linked in allowlist
+            if (identData.data?.department) {
+              const deptField = (formData.fields || []).find(f => f.vendorRole === 'department' || f.label.toLowerCase().includes('department'));
+              if (deptField) {
+                const deptEl = document.getElementById(`input_${deptField.id}`);
+                if (deptEl) {
+                  deptEl.value = identData.data.department;
+                  deptEl.disabled = true;
+                  deptEl.style.backgroundColor = '#e9ecef';
+                  deptEl.dispatchEvent(new Event('change'));
+                }
+              }
+            }
+
+            // Restore draft if available
+            if (identData.data?.email) {
+              const saveEmailInput = document.getElementById('saveProgressEmail');
+              if (saveEmailInput) saveEmailInput.value = identData.data.email;
+              attemptRestoreDraft(identData.data.email);
+            }
+          } else {
+            errEl.textContent = data.message || 'Invalid or expired OTP';
+            errEl.style.display = 'block';
+          }
+        } catch (err) {
+          errEl.textContent = 'Network error during verification. Please try again.';
+          errEl.style.display = 'block';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Verify & Open';
+        }
+      }
+
+      function signOutOtp() {
+        isOtpVerified = false;
+        clearInterval(otpCountdownTimer);
+        document.getElementById('input_otp').value = '';
+        $('#otpInputSection').hide();
+        $('#info_mobno').html('');
+        $('#verifiedUserBanner').hide();
+        $('#formContentWrapper').slideUp();
+        $('#otpGateContainer').slideDown();
+      }
+
+      $(document).on('click', '#sendOtpBtn, #resendOtpBtn', handleSendOtp);
+      $(document).on('click', '#verifyOtpBtn', handleVerifyOtp);
+      $(document).on('input', '#input_otp', function() {
+        if (this.value.trim().length === 6) {
+          handleVerifyOtp();
+        }
+      });
+      $(document).on('keypress', '#input_otp', function(e) {
+        if (e.which === 13) {
+          e.preventDefault();
+          handleVerifyOtp();
+        }
+      });
+      $(document).on('keypress', '#input_mobno', function(e) {
+        if (e.which === 13) {
+          e.preventDefault();
+          handleSendOtp();
+        }
+      });
 
       // Start fetching on load
       loadForm();
