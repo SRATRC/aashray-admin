@@ -191,7 +191,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       if (bookingsRes.ok) {
         travelReport = data.data || [];
-        console.log("First booking:", travelReport[0]);
+        // Precompute display-string fields so the Excel export (which reads the raw
+        // field named by each column's data-key) mirrors what the table renders,
+        // instead of exporting "[object Object]" for adhyayan or the raw trip id.
+        travelReport.forEach((b) => {
+          b.adhyayan_label = b.adhyayan
+            ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}–${formatDate(b.adhyayan.end_date)})`
+            : '-';
+          b.trip_group_label = b.trip_group_id ? 'Round trip' : '-';
+        });
 
         setupDownloadButton();
 
@@ -201,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const normalize = str =>
           (str || "")
             .toLowerCase()
-            .replace(/[–—]/g, '-') // normalize dash variants
+            .replace(/[\u2013\u2014]/g, '-') // normalize dash variants
             .trim()
             .replace(/\s+/g, ' ');
 
@@ -305,9 +313,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 </td>
 
 <td>
-  ${b.leaving_post_adhyayan == 1
-              ? 'Yes'
-              : 'No'}
+  ${b.adhyayan
+              ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}–${formatDate(b.adhyayan.end_date)})`
+              : '-'}
+</td>
+
+<td>
+  ${b.trip_group_id
+              ? '<span class="badge bg-info">Round trip</span>'
+              : '-'}
 </td>
 <td>
 
@@ -447,10 +461,6 @@ async function openTransactionEditModal(bookingId) {
   document.getElementById('txnType').value = booking.type ?? '';
   document.getElementById('txnTravelDate').value = booking.date ? booking.date.split('T')[0] : '';
 
-  document.getElementById('txnLeavingPostAdhyayan').value =
-    booking.leaving_post_adhyayan != null
-      ? String(booking.leaving_post_adhyayan)
-      : '';
   await loadAvailableBusRoutes(
     booking
   );
@@ -558,7 +568,6 @@ document.getElementById('transactionForm').addEventListener('submit', async (eve
     drop_point: document.getElementById('txnDrop').value,
     type: document.getElementById('txnType').value,
     date: document.getElementById('txnTravelDate').value,
-    leaving_post_adhyayan: document.getElementById('txnLeavingPostAdhyayan').value,
     bus_group_id: document.getElementById('txnBusGroup').value,
     is_coordinator: document.getElementById('txnIsCoordinator').value,
   };
