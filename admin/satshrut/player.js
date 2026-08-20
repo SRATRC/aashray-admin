@@ -111,24 +111,24 @@ function updateTitleForSegment() {
 function populateSessionInfo() {
   const s = sessionData;
   const videoDur = s.video_duration_seconds;
-  const audioDur = 300; // Initial placeholder until real duration is queried
-  const totalDur = videoDur * 2 + audioDur * 2;
+  // Don't pre-fill audio with a placeholder — show '...' until fetchAudioDurations() resolves
+  const audioDur = 300;
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
   document.getElementById('chipVideoDur').textContent = formatMinSec(videoDur);
-  document.getElementById('chipAudioDur').textContent = formatMinSec(audioDur);
-  document.getElementById('chipTotal').textContent = formatMinSec(totalDur);
+  document.getElementById('chipAudioDur').textContent = '...';
+  document.getElementById('chipTotal').textContent = '...';
 
-  // Phase durations
+  // Phase durations (audio will be overwritten by updateSessionDurations())
   phaseDurations = [videoDur, audioDur, videoDur, audioDur];
-  totalSessionDuration = totalDur;
+  totalSessionDuration = videoDur * 2 + audioDur * 2;
 
   // Phase timeline chips
   document.getElementById('ph-dur-0').textContent = formatMinSec(videoDur);
-  document.getElementById('ph-dur-1').textContent = formatMinSec(audioDur);
+  document.getElementById('ph-dur-1').textContent = '...';
   document.getElementById('ph-dur-2').textContent = formatMinSec(videoDur);
-  document.getElementById('ph-dur-3').textContent = formatMinSec(audioDur);
+  document.getElementById('ph-dur-3').textContent = '...';
 
   document.getElementById('player-panel').style.display = 'block';
 }
@@ -628,6 +628,15 @@ document.addEventListener('keydown', function (e) {
 });
 
 // ── Kick off ──────────────────────────────────────────────────────────────────
+
+// Bust bfcache: if the browser restores this page from back-forward cache
+// the old JS state (sessionData, player, timer) would be stale. Force a
+// hard reload so the session is always freshly fetched.
+window.addEventListener('pageshow', function (e) {
+  if (e.persisted) {
+    window.location.reload();
+  }
+});
 
 document.addEventListener('DOMContentLoaded', function () {
   const beginBtn = document.getElementById('begin-btn');
