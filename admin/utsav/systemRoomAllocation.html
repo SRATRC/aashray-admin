@@ -1,0 +1,481 @@
+<!-- Role Access Check -->
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavAdmin', 'superAdmin', 'utsavAdminReadOnly', 'utsavAdminRaj']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Room Allocation</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f4f7f6;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+    .header {
+      background-color: #204060;
+      color: white;
+      padding: 12px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .header .logout a {
+      color: #e0e0e0;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .header .logout a:hover {
+      color: white;
+      text-decoration: underline;
+    }
+    .dashboard-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 24px;
+      margin-top: 20px;
+      margin-bottom: 30px;
+    }
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #204060;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .page-subtitle {
+      font-size: 0.95rem;
+      color: #6c757d;
+      margin-bottom: 20px;
+    }
+
+    /* KPI Summary Cards */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+    }
+    .kpi-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+    .kpi-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #204060;
+      line-height: 1.2;
+    }
+    .kpi-label {
+      font-size: 0.82rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* Filters Bar */
+    .filter-bar {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filter-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .filter-input, .filter-select {
+      height: 38px;
+      padding: 6px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: white;
+      color: #334155;
+    }
+    .filter-input:focus, .filter-select:focus {
+      border-color: #204060;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(32, 64, 96, 0.15);
+    }
+
+    /* Action Toolbar */
+    .action-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .btn-action {
+      height: 38px;
+      padding: 0 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-apply {
+      background: #28a745;
+      color: white;
+    }
+    .btn-apply:hover {
+      background: #218838;
+    }
+    .btn-apply:disabled {
+      background: #94d3a2;
+      cursor: not-allowed;
+    }
+    .btn-excel {
+      background: #204060;
+      color: white;
+    }
+    .btn-excel:hover {
+      background: #173048;
+    }
+    .btn-select-auto {
+      background: #e2e8f0;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-select-auto:hover {
+      background: #cbd5e1;
+    }
+
+    /* Table Styling */
+    .allocation-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    .allocation-table th {
+      background-color: #204060;
+      color: white;
+      padding: 12px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: left;
+      border: 1px solid #1a3550;
+      white-space: nowrap;
+    }
+    .allocation-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.88rem;
+      vertical-align: middle;
+      color: #334155;
+    }
+    .allocation-table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+    .allocation-table tbody tr.row-selected {
+      background-color: #f0fdf4 !important;
+    }
+
+    /* Badge Tags */
+    .badge-reason {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .badge-flat {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .badge-international {
+      background: #ede9fe;
+      color: #5b21b6;
+      border: 1px solid #ddd6fe;
+    }
+    .badge-form {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .badge-assigned {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .badge-unassigned {
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+    }
+
+    .room-input {
+      width: 110px;
+      padding: 5px 8px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #204060;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .room-input:focus {
+      border-color: #28a745;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+    }
+    .room-input.suggested-highlight {
+      border-color: #28a745;
+      background-color: #f0fdf4;
+    }
+
+    .comments-cell {
+      max-width: 220px;
+      white-space: normal;
+      word-break: break-word;
+      font-size: 0.82rem;
+      color: #64748b;
+    }
+
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      z-index: 9999;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()"><i class="fas fa-arrow-left"></i> Back</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()"><i class="fas fa-home"></i> Home</a> &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="max-width: 1350px; margin: 0 auto; padding: 0 15px;">
+    <div class="dashboard-card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+        <div>
+          <div class="page-title">
+            <i class="fas fa-door-open" style="color: #28a745;"></i> System Room Allocation
+          </div>
+          <div class="page-subtitle" id="utsavInfoSubtitle">Loading event details...</div>
+        </div>
+        <div>
+          <a id="backToBookingsBtn" href="utsavBookingslist.html" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 14px;">
+            <i class="fas fa-list"></i> View All Bookings
+          </a>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
+            <i class="fas fa-users"></i>
+          </div>
+          <div>
+            <div class="kpi-val" id="kpiTotal">0</div>
+            <div class="kpi-label">Total Confirmed</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
+            <i class="fas fa-magic"></i>
+          </div>
+          <div>
+            <div class="kpi-val" id="kpiAutoAllotted" style="color: #16a34a;">0</div>
+            <div class="kpi-label">Auto-Allot Candidates</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: #f1f5f9; color: #475569;">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div>
+            <div class="kpi-val" id="kpiAlreadyAssigned">0</div>
+            <div class="kpi-label">Already Assigned</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: #fff1f2; color: #e11d48;">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div>
+            <div class="kpi-val" id="kpiUnassigned" style="color: #e11d48;">0</div>
+            <div class="kpi-label">Pending Allocation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar">
+        <div class="filter-item" style="flex: 1; min-width: 220px;">
+          <span class="filter-label">Search</span>
+          <input type="text" id="searchInput" class="filter-input" placeholder="Search name, mobile, card, room, comments..." />
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">Allocation Rule</span>
+          <select id="ruleFilter" class="filter-select">
+            <option value="all">All Rules & Statuses</option>
+            <option value="auto_allotted">Auto-Allotted Candidates Only</option>
+            <option value="flat_owner">Flat Owners (flatdb)</option>
+            <option value="flat_host_guest">Flat Host Form Guests</option>
+            <option value="international_pre_post">International Pre/Post Room</option>
+            <option value="already_allotted">Already Assigned in Utsav</option>
+            <option value="unassigned">Pending / Unassigned</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">Package</span>
+          <select id="packageFilter" class="filter-select">
+            <option value="all">All Packages</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">Gender</span>
+          <select id="genderFilter" class="filter-select">
+            <option value="all">All</option>
+            <option value="M">Male (M)</option>
+            <option value="F">Female (F)</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">Center</span>
+          <select id="centerFilter" class="filter-select">
+            <option value="all">All Centers</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div class="action-toolbar">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button id="selectAutoBtn" class="btn-action btn-select-auto">
+            <i class="fas fa-magic"></i> Select All Auto-Allotted
+          </button>
+          <button id="selectAllVisibleBtn" class="btn-action btn-select-auto">
+            <i class="fas fa-tasks"></i> Select All Visible
+          </button>
+          <button id="clearSelectionBtn" class="btn-action btn-select-auto" style="display:none;">
+            <i class="fas fa-times"></i> Clear Selection
+          </button>
+          <span id="selectionCountBadge" style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-left: 6px;">
+            0 selected
+          </span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button id="exportExcelBtn" class="btn-action btn-excel">
+            <i class="fas fa-file-excel"></i> Export to Excel
+          </button>
+          <button id="applyAllocationsBtn" class="btn-action btn-apply">
+            <i class="fas fa-save"></i> Apply Selected Allocations
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow-x: auto;">
+        <table class="allocation-table" id="allocationTable">
+          <thead>
+            <tr>
+              <th style="width: 36px; text-align: center;">
+                <input type="checkbox" id="selectAllCheckbox" title="Select all visible" />
+              </th>
+              <th style="width: 40px; text-align: center;">#</th>
+              <th>Participant Info</th>
+              <th>Mobile & Center</th>
+              <th>Country</th>
+              <th>Package</th>
+              <th>Mumukshu Comments</th>
+              <th style="text-align: center;">Current Room</th>
+              <th style="text-align: center; width: 140px;">Suggested Room</th>
+              <th>Allocation Reason</th>
+              <th style="text-align: center; width: 80px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="allocationTableBody">
+            <tr>
+              <td colspan="11" style="text-align: center; padding: 40px; color: #64748b;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i><br /><br />
+                Computing intelligent room allocations...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastMsg" class="toast-msg"></div>
+
+  <script src="systemRoomAllocation.js"></script>
+</body>
+</html>

@@ -775,6 +775,11 @@
         if (!field) return false;
         return field.type === 'guest_list' || field.id === 'guests_list' || field.id === 'guest_list' || (field.label && field.label.toLowerCase().includes('list of guest'));
       }
+
+      function isGuestCapacityField(field) {
+        if (!field) return false;
+        return field.id === 'guest_capacity_count' || field.id === 'guest_capacity' || (field.label && field.label.toLowerCase().includes('guests you can accommodate'));
+      }
     
       let guestLookupTimeouts = {};
 
@@ -901,7 +906,7 @@
             });
           } else if (field.type === 'radio') {
             $(`input[name="${field.id}"][value="${ans}"]`).prop('checked', true);
-                    } else if (field.id === 'guest_capacity_count') {
+                    } else if (isGuestCapacityField(field)) {
             const el = document.getElementById(inputId);
             if (el) el.value = ans;
             const valNum = parseInt(ans, 10) || 0;
@@ -1493,6 +1498,29 @@
           }
         }
 
+        // Number min/max check
+        if (field.type === 'number' && answerVal !== '' && answerVal !== null && answerVal !== undefined) {
+          const num = parseFloat(answerVal);
+          if (isNaN(num)) {
+            const msg = 'Please enter a valid number';
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+          if (field.min !== undefined && field.min !== null && num < parseFloat(field.min)) {
+            const msg = `Value must be at least ${field.min}`;
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+          if (field.max !== undefined && field.max !== null && num > parseFloat(field.max)) {
+            const msg = `Value cannot exceed ${field.max}`;
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+        }
+
         // 2. Custom Rule Check
         if (field.validation) {
           const valCheck = validateFieldInput(field, answerVal, checkedCount);
@@ -1902,9 +1930,7 @@
         const inputId = `input_${field.id}`;
         let inputHtml = '';
 
-        if (field.type === 'text') {
-          inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" data-word-limit="20" maxlength="200" ${requiredAttr} />`;
-                } else if (isGuestListField(field)) {
+        if (isGuestListField(field)) {
           inputHtml = `
             <div id="guestListWrapper_${field.id}" style="margin-top: 0.5rem;">
               <div id="guestListContainer_${field.id}">
@@ -1915,14 +1941,33 @@
               </div>
             </div>
           `;
+        } else if (isGuestCapacityField(field)) {
+          const maxCap = field.max !== undefined && field.max !== null ? parseInt(field.max, 10) : 6;
+          let pillsHtml = '';
+          for (let i = 0; i <= maxCap; i++) {
+            pillsHtml += `<button type="button" class="btn btn-outline-secondary btn-cap-pill" data-cap-val="${i}" onclick="selectGuestCapPill('${field.id}', ${i}, this)" style="min-width: 48px; height: 42px; font-weight: 700; border-radius: 8px; font-size: 1rem; border: 1.5px solid #ced4da; transition: all 0.2s; background: #fff; color: #204060; margin-right: 6px; margin-bottom: 6px;">${i}</button>`;
+          }
+          inputHtml = `
+            <input type="hidden" id="${inputId}" value="0" ${requiredAttr} />
+            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px;">
+              ${pillsHtml}
+            </div>
+          `;
+        } else if (field.type === 'text') {
+          inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" data-word-limit="20" maxlength="200" ${requiredAttr} />`;
         } else if (field.type === 'textarea') {
           inputHtml = `<textarea id="${inputId}" rows="4" placeholder="Your answer" ${requiredAttr}></textarea>`;
-      } else if (field.type === 'email') {
-        inputHtml = `<input type="email" id="${inputId}" placeholder="Your email address" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
-      } else if (field.type === 'phone') {
-        inputHtml = `<input type="tel" id="${inputId}" placeholder="10-digit mobile number" maxlength="10" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+        } else if (field.type === 'email') {
+          inputHtml = `<input type="email" id="${inputId}" placeholder="Your email address" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+        } else if (field.type === 'phone') {
+          inputHtml = `<input type="tel" id="${inputId}" placeholder="10-digit mobile number" maxlength="10" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
         } else if (field.type === 'number') {
-          inputHtml = `<input type="number" id="${inputId}" placeholder="Your answer" ${requiredAttr} />`;
+          const minAttr = field.min !== undefined && field.min !== null ? `min="${field.min}"` : '';
+          const maxAttr = field.max !== undefined && field.max !== null ? `max="${field.max}"` : '';
+          const maxVal = field.max !== undefined && field.max !== null ? parseFloat(field.max) : null;
+          const minVal = field.min !== undefined && field.min !== null ? parseFloat(field.min) : 0;
+          const onInputHandler = maxVal !== null ? `oninput="if(this.value !== '' && parseFloat(this.value) > ${maxVal}) this.value = ${maxVal}; if(this.value !== '' && parseFloat(this.value) < ${minVal}) this.value = ${minVal};"` : '';
+          inputHtml = `<input type="number" id="${inputId}" placeholder="Your answer" ${minAttr} ${maxAttr} ${onInputHandler} ${requiredAttr} style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem;" />`;
         } else if (field.type === 'date') {
           let minAttr = '';
           let maxAttr = '';
@@ -1945,8 +1990,6 @@
             } else if (field.dateConstraints.minType === 'fixed' && field.dateConstraints.minFixed) {
               computedMin = field.dateConstraints.minFixed;
             }
-            // Once date settings exist for a field, never allow picking a date before today,
-            // regardless of the configured minType (including "no minimum" or a past fixed date).
             if (!computedMin || computedMin < todayStr) {
               computedMin = todayStr;
             }
@@ -2122,7 +2165,7 @@
             <label for="${inputId}" style="margin-bottom:0.25rem;">${renderRichText(field.label)} ${requiredMark}</label>
             ${field.description ? `<p style="font-size:0.8rem; color:#6c757d; margin-top:-0.15rem; margin-bottom:0.5rem; font-weight:400; line-height:1.4;">${renderRichText(field.description)}</p>` : ''}
             ${inputHtml}
-            ${field.type === 'text' ? `<div class="word-count-hint" id="wordCount_${field.id}" style="font-size:0.78rem; color:#6c757d; margin-top:0.3rem; text-align:right;">0/20 words</div>` : ''}
+            ${field.type === 'text' && !isGuestListField(field) ? `<div class="word-count-hint" id="wordCount_${field.id}" style="font-size:0.78rem; color:#6c757d; margin-top:0.3rem; text-align:right;">0/20 words</div>` : ''}
             <div class="inline-error-msg" id="error_${field.id}" style="color: #dc3545; font-size: 0.82rem; margin-top: 0.35rem; display: none; font-weight: 500;"><i class="fas fa-exclamation-circle"></i> <span></span></div>
           </div>
         `;

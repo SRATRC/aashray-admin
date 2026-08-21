@@ -2258,7 +2258,8 @@
           
           const accessVal = document.getElementById('formType')?.value || 'public';
           const isPublic = accessVal === 'public';
-          const authType = accessVal === 'public' ? 'cardno' : accessVal;
+          const requireRegistration = (accessVal === 'reg_cardno' || accessVal === 'reg_mobno');
+          const authType = (accessVal === 'mobno' || accessVal === 'reg_mobno') ? 'mobno' : (isPublic ? 'cardno' : accessVal);
 
           const limitOneResponse = document.getElementById('limitOneResponse')?.checked || false;
           const allowEdit = document.getElementById('allowEdit')?.checked || false;
