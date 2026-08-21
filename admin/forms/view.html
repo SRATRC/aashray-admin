@@ -1411,7 +1411,108 @@
       let lastCheckedAuthVal = '';
       let lookupTimeout = null;
       window.isAuthVerified = false;
+      window.previousResponseId = null;
       window.lastAuthErrorMessage = '';
+
+      // ── Date helpers for grid pre-fill and past-date locking ──────────
+      function normalizeDateLabel(dateKey) {
+        if (!dateKey) return null;
+        const trimmed = String(dateKey).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+        const match = trimmed.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)(?:\s+(\d{4}))?$/i);
+        if (match) {
+          const day = String(parseInt(match[1], 10)).padStart(2, '0');
+          const monthName = match[2].toLowerCase().substring(0, 3);
+          const year = match[3] || new Date().getFullYear();
+          const months = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+          const m = months[monthName];
+          if (m) return `${year}-${m}-${day}`;
+        }
+        return null;
+      }
+
+      function getTodayIST() {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      }
+
+      function disablePastDateRows() {
+        const today = getTodayIST();
+        document.querySelectorAll('.grid-table tbody tr').forEach(tr => {
+          const rowLabel = tr.querySelector('td')?.textContent?.trim();
+          if (!rowLabel) return;
+          const normalized = normalizeDateLabel(rowLabel);
+          if (normalized && normalized < today) {
+            tr.style.opacity = '0.5';
+            tr.style.pointerEvents = 'none';
+            tr.querySelectorAll('input').forEach(inp => { inp.disabled = true; });
+            const firstTd = tr.querySelector('td');
+            if (firstTd && !firstTd.textContent.includes('(Past)')) {
+              firstTd.innerHTML += ' <span style="font-size:0.75rem; color:#6c757d; font-weight:400;">(Past)</span>';
+            }
+          }
+        });
+      }
+
+      function prefillPreviousResponse(prevData) {
+        const prevResponses = prevData.responses || {};
+        const submittedDate = prevData.submittedAt ? new Date(prevData.submittedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+        // Show warning banner
+        const currentPageIdx = window.currentPageIdx || 0;
+        const alertContainer = document.getElementById(`formAlert_${currentPageIdx}`);
+        if (alertContainer) {
+          alertContainer.className = 'alert-warning';
+          alertContainer.innerHTML = `<i class="fas fa-info-circle"></i> You submitted earlier${submittedDate ? ' on ' + submittedDate : ''}. Your previous choices are shown below. You can update future dates only.`;
+          alertContainer.style.display = 'block';
+          alertContainer.style.background = '#fff3cd';
+          alertContainer.style.color = '#856404';
+          alertContainer.style.border = '1px solid #ffeeba';
+          alertContainer.style.borderRadius = '6px';
+          alertContainer.style.padding = '0.75rem 1rem';
+          alertContainer.style.marginBottom = '1rem';
+          alertContainer.style.fontWeight = '600';
+          alertContainer.style.fontSize = '0.9rem';
+        }
+
+        // Pre-fill fields
+        (formData.fields || []).forEach(field => {
+          const val = prevResponses[field.id];
+          if (val === undefined || val === null) return;
+
+          if (field.type === 'grid_radio' && typeof val === 'object') {
+            field.rows.forEach((r, ri) => {
+              const selectedCol = val[r];
+              if (!selectedCol) return;
+              const colIdx = (field.columns || []).indexOf(selectedCol);
+              if (colIdx === -1) return;
+              const radio = document.querySelector(`input[name="response_${field.id}_${ri}"][value="${CSS.escape(selectedCol)}"]`);
+              if (radio) radio.checked = true;
+            });
+          } else if (field.type === 'grid_checkbox' && typeof val === 'object') {
+            field.rows.forEach((r, ri) => {
+              const selectedCols = val[r] || [];
+              selectedCols.forEach(col => {
+                const cb = document.querySelector(`input[name="response_${field.id}_${ri}"][value="${CSS.escape(col)}"]`);
+                if (cb) cb.checked = true;
+              });
+            });
+          } else if (field.type === 'checkbox' && Array.isArray(val)) {
+            val.forEach(v => {
+              const cb = document.querySelector(`input[name="${field.id}"][value="${CSS.escape(v)}"]`);
+              if (cb) cb.checked = true;
+            });
+          } else if (field.type === 'radio') {
+            const radio = document.querySelector(`input[name="${field.id}"][value="${CSS.escape(val)}"]`);
+            if (radio) radio.checked = true;
+          } else {
+            const el = document.getElementById(`input_${field.id}`);
+            if (el) el.value = val;
+          }
+        });
+
+        // Disable past date rows
+        disablePastDateRows();
+      }
 
       async function performAuthLookup(inputEl) {
         if (!inputEl) return false;
@@ -1468,6 +1569,26 @@
                 }
               }
             }
+
+            // Fetch previous response to pre-fill form and disable past dates (ONLY once per unique auth input, not on submit re-validation)
+            if (window.lastPrefilledAuthValue !== val) {
+              window.lastPrefilledAuthValue = val;
+              try {
+                const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}`);
+                const prevData = await prevRes.json();
+                if (prevData.success && prevData.data) {
+                  window.previousResponseId = prevData.data.responseId;
+                  prefillPreviousResponse(prevData.data);
+                } else {
+                  window.previousResponseId = null;
+                  disablePastDateRows();
+                }
+              } catch (prevErr) {
+                console.warn('Could not fetch previous response:', prevErr);
+                disablePastDateRows();
+              }
+            }
+
             return true;
           } else {
             $(inputEl).css('border-color', '#dc3545');
