@@ -784,44 +784,70 @@
       let guestLookupTimeouts = {};
 
       function handleGuestMobileInput(fieldId, idx, inputEl) {
-        const val = inputEl.value.trim().replace(/\D/g, '');
-        inputEl.value = val;
+        const rawVal = inputEl.value.trim();
+        const val = rawVal.replace(/\D/g, '').slice(-10);
+        const card = document.getElementById('guest_card_' + fieldId + '_' + idx);
         const statusEl = document.getElementById('guest_status_' + fieldId + '_' + idx);
-        const cardEl = document.getElementById('guest_card_' + fieldId + '_' + idx);
-        if (!statusEl || !cardEl) return;
-
+        
         clearTimeout(guestLookupTimeouts[fieldId + '_' + idx]);
+        if (!card || !statusEl) return;
 
-        if (val.length !== 10) {
-          statusEl.innerHTML = val.length > 0 ? '<span style="color:#6c757d; font-size:0.82rem;">Enter 10-digit mobile number</span>' : '';
-          cardEl.dataset.cardno = '';
-          cardEl.dataset.name = '';
-          cardEl.dataset.center = '';
+        if (val.length < 10) {
+          card.dataset.cardno = '';
+          card.dataset.name = '';
+          card.dataset.center = '';
           inputEl.style.borderColor = '#ced4da';
+          statusEl.innerHTML = '';
           return;
         }
 
-        statusEl.innerHTML = '<span style="color:#6c757d; font-size:0.82rem;"><i class="fas fa-spinner fa-spin"></i> Checking registration...</span>';
+        // Check if this number is already entered in another guest card in the same form
+        const container = document.getElementById('guestListContainer_' + fieldId);
+        let isDuplicate = false;
+        if (container) {
+          container.querySelectorAll('.guest-mobno-input').forEach((otherInput, oIdx) => {
+            if (oIdx !== idx && otherInput.value.replace(/\D/g, '').slice(-10) === val) {
+              isDuplicate = true;
+            }
+          });
+        }
+        if (isDuplicate) {
+          inputEl.style.borderColor = '#dc3545';
+          statusEl.innerHTML = '<span style="color:#dc3545; font-weight:600; font-size:0.85rem;"><i class="fas fa-times-circle"></i> Duplicate guest: this mobile number is already added in another card.</span>';
+          card.dataset.cardno = '';
+          card.dataset.name = '';
+          return;
+        }
+
+        statusEl.innerHTML = '<span style="color:#6c757d; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Verifying guest...</span>';
 
         guestLookupTimeouts[fieldId + '_' + idx] = setTimeout(async () => {
           try {
-            const res = await fetch(CONFIG.baseUrl + '/admin/forms/public/' + formData.id + '/validate-guest?mobno=' + val);
+            const flatnoEl = document.getElementById('input_flatno');
+            const flatno = flatnoEl ? flatnoEl.value.trim() : '';
+            const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+            const submitter = authInput ? authInput.value.trim() : '';
+
+            const url = CONFIG.baseUrl + '/admin/forms/public/' + formData.id + '/validate-guest?mobno=' + encodeURIComponent(val) + '&flatno=' + encodeURIComponent(flatno) + '&submitterMobno=' + encodeURIComponent(submitter);
+            const res = await fetch(url);
             const data = await res.json();
+
             if (data.success && data.data) {
-              cardEl.dataset.cardno = data.data.cardno;
-              cardEl.dataset.name = data.data.name;
-              cardEl.dataset.center = data.data.center || '';
-              statusEl.innerHTML = '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(data.data.name) + ' (' + escapeHtml(data.data.center || 'Member') + ') - Confirmed Booking</span>';
               inputEl.style.borderColor = '#28a745';
+              card.dataset.cardno = data.data.cardno;
+              card.dataset.name = data.data.name;
+              card.dataset.center = data.data.center || '';
+              statusEl.innerHTML = '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(data.data.name) + ' (' + escapeHtml(data.data.center || 'Member') + ') - Confirmed Booking</span>';
             } else {
-              cardEl.dataset.cardno = '';
-              cardEl.dataset.name = '';
-              cardEl.dataset.center = '';
-              statusEl.innerHTML = '<span style="color:#dc3545; font-weight:600; font-size:0.82rem;"><i class="fas fa-exclamation-circle"></i> ' + escapeHtml(data.message || 'Not registered for this event') + '</span>';
               inputEl.style.borderColor = '#dc3545';
+              card.dataset.cardno = '';
+              card.dataset.name = '';
+              card.dataset.center = '';
+              statusEl.innerHTML = '<span style="color:#dc3545; font-weight:600; font-size:0.85rem;"><i class="fas fa-times-circle"></i> ' + escapeHtml(data.message || 'Verification failed') + '</span>';
             }
           } catch (err) {
-            statusEl.innerHTML = '<span style="color:#dc3545; font-size:0.82rem;">Failed to verify guest registration</span>';
+            inputEl.style.borderColor = '#dc3545';
+            statusEl.innerHTML = '<span style="color:#dc3545; font-size:0.85rem;"><i class="fas fa-times-circle"></i> Network error verifying guest</span>';
           }
         }, 300);
       }
@@ -889,6 +915,7 @@
         }
         container.innerHTML = html;
       }
+
 
       function populateAnswers(answers) {
         if (!answers || !formData) return;
