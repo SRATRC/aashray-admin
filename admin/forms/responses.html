@@ -138,11 +138,10 @@
         padding: 1rem 0.75rem;
       }
       .table td {
-        max-width: 250px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        padding: 1rem 0.75rem;
+        max-width: 280px;
+        white-space: normal !important;
+        word-break: break-word;
+        padding: 0.85rem 0.75rem;
         vertical-align: middle;
         border-bottom: 1px solid #eee;
         color: #495057;
@@ -152,10 +151,6 @@
       }
       .table tbody tr:hover {
         background-color: #f8f9fa !important;
-      }
-      td:hover {
-        white-space: normal;
-        overflow: visible;
       }
 
       /* Tabs styling */
@@ -770,7 +765,20 @@
       // Formats nested matrix / grid answers cleanly for the web table UI
       function formatAnswerForDisplayHtml(answer) {
         if (answer === null || answer === undefined || answer === '') return '<span style="color:#adb5bd;">—</span>';
-        if (Array.isArray(answer)) return escapeHtml(answer.join(', '));
+        if (Array.isArray(answer)) {
+          if (answer.length === 0) return '<span style="color:#adb5bd;">—</span>';
+          if (typeof answer[0] === 'object' && answer[0] !== null) {
+            return `<div style="display:flex; flex-direction:column; gap:4px; font-size:0.83rem; text-align:left;">` +
+              answer.map((g, idx) => {
+                const title = g.name || 'Guest #' + (idx + 1);
+                const mob = g.mobno ? ` (${escapeHtml(g.mobno)})` : '';
+                const centerBadge = g.center ? ` <span style="font-size:0.75rem; background:#e9ecef; color:#495057; padding:1px 5px; border-radius:4px;">${escapeHtml(g.center)}</span>` : '';
+                return `<div><strong style="color:#204060;">${idx + 1}. ${escapeHtml(title)}</strong>${mob}${centerBadge}</div>`;
+              }).join('') +
+            `</div>`;
+          }
+          return escapeHtml(answer.join(', '));
+        }
         if (typeof answer === 'object') {
           const entries = Object.entries(answer);
           if (entries.length === 0) return '<span style="color:#adb5bd;">—</span>';
@@ -810,7 +818,13 @@
       // Formats nested matrix / grid answers cleanly for Excel spreadsheet export
       function formatAnswerForExcel(answer) {
         if (answer === null || answer === undefined || answer === '') return '';
-        if (Array.isArray(answer)) return answer.join(', ');
+        if (Array.isArray(answer)) {
+          if (answer.length === 0) return '';
+          if (typeof answer[0] === 'object' && answer[0] !== null) {
+            return answer.map((g, idx) => `${idx + 1}. ${g.name || 'Guest'} (${g.mobno || ''}) ${g.center ? '[' + g.center + ']' : ''}`).join('\n');
+          }
+          return answer.join(', ');
+        }
         if (typeof answer === 'object') {
           const entries = Object.entries(answer);
           if (entries.length === 0) return '';

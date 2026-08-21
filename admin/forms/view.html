@@ -769,6 +769,122 @@
       // Populates form fields from a plain { fieldId: answer } map. Shared by
       // the "edit an existing submitted response" flow and the "restore a
       // saved in-progress draft" flow.
+            // ── Flat Host Guest List Dynamic Handlers ─────────────────────────
+      
+      function isGuestListField(field) {
+        if (!field) return false;
+        return field.type === 'guest_list' || field.id === 'guests_list' || field.id === 'guest_list' || (field.label && field.label.toLowerCase().includes('list of guest'));
+      }
+    
+      let guestLookupTimeouts = {};
+
+      function handleGuestMobileInput(fieldId, idx, inputEl) {
+        const val = inputEl.value.trim().replace(/\D/g, '');
+        inputEl.value = val;
+        const statusEl = document.getElementById('guest_status_' + fieldId + '_' + idx);
+        const cardEl = document.getElementById('guest_card_' + fieldId + '_' + idx);
+        if (!statusEl || !cardEl) return;
+
+        clearTimeout(guestLookupTimeouts[fieldId + '_' + idx]);
+
+        if (val.length !== 10) {
+          statusEl.innerHTML = val.length > 0 ? '<span style="color:#6c757d; font-size:0.82rem;">Enter 10-digit mobile number</span>' : '';
+          cardEl.dataset.cardno = '';
+          cardEl.dataset.name = '';
+          cardEl.dataset.center = '';
+          inputEl.style.borderColor = '#ced4da';
+          return;
+        }
+
+        statusEl.innerHTML = '<span style="color:#6c757d; font-size:0.82rem;"><i class="fas fa-spinner fa-spin"></i> Checking registration...</span>';
+
+        guestLookupTimeouts[fieldId + '_' + idx] = setTimeout(async () => {
+          try {
+            const res = await fetch(CONFIG.baseUrl + '/admin/forms/public/' + formData.id + '/validate-guest?mobno=' + val);
+            const data = await res.json();
+            if (data.success && data.data) {
+              cardEl.dataset.cardno = data.data.cardno;
+              cardEl.dataset.name = data.data.name;
+              cardEl.dataset.center = data.data.center || '';
+              statusEl.innerHTML = '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(data.data.name) + ' (' + escapeHtml(data.data.center || 'Member') + ') - Confirmed Booking</span>';
+              inputEl.style.borderColor = '#28a745';
+            } else {
+              cardEl.dataset.cardno = '';
+              cardEl.dataset.name = '';
+              cardEl.dataset.center = '';
+              statusEl.innerHTML = '<span style="color:#dc3545; font-weight:600; font-size:0.82rem;"><i class="fas fa-exclamation-circle"></i> ' + escapeHtml(data.message || 'Not registered for this event') + '</span>';
+              inputEl.style.borderColor = '#dc3545';
+            }
+          } catch (err) {
+            statusEl.innerHTML = '<span style="color:#dc3545; font-size:0.82rem;">Failed to verify guest registration</span>';
+          }
+        }, 300);
+      }
+
+      
+      function selectGuestCapPill(fieldId, val, btnEl) {
+        const input = document.getElementById('input_' + fieldId);
+        if (input) input.value = val;
+        
+        if (btnEl && btnEl.parentElement) {
+          btnEl.parentElement.querySelectorAll('.btn-cap-pill').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = '#fff';
+            b.style.color = '#204060';
+            b.style.borderColor = '#ced4da';
+          });
+          btnEl.classList.add('active');
+          btnEl.style.background = '#204060';
+          btnEl.style.color = '#fff';
+          btnEl.style.borderColor = '#204060';
+        }
+
+        updateGuestListInputs(val, 'guests_list');
+      }
+    
+      function updateGuestListInputs(count, fieldId = 'guests_list') {
+        const container = document.getElementById('guestListContainer_' + fieldId);
+        const notice = document.getElementById('noGuestsNotice_' + fieldId);
+        if (!container) return;
+
+        const num = Math.max(0, Math.min(6, parseInt(count, 10) || 0));
+        if (num === 0) {
+          container.innerHTML = '';
+          if (notice) notice.style.display = 'block';
+          return;
+        }
+
+        if (notice) notice.style.display = 'none';
+
+        const existingValues = [];
+        container.querySelectorAll('.guest-card').forEach(card => {
+          const mobInput = card.querySelector('.guest-mobno-input');
+          existingValues.push({
+            mobno: mobInput ? mobInput.value.trim() : '',
+            cardno: card.dataset.cardno || '',
+            name: card.dataset.name || '',
+            center: card.dataset.center || ''
+          });
+        });
+
+        let html = '';
+        for (let i = 0; i < num; i++) {
+          const existing = existingValues[i] || {};
+          html += '<div class="guest-card" id="guest_card_' + fieldId + '_' + i + '" data-index="' + i + '" data-cardno="' + escapeAttr(existing.cardno || '') + '" data-name="' + escapeAttr(existing.name || '') + '" data-center="' + escapeAttr(existing.center || '') + '" style="background: #fdfefe; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.75rem 0.9rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">' +
+              '<span style="font-weight: 700; color: #204060; font-size: 0.85rem;"><i class="fas fa-user-check" style="color:#28a745;"></i> Guest #' + (i + 1) + '</span>' +
+            '</div>' +
+            '<div>' +
+              '<input type="tel" maxlength="10" class="guest-mobno-input" id="guest_mobno_' + fieldId + '_' + i + '" placeholder="Enter 10-digit Mobile Number" value="' + escapeAttr(existing.mobno || '') + '" oninput="handleGuestMobileInput(\'' + fieldId + '\', ' + i + ', this)" style="width: 100%; box-sizing: border-box; padding: 0.45rem 0.65rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;" />' +
+            '</div>' +
+            '<div id="guest_status_' + fieldId + '_' + i + '" style="margin-top: 0.3rem;">' +
+              (existing.name ? '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(existing.name) + ' (' + escapeHtml(existing.center || 'Member') + ') - Confirmed Booking</span>' : '') +
+            '</div>' +
+          '</div>';
+        }
+        container.innerHTML = html;
+      }
+
       function populateAnswers(answers) {
         if (!answers || !formData) return;
 
@@ -785,6 +901,25 @@
             });
           } else if (field.type === 'radio') {
             $(`input[name="${field.id}"][value="${ans}"]`).prop('checked', true);
+                    } else if (field.id === 'guest_capacity_count') {
+            const el = document.getElementById(inputId);
+            if (el) el.value = ans;
+            const valNum = parseInt(ans, 10) || 0;
+            document.querySelectorAll('.btn-cap-pill').forEach(b => {
+              const bVal = parseInt(b.dataset.capVal, 10);
+              if (bVal === valNum) {
+                b.classList.add('active');
+                b.style.background = '#204060';
+                b.style.color = '#fff';
+                b.style.borderColor = '#204060';
+              } else {
+                b.classList.remove('active');
+                b.style.background = '#fff';
+                b.style.color = '#204060';
+                b.style.borderColor = '#ced4da';
+              }
+            });
+            updateGuestListInputs(valNum, 'guests_list');
           } else if (field.type === 'rating') {
             const val = parseInt(ans);
             const parent = $(`.star-rating[data-id="${field.id}"]`);
@@ -810,6 +945,32 @@
                 $(`input[name="response_${field.id}_${ri}"][value="${v}"]`).prop('checked', true);
               });
             });
+                    } else if (isGuestListField(field)) {
+            const list = Array.isArray(ans) ? ans : [];
+            const guestCountEl = document.getElementById('input_guest_capacity_count');
+            const countToRender = list.length > 0 ? list.length : (guestCountEl ? parseInt(guestCountEl.value, 10) || 0 : 0);
+            if (guestCountEl && list.length > 0) {
+              guestCountEl.value = list.length;
+            }
+            updateGuestListInputs(countToRender, field.id);
+            const container = document.getElementById(`guestListContainer_${field.id}`);
+            if (container) {
+              list.forEach((g, idx) => {
+                const card = document.getElementById(`guest_card_${field.id}_${idx}`);
+                const mobInput = document.getElementById(`guest_mobno_${field.id}_${idx}`);
+                const statusEl = document.getElementById(`guest_status_${field.id}_${idx}`);
+                if (card && mobInput) {
+                  mobInput.value = g.mobno || '';
+                  card.dataset.cardno = g.cardno || '';
+                  card.dataset.name = g.name || '';
+                  card.dataset.center = g.center || '';
+                  if (statusEl && g.name) {
+                    statusEl.innerHTML = `<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ${escapeHtml(g.name)} (${escapeHtml(g.center || 'Member')}) - Confirmed Booking</span>`;
+                    mobInput.style.borderColor = '#28a745';
+                  }
+                }
+              });
+            }
           } else if (field.type === 'grid_number') {
             const gridAns = ans || {};
             (field.rows || []).forEach((r, ri) => {
@@ -1275,6 +1436,40 @@
           }
           clearInlineError(field.id);
           return { isValid: true };
+        } else if (isGuestListField(field)) {
+          const guestCapEl = document.getElementById('input_guest_capacity_count');
+          const count = guestCapEl ? parseInt(guestCapEl.value, 10) || 0 : 0;
+          if (count > 0) {
+            const container = document.getElementById(`guestListContainer_${field.id}`);
+            let missingOrInvalid = false;
+            let missingIndex = -1;
+            if (!container) {
+              missingOrInvalid = true;
+            } else {
+              for (let i = 0; i < count; i++) {
+                const card = document.getElementById(`guest_card_${field.id}_${i}`);
+                const mobInput = document.getElementById(`guest_mobno_${field.id}_${i}`);
+                const cardno = card ? card.dataset.cardno : '';
+                const val = mobInput ? mobInput.value.trim() : '';
+                if (!val || val.length !== 10 || !cardno) {
+                  missingOrInvalid = true;
+                  missingIndex = i + 1;
+                  if (mobInput) mobInput.style.borderColor = '#dc3545';
+                  break;
+                }
+              }
+            }
+
+            if (missingOrInvalid) {
+              const msg = missingIndex > 0 
+                ? `Please provide a verified mobile number for Guest #${missingIndex}` 
+                : `Please provide verified mobile numbers for all ${count} guest(s)`;
+              showInlineError(field.id, msg);
+              return { isValid: false, errorMsg: msg };
+            }
+          }
+          clearInlineError(field.id);
+          return { isValid: true };
         } else {
           const el = document.getElementById(`input_${field.id}`);
           answerVal = el ? el.value.trim() : '';
@@ -1474,44 +1669,48 @@
           alertContainer.style.fontSize = '0.9rem';
         }
 
-        // Pre-fill fields
-        (formData.fields || []).forEach(field => {
-          const val = prevResponses[field.id];
-          if (val === undefined || val === null) return;
-
-          if (field.type === 'grid_radio' && typeof val === 'object') {
-            field.rows.forEach((r, ri) => {
-              const selectedCol = val[r];
-              if (!selectedCol) return;
-              const colIdx = (field.columns || []).indexOf(selectedCol);
-              if (colIdx === -1) return;
-              const radio = document.querySelector(`input[name="response_${field.id}_${ri}"][value="${CSS.escape(selectedCol)}"]`);
-              if (radio) radio.checked = true;
-            });
-          } else if (field.type === 'grid_checkbox' && typeof val === 'object') {
-            field.rows.forEach((r, ri) => {
-              const selectedCols = val[r] || [];
-              selectedCols.forEach(col => {
-                const cb = document.querySelector(`input[name="response_${field.id}_${ri}"][value="${CSS.escape(col)}"]`);
-                if (cb) cb.checked = true;
-              });
-            });
-          } else if (field.type === 'checkbox' && Array.isArray(val)) {
-            val.forEach(v => {
-              const cb = document.querySelector(`input[name="${field.id}"][value="${CSS.escape(v)}"]`);
-              if (cb) cb.checked = true;
-            });
-          } else if (field.type === 'radio') {
-            const radio = document.querySelector(`input[name="${field.id}"][value="${CSS.escape(val)}"]`);
-            if (radio) radio.checked = true;
-          } else {
-            const el = document.getElementById(`input_${field.id}`);
-            if (el) el.value = val;
-          }
-        });
+        // Pre-fill all fields (grid_number, grid_radio, select, text, rating, etc.)
+        populateAnswers(prevResponses);
 
         // Disable past date rows
         disablePastDateRows();
+      }
+
+      
+      // Switch pre-fill when department changes for multi-department heads
+      async function handleDepartmentChange(deptVal) {
+        if (!formData || !deptVal) return;
+        const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+        if (!authInput) return;
+        const val = authInput.value.trim();
+        const type = authInput.id === 'input_mobno' ? 'mobno' : 'cardno';
+
+        try {
+          const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}&department=${encodeURIComponent(deptVal)}`);
+          const prevData = await prevRes.json();
+          if (prevData.success && prevData.data) {
+            window.previousResponseId = prevData.data.responseId;
+            prefillPreviousResponse(prevData.data);
+          } else {
+            window.previousResponseId = null;
+            resetGridInputs();
+            const currentPageIdx = window.currentPageIdx || 0;
+            const alertContainer = document.getElementById(`formAlert_${currentPageIdx}`);
+            if (alertContainer) alertContainer.style.display = 'none';
+            disablePastDateRows();
+          }
+        } catch (err) {
+          console.warn('Error fetching response for department:', err);
+        }
+      }
+
+      function resetGridInputs() {
+        document.querySelectorAll('.grid-table tbody input[type="number"]').forEach(inp => {
+          if (!inp.disabled) inp.value = '0';
+        });
+        document.querySelectorAll('.grid-table tbody input[type="radio"], .grid-table tbody input[type="checkbox"]').forEach(inp => {
+          if (!inp.disabled) inp.checked = false;
+        });
       }
 
       async function performAuthLookup(inputEl) {
@@ -1559,22 +1758,57 @@
               infoEl.innerHTML = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
             }
 
-            if (data.data.department) {
-              const deptField = (formData.fields || []).find(f => f.vendorRole === 'department');
-              if (deptField) {
-                const deptEl = document.getElementById(`input_${deptField.id}`);
-                if (deptEl && !deptEl.disabled) {
-                  deptEl.value = data.data.department;
-                  deptEl.dispatchEvent(new Event('change'));
-                }
+            const deptField = (formData.fields || []).find(f => f.vendorRole === 'department' || f.id === 'name_of_department' || (f.label || '').toLowerCase().includes('department'));
+            if (deptField) {
+              const deptEl = document.getElementById(`input_${deptField.id}`);
+              if (deptEl && !deptEl.dataset.hasDeptListener) {
+                deptEl.dataset.hasDeptListener = 'true';
+                deptEl.addEventListener('change', (e) => {
+                  handleDepartmentChange(e.target.value);
+                });
               }
+              if (data.data.department && deptEl && !deptEl.value) {
+                deptEl.value = data.data.department;
+              }
+            }
+
+            // Auto-populate flat info for Flat Host forms
+            if (data.data.flatno) {
+              const flatEl = document.getElementById('input_flatno');
+              if (flatEl) {
+                flatEl.value = data.data.flatno;
+                flatEl.readOnly = true;
+                flatEl.style.backgroundColor = '#e9ecef';
+              }
+              const resCountEl = document.getElementById('input_permanent_residents_count');
+              if (resCountEl) {
+                resCountEl.value = data.data.confirmed_residents_count !== undefined ? data.data.confirmed_residents_count : 1;
+                resCountEl.readOnly = true;
+                resCountEl.style.backgroundColor = '#e9ecef';
+              }
+              if (infoEl) {
+                infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-building"></i> Flat No: ${escapeHtml(data.data.flatno)} • ${data.data.confirmed_residents_count} Confirmed Resident(s) Attending</div>`;
+              }
+            }
+
+            // Attach listener to guest capacity field if present
+            const guestCapEl = document.getElementById('input_guest_capacity_count');
+            if (guestCapEl && !guestCapEl.dataset.hasCapListener) {
+              guestCapEl.dataset.hasCapListener = 'true';
+              guestCapEl.addEventListener('input', (e) => {
+                updateGuestListInputs(e.target.value, 'guests_list');
+              });
+              guestCapEl.addEventListener('change', (e) => {
+                updateGuestListInputs(e.target.value, 'guests_list');
+              });
             }
 
             // Fetch previous response to pre-fill form and disable past dates (ONLY once per unique auth input, not on submit re-validation)
             if (window.lastPrefilledAuthValue !== val) {
               window.lastPrefilledAuthValue = val;
               try {
-                const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}`);
+                const flatnoParam = data.data.flatno ? `&flatno=${encodeURIComponent(data.data.flatno)}` : '';
+                const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}${flatnoParam}`);
                 const prevData = await prevRes.json();
                 if (prevData.success && prevData.data) {
                   window.previousResponseId = prevData.data.responseId;
@@ -1670,6 +1904,17 @@
 
         if (field.type === 'text') {
           inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" data-word-limit="20" maxlength="200" ${requiredAttr} />`;
+                } else if (isGuestListField(field)) {
+          inputHtml = `
+            <div id="guestListWrapper_${field.id}" style="margin-top: 0.5rem;">
+              <div id="guestListContainer_${field.id}">
+                <!-- Dynamic Guest inputs -->
+              </div>
+              <div id="noGuestsNotice_${field.id}" style="padding: 0.85rem 1rem; background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 8px; color: #6c757d; font-size: 0.88rem; text-align: center;">
+                <i class="fas fa-user-friends"></i> Select number of guests above to list guest mobile numbers.
+              </div>
+            </div>
+          `;
         } else if (field.type === 'textarea') {
           inputHtml = `<textarea id="${inputId}" rows="4" placeholder="Your answer" ${requiredAttr}></textarea>`;
       } else if (field.type === 'email') {
@@ -2131,6 +2376,22 @@
               });
             });
             responses[field.id] = rowAnswers;
+          } else if (isGuestListField(field)) {
+            const list = [];
+            const container = document.getElementById(`guestListContainer_${field.id}`);
+            if (container) {
+              container.querySelectorAll('.guest-card').forEach(card => {
+                const mobInput = card.querySelector('.guest-mobno-input');
+                const mob = mobInput ? mobInput.value.trim() : '';
+                const cardno = card.dataset.cardno || '';
+                const name = card.dataset.name || '';
+                const center = card.dataset.center || '';
+                if (mob || cardno || name) {
+                  list.push({ mobno: mob, cardno, name, center });
+                }
+              });
+            }
+            responses[field.id] = list;
           } else {
             const el = document.getElementById(`input_${field.id}`);
             responses[field.id] = el ? el.value.trim() : '';
