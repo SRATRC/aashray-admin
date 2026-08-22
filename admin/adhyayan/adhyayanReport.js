@@ -171,6 +171,17 @@ document.addEventListener('DOMContentLoaded', () => {
               🔗 Copy Adhyayan Link
             </button>
 
+            <button class="btn btn-sm btn-outline-primary short-link"
+              data-slug="a${item.id}">
+              🌐 Copy WhatsApp Shortlink
+            </button>
+
+            <button class="btn btn-sm btn-info send-grp-reminder"
+              data-shibir="${item.id}"
+              data-name="${item.name}">
+              💬 Audit & Send Reminders
+            </button>
+
             <button class="btn btn-sm btn-warning feedback-link"
               data-shibir="${item.id}">
               📝 Copy Feedback Link
@@ -331,6 +342,32 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`Adhyayan link copied:\n${url}`);
       } catch {
         alert('Failed to copy Adhyayan link.');
+      }
+    }
+
+    // Copy Shortlink (WhatsApp redirect link)
+    if (e.target.classList.contains('short-link')) {
+      const slug = e.target.dataset.slug;
+      const url = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/${slug}`;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`WhatsApp Shortlink copied:\n${url}`);
+      } catch {
+        alert('Failed to copy shortlink.');
+      }
+    }
+
+    if (e.target.classList.contains('send-grp-reminder')) {
+      const shibirId = e.target.dataset.shibir;
+      const shibir = adhyayanfetch.find(s => String(s.id) === String(shibirId));
+      const jid = shibir?.whatsapp_group_jid || '';
+      
+      const newUrl = `${window.location.pathname}?event_id=${shibirId}&type=shibir${jid ? '&jid=' + encodeURIComponent(jid) : ''}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      if (typeof openAuditModal === 'function') {
+        openAuditModal(jid || shibirId);
       }
     }
 

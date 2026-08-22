@@ -40,6 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
     foodAllowedSelect.value = data.food_allowed ? "1" : "0";
     document.getElementById('amount').value = data.amount;
     document.getElementById('comments').value = data.comments;
+    document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
+
+    const shortlinkGroup = document.getElementById('shortlink_group');
+    const shortlinkInput = document.getElementById('shortlink');
+    const shortlinkUrl = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/a${data.id}`;
+    shortlinkInput.value = shortlinkUrl;
+    shortlinkGroup.style.display = 'block';
+
+    const copyBtn = document.getElementById('copy_shortlink_btn');
+    if (copyBtn) {
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(shortlinkUrl);
+        alert('Shortlink copied to clipboard!');
+      };
+    }
 
     document.getElementById('saveButton').addEventListener('click', () => {
       updateAdhyayanDetails(document.getElementById('id').value);
@@ -64,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
       available_seats: adhyayanForm.get('available_seats'),
       food_allowed: adhyayanForm.get('food_allowed'),
       amount: adhyayanForm.get('amount'),
-      comments: adhyayanForm.get('comments')
+      comments: adhyayanForm.get('comments'),
+      whatsapp_link: adhyayanForm.get('whatsapp_link') || null
     };
 
     try {

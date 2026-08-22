@@ -9,9 +9,104 @@ document.addEventListener(
     async function () {
 
         await fetchFeedbacks();
+        setupSummaryModal();
 
     }
 );
+
+function setupSummaryModal() {
+    const summaryBtn = document.getElementById('summaryBtn');
+    const modal = document.getElementById('feedbackSummaryOverlay');
+    const closeBtn = document.getElementById('closeSummaryModal');
+
+    if (!summaryBtn || !modal || !closeBtn) return;
+
+    summaryBtn.addEventListener('click', () => {
+        calculateAndShowSummary();
+        modal.style.display = 'flex';
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+function calculateAndShowSummary() {
+    const summaryContent = document.getElementById('summaryContent');
+    const totalReceived = feedbacks.length;
+
+    let foodSum = 0, foodCount = 0;
+    let staySum = 0, stayCount = 0;
+    let eventSum = 0, eventCount = 0;
+    let programSum = 0, programCount = 0;
+
+    feedbacks.forEach(item => {
+        const answers = Array.isArray(item.answers) ? item.answers : [];
+
+        answers.forEach(a => {
+            const val = Number(a.answer);
+            if (!isNaN(val) && val > 0) {
+                if (a.question_id === 'food_rating') {
+                    foodSum += val;
+                    foodCount++;
+                } else if (a.question_id === 'stay_rating') {
+                    staySum += val;
+                    stayCount++;
+                } else if (a.question_id === 'event_rating') {
+                    eventSum += val;
+                    eventCount++;
+                } else if (a.question_id === 'program_rating') {
+                    programSum += val;
+                    programCount++;
+                }
+            }
+        });
+    });
+
+    const foodAvg = foodCount ? (foodSum / foodCount).toFixed(2) : 'N/A';
+    const stayAvg = stayCount ? (staySum / stayCount).toFixed(2) : 'N/A';
+    const eventAvg = eventCount ? (eventSum / eventCount).toFixed(2) : 'N/A';
+    const programAvg = programCount ? (programSum / programCount).toFixed(2) : 'N/A';
+
+    summaryContent.innerHTML = `
+        <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px;">
+            <p style="margin:0; font-size:16px;"><strong>Total Feedbacks Received:</strong> <span style="font-weight:bold; color:#007bff;">${totalReceived}</span></p>
+        </div>
+
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th style="text-align:center;">Average Rating (out of 5)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>🍔 Food Rating</strong></td>
+                    <td style="text-align:center; font-weight:bold; color:#28a745;">${foodAvg} ${foodAvg !== 'N/A' ? '⭐' : ''}</td>
+                </tr>
+                <tr>
+                    <td><strong>🏠 Stay Rating</strong></td>
+                    <td style="text-align:center; font-weight:bold; color:#28a745;">${stayAvg} ${stayAvg !== 'N/A' ? '⭐' : ''}</td>
+                </tr>
+                <tr>
+                    <td><strong>🎉 Event Rating</strong></td>
+                    <td style="text-align:center; font-weight:bold; color:#28a745;">${eventAvg} ${eventAvg !== 'N/A' ? '⭐' : ''}</td>
+                </tr>
+                <tr>
+                    <td><strong>📖 Program Rating</strong></td>
+                    <td style="text-align:center; font-weight:bold; color:#28a745;">${programAvg} ${programAvg !== 'N/A' ? '⭐' : ''}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+}
 
 async function fetchFeedbacks() {
 
