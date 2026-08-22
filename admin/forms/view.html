@@ -593,7 +593,7 @@
           let fieldsHtml = '';
           
           if (pi === 0 && isAuth) {
-            const isMobAuth = form.authType === 'mobno';
+            const isMobAuth = (form.authType === 'mobno' || form.authType === 'reg_mobno');
             if (isMobAuth && !form.requireOtp) {
               fieldsHtml += `
                 <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
@@ -1833,6 +1833,100 @@
               }
             }
 
+            // Auto-populate Tapp / Tapascharya details
+            const tappField = (formData.fields || []).find(f => 
+              f.id === 'tapp_details' || f.id === 'tapp' || f.id === 'tapascharya' ||
+              (f.label && (f.label.toLowerCase().includes('tapp') || f.label.toLowerCase().includes('tapascharya') || f.label.toLowerCase().includes('fasting')))
+            );
+
+            if (tappField) {
+              const tappEl = document.getElementById(`input_${tappField.id}`);
+              if (data.data.tapp_details && tappEl && (!tappEl.value || tappEl.value.trim() === '')) {
+                tappEl.value = data.data.tapp_details;
+              }
+              if (tappEl && !tappEl.dataset.hasTappListener) {
+                tappEl.dataset.hasTappListener = 'true';
+                tappEl.addEventListener('input', (e) => {
+                  updatePaarnaEligibilityBadge(tappField.id, e.target.value, null);
+                });
+              }
+              updatePaarnaEligibilityBadge(tappField.id, tappEl ? tappEl.value : data.data.tapp_details, data.data.is_paarna_eligible);
+            }
+
+            if (data.data.tapp_details && infoEl) {
+              infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-utensils"></i> Tapascharya: ${escapeHtml(data.data.tapp_details)}</div>`;
+            }
+      function evaluatePaarnaEligibility(tappText, isServerEligible) {
+        if (isServerEligible === true) return true;
+        if (!tappText || typeof tappText !== 'string') return false;
+
+        const clean = tappText.toLowerCase().trim();
+        if (!clean) return false;
+
+        // Keywords for guaranteed eligibility
+        if (clean.includes('athai') || clean.includes('tevle') || clean.includes('8 upvaas') || clean.includes('8 upvas') || clean.includes('8 ekasna') || clean.includes('8 beasna') || clean.includes('8 biyasna') || clean.includes('8 aayambil') || clean.includes('8 liquid') || clean.includes('8 only liquid') || clean.includes('8 ras tyaag')) {
+          return true;
+        }
+
+        // Sum numbers in text: e.g. "6 upvaas, 2 ekasna" -> 6 + 2 = 8
+        const nums = clean.match(/\d+/g);
+        if (nums && nums.length > 0) {
+          const sum = nums.reduce((acc, n) => acc + parseInt(n, 10), 0);
+          if (sum >= 8) return true;
+        }
+
+        return false;
+      }
+
+      function updatePaarnaEligibilityBadge(fieldId, tappVal, isServerEligible) {
+        const isPaarnaForm = formData && ((formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna'));
+        if (!isPaarnaForm) return;
+
+        const tappEl = document.getElementById(`input_${fieldId}`);
+        if (!tappEl) return;
+
+        let badgeEl = document.getElementById('paarna_eligibility_badge');
+        if (!badgeEl) {
+          badgeEl = document.createElement('div');
+          badgeEl.id = 'paarna_eligibility_badge';
+          tappEl.parentElement.appendChild(badgeEl);
+        }
+
+        const isEligible = evaluatePaarnaEligibility(tappVal, isServerEligible);
+        window.isPaarnaEligible = isEligible;
+
+        if (isEligible) {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.45rem;">
+              <i class="fas fa-check-circle" style="font-size:1.05rem; color:#28a745;"></i>
+              <span>Eligible for Paarna at Research Centre (Confirmed)</span>
+            </div>
+          `;
+        } else {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#fff8e6; border:1px solid #ffe8a1; border-radius:6px; color:#856404; font-size:0.85rem; font-weight:600; display:flex; align-items:flex-start; gap:0.45rem;">
+              <i class="fas fa-info-circle" style="font-size:1.05rem; color:#f0ad4e; margin-top:2px;"></i>
+              <span>Note: Your Paarna request will be reviewed and confirmed by the seva team.</span>
+            </div>
+          `;
+        }
+      }
+
+
+            // Auto-populate Name field if present in form
+            if (data.data.name) {
+              const nameField = (formData.fields || []).find(f => 
+                f.id === 'name' || f.id === 'full_name' || f.id === 'participant_name' ||
+                (f.label && (f.label.toLowerCase() === 'name' || f.label.toLowerCase() === 'full name' || f.label.toLowerCase() === 'participant name' || f.label.toLowerCase().includes('name of participant')))
+              );
+              if (nameField) {
+                const nameEl = document.getElementById(`input_${nameField.id}`);
+                if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
+                  nameEl.value = data.data.name;
+                }
+              }
+            }
+
             // Auto-populate flat info for Flat Host forms
             if (data.data.flatno) {
               const flatEl = document.getElementById('input_flatno');
@@ -2680,7 +2774,15 @@
           `;
         }
 
-        const msgText = formData.confirmationMessage || 'Thank you for filling out the form. Your response has been recorded.';
+        let msgText = formData.confirmationMessage || 'Thank you for filling out the form. Your response has been recorded.';
+        const isPaarnaForm = (formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna');
+        if (isPaarnaForm) {
+          if (window.isPaarnaEligible === true) {
+            msgText = 'Jai Jinendra! Your Paarna registration at the Research Centre is confirmed for 16th Sept.';
+          } else {
+            msgText = 'Thank you! Your Paarna request has been submitted and will be reviewed and confirmed by the seva team.';
+          }
+        }
 
         const emailedNoticeHtml = emailedTo
           ? `<p style="margin-top:1rem; font-size:0.9rem; color:#28a745;"><i class="fas fa-envelope"></i> A copy of your response has been emailed to ${emailedTo}.</p>`

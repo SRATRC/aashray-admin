@@ -133,6 +133,30 @@
       to { transform: translate(-50%, 0); opacity: 1; }
     }
 
+  
+    .history-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 7px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #0284c7;
+      background: #e0f2fe;
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      outline: none;
+    }
+    .history-chip:hover {
+      background: #0284c7;
+      color: white;
+      border-color: #0284c7;
+      box-shadow: 0 2px 4px rgba(2,132,199,0.25);
+    }
+
   </style>
 </head>
 <body>
@@ -160,6 +184,15 @@
     <button class="tab-btn" onclick="switchTab('tab-review', this)">
       <i class="fas fa-flag"></i> Review Flags
     </button>
+    <button class="tab-btn" onclick="switchTab('tab-housekeeping', this); loadHousekeepingReport();">
+      <i class="fas fa-broom"></i> Housekeeping Extra Beds
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-allotted-beds', this); loadAllottedBedsReport();">
+      <i class="fas fa-bed"></i> Allotted Beds &amp; Switching
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-uncheckedin', this); loadUncheckedInReport();">
+      <i class="fas fa-user-clock"></i> Unchecked-In Beds
+    </button>
     <div style="flex:1; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; gap:8px;">
       <span id="utsavBadge" style="font-size:0.82rem; font-weight:700; color:#204060; background:#e0f2fe; padding:4px 12px; border-radius:4px;"></span>
     </div>
@@ -169,9 +202,16 @@
   <div id="tab-inventory" class="tab-pane active">
     <div class="card">
       <div class="card-title"><i class="fas fa-building" style="color:#204060;"></i> RC Room Inventory</div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-        <button class="btn-sm btn-primary-sm" onclick="initRCRooms()"><i class="fas fa-sync"></i> Initialize / Refresh RC Rooms from RoomDB</button>
-        <button class="btn-sm btn-outline-sm" onclick="loadInventory()"><i class="fas fa-eye"></i> View Current Inventory</button>
+      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:16px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <button class="btn-sm btn-primary-sm" onclick="initRCRooms()"><i class="fas fa-sync"></i> Initialize / Refresh RC Rooms</button>
+          <button class="btn-sm btn-outline-sm" onclick="loadInventory()"><i class="fas fa-redo"></i> Reload Inventory</button>
+        </div>
+        <div>
+          <button class="btn-sm btn-success-sm" id="saveAllInventoryBtn" onclick="saveAllRoomConfigs()" style="background:#16a34a; font-weight:700; padding:7px 18px; box-shadow:0 2px 6px rgba(22,163,74,0.3); font-size:0.86rem;">
+            <i class="fas fa-save"></i> Save All Room Changes
+          </button>
+        </div>
       </div>
       <p style="font-size:0.85rem; color:#64748b; margin-bottom:16px;">
         RC rooms (RC_OAG &amp; RC_NAG) are auto-populated from the room master. You can adjust <strong>floor beds</strong>, <strong>block status</strong>, and <strong>gender overrides</strong> per event without changing the room master.
@@ -225,7 +265,7 @@
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:12px; font-size:0.87rem; color:#475569;">
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:12px;">
           <strong style="color:#16a34a;"><i class="fas fa-star"></i> RC Inside Priority</strong><br/>
-          Seniors (65+), NRI/International guests, Full-event package guests
+          Full-event package guests, No RC in last 2 events (Fairness Priority), Seniors (65+), NRI/International
         </div>
         <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:12px;">
           <strong style="color:#1e40af;"><i class="fas fa-layer-group"></i> Ground Floor Priority</strong><br/>
@@ -260,6 +300,10 @@
                 <button class="btn-sm btn-outline-sm" id="downloadRunExcelBtn" onclick="downloadDryRunExcel()" style="display:none;">
           <i class="fas fa-file-excel" style="color:#16a34a;"></i> Download Dry Run Excel
         </button>
+        <button class="btn-sm btn-outline-sm" id="uploadRunExcelBtn" onclick="triggerAllocationExcelUpload()" style="display:inline-flex;">
+          <i class="fas fa-file-upload" style="color:#0284c7;"></i> Upload Allocation Excel
+        </button>
+        <input type="file" id="allocationExcelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleAllocationExcelUpload(event)" />
         <button class="btn-sm btn-outline-sm" onclick="clearRunSelection()" id="clearRunSelBtn" style="display:none;">
           <i class="fas fa-times"></i> Clear
         </button>
@@ -365,6 +409,402 @@
   </div>
 
   
+  
+  <!-- TAB 5: HOUSEKEEPING EXTRA BEDS REPORT -->
+  <div id="tab-housekeeping" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:0;">
+          <i class="fas fa-broom" style="color:#0284c7;"></i> Housekeeping Extra Beds &amp; Beddings Report
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadHousekeepingReport()"><i class="fas fa-sync"></i> Refresh Report</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadHousekeepingExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="printHousekeepingReport()"><i class="fas fa-print"></i> Print Checklist</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row" id="hkKpiRow">
+        <div class="kpi-card" style="border-left:4px solid #16a34a;">
+          <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="hkRcExtraBeds" style="color:#16a34a;">0</div><div class="kpi-label">RC Rooms Floor Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-building"></i></div>
+          <div><div class="kpi-val" id="hkFlatsExtraBeds" style="color:#8b5cf6;">0</div><div class="kpi-label">Flats Extra Beddings</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-layer-group"></i></div>
+          <div><div class="kpi-val" id="hkGrandTotalBeds" style="color:#0284c7;">0</div><div class="kpi-label">Grand Total Required</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar" style="margin-top:14px;">
+        <div class="filter-group" style="flex:1; min-width:220px;">
+          <label>Search</label>
+          <input type="text" id="hkSearchInp" placeholder="Search room, flat, building, owner, remarks..." oninput="renderHousekeepingTables()" />
+        </div>
+        <div class="filter-group">
+          <label>View Section</label>
+          <select id="hkSectionFilter" onchange="renderHousekeepingTables()">
+            <option value="all">All Sections (RC Rooms + Flats)</option>
+            <option value="rc">RC Rooms Only</option>
+            <option value="flats">Flats Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tables Wrap -->
+      <div id="hkReportContentWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Loading housekeeping report...</p>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- TAB 6: UNCHECKED-IN BEDS TRACKER & RE-ALLOTMENT -->
+  <div id="tab-uncheckedin" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">
+            <i class="fas fa-user-clock" style="color:#f59e0b;"></i> Unchecked-In Allocated Beds (Vacant Beds Tracker)
+          </div>
+          <p style="margin:0; font-size:0.85rem; color:#64748b;">
+            Confirmed participants with allocated beds who have not checked in yet. Re-allot vacant beds to other confirmed or checked-in Utsav participants on the fly.
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadUncheckedInReport()"><i class="fas fa-sync"></i> Refresh</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadUncheckedInExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="printUncheckedInReport()"><i class="fas fa-print"></i> Print List</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card" style="border-left:4px solid #f59e0b;">
+          <div class="kpi-icon" style="background:#fef3c7; color:#d97706;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInTotal" style="color:#d97706;">0</div><div class="kpi-label">Total Unchecked-In Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-mars"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInMale" style="color:#0284c7;">0</div><div class="kpi-label">Male Vacant Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #ec4899;">
+          <div class="kpi-icon" style="background:#fce7f3; color:#db2777;"><i class="fas fa-venus"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInFemale" style="color:#db2777;">0</div><div class="kpi-label">Female Vacant Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-users"></i></div>
+          <div><div class="kpi-val" id="kpiUnallocatedGuests" style="color:#8b5cf6;">0</div><div class="kpi-label">Confirmed Utsav Participants</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar" style="margin-top:14px;">
+        <div class="filter-group" style="flex:1; min-width:200px;">
+          <label>Search</label>
+          <input type="text" id="uncheckedInSearch" placeholder="Search room, bed, name, card, mobile..." oninput="renderUncheckedInTable()" />
+        </div>
+        <div class="filter-group">
+          <label>Gender</label>
+          <select id="uncheckedInGenderFilter" onchange="renderUncheckedInTable()">
+            <option value="all">All Genders</option>
+            <option value="M">Male Only</option>
+            <option value="F">Female Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Building / Property</label>
+          <select id="uncheckedInPropFilter" onchange="renderUncheckedInTable()">
+            <option value="all">All Buildings</option>
+            <option value="OAG">OAG Only</option>
+            <option value="NAG">NAG Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Wrap -->
+      <div id="uncheckedInTableWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Loading unchecked-in beds...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-Allot Modal -->
+  <div id="reallotModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:550px; width:90%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-exchange-alt" style="color:#0284c7;"></i> Re-Allot Bed
+        </h3>
+        <button type="button" onclick="closeReallotModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <div id="reallotBedSummary" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:16px; font-size:0.88rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:6px;">
+          OPTION 1: Pick from Confirmed / Checked-in Participants (<span id="reallotGenderLabel">Matching Gender</span>)
+        </label>
+        <select id="reallotWaitingSelect" style="width:100%; height:38px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;" onchange="onSelectWaitingGuest(this)">
+          <option value="">-- Choose confirmed Utsav participant --</option>
+        </select>
+      </div>
+
+      <div style="display:flex; align-items:center; margin:14px 0; text-align:center;">
+        <div style="flex:1; border-bottom:1px solid #e2e8f0;"></div>
+        <span style="padding:0 10px; color:#94a3b8; font-size:0.75rem; font-weight:700; text-transform:uppercase;">OR</span>
+        <div style="flex:1; border-bottom:1px solid #e2e8f0;"></div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:6px;">
+          OPTION 2: Search Confirmed Participant by Mobile No or Card No
+        </label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="reallotSearchInp" placeholder="Enter 10-digit mobile or card no of confirmed participant..." style="flex:1; height:38px; padding:0 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;" />
+          <button type="button" class="btn-sm btn-primary-sm" onclick="searchGuestForReallot()"><i class="fas fa-search"></i> Find</button>
+        </div>
+        <div id="reallotLookupResult" style="margin-top:8px; font-size:0.85rem; min-height:20px;"></div>
+      </div>
+
+      <div style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 14px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:600; color:#166534; margin:0;">
+          <input type="checkbox" id="reallotCheckinToggle" checked style="width:16px; height:16px; cursor:pointer;" />
+          <span>Check-in new guest immediately upon re-allotment</span>
+        </label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeReallotModal()">Cancel</button>
+        <button type="button" class="btn-sm btn-success-sm" id="confirmReallotBtn" onclick="submitReallotment()" style="padding:8px 18px; font-weight:700;">
+          <i class="fas fa-check"></i> Confirm &amp; Re-Allot Bed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- TAB 7: ALLOTTED BEDS & SWITCHING -->
+  <div id="tab-allotted-beds" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">
+            <i class="fas fa-bed" style="color:#0284c7;"></i> Confirmed Allotted Beds &amp; Bed Switching
+          </div>
+          <p style="margin:0; font-size:0.85rem; color:#64748b;">
+            Manage all confirmed room allocations. Easily move participants to vacant beds or perform mutual 2-way bed swaps between guests.
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadAllottedBedsReport()"><i class="fas fa-sync"></i> Refresh</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadAllottedBedsExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="printAllottedBedsReport()"><i class="fas fa-print"></i> Print List</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="kpiAllottedTotal" style="color:#0284c7;">0</div><div class="kpi-label">Total Allotted Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #16a34a;">
+          <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-check-circle"></i></div>
+          <div><div class="kpi-val" id="kpiAllottedCheckedIn" style="color:#16a34a;">0</div><div class="kpi-label">Checked-In Guests</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #f59e0b;">
+          <div class="kpi-icon" style="background:#fef3c7; color:#d97706;"><i class="fas fa-clock"></i></div>
+          <div><div class="kpi-val" id="kpiAllottedUncheckedIn" style="color:#d97706;">0</div><div class="kpi-label">Not Checked-In</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-door-open"></i></div>
+          <div><div class="kpi-val" id="kpiVacantBedsCount" style="color:#8b5cf6;">0</div><div class="kpi-label">Vacant Free Beds in RC</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar" style="margin-top:14px;">
+        <div class="filter-group" style="flex:1; min-width:200px;">
+          <label>Search</label>
+          <input type="text" id="allottedSearch" placeholder="Search room, name, card, mobile, center..." oninput="renderAllottedBedsTable()" />
+        </div>
+        <div class="filter-group">
+          <label>Gender</label>
+          <select id="allottedGenderFilter" onchange="renderAllottedBedsTable()">
+            <option value="all">All Genders</option>
+            <option value="M">Male Only</option>
+            <option value="F">Female Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Check-in Status</label>
+          <select id="allottedStatusFilter" onchange="renderAllottedBedsTable()">
+            <option value="all">All Statuses</option>
+            <option value="checkedin">Checked-In Only</option>
+            <option value="uncheckedin">Not Checked-In Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Building / Type</label>
+          <select id="allottedBuildingFilter" onchange="renderAllottedBedsTable()">
+            <option value="all">All Locations</option>
+            <option value="RC_OAG">RC OAG</option>
+            <option value="RC_NAG">RC NAG</option>
+            <option value="Flat">Flats</option>
+            <option value="External">External Hotels</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Wrap -->
+      <div id="allottedBedsTableWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Loading allotted beds...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Switch / Swap Bed Modal -->
+  <div id="swapBedModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:600px; width:92%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-random" style="color:#0284c7;"></i> Change / Swap Bed
+        </h3>
+        <button type="button" onclick="closeSwapModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <!-- Person A Details Box -->
+      <div id="swapPersonASummary" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:12px; margin-bottom:18px; font-size:0.88rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Action Mode Switch -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:8px; text-transform:uppercase;">Select Action:</label>
+        <div style="display:flex; gap:16px;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.9rem; font-weight:600; color:#0369a1;">
+            <input type="radio" name="swapModeRadio" value="move" checked onchange="toggleSwapMode('move')" />
+            <span>Move to Vacant Bed</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.9rem; font-weight:600; color:#6d28d9;">
+            <input type="radio" name="swapModeRadio" value="swap" onchange="toggleSwapMode('swap')" />
+            <span>Mutual 2-Way Swap with another Person</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Mode 1: Move to Vacant Bed -->
+      <div id="swapModeMoveWrap" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:6px;">
+          Choose Vacant / Free Bed (<span id="swapVacantGenderLabel">Matching Gender</span>)
+        </label>
+        <select id="swapVacantSelect" style="width:100%; height:38px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;">
+          <option value="">-- Choose vacant bed --</option>
+        </select>
+        <p style="margin:8px 0 0 0; font-size:0.8rem; color:#64748b;">
+          The participant will move to the selected bed, and their current bed will become free.
+        </p>
+      </div>
+
+      <!-- Mode 2: Mutual 2-Way Swap -->
+      <div id="swapModeSwapWrap" style="display:none; background:#faf5ff; border:1px solid #e9d5ff; border-radius:8px; padding:14px; margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#5b21b6; display:block; margin-bottom:6px;">
+          Select Person B to Swap With (<span id="swapPartnerGenderLabel">Matching Gender</span>)
+        </label>
+        <select id="swapPartnerSelect" style="width:100%; height:38px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;" onchange="onSelectSwapPartner(this)">
+          <option value="">-- Select participant to swap with --</option>
+        </select>
+
+        <div style="margin-top:10px;">
+          <label style="font-size:0.75rem; font-weight:700; color:#64748b; display:block; margin-bottom:4px; text-transform:uppercase;">
+            OR Search Person B by Mobile or Card No:
+          </label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="swapSearchInp" placeholder="Enter mobile or card no..." style="flex:1; height:36px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;" />
+            <button type="button" class="btn-sm btn-primary-sm" onclick="searchPartnerForSwap()"><i class="fas fa-search"></i> Find</button>
+          </div>
+        </div>
+
+        <div id="swapPreviewResult" style="margin-top:10px; font-size:0.85rem; min-height:20px;"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeSwapModal()">Cancel</button>
+        <button type="button" class="btn-sm btn-success-sm" id="confirmSwapBtn" onclick="submitBedSwap()" style="padding:8px 20px; font-weight:700;">
+          <i class="fas fa-check"></i> Confirm Bed Switch
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Excel Import Preview Modal -->
+  <div id="excelImportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:650px; width:92%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out; max-height:85vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-file-excel" style="color:#16a34a;"></i> Review &amp; Apply Excel Allocations
+        </h3>
+        <button type="button" onclick="closeExcelImportModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <div id="excelImportSummary" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:12px; margin-bottom:14px; font-size:0.88rem; color:#166534;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:16px;">
+        <div id="excelImportPreviewWrap"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeExcelImportModal()">Cancel</button>
+        <button type="button" class="btn-sm btn-success-sm" id="confirmExcelImportBtn" onclick="submitExcelAllocations()" style="padding:8px 22px; font-weight:700;">
+          <i class="fas fa-save"></i> Apply All to Bookings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Stay History Modal -->
+  <div id="stayHistoryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:650px; width:92%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out; max-height:85vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-history" style="color:#0284c7;"></i> Past 2-Year Utsav Stay History
+        </h3>
+        <button type="button" onclick="closeStayHistoryModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <!-- Participant Header -->
+      <div id="stayHistoryProfile" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:12px; font-size:0.88rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Stay Stats Summary KPIs -->
+      <div id="stayHistoryKpis" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin-bottom:12px;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- History Table Wrap -->
+      <div style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:14px;">
+        <div id="stayHistoryTableWrap"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeStayHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Floating Sticky Apply Bar -->
   <div id="stickyApplyBar" class="sticky-apply-bar">
     <div style="display:flex; align-items:center; gap:8px;">
