@@ -1712,7 +1712,13 @@
         const alertContainer = document.getElementById(`formAlert_${currentPageIdx}`);
         if (alertContainer) {
           alertContainer.className = 'alert-warning';
-          alertContainer.innerHTML = `<i class="fas fa-info-circle"></i> You submitted earlier${submittedDate ? ' on ' + submittedDate : ''}. Your previous choices are shown below. You can update future dates only.`;
+          let bannerMsg = `<i class="fas fa-info-circle"></i> You submitted earlier${submittedDate ? ' on ' + submittedDate : ''}. Your previous choices are shown below. You can update future dates only.`;
+          if (prevData.department && prevData.submittedByName) {
+            bannerMsg = `<i class="fas fa-info-circle"></i> Showing submission for <strong>${escapeHtml(prevData.department)}</strong> department (last updated by <strong>${escapeHtml(prevData.submittedByName)}</strong>${submittedDate ? ' on ' + submittedDate : ''}). Your choices are shown below. You can update future dates only.`;
+          } else if (prevData.flatno && prevData.submittedByName) {
+            bannerMsg = `<i class="fas fa-info-circle"></i> Showing submission for <strong>Flat ${escapeHtml(prevData.flatno)}</strong> (last updated by <strong>${escapeHtml(prevData.submittedByName)}</strong>${submittedDate ? ' on ' + submittedDate : ''}). Your choices are shown below.`;
+          }
+          alertContainer.innerHTML = bannerMsg;
           alertContainer.style.display = 'block';
           alertContainer.style.background = '#fff3cd';
           alertContainer.style.color = '#856404';
@@ -1863,7 +1869,8 @@
               window.lastPrefilledAuthValue = val;
               try {
                 const flatnoParam = data.data.flatno ? `&flatno=${encodeURIComponent(data.data.flatno)}` : '';
-                const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}${flatnoParam}`);
+                const deptParam = data.data.department ? `&department=${encodeURIComponent(data.data.department)}` : '';
+                const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}${flatnoParam}${deptParam}`);
                 const prevData = await prevRes.json();
                 if (prevData.success && prevData.data) {
                   window.previousResponseId = prevData.data.responseId;

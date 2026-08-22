@@ -630,7 +630,7 @@
                   <div class="full-width" id="otpAllowlistSection" style="display:none; border-top: 1px dashed #ced4da; padding-top: 1rem; margin-top: 0.5rem;">
                     <label style="font-weight:600; color:#204060;">Authorized Numbers (OTP Allowlist)</label>
                     <small style="display:block; color:#6c757d; margin-bottom:0.5rem;">
-                      Restricts OTP sign-in on this form to these mobile numbers only (each must already be a registered member). Leave empty to allow any registered member.
+                      Restricts access and submission on this form to these mobile numbers only (each must already be a registered member). Leave empty to allow any registered member.
                       While creating a new form, numbers added here are staged and saved once you click Save Form.
                     </small>
                     <div id="otpAllowlistList" style="margin-bottom:0.5rem;"></div>
@@ -2074,11 +2074,11 @@
       }
 
       async       function handleRequireOtpChange() {
-        const isChecked = document.getElementById('requireOtp')?.checked;
-        const isMob = document.getElementById('formType')?.value === 'mobno';
+        const accessVal = document.getElementById('formType')?.value;
+        const isMob = (accessVal === 'mobno' || accessVal === 'reg_mobno');
         const wrap = document.getElementById('manageAllowlistWrap');
         if (wrap) {
-          wrap.style.display = (isChecked && isMob) ? 'block' : 'none';
+          wrap.style.display = isMob ? 'block' : 'none';
         }
         updateAllowlistBadge();
       }
@@ -2413,11 +2413,11 @@
       window.stagedOtpAllowlist = [];
 
       function handleRequireOtpChange() {
-        const isChecked = document.getElementById('requireOtp')?.checked;
-        const isMob = document.getElementById('formType')?.value === 'mobno';
+        const accessVal = document.getElementById('formType')?.value;
+        const isMob = (accessVal === 'mobno' || accessVal === 'reg_mobno');
         const wrap = document.getElementById('manageAllowlistWrap');
         if (wrap) {
-          wrap.style.display = (isChecked && isMob) ? 'block' : 'none';
+          wrap.style.display = isMob ? 'block' : 'none';
         }
         updateAllowlistBadge();
       }
@@ -2489,11 +2489,12 @@
       function updateAllowlistBadge() {
         const list = window.stagedOtpAllowlist || [];
         const configuredCount = list.filter(e => e.mobno && String(e.mobno).length === 10).length;
+        const uniqueDepts = new Set(list.map(e => e.department).filter(Boolean)).size;
         const badge = document.getElementById('allowlistBadge');
         if (badge) badge.textContent = configuredCount;
         const countText = document.getElementById('allowlistModalCountText');
         if (countText) {
-          countText.textContent = `${configuredCount} number${configuredCount === 1 ? '' : 's'} assigned (${list.length} total departments)`;
+          countText.textContent = `${configuredCount} number${configuredCount === 1 ? '' : 's'} assigned (${uniqueDepts} total department${uniqueDepts === 1 ? '' : 's'})`;
         }
       }
 
@@ -2561,13 +2562,26 @@
           } catch (e) {}
         }
 
-        // Check if department already exists in list
-        const existingIdx = window.stagedOtpAllowlist.findIndex(e => (e.department || '').toLowerCase() === deptVal.toLowerCase());
-        if (existingIdx !== -1) {
-          window.stagedOtpAllowlist[existingIdx].mobno = mobVal || null;
-          window.stagedOtpAllowlist[existingIdx].name = memberName;
-          window.stagedOtpAllowlist[existingIdx].cardno = cardno;
+        // If an unassigned placeholder exists for this department, fill it first
+        const emptyPlaceholderIdx = window.stagedOtpAllowlist.findIndex(e => 
+          (e.department || '').toLowerCase() === deptVal.toLowerCase() && (!e.mobno || String(e.mobno).trim() === '')
+        );
+
+        if (emptyPlaceholderIdx !== -1 && mobVal) {
+          window.stagedOtpAllowlist[emptyPlaceholderIdx].mobno = mobVal;
+          window.stagedOtpAllowlist[emptyPlaceholderIdx].name = memberName;
+          window.stagedOtpAllowlist[emptyPlaceholderIdx].cardno = cardno;
         } else {
+          // Check if this exact mobile number is already added for this department
+          const duplicateIdx = window.stagedOtpAllowlist.findIndex(e => 
+            (e.department || '').toLowerCase() === deptVal.toLowerCase() && e.mobno === mobVal
+          );
+          if (duplicateIdx !== -1 && mobVal) {
+            alert(`Mobile number ${mobVal} is already added for ${deptVal}`);
+            return;
+          }
+
+          // Otherwise add as an additional head for this department
           window.stagedOtpAllowlist.push({
             department: deptVal,
             mobno: mobVal || null,
@@ -2872,7 +2886,7 @@
         </div>
         <div style="padding:1.5rem; overflow-y:auto; flex:1;">
           <p style="color:#495057; font-size:0.88rem; margin-top:0; margin-bottom:1.25rem; line-height:1.5;">
-            Only phone numbers added here will be permitted to receive an OTP and fill out this form.
+            Only phone numbers added here will be permitted to access and submit this form.
             <br><span style="color:#6c757d; font-size:0.82rem;">(If list is empty, any registered Ashram member can receive OTP and fill the form).</span>
           </p>
 
