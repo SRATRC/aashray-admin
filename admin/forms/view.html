@@ -1,0 +1,3057 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Form - Aashray</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      :root {
+        --theme-color: #204060;
+      }
+
+      body {
+        background-color: #f0f2f5;
+        padding: 2rem 1rem;
+        font-family: 'Inter', -apple-system, sans-serif;
+      }
+
+      .form-container {
+        max-width: 680px;
+        margin: 0 auto;
+      }
+
+      .form-header {
+        background: #fff;
+        border-top: 10px solid var(--theme-color);
+        border-radius: 8px;
+        padding: 2.25rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+      }
+
+      .form-header h1 {
+        margin: 0 0 0.75rem 0;
+        color: var(--theme-color);
+        font-size: 2rem;
+        font-weight: 800;
+        word-wrap: break-word;
+      }
+
+      .form-header p {
+        margin: 0;
+        color: #495057;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+      }
+
+      .form-body {
+        background: #fff;
+        border-radius: 8px;
+        padding: 2.25rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        margin-bottom: 1.25rem;
+      }
+
+      .field-group {
+        margin-bottom: 2rem;
+      }
+
+      .field-group label {
+        display: block;
+        font-weight: 700;
+        color: var(--theme-color);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+      }
+
+      .field-group .required {
+        color: #dc3545;
+        margin-left: 0.2rem;
+      }
+      
+      /* Input styles */
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      input[type="time"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        background-color: #fafafa;
+        transition: border-color 0.2s, background-color 0.2s;
+        box-sizing: border-box;
+      }
+
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      input[type="date"]:focus,
+      input[type="time"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4c86b0;
+        background-color: #fff;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(76, 134, 176, 0.1);
+      }
+
+      textarea {
+        resize: vertical;
+      }
+
+      /* Options layout */
+      .option-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.6rem;
+      }
+
+      .option-item input[type="radio"],
+      .option-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--theme-color);
+      }
+
+      .option-item label {
+        margin: 0;
+        font-weight: 400;
+        color: #495057;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+
+      /* Star rating design */
+      .star-rating {
+        display: inline-flex;
+        gap: 0.4rem;
+        font-size: 2.2rem;
+        cursor: pointer;
+      }
+
+      .star-rating .star {
+        color: #dee2e6;
+        transition: color 0.15s, transform 0.1s;
+      }
+
+      .star-rating .star:hover {
+        transform: scale(1.15);
+      }
+
+      .star-rating .star.selected,
+      .star-rating .star.hovered {
+        color: #ffc107;
+      }
+
+      /* Matrix Grid design */
+      .grid-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .grid-table th {
+        background: #f8f9fa;
+        color: var(--theme-color);
+        font-weight: 700;
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+
+      .grid-table td {
+        padding: 0.75rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+
+      .grid-table td:first-child {
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        background: #fbfbfb;
+      }
+
+      .grid-table input[type="radio"],
+      .grid-table input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--theme-color);
+      }
+
+      /* Quick-fill column headers: click once to apply that answer to every row,
+         instead of clicking each row individually. */
+      .grid-table th.grid-col-quickfill {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        user-select: none;
+      }
+      .grid-table th.grid-col-quickfill:hover {
+        background: #e3ecf5;
+      }
+      .grid-table th.grid-col-quickfill:active {
+        background: #d3e0ee;
+      }
+      .grid-col-quickfill-hint {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: #6c757d;
+        margin-top: 0.2rem;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      /* Success Screen */
+      .success-screen {
+        background: #fff;
+        border-radius: 8px;
+        padding: 3rem 2.25rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+      }
+
+      .success-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .success-screen h2 {
+        color: var(--theme-color);
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+        font-weight: 800;
+      }
+
+      .success-screen p {
+        color: #6c757d;
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      /* Alert blocks */
+      [id^="formAlert_"] {
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        display: none;
+        font-weight: 500;
+      }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+      .submit-btn {
+        background-color: var(--theme-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.75rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        box-shadow: 0 4px 6px rgba(32, 64, 96, 0.15);
+      }
+
+      .submit-btn:hover {
+        opacity: 0.9;
+      }
+
+      .submit-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+
+      .auth-section {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+    .loading-state,
+    .error-state {
+        text-align: center;
+        padding: 4rem 2rem;
+      }
+
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: var(--theme-color);
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem auto;
+      }
+
+      @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+      .error-state i {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 1rem;
+      }
+
+      .error-state h2 {
+        margin-bottom: 0.5rem;
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 0.75rem 0.25rem;
+        }
+
+        .form-header {
+          padding: 1.25rem 1rem;
+        }
+
+        .form-body {
+          padding: 1.25rem 0.75rem;
+        }
+
+        .form-header h1 {
+          font-size: 1.35rem;
+        }
+
+        .matrix-table th, .matrix-table td {
+          padding: 0.35rem 0.2rem !important;
+          font-size: 0.8rem !important;
+        }
+
+        .matrix-table input.grid-number-cell {
+          max-width: 52px !important;
+          padding: 0.3rem 0.15rem !important;
+          font-size: 0.85rem !important;
+        }
+
+        .matrix-table input[placeholder="Set all"] {
+          max-width: 58px !important;
+          height: 26px !important;
+          font-size: 0.74rem !important;
+          padding: 0.15rem 0.2rem !important;
+          box-sizing: border-box !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+  <div id="previewBanner"
+    style="display:none; position:fixed; top:0; left:0; right:0; background:#ffc107; color:#212529; text-align:center; padding:0.6rem; font-weight:700; font-size:0.95rem; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.15);">
+      <i class="fas fa-eye"></i> Form Preview Mode — Responses will not be submitted
+    </div>
+
+    <div class="form-container" id="formContainer">
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>Loading form...</p>
+      </div>
+    </div>
+
+    <script>
+      // If the browser restores this page from its back-forward cache (e.g.
+      // the user hits Back), the entire DOM is served frozen exactly as it
+      // was left — none of this script re-runs, so any auth/draft state
+      // that was cleared or changed since would appear stale or reversed.
+      // Force a real reload whenever that happens so the page always
+      // reflects current state.
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const formId = urlParams.get('id');
+
+      let formData = null;
+
+      async function loadForm() {
+        if (urlParams.get('preview') === 'true') {
+          try {
+            const rawData = sessionStorage.getItem('preview_form_data');
+            if (!rawData) {
+              showErrorState('No preview data found. Please open preview from the Form Builder.');
+              return;
+            }
+            formData = JSON.parse(rawData);
+            document.title = `[Preview] ${formData.title} - Aashray`;
+            renderForm(formData);
+          } catch (err) {
+            showErrorState('Failed to load preview form data.');
+          }
+          return;
+        }
+
+        if (!formId) {
+          showErrorState('No form ID specified in the URL.');
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}`);
+          const data = await res.json();
+
+          if (!data.success) {
+            showErrorState(data.message || 'Form not found or inactive.');
+            return;
+          }
+
+          formData = data.data;
+
+          // Limit to 1 response client-side check (only if not editing)
+          if (formData.limitOneResponse && !formData.allowEdit && !urlParams.get('responseId') && localStorage.getItem(`form_submitted_${formId}`) === 'true') {
+            showAlreadySubmittedState();
+            return;
+          }
+          
+          if (formData.isClosed && urlParams.get('preview') !== 'true') {
+            renderClosedScreen(formData);
+            return;
+          }
+
+          document.title = `${formData.title} - Aashray`;
+          renderForm(formData);
+
+          // If editing response, load previous responses
+          const responseId = urlParams.get('responseId');
+          if (responseId && formData.allowEdit) {
+            await loadAndPopulateResponse(responseId);
+          } else if (!responseId) {
+            // We don't know WHO is opening this link (it could be
+            // shared/forwarded, or the device could be shared), so we never
+            // silently restore or prefill an email. We only show a generic,
+            // non-identifying hint; the visitor must actively prove who they
+            // are (type their email, or — on authenticated forms — resolve
+            // their mobile/card number) before anything is restored.
+            if (localStorage.getItem(`form_has_draft_${formId}`) === 'true') {
+              const hintEl = document.getElementById('draftHintMsg');
+              if (hintEl) {
+                hintEl.textContent = 'Have a saved draft on this form? Check "Save my progress" above and enter your email to resume it.';
+                hintEl.style.display = 'block';
+              }
+            }
+          }
+        } catch (err) {
+          showErrorState('Unable to load form. Please try again later.');
+        }
+      }
+
+      // Secure DOM-based HTML Sanitizer for B, I, U, A elements
+      function renderRichText(text) {
+        if (!text) return '';
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${text}</div>`, 'text/html');
+        const allowedTags = ['B', 'I', 'U', 'A', 'BR', 'STRONG', 'EM', 'SPAN', 'P'];
+        
+        function sanitizeNode(node) {
+          const children = Array.from(node.childNodes);
+          children.forEach(child => {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              if (!allowedTags.includes(child.nodeName)) {
+                const textNode = doc.createTextNode(child.textContent);
+                node.replaceChild(textNode, child);
+              } else {
+                if (child.nodeName === 'A') {
+                  const href = child.getAttribute('href');
+                  child.removeAttribute('onclick');
+                  child.removeAttribute('onerror');
+                  child.setAttribute('target', '_blank');
+                  child.setAttribute('rel', 'noopener noreferrer');
+                }
+                sanitizeNode(child);
+              }
+            }
+          });
+        }
+        
+        sanitizeNode(doc.body.firstChild);
+        return doc.body.firstChild.innerHTML;
+      }
+
+      function renderClosedScreen(form) {
+        const container = document.getElementById('formContainer');
+        const msg = form.closeMessage || 'This form is no longer accepting responses.';
+        
+        container.innerHTML = `
+          <div class="success-screen" style="border-top: 10px solid #dc3545; max-width:600px; margin:2rem auto; background:#fff; border-radius:8px; padding:3rem 2rem; box-shadow:0 4px 6px rgba(0,0,0,0.03); text-align:center;">
+            <div class="success-icon" style="color: #dc3545; font-size:4rem; margin-bottom:1.5rem;"><i class="fas fa-exclamation-circle"></i></div>
+            <h2 style="color:#204060; margin:0 0 1rem 0; font-weight:800;">Form Closed</h2>
+            <p style="margin: 0; color: #495057; font-size: 1.1rem; line-height: 1.6;">${renderRichText(msg)}</p>
+            <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+              <span style="font-size: 0.85rem; color: #6c757d;">This form has expired or reached its submission limit.</span>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderForm(form) {
+        const container = document.getElementById('formContainer');
+
+        const themeColor = form.themeColor || '#204060';
+        document.documentElement.style.setProperty('--theme-color', themeColor);
+
+        if (urlParams.get('preview') === 'true') {
+          document.getElementById('previewBanner').style.display = 'block';
+          container.style.marginTop = '4rem';
+        }
+
+        // Separate fields into page sections
+        const pages = [];
+        let currentPage = {
+          id: 'page_0',
+          title: form.title,
+          description: form.description,
+          fields: [],
+          nextAction: form.section1Action || 'next'
+        };
+
+        const isAuth = !form.isPublic;
+
+        form.fields.forEach(field => {
+          if (field.type === 'section') {
+            pages.push(currentPage);
+            currentPage = {
+              id: field.id,
+              title: field.label,
+              description: field.description || '',
+              fields: [],
+              nextAction: field.nextAction || 'next'
+            };
+          } else {
+            currentPage.fields.push(field);
+          }
+        });
+        pages.push(currentPage);
+
+        window.pageIndices = {};
+        pages.forEach((p, idx) => {
+          window.pageIndices[p.id] = idx;
+        });
+
+        // Render progress bar container
+        let progressHtml = '';
+        if (form.showProgressBar) {
+          progressHtml = `
+            <div id="progressContainer" style="margin-top: 1.5rem; padding: 1rem 1.5rem; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+              <div style="display:flex; justify-content:space-between; font-size:0.95rem; color:#000000; font-weight:700; margin-bottom:0.4rem;">
+                <span>Progress</span>
+                <span id="progressText">Page 1 of ${pages.length}</span>
+              </div>
+              <div style="width:100%; height:8px; background:#e9ecef; border-radius:50px; overflow:hidden;">
+                <div id="progressBar" style="width:${(1 / pages.length) * 100}%; height:100%; background:linear-gradient(135deg, var(--theme-color) 0%, #4c86b0 100%); transition:width 0.3s ease;"></div>
+              </div>
+            </div>
+          `;
+        }
+
+        let pagesHtml = '';
+        pages.forEach((page, pi) => {
+          let fieldsHtml = '';
+          
+          if (pi === 0 && isAuth) {
+            const isMobAuth = (form.authType === 'mobno' || form.authType === 'reg_mobno');
+            if (isMobAuth && !form.requireOtp) {
+              fieldsHtml += `
+                <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
+                  <label for="input_mobno" style="font-weight: 700; color: var(--theme-color); display:block; margin-bottom:0.4rem;">Mobile Number *</label>
+                  <input type="tel" id="input_mobno" maxlength="10" autocomplete="off" placeholder="Enter your registered 10-digit mobile number" required style="width: 100%; height:42px; padding: 0 0.85rem; border: 1.5px solid #ced4da; border-radius: 6px; font-size: 1rem; font-weight:600; background-color: #fff; box-sizing:border-box;" />
+                  <div id="info_mobno" style="min-height: 22px; font-size: 0.88rem; margin-top: 0.5rem;"></div>
+                </div>
+              `;
+            } else if (!isMobAuth) {
+              fieldsHtml += `
+                <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
+                  <label for="input_cardno" style="font-weight: 700; color: var(--theme-color); display:block; margin-bottom:0.4rem;">Card Number *</label>
+                  <input type="text" id="input_cardno" autocomplete="off" placeholder="Enter your card number" required style="width: 100%; height:42px; padding: 0 0.85rem; border: 1.5px solid #ced4da; border-radius: 6px; font-size: 1rem; font-weight:600; background-color: #fff; box-sizing:border-box;" />
+                  <div id="info_cardno" style="min-height: 22px; font-size: 0.88rem; margin-top: 0.5rem;"></div>
+                </div>
+              `;
+            }
+          }
+
+          page.fields.forEach(f => {
+            fieldsHtml += renderField(f);
+          });
+
+          const displayStyle = pi === 0 ? 'block' : 'none';
+
+          // Navigation buttons block based on early submission
+          let navButtonsHtml = '';
+          if (pi > 0) {
+            navButtonsHtml += `<button type="button" class="submit-btn btn-back" onclick="goToPage(${pi - 1})" style="background-color:#6c757d; margin-right:0.5rem; width:auto; padding:0.6rem 1.5rem;"><i class="fas fa-arrow-left"></i> Back</button>`;
+          }
+
+          const action = page.nextAction;
+          if (action === 'submit' || pi === pages.length - 1) {
+            navButtonsHtml += `<button type="submit" class="submit-btn" id="submitBtn" style="width:auto; padding:0.6rem 1.5rem;">Submit Response</button>`;
+          } else {
+            let targetPageIdx = pi + 1;
+            if (action !== 'next' && window.pageIndices[action] !== undefined) {
+              targetPageIdx = window.pageIndices[action];
+            }
+            navButtonsHtml += `<button type="button" class="submit-btn btn-next" onclick="validateAndGoToPage(${pi}, ${targetPageIdx})" style="width:auto; padding:0.6rem 1.5rem;">Next <i class="fas fa-arrow-right"></i></button>`;
+          }
+
+          pagesHtml += `
+            <div class="form-page" id="formPage_${pi}" style="display: ${displayStyle}">
+              <div class="form-header">
+                <h1>${renderRichText(page.title)}</h1>
+                ${page.description ? `<p>${renderRichText(page.description)}</p>` : ''}
+              </div>
+              <div class="form-body">
+                <div id="formAlert_${pi}"></div>
+                <form class="page-form" autocomplete="off" onsubmit="submitForm(event)">
+                  ${fieldsHtml}
+                  <div style="margin-top:2rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>${navButtonsHtml}</div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          `;
+        });
+
+        // Save-progress and email-a-copy are two independent persistent blocks
+        // (not tied to one page) so they survive page navigation. Not offered
+        // while previewing or while editing an already-submitted response.
+        let saveProgressHtml = '';
+        const isEditFlow = !!urlParams.get('responseId');
+        if (urlParams.get('preview') !== 'true' && !isEditFlow) {
+          saveProgressHtml = `
+            <div class="save-progress-section" id="saveProgressSection" style="max-width:680px; margin:0 auto 1.25rem auto; background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.1rem 1.25rem; box-shadow:0 4px 6px rgba(0,0,0,0.03);">
+              <label style="display:flex; align-items:center; gap:0.6rem; font-weight:700; color: var(--theme-color); cursor:pointer; margin:0;">
+                <input type="checkbox" id="saveProgressToggle" style="width:auto; margin:0;" />
+                Save my progress
+              </label>
+              <p style="margin:0.35rem 0 0 1.9rem; font-size:0.8rem; color:#6c757d;">If you leave and come back, we'll restore what you've already filled in.</p>
+              <div id="draftHintMsg" style="display:none; margin:0.5rem 0 0 1.9rem; font-size:0.8rem; color:#0d6efd;"></div>
+              <div id="saveProgressEmailWrap" style="display:none; margin-top:0.75rem;">
+                <input type="email" id="saveProgressEmail" autocomplete="off" placeholder="Enter your email address" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #ced4da; border-radius:6px; font-size:0.95rem; background-color:#fafafa;" />
+                <div id="draftStatusMsg" style="margin-top:0.5rem; font-size:0.82rem; color:#6c757d; display:none;"></div>
+              </div>
+            </div>
+            <div class="email-copy-section" id="emailCopySection" style="max-width:680px; margin:0 auto 1.25rem auto; background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.1rem 1.25rem; box-shadow:0 4px 6px rgba(0,0,0,0.03);">
+              <label style="display:flex; align-items:center; gap:0.6rem; font-weight:700; color: var(--theme-color); cursor:pointer; margin:0;">
+                <input type="checkbox" id="emailCopyToggle" style="width:auto; margin:0;" />
+                Email me a copy of my response
+              </label>
+              <p style="margin:0.35rem 0 0 1.9rem; font-size:0.8rem; color:#6c757d;">We'll send a copy of your response to this email address after you submit.</p>
+              <div id="emailCopyEmailWrap" style="display:none; margin-top:0.75rem;">
+                <input type="email" id="emailCopyEmail" autocomplete="off" placeholder="Enter your email address" style="width:100%; padding:0.65rem 0.85rem; border:1px solid #ced4da; border-radius:6px; font-size:0.95rem; background-color:#fafafa;" />
+              </div>
+            </div>
+          `;
+        }
+
+        const requiresOtpGate = isAuth && form.authType === 'mobno' && form.requireOtp && !isOtpVerified;
+
+        const otpGateHtml = !form.requireOtp ? '' : `
+          <div id="otpGateContainer" style="display: ${requiresOtpGate ? 'block' : 'none'}; max-width:540px; margin:0 auto 2rem auto; background:#fff; border-radius:10px; border:1px solid #dee2e6; box-shadow:0 4px 16px rgba(0,0,0,0.06); padding:2.5rem 2rem; text-align:center;">
+            <div style="width:58px; height:58px; border-radius:50%; background:#eef4f9; color:var(--theme-color); display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:1rem;">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2 style="font-size:1.35rem; font-weight:800; color:#204060; margin:0 0 0.4rem 0;">Sign In with Mobile Number</h2>
+            <p style="color:#6c757d; font-size:0.9rem; margin:0 0 1.75rem 0;">Please enter your registered 10-digit mobile number to verify and open the form.</p>
+            
+            <div style="max-width:380px; margin:0 auto; text-align:left;">
+              <div id="mobInputWrapper">
+                <label for="input_mobno" style="font-size:0.85rem; font-weight:700; color:#204060; display:block; margin-bottom:0.4rem;">Mobile Number *</label>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <input type="tel" id="input_mobno" maxlength="10" placeholder="10-digit number" style="flex:1; height:44px; padding:0 0.85rem; border:1.5px solid #ced4da; border-radius:6px; font-size:1rem; font-weight:600; box-sizing:border-box;" />
+                  <button type="button" id="sendOtpBtn" class="submit-btn" style="width:auto; height:44px; padding:0 1.25rem; font-size:0.9rem; font-weight:600; white-space:nowrap; background-color:var(--theme-color); margin:0; border-radius:6px; display:inline-flex; align-items:center; justify-content:center;">Send OTP</button>
+                </div>
+                <div id="info_mobno" style="min-height:22px; font-size:0.85rem; margin-top:0.45rem;"></div>
+              </div>
+
+              <div id="otpInputSection" style="display:none; margin-top:1rem; border-top:1px dashed #ced4da; padding-top:1.25rem;">
+                <label for="input_otp" style="font-size:0.85rem; font-weight:700; color:#204060; display:block; margin-bottom:0.4rem;">Enter 6-Digit OTP *</label>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <input type="text" id="input_otp" maxlength="6" placeholder="• • • • • •" style="flex:1; height:44px; padding:0 0.85rem; border:1.5px solid #ced4da; border-radius:6px; font-size:1.15rem; font-weight:700; letter-spacing:4px; text-align:center; box-sizing:border-box;" />
+                  <button type="button" id="verifyOtpBtn" class="submit-btn" style="width:auto; height:44px; padding:0 1.25rem; font-size:0.9rem; font-weight:600; background-color:#28a745; margin:0; border-radius:6px; white-space:nowrap;">Verify & Open</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                  <span id="otpTimerText" style="font-size:0.8rem; color:#6c757d;"></span>
+                  <button type="button" id="resendOtpBtn" style="display:none; background:none; border:none; color:var(--theme-color); font-weight:700; font-size:0.82rem; cursor:pointer; text-decoration:underline;">Resend OTP</button>
+                </div>
+                <div id="otpErrorMsg" style="color:#dc3545; font-size:0.85rem; margin-top:0.4rem; display:none; font-weight:500;"></div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const verifiedBannerHtml = `
+          <div id="verifiedUserBanner" style="display:${isOtpVerified ? 'flex' : 'none'}; max-width:680px; margin:0 auto 1.5rem auto; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:0.85rem 1.25rem; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:0.5rem; color:#2e7d32; font-weight:700; font-size:0.92rem;">
+              <i class="fas fa-check-circle" style="font-size:1.1rem;"></i>
+              <span>Signed in as: <span id="verifiedUserName">Registered Member</span> (<span id="verifiedUserMob"></span>)</span>
+            </div>
+            <button type="button" onclick="signOutOtp()" style="background:none; border:none; color:#6c757d; font-size:0.8rem; text-decoration:underline; cursor:pointer;">Sign Out</button>
+          </div>
+        `;
+
+        container.innerHTML = `
+          ${otpGateHtml}
+          <div id="formContentWrapper" style="display: ${requiresOtpGate ? 'none' : 'block'};">
+            ${verifiedBannerHtml}
+            ${saveProgressHtml}
+            <div id="pagesContainer">${pagesHtml}</div>
+            ${progressHtml}
+          </div>
+        `;
+
+        window.totalPagesCount = pages.length;
+        window.currentPageIdx = 0;
+
+        initStarRatings();
+        evaluateLogic();
+      }
+
+      const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      let lastRestoredDraftEmail = null;
+      let draftSaveTimeout = null;
+      // The email a server-side draft actually exists under for this session,
+      // independent of whatever the checkbox happens to be set to right now —
+      // so if the user unchecks "save my progress" before hitting Submit, we
+      // still know which draft to tell the server to delete.
+      let sessionDraftEmail = null;
+
+      function showDraftStatusMsg(msg) {
+        const el = document.getElementById('draftStatusMsg');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'block';
+      }
+
+      // Populates form fields from a plain { fieldId: answer } map. Shared by
+      // the "edit an existing submitted response" flow and the "restore a
+      // saved in-progress draft" flow.
+            // ── Flat Host Guest List Dynamic Handlers ─────────────────────────
+      
+      function isGuestListField(field) {
+        if (!field) return false;
+        return field.type === 'guest_list' || field.id === 'guests_list' || field.id === 'guest_list' || (field.label && field.label.toLowerCase().includes('list of guest'));
+      }
+
+      function isGuestCapacityField(field) {
+        if (!field) return false;
+        return field.id === 'guest_capacity_count' || field.id === 'guest_capacity' || (field.label && field.label.toLowerCase().includes('guests you can accommodate'));
+      }
+    
+      let guestLookupTimeouts = {};
+
+      function handleGuestMobileInput(fieldId, idx, inputEl) {
+        const rawVal = inputEl.value.trim();
+        const val = rawVal.replace(/\D/g, '').slice(-10);
+        const card = document.getElementById('guest_card_' + fieldId + '_' + idx);
+        const statusEl = document.getElementById('guest_status_' + fieldId + '_' + idx);
+        
+        clearTimeout(guestLookupTimeouts[fieldId + '_' + idx]);
+        if (!card || !statusEl) return;
+
+        if (val.length < 10) {
+          card.dataset.cardno = '';
+          card.dataset.name = '';
+          card.dataset.center = '';
+          inputEl.style.borderColor = '#ced4da';
+          statusEl.innerHTML = '';
+          return;
+        }
+
+        // Check if this number is already entered in another guest card in the same form
+        const container = document.getElementById('guestListContainer_' + fieldId);
+        let isDuplicate = false;
+        if (container) {
+          container.querySelectorAll('.guest-mobno-input').forEach((otherInput, oIdx) => {
+            if (oIdx !== idx && otherInput.value.replace(/\D/g, '').slice(-10) === val) {
+              isDuplicate = true;
+            }
+          });
+        }
+        if (isDuplicate) {
+          inputEl.style.borderColor = '#dc3545';
+          statusEl.innerHTML = '<span style="color:#dc3545; font-weight:600; font-size:0.85rem;"><i class="fas fa-times-circle"></i> Duplicate guest: this mobile number is already added in another card.</span>';
+          card.dataset.cardno = '';
+          card.dataset.name = '';
+          return;
+        }
+
+        statusEl.innerHTML = '<span style="color:#6c757d; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Verifying guest...</span>';
+
+        guestLookupTimeouts[fieldId + '_' + idx] = setTimeout(async () => {
+          try {
+            const flatnoEl = document.getElementById('input_flatno');
+            const flatno = flatnoEl ? flatnoEl.value.trim() : '';
+            const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+            const submitter = authInput ? authInput.value.trim() : '';
+
+            const url = CONFIG.baseUrl + '/admin/forms/public/' + formData.id + '/validate-guest?mobno=' + encodeURIComponent(val) + '&flatno=' + encodeURIComponent(flatno) + '&submitterMobno=' + encodeURIComponent(submitter);
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.success && data.data) {
+              inputEl.style.borderColor = '#28a745';
+              card.dataset.cardno = data.data.cardno;
+              card.dataset.name = data.data.name;
+              card.dataset.center = data.data.center || '';
+              statusEl.innerHTML = '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(data.data.name) + ' (' + escapeHtml(data.data.center || 'Member') + ') - Confirmed Booking</span>';
+            } else {
+              inputEl.style.borderColor = '#dc3545';
+              card.dataset.cardno = '';
+              card.dataset.name = '';
+              card.dataset.center = '';
+              statusEl.innerHTML = '<span style="color:#dc3545; font-weight:600; font-size:0.85rem;"><i class="fas fa-times-circle"></i> ' + escapeHtml(data.message || 'Verification failed') + '</span>';
+            }
+          } catch (err) {
+            inputEl.style.borderColor = '#dc3545';
+            statusEl.innerHTML = '<span style="color:#dc3545; font-size:0.85rem;"><i class="fas fa-times-circle"></i> Network error verifying guest</span>';
+          }
+        }, 300);
+      }
+
+      
+      function selectGuestCapPill(fieldId, val, btnEl) {
+        const input = document.getElementById('input_' + fieldId);
+        if (input) input.value = val;
+        
+        if (btnEl && btnEl.parentElement) {
+          btnEl.parentElement.querySelectorAll('.btn-cap-pill').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = '#fff';
+            b.style.color = '#204060';
+            b.style.borderColor = '#ced4da';
+          });
+          btnEl.classList.add('active');
+          btnEl.style.background = '#204060';
+          btnEl.style.color = '#fff';
+          btnEl.style.borderColor = '#204060';
+        }
+
+        updateGuestListInputs(val, 'guests_list');
+      }
+    
+      function updateGuestListInputs(count, fieldId = 'guests_list') {
+        const container = document.getElementById('guestListContainer_' + fieldId);
+        const notice = document.getElementById('noGuestsNotice_' + fieldId);
+        if (!container) return;
+
+        const num = Math.max(0, Math.min(6, parseInt(count, 10) || 0));
+        if (num === 0) {
+          container.innerHTML = '';
+          if (notice) notice.style.display = 'block';
+          return;
+        }
+
+        if (notice) notice.style.display = 'none';
+
+        const existingValues = [];
+        container.querySelectorAll('.guest-card').forEach(card => {
+          const mobInput = card.querySelector('.guest-mobno-input');
+          existingValues.push({
+            mobno: mobInput ? mobInput.value.trim() : '',
+            cardno: card.dataset.cardno || '',
+            name: card.dataset.name || '',
+            center: card.dataset.center || ''
+          });
+        });
+
+        let html = '';
+        for (let i = 0; i < num; i++) {
+          const existing = existingValues[i] || {};
+          html += '<div class="guest-card" id="guest_card_' + fieldId + '_' + i + '" data-index="' + i + '" data-cardno="' + escapeAttr(existing.cardno || '') + '" data-name="' + escapeAttr(existing.name || '') + '" data-center="' + escapeAttr(existing.center || '') + '" style="background: #fdfefe; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.75rem 0.9rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">' +
+              '<span style="font-weight: 700; color: #204060; font-size: 0.85rem;"><i class="fas fa-user-check" style="color:#28a745;"></i> Guest #' + (i + 1) + '</span>' +
+            '</div>' +
+            '<div>' +
+              '<input type="tel" maxlength="10" class="guest-mobno-input" id="guest_mobno_' + fieldId + '_' + i + '" placeholder="Enter 10-digit Mobile Number" value="' + escapeAttr(existing.mobno || '') + '" oninput="handleGuestMobileInput(\'' + fieldId + '\', ' + i + ', this)" style="width: 100%; box-sizing: border-box; padding: 0.45rem 0.65rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;" />' +
+            '</div>' +
+            '<div id="guest_status_' + fieldId + '_' + i + '" style="margin-top: 0.3rem;">' +
+              (existing.name ? '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(existing.name) + ' (' + escapeHtml(existing.center || 'Member') + ') - Confirmed Booking</span>' : '') +
+            '</div>' +
+          '</div>';
+        }
+        container.innerHTML = html;
+      }
+
+
+      function populateAnswers(answers) {
+        if (!answers || !formData) return;
+
+        formData.fields.forEach(field => {
+          const ans = answers[field.id];
+          if (ans === undefined || ans === null) return;
+
+          const inputId = `input_${field.id}`;
+
+          if (field.type === 'checkbox') {
+            const vals = Array.isArray(ans) ? ans : [ans];
+            vals.forEach(v => {
+              $(`input[name="${field.id}"][value="${v}"]`).prop('checked', true);
+            });
+          } else if (field.type === 'radio') {
+            $(`input[name="${field.id}"][value="${ans}"]`).prop('checked', true);
+                    } else if (isGuestCapacityField(field)) {
+            const el = document.getElementById(inputId);
+            if (el) el.value = ans;
+            const valNum = parseInt(ans, 10) || 0;
+            document.querySelectorAll('.btn-cap-pill').forEach(b => {
+              const bVal = parseInt(b.dataset.capVal, 10);
+              if (bVal === valNum) {
+                b.classList.add('active');
+                b.style.background = '#204060';
+                b.style.color = '#fff';
+                b.style.borderColor = '#204060';
+              } else {
+                b.classList.remove('active');
+                b.style.background = '#fff';
+                b.style.color = '#204060';
+                b.style.borderColor = '#ced4da';
+              }
+            });
+            updateGuestListInputs(valNum, 'guests_list');
+          } else if (field.type === 'rating') {
+            const val = parseInt(ans);
+            const parent = $(`.star-rating[data-id="${field.id}"]`);
+            parent.find('.input-rating-val').val(val);
+            parent.find('.star').each(function() {
+              if ($(this).data('val') <= val) {
+                $(this).addClass('selected');
+              }
+            });
+          } else if (field.type === 'grid_radio') {
+            const gridAns = ans || {};
+            field.rows.forEach((r, ri) => {
+              const rowVal = gridAns[r];
+              if (rowVal) {
+                $(`input[name="response_${field.id}_${ri}"][value="${rowVal}"]`).prop('checked', true);
+              }
+            });
+          } else if (field.type === 'grid_checkbox') {
+            const gridAns = ans || {};
+            field.rows.forEach((r, ri) => {
+              const rowVals = gridAns[r] || [];
+              rowVals.forEach(v => {
+                $(`input[name="response_${field.id}_${ri}"][value="${v}"]`).prop('checked', true);
+              });
+            });
+                    } else if (isGuestListField(field)) {
+            const list = Array.isArray(ans) ? ans : [];
+            const guestCountEl = document.getElementById('input_guest_capacity_count');
+            const countToRender = list.length > 0 ? list.length : (guestCountEl ? parseInt(guestCountEl.value, 10) || 0 : 0);
+            if (guestCountEl && list.length > 0) {
+              guestCountEl.value = list.length;
+            }
+            updateGuestListInputs(countToRender, field.id);
+            const container = document.getElementById(`guestListContainer_${field.id}`);
+            if (container) {
+              list.forEach((g, idx) => {
+                const card = document.getElementById(`guest_card_${field.id}_${idx}`);
+                const mobInput = document.getElementById(`guest_mobno_${field.id}_${idx}`);
+                const statusEl = document.getElementById(`guest_status_${field.id}_${idx}`);
+                if (card && mobInput) {
+                  mobInput.value = g.mobno || '';
+                  card.dataset.cardno = g.cardno || '';
+                  card.dataset.name = g.name || '';
+                  card.dataset.center = g.center || '';
+                  if (statusEl && g.name) {
+                    statusEl.innerHTML = `<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ${escapeHtml(g.name)} (${escapeHtml(g.center || 'Member')}) - Confirmed Booking</span>`;
+                    mobInput.style.borderColor = '#28a745';
+                  }
+                }
+              });
+            }
+          } else if (field.type === 'grid_number') {
+            const gridAns = ans || {};
+            (field.rows || []).forEach((r, ri) => {
+              const rowObj = gridAns[r] || {};
+              (field.columns || []).forEach((c, ci) => {
+                const input = document.querySelector(`input[name="response_${field.id}_${ri}_${ci}"]`);
+                if (input) {
+                  const val = typeof rowObj === 'object' ? (rowObj[c] !== undefined ? rowObj[c] : '') : rowObj;
+                  input.value = (val !== null && val !== undefined && val !== '') ? val : '0';
+                }
+              });
+            });
+          } else {
+            const el = document.getElementById(inputId);
+            if (el) el.value = ans;
+          }
+        });
+
+        evaluateLogic();
+      }
+
+      // Fetches a previously saved in-progress draft (opt-in, keyed by email)
+      // and restores it into the form if one exists.
+      async function attemptRestoreDraft(email) {
+        if (!email || !formData || urlParams.get('preview') === 'true' || urlParams.get('responseId')) return;
+        const normalized = email.trim().toLowerCase();
+        if (!EMAIL_REGEX.test(normalized) || normalized === lastRestoredDraftEmail) return;
+        lastRestoredDraftEmail = normalized;
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/draft?email=${encodeURIComponent(normalized)}`);
+          const data = await res.json();
+          const hasRealAnswers = data.data && data.data.responses &&
+            Object.values(data.data.responses).some(v => Array.isArray(v) ? v.length > 0 : (v !== '' && v !== null && v !== undefined));
+          if (data.success && hasRealAnswers) {
+            sessionDraftEmail = normalized;
+            populateAnswers(data.data.responses);
+
+            // Proving identity via email is itself the confirmation needed to
+            // also restore the mobile/card number field — so it doesn't have
+            // to be retyped separately. Re-run the same resolve it would get
+            // from typing it, to show the "Registered to..." confirmation.
+            const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+            if (authInput && !authInput.value.trim()) {
+              const restoredNumber = authInput.id === 'input_mobno' ? data.data.mobno : data.data.cardno;
+              if (restoredNumber) {
+                authInput.value = restoredNumber;
+                checkAuthInputValidation(authInput);
+              }
+            }
+
+            const when = data.data.updatedAt ? new Date(data.data.updatedAt).toLocaleString() : '';
+            const toggle = document.getElementById('saveProgressToggle');
+            const wrap = document.getElementById('saveProgressEmailWrap');
+            if (toggle) toggle.checked = true;
+            if (wrap) wrap.style.display = 'block';
+            const hintEl = document.getElementById('draftHintMsg');
+            if (hintEl) hintEl.style.display = 'none';
+            showDraftStatusMsg(`We restored your saved progress${when ? ` from ${when}` : ''}.`);
+          }
+        } catch (err) {
+          console.error('Failed to restore saved draft:', err);
+        }
+      }
+
+      // Debounced autosave of an in-progress draft — no-ops unless the user
+      // has opted in via the "save my progress" checkbox with a valid email.
+      function scheduleDraftSave() {
+        if (!formData || urlParams.get('preview') === 'true' || urlParams.get('responseId')) return;
+        const toggle = document.getElementById('saveProgressToggle');
+        if (!toggle || !toggle.checked) return;
+        const emailInput = document.getElementById('saveProgressEmail');
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        if (!EMAIL_REGEX.test(email)) return;
+
+        clearTimeout(draftSaveTimeout);
+        draftSaveTimeout = setTimeout(async () => {
+          try {
+            const responses = collectResponses();
+            const cardno = document.getElementById('input_cardno')?.value?.trim() || null;
+            const mobno = document.getElementById('input_mobno')?.value?.trim() || null;
+            const saveRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/draft`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, cardno, mobno, responses })
+            });
+            if (!saveRes.ok) throw new Error(`Draft save failed with status ${saveRes.status}`);
+            sessionDraftEmail = email;
+            // Only remember a non-identifying flag — never the email itself —
+            // so a later visitor on this device sees just a generic "you may
+            // have a draft" hint, never who saved it or what they entered.
+            localStorage.setItem(`form_has_draft_${formId}`, 'true');
+            showDraftStatusMsg('Progress saved.');
+          } catch (err) {
+            console.error('Failed to save draft:', err);
+          }
+        }, 1000);
+      }
+
+      $(document).on('change', '#saveProgressToggle', function() {
+        const wrap = document.getElementById('saveProgressEmailWrap');
+        if (this.checked) {
+          wrap.style.display = 'block';
+          const hintEl = document.getElementById('draftHintMsg');
+          if (hintEl) hintEl.style.display = 'none';
+          const email = document.getElementById('saveProgressEmail').value.trim();
+          if (EMAIL_REGEX.test(email)) {
+            attemptRestoreDraft(email);
+          }
+        } else {
+          wrap.style.display = 'none';
+        }
+      });
+
+      $(document).on('blur', '#saveProgressEmail', function() {
+        const toggle = document.getElementById('saveProgressToggle');
+        if (!toggle || !toggle.checked) return;
+        if (EMAIL_REGEX.test(this.value.trim())) {
+          attemptRestoreDraft(this.value.trim());
+        }
+      });
+
+      $(document).on('change', '#emailCopyToggle', function() {
+        const wrap = document.getElementById('emailCopyEmailWrap');
+        wrap.style.display = this.checked ? 'block' : 'none';
+      });
+
+      function goToPage(pageIdx) {
+        $(`.form-page`).hide();
+        $(`#formPage_${pageIdx}`).show();
+        window.currentPageIdx = pageIdx;
+        
+        if (document.getElementById('progressBar')) {
+          const pct = ((pageIdx + 1) / window.totalPagesCount) * 100;
+          document.getElementById('progressBar').style.width = `${pct}%`;
+          document.getElementById('progressText').textContent = `Page ${pageIdx + 1} of ${window.totalPagesCount}`;
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function validateFieldInput(field, value, checkedCount) {
+        if (!field.validation) {
+          return { isValid: true };
+        }
+
+        const val = field.validation;
+        const rule = val.rule || val.type;
+        if (!rule) {
+          return { isValid: true };
+        }
+
+        const errorMsg = val.errorMsg || 'Invalid value';
+        const isEmpty = (value === '' || value === null || value === undefined);
+
+        if (!field.required && isEmpty && !['checkbox_limit', 'select_at_least', 'select_at_most', 'select_exactly'].includes(rule)) {
+          return { isValid: true };
+        }
+
+        // --- 1. NUMBER RULES ---
+        if (['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal', 'between', 'not_between', 'is_number', 'whole_number', 'number_check', 'range', 'ten_digit'].includes(rule)) {
+          const num = parseFloat(value);
+          if (isNaN(num) || value.trim() === '') {
+            return { isValid: false, errorMsg: errorMsg || 'Must be a valid number' };
+          }
+
+          const targetVal = val.value ? parseFloat(val.value) : undefined;
+
+          switch (rule) {
+            case 'greater_than':
+              if (targetVal !== undefined && !(num > targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'greater_than_or_equal':
+              if (targetVal !== undefined && !(num >= targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'less_than':
+              if (targetVal !== undefined && !(num < targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'less_than_or_equal':
+              if (targetVal !== undefined && !(num <= targetVal)) return { isValid: false, errorMsg };
+              break;
+            case 'equal':
+              if (targetVal !== undefined && num !== targetVal) return { isValid: false, errorMsg };
+              break;
+            case 'not_equal':
+              if (targetVal !== undefined && num === targetVal) return { isValid: false, errorMsg };
+              break;
+            case 'between':
+              const minBetween = val.min ? parseFloat(val.min) : undefined;
+              const maxBetween = val.max ? parseFloat(val.max) : undefined;
+              if (minBetween !== undefined && maxBetween !== undefined) {
+                if (num < minBetween || num > maxBetween) return { isValid: false, errorMsg };
+              }
+              break;
+            case 'not_between':
+              const minNotBetween = val.min ? parseFloat(val.min) : undefined;
+              const maxNotBetween = val.max ? parseFloat(val.max) : undefined;
+              if (minNotBetween !== undefined && maxNotBetween !== undefined) {
+                if (num >= minNotBetween && num <= maxNotBetween) return { isValid: false, errorMsg };
+              }
+              break;
+            case 'is_number':
+            case 'number_check':
+              break;
+            case 'whole_number':
+              if (!Number.isInteger(num)) return { isValid: false, errorMsg };
+              break;
+            case 'ten_digit':
+              const cleanNum = value.trim().replace(/\D/g, '');
+              if (cleanNum.length !== 10) return { isValid: false, errorMsg: errorMsg || 'Must be a 10-digit number' };
+              break;
+            case 'range':
+              if (val.min && num < parseFloat(val.min)) return { isValid: false, errorMsg };
+              if (val.max && num > parseFloat(val.max)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 2. TEXT RULES ---
+        else if (['contains', 'does_not_contain', 'email', 'url'].includes(rule) && val.category === 'text') {
+          const strVal = String(value);
+          switch (rule) {
+            case 'contains':
+              if (val.value && !strVal.includes(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'does_not_contain':
+              if (val.value && strVal.includes(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'email':
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(strVal)) return { isValid: false, errorMsg };
+              break;
+            case 'url':
+              const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+              if (!urlRegex.test(strVal)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 3. LENGTH RULES ---
+        else if (['max_char_count', 'min_char_count', 'length'].includes(rule)) {
+          const len = value.length;
+          switch (rule) {
+            case 'max_char_count':
+              if (val.value && len > parseInt(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'min_char_count':
+              if (val.value && len < parseInt(val.value)) return { isValid: false, errorMsg };
+              break;
+            case 'length':
+              if (val.min && len < parseInt(val.min)) return { isValid: false, errorMsg };
+              if (val.max && len > parseInt(val.max)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 4. REGULAR EXPRESSION RULES ---
+        else if (['contains', 'does_not_contain', 'matches', 'does_not_match', 'regex'].includes(rule)) {
+          const strVal = String(value);
+          const pattern = val.value || val.pattern;
+          if (pattern) {
+            try {
+              let finalPattern = pattern;
+              if (rule === 'matches' || rule === 'does_not_match') {
+                if (!finalPattern.startsWith('^')) finalPattern = '^' + finalPattern;
+                if (!finalPattern.endsWith('$')) finalPattern = finalPattern + '$';
+              }
+              const rx = new RegExp(finalPattern);
+              const isMatch = rx.test(strVal);
+
+              if ((rule === 'contains' || rule === 'matches' || rule === 'regex') && !isMatch) {
+                return { isValid: false, errorMsg };
+              }
+              if ((rule === 'does_not_contain' || rule === 'does_not_match') && isMatch) {
+                return { isValid: false, errorMsg };
+              }
+            } catch (e) {
+              console.error("Invalid regex pattern validation:", e);
+            }
+          }
+        }
+
+        // --- 5. CHECKBOX CHOICE LIMIT RULES ---
+        else if (['select_at_least', 'select_at_most', 'select_exactly', 'checkbox_limit'].includes(rule)) {
+          const count = parseInt(checkedCount || 0);
+          if (!field.required && count === 0) return { isValid: true };
+
+          const targetNum = val.value ? parseInt(val.value) : undefined;
+
+          switch (rule) {
+            case 'select_at_least':
+              if (targetNum !== undefined && count < targetNum) return { isValid: false, errorMsg };
+              break;
+            case 'select_at_most':
+              if (targetNum !== undefined && count > targetNum) return { isValid: false, errorMsg };
+              break;
+            case 'select_exactly':
+              if (targetNum !== undefined && count !== targetNum) return { isValid: false, errorMsg };
+              break;
+            case 'checkbox_limit':
+              if (val.min && count < parseInt(val.min)) return { isValid: false, errorMsg };
+              if (val.max && count > parseInt(val.max)) return { isValid: false, errorMsg };
+              break;
+          }
+        }
+
+        // --- 6. DATE RANGE RULES ---
+        else if (rule === 'date_range') {
+          const dateVal = new Date(value);
+          if (isNaN(dateVal.getTime())) return { isValid: false, errorMsg: 'Must be a valid date' };
+          if (val.min && dateVal < new Date(val.min)) return { isValid: false, errorMsg };
+          if (val.max && dateVal > new Date(val.max)) return { isValid: false, errorMsg };
+        }
+
+        return { isValid: true };
+      }
+
+      function showInlineError(fid, msg) {
+        const errorEl = document.getElementById(`error_${fid}`);
+        if (errorEl) {
+          $(errorEl).find('span').text(msg);
+          $(errorEl).show();
+        }
+      }
+
+      function clearInlineError(fid) {
+        const errorEl = document.getElementById(`error_${fid}`);
+        if (errorEl) {
+          $(errorEl).hide();
+        }
+      }
+
+      // Lets the user click a grid column header once to apply that answer to
+      // every row, instead of clicking each row individually — the main
+      // click-reduction for multi-day Accommodation/Food grids. For checkbox
+      // grids this toggles: if every row already has that column checked, it
+      // clears them all; otherwise it checks them all.
+      function applyNumberToAllRows(fieldId, colIndex, value) {
+        const cleanVal = (value === '' || value === null || value === undefined) ? '' : String(Math.max(0, parseInt(value, 10) || 0));
+        const inputs = document.querySelectorAll(`.grid-number-cell[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
+        inputs.forEach(input => {
+          input.value = cleanVal;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+
+      function applyColumnToAllRows(fieldId, colIndex, isRadio) {
+        const inputs = document.querySelectorAll(`input[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
+        if (inputs.length === 0) return;
+
+        if (isRadio) {
+          inputs.forEach(input => {
+            input.checked = true;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        } else {
+          const allChecked = Array.from(inputs).every(input => input.checked);
+          inputs.forEach(input => {
+            input.checked = !allChecked;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        }
+      }
+
+      function checkFieldValidation(group) {
+        const fid = $(group).data('field-id');
+        const field = formData.fields.find(f => f.id === fid);
+        if (!field) return { isValid: true };
+
+        const inputs = $(group).find('input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="tel"], select, textarea');
+
+        let answerVal = null;
+        let checkedCount = 0;
+        if (field.type === 'checkbox') {
+          const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+          answerVal = Array.from(checked).map(c => c.value);
+          checkedCount = checked.length;
+        } else if (field.type === 'radio') {
+          const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+          answerVal = selected ? selected.value : '';
+        } else if (field.type === 'grid_radio') {
+          if (field.dynamicRows === 'utsav' && field.noActiveUtsav && field.required) {
+            const errMsg = 'This section is unavailable because no upcoming event is currently configured.';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
+          const selectedCols = [];
+          let hasSelectionError = false;
+          let errMsg = '';
+          field.rows.forEach((r, ri) => {
+            const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+            if (field.required && !checked) {
+              hasSelectionError = true;
+              errMsg = `Please select an option for each row`;
+            }
+            if (checked) {
+              selectedCols.push(checked.value);
+            }
+          });
+
+          if (!hasSelectionError && field.limitOnePerColumn) {
+            const uniqueCols = new Set(selectedCols);
+            if (uniqueCols.size < selectedCols.length) {
+              hasSelectionError = true;
+              errMsg = `Please select a unique option per column (limit to one per column)`;
+            }
+          }
+          if (hasSelectionError) {
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          } else {
+            clearInlineError(field.id);
+            return { isValid: true };
+          }
+        } else if (field.type === 'grid_checkbox') {
+          if (field.dynamicRows === 'utsav' && field.noActiveUtsav && field.required) {
+            const errMsg = 'This section is unavailable because no upcoming event is currently configured.';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
+          let hasSelectionError = false;
+          let errMsg = '';
+          field.rows.forEach((r, ri) => {
+            const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+            if (field.required && checked.length === 0) {
+              hasSelectionError = true;
+              errMsg = `Please select at least one checkbox for each row`;
+            }
+          });
+          if (hasSelectionError) {
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          } else {
+            clearInlineError(field.id);
+            return { isValid: true };
+          }
+        } else if (field.type === 'grid_number') {
+          let hasEmpty = false;
+          let hasNegative = false;
+          (field.rows || []).forEach((r, ri) => {
+            (field.columns || []).forEach((c, ci) => {
+              const input = document.querySelector(`input[name="response_${field.id}_${ri}_${ci}"]`);
+              if (input) {
+                const val = input.value.trim();
+                if (val === '') {
+                  hasEmpty = true;
+                } else if (parseInt(val, 10) < 0) {
+                  hasNegative = true;
+                }
+              }
+            });
+          });
+
+          if (hasNegative) {
+            const errMsg = 'Counts cannot be negative';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
+          if (field.required && hasEmpty) {
+            const errMsg = 'Please enter a number for each date';
+            showInlineError(field.id, errMsg);
+            return { isValid: false, errorMsg: errMsg };
+          }
+          clearInlineError(field.id);
+          return { isValid: true };
+        } else if (isGuestListField(field)) {
+          const guestCapEl = document.getElementById('input_guest_capacity_count');
+          const count = guestCapEl ? parseInt(guestCapEl.value, 10) || 0 : 0;
+          if (count > 0) {
+            const container = document.getElementById(`guestListContainer_${field.id}`);
+            let missingOrInvalid = false;
+            let missingIndex = -1;
+            if (!container) {
+              missingOrInvalid = true;
+            } else {
+              for (let i = 0; i < count; i++) {
+                const card = document.getElementById(`guest_card_${field.id}_${i}`);
+                const mobInput = document.getElementById(`guest_mobno_${field.id}_${i}`);
+                const cardno = card ? card.dataset.cardno : '';
+                const val = mobInput ? mobInput.value.trim() : '';
+                if (!val || val.length !== 10 || !cardno) {
+                  missingOrInvalid = true;
+                  missingIndex = i + 1;
+                  if (mobInput) mobInput.style.borderColor = '#dc3545';
+                  break;
+                }
+              }
+            }
+
+            if (missingOrInvalid) {
+              const msg = missingIndex > 0 
+                ? `Please provide a verified mobile number for Guest #${missingIndex}` 
+                : `Please provide verified mobile numbers for all ${count} guest(s)`;
+              showInlineError(field.id, msg);
+              return { isValid: false, errorMsg: msg };
+            }
+          }
+          clearInlineError(field.id);
+          return { isValid: true };
+        } else {
+          const el = document.getElementById(`input_${field.id}`);
+          answerVal = el ? el.value.trim() : '';
+        }
+
+        // 1. Required Check
+        if (field.required) {
+          if (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0)) {
+            const msg = `This field is required`;
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+        } else {
+          // If not required and empty, skip rule validation
+          const isEmpty = (answerVal === '' || answerVal === null || answerVal === undefined || (Array.isArray(answerVal) && answerVal.length === 0));
+          if (isEmpty) {
+            clearInlineError(field.id);
+            inputs.css('border-color', '#ced4da');
+            return { isValid: true };
+          }
+        }
+
+        // Number min/max check
+        if (field.type === 'number' && answerVal !== '' && answerVal !== null && answerVal !== undefined) {
+          const num = parseFloat(answerVal);
+          if (isNaN(num)) {
+            const msg = 'Please enter a valid number';
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+          if (field.min !== undefined && field.min !== null && num < parseFloat(field.min)) {
+            const msg = `Value must be at least ${field.min}`;
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+          if (field.max !== undefined && field.max !== null && num > parseFloat(field.max)) {
+            const msg = `Value cannot exceed ${field.max}`;
+            showInlineError(field.id, msg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: msg };
+          }
+        }
+
+        // 2. Custom Rule Check
+        if (field.validation) {
+          const valCheck = validateFieldInput(field, answerVal, checkedCount);
+          if (!valCheck.isValid) {
+            showInlineError(field.id, valCheck.errorMsg);
+            inputs.css('border-color', '#dc3545');
+            return { isValid: false, errorMsg: valCheck.errorMsg };
+          }
+        }
+
+      // 3. Email Type Check
+      if (field.type === 'email' && answerVal) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(answerVal)) {
+          const msg = `Must be a valid email address`;
+          showInlineError(field.id, msg);
+          inputs.css('border-color', '#dc3545');
+          return { isValid: false, errorMsg: msg };
+        }
+      }
+
+      // 4. Phone Type Check
+      if (field.type === 'phone' && answerVal) {
+        const cleanNum = answerVal.replace(/\D/g, '');
+        if (cleanNum.length !== 10) {
+          const msg = `Must be a 10-digit phone number`;
+          showInlineError(field.id, msg);
+          inputs.css('border-color', '#dc3545');
+          return { isValid: false, errorMsg: msg };
+        }
+      }
+
+        // Date constraints check
+        if (field.type === 'date' && answerVal) {
+          const dateConstraints = field.dateConstraints;
+          if (dateConstraints) {
+            const chosenDate = new Date(answerVal);
+            const getLocalDateString = (d) => {
+              const year = d.getFullYear();
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            const chosenStr = getLocalDateString(chosenDate);
+            const today = new Date();
+            const todayStr = getLocalDateString(today);
+
+            let minDateStr = null;
+            if (dateConstraints.minType === 'today') {
+              minDateStr = todayStr;
+            } else if (dateConstraints.minType === 'tomorrow') {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              minDateStr = getLocalDateString(tomorrow);
+            } else if (dateConstraints.minType === 'fixed' && dateConstraints.minFixed) {
+              minDateStr = dateConstraints.minFixed;
+            }
+
+            // Once date settings exist for a field, never allow a date before today,
+            // regardless of the configured minType (including "no minimum" or a past fixed date).
+            if (!minDateStr || minDateStr < todayStr) {
+              minDateStr = todayStr;
+            }
+
+            if (minDateStr && chosenStr < minDateStr) {
+              const msg = `Date must be on or after ${minDateStr}`;
+              showInlineError(field.id, msg);
+              inputs.css('border-color', '#dc3545');
+              return { isValid: false, errorMsg: msg };
+            }
+
+            let maxDateStr = null;
+            if (dateConstraints.maxType === 'today') {
+              maxDateStr = todayStr;
+            } else if (dateConstraints.maxType === 'fixed' && dateConstraints.maxFixed) {
+              maxDateStr = dateConstraints.maxFixed;
+            }
+
+            if (maxDateStr && chosenStr > maxDateStr) {
+              const msg = `Date must be on or before ${maxDateStr}`;
+              showInlineError(field.id, msg);
+              inputs.css('border-color', '#dc3545');
+              return { isValid: false, errorMsg: msg };
+            }
+
+            if (dateConstraints.cutoffHour !== null && dateConstraints.cutoffHour !== undefined) {
+              const now = new Date();
+              const nowStr = getLocalDateString(now);
+              const cutoffDay = new Date(chosenStr);
+              cutoffDay.setDate(cutoffDay.getDate() - 1);
+              const cutoffDayStr = getLocalDateString(cutoffDay);
+
+              const currentHour = now.getHours();
+              if (nowStr > cutoffDayStr || (nowStr === cutoffDayStr && currentHour >= dateConstraints.cutoffHour)) {
+                const msg = `Booking/Selection for ${chosenStr} has closed (Cutoff was ${dateConstraints.cutoffHour}:00 of previous day)`;
+                showInlineError(field.id, msg);
+                inputs.css('border-color', '#dc3545');
+                return { isValid: false, errorMsg: msg };
+              }
+            }
+          }
+        }
+
+        // Valid
+        clearInlineError(field.id);
+        inputs.css('border-color', '#ced4da');
+        return { isValid: true };
+      }
+
+      let isOtpVerified = urlParams.get('responseId') ? true : false;
+      let lastCheckedAuthVal = '';
+      let lookupTimeout = null;
+      window.isAuthVerified = false;
+      window.previousResponseId = null;
+      window.lastAuthErrorMessage = '';
+
+      // ── Date helpers for grid pre-fill and past-date locking ──────────
+      function normalizeDateLabel(dateKey) {
+        if (!dateKey) return null;
+        const trimmed = String(dateKey).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+        const match = trimmed.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)(?:\s+(\d{4}))?$/i);
+        if (match) {
+          const day = String(parseInt(match[1], 10)).padStart(2, '0');
+          const monthName = match[2].toLowerCase().substring(0, 3);
+          const year = match[3] || new Date().getFullYear();
+          const months = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+          const m = months[monthName];
+          if (m) return `${year}-${m}-${day}`;
+        }
+        return null;
+      }
+
+      function getTodayIST() {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      }
+
+      function disablePastDateRows() {
+        const today = getTodayIST();
+        document.querySelectorAll('.grid-table tbody tr').forEach(tr => {
+          const rowLabel = tr.querySelector('td')?.textContent?.trim();
+          if (!rowLabel) return;
+          const normalized = normalizeDateLabel(rowLabel);
+          if (normalized && normalized < today) {
+            tr.style.opacity = '0.5';
+            tr.style.pointerEvents = 'none';
+            tr.querySelectorAll('input').forEach(inp => { inp.disabled = true; });
+            const firstTd = tr.querySelector('td');
+            if (firstTd && !firstTd.textContent.includes('(Past)')) {
+              firstTd.innerHTML += ' <span style="font-size:0.75rem; color:#6c757d; font-weight:400;">(Past)</span>';
+            }
+          }
+        });
+      }
+
+      function prefillPreviousResponse(prevData) {
+        const prevResponses = prevData.responses || {};
+        const submittedDate = prevData.submittedAt ? new Date(prevData.submittedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+        // Show warning banner
+        const currentPageIdx = window.currentPageIdx || 0;
+        const alertContainer = document.getElementById(`formAlert_${currentPageIdx}`);
+        if (alertContainer) {
+          alertContainer.className = 'alert-warning';
+          let bannerMsg = `<i class="fas fa-info-circle"></i> You submitted earlier${submittedDate ? ' on ' + submittedDate : ''}. Your previous choices are shown below. You can update future dates only.`;
+          if (prevData.department && prevData.submittedByName) {
+            bannerMsg = `<i class="fas fa-info-circle"></i> Showing submission for <strong>${escapeHtml(prevData.department)}</strong> department (last updated by <strong>${escapeHtml(prevData.submittedByName)}</strong>${submittedDate ? ' on ' + submittedDate : ''}). Your choices are shown below. You can update future dates only.`;
+          } else if (prevData.flatno && prevData.submittedByName) {
+            bannerMsg = `<i class="fas fa-info-circle"></i> Showing submission for <strong>Flat ${escapeHtml(prevData.flatno)}</strong> (last updated by <strong>${escapeHtml(prevData.submittedByName)}</strong>${submittedDate ? ' on ' + submittedDate : ''}). Your choices are shown below.`;
+          }
+          alertContainer.innerHTML = bannerMsg;
+          alertContainer.style.display = 'block';
+          alertContainer.style.background = '#fff3cd';
+          alertContainer.style.color = '#856404';
+          alertContainer.style.border = '1px solid #ffeeba';
+          alertContainer.style.borderRadius = '6px';
+          alertContainer.style.padding = '0.75rem 1rem';
+          alertContainer.style.marginBottom = '1rem';
+          alertContainer.style.fontWeight = '600';
+          alertContainer.style.fontSize = '0.9rem';
+        }
+
+        // Pre-fill all fields (grid_number, grid_radio, select, text, rating, etc.)
+        populateAnswers(prevResponses);
+
+        // Disable past date rows
+        disablePastDateRows();
+      }
+
+      
+      // Switch pre-fill when department changes for multi-department heads
+      async function handleDepartmentChange(deptVal) {
+        if (!formData || !deptVal) return;
+        const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+        if (!authInput) return;
+        const val = authInput.value.trim();
+        const type = authInput.id === 'input_mobno' ? 'mobno' : 'cardno';
+
+        try {
+          const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}&department=${encodeURIComponent(deptVal)}`);
+          const prevData = await prevRes.json();
+          if (prevData.success && prevData.data) {
+            window.previousResponseId = prevData.data.responseId;
+            prefillPreviousResponse(prevData.data);
+          } else {
+            window.previousResponseId = null;
+            resetGridInputs();
+            const currentPageIdx = window.currentPageIdx || 0;
+            const alertContainer = document.getElementById(`formAlert_${currentPageIdx}`);
+            if (alertContainer) alertContainer.style.display = 'none';
+            disablePastDateRows();
+          }
+        } catch (err) {
+          console.warn('Error fetching response for department:', err);
+        }
+      }
+
+      function resetGridInputs() {
+        document.querySelectorAll('.grid-table tbody input[type="number"]').forEach(inp => {
+          if (!inp.disabled) inp.value = '0';
+        });
+        document.querySelectorAll('.grid-table tbody input[type="radio"], .grid-table tbody input[type="checkbox"]').forEach(inp => {
+          if (!inp.disabled) inp.checked = false;
+        });
+      }
+
+      async function performAuthLookup(inputEl) {
+        if (!inputEl) return false;
+        const id = $(inputEl).attr('id');
+        const val = inputEl.value.trim();
+        const isMob = id === 'input_mobno';
+        const errorId = isMob ? 'mobno' : 'cardno';
+        const infoEl = document.getElementById(`info_${errorId}`);
+
+        if (!val) {
+          if (infoEl) infoEl.innerHTML = `<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> ${isMob ? 'Mobile Number' : 'Card Number'} is required</span>`;
+          $(inputEl).css('border-color', '#dc3545');
+          window.isAuthVerified = false;
+          window.lastAuthErrorMessage = `${isMob ? 'Mobile Number' : 'Card Number'} is required`;
+          return false;
+        }
+
+        if (isMob) {
+          const clean = val.replace(/\D/g, '');
+          if (clean.length !== 10) {
+            if (infoEl) infoEl.innerHTML = '<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> Mobile Number must be 10 digits</span>';
+            $(inputEl).css('border-color', '#dc3545');
+            window.isAuthVerified = false;
+            window.lastAuthErrorMessage = 'Mobile Number must be 10 digits';
+            return false;
+          }
+        }
+
+        if (infoEl) {
+          infoEl.innerHTML = '<span style="color:#6c757d;"><i class="fas fa-spinner fa-spin"></i> Checking registration...</span>';
+        }
+
+        try {
+          const type = isMob ? 'mobno' : 'cardno';
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=${type}&value=${encodeURIComponent(val)}&formId=${formData.id}`);
+          const data = await res.json();
+          
+          window.isAuthVerified = data.success;
+          window.lastAuthErrorMessage = data.message || '';
+
+          if (data.success) {
+            $(inputEl).css('border-color', '#28a745');
+            if (infoEl) {
+              infoEl.innerHTML = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
+            }
+
+            const deptField = (formData.fields || []).find(f => f.vendorRole === 'department' || f.id === 'name_of_department' || (f.label || '').toLowerCase().includes('department'));
+            if (deptField) {
+              const deptEl = document.getElementById(`input_${deptField.id}`);
+              if (deptEl && !deptEl.dataset.hasDeptListener) {
+                deptEl.dataset.hasDeptListener = 'true';
+                deptEl.addEventListener('change', (e) => {
+                  handleDepartmentChange(e.target.value);
+                });
+              }
+              if (data.data.department && deptEl && !deptEl.value) {
+                deptEl.value = data.data.department;
+              }
+            }
+
+            // Auto-populate Tapp / Tapascharya details
+            const tappField = (formData.fields || []).find(f => 
+              f.id === 'tapp_details' || f.id === 'tapp' || f.id === 'tapascharya' ||
+              (f.label && (f.label.toLowerCase().includes('tapp') || f.label.toLowerCase().includes('tapascharya') || f.label.toLowerCase().includes('fasting')))
+            );
+
+            if (tappField) {
+              const tappEl = document.getElementById(`input_${tappField.id}`);
+              if (data.data.tapp_details && tappEl && (!tappEl.value || tappEl.value.trim() === '')) {
+                tappEl.value = data.data.tapp_details;
+              }
+              if (tappEl && !tappEl.dataset.hasTappListener) {
+                tappEl.dataset.hasTappListener = 'true';
+                tappEl.addEventListener('input', (e) => {
+                  updatePaarnaEligibilityBadge(tappField.id, e.target.value, null);
+                });
+              }
+              updatePaarnaEligibilityBadge(tappField.id, tappEl ? tappEl.value : data.data.tapp_details, data.data.is_paarna_eligible);
+            }
+
+            if (data.data.tapp_details && infoEl) {
+              infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-utensils"></i> Tapascharya: ${escapeHtml(data.data.tapp_details)}</div>`;
+            }
+      function evaluatePaarnaEligibility(tappText, isServerEligible) {
+        if (isServerEligible === true) return true;
+        if (!tappText || typeof tappText !== 'string') return false;
+
+        const clean = tappText.toLowerCase().trim();
+        if (!clean) return false;
+
+        // Keywords for guaranteed eligibility
+        if (clean.includes('athai') || clean.includes('tevle') || clean.includes('8 upvaas') || clean.includes('8 upvas') || clean.includes('8 ekasna') || clean.includes('8 beasna') || clean.includes('8 biyasna') || clean.includes('8 aayambil') || clean.includes('8 liquid') || clean.includes('8 only liquid') || clean.includes('8 ras tyaag')) {
+          return true;
+        }
+
+        // Sum numbers in text: e.g. "6 upvaas, 2 ekasna" -> 6 + 2 = 8
+        const nums = clean.match(/\d+/g);
+        if (nums && nums.length > 0) {
+          const sum = nums.reduce((acc, n) => acc + parseInt(n, 10), 0);
+          if (sum >= 8) return true;
+        }
+
+        return false;
+      }
+
+      function updatePaarnaEligibilityBadge(fieldId, tappVal, isServerEligible) {
+        const isPaarnaForm = formData && ((formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna'));
+        if (!isPaarnaForm) return;
+
+        const tappEl = document.getElementById(`input_${fieldId}`);
+        if (!tappEl) return;
+
+        let badgeEl = document.getElementById('paarna_eligibility_badge');
+        if (!badgeEl) {
+          badgeEl = document.createElement('div');
+          badgeEl.id = 'paarna_eligibility_badge';
+          tappEl.parentElement.appendChild(badgeEl);
+        }
+
+        const isEligible = evaluatePaarnaEligibility(tappVal, isServerEligible);
+        window.isPaarnaEligible = isEligible;
+
+        if (isEligible) {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.45rem;">
+              <i class="fas fa-check-circle" style="font-size:1.05rem; color:#28a745;"></i>
+              <span>Eligible for Paarna at Research Centre (Confirmed)</span>
+            </div>
+          `;
+        } else {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#fff8e6; border:1px solid #ffe8a1; border-radius:6px; color:#856404; font-size:0.85rem; font-weight:600; display:flex; align-items:flex-start; gap:0.45rem;">
+              <i class="fas fa-info-circle" style="font-size:1.05rem; color:#f0ad4e; margin-top:2px;"></i>
+              <span>Note: Your Paarna request will be reviewed and confirmed by the seva team.</span>
+            </div>
+          `;
+        }
+      }
+
+
+            // Auto-populate Name field if present in form
+            if (data.data.name) {
+              const nameField = (formData.fields || []).find(f => 
+                f.id === 'name' || f.id === 'full_name' || f.id === 'participant_name' ||
+                (f.label && (f.label.toLowerCase() === 'name' || f.label.toLowerCase() === 'full name' || f.label.toLowerCase() === 'participant name' || f.label.toLowerCase().includes('name of participant')))
+              );
+              if (nameField) {
+                const nameEl = document.getElementById(`input_${nameField.id}`);
+                if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
+                  nameEl.value = data.data.name;
+                }
+              }
+            }
+
+            // Auto-populate flat info for Flat Host forms
+            if (data.data.flatno) {
+              const flatEl = document.getElementById('input_flatno');
+              if (flatEl) {
+                flatEl.value = data.data.flatno;
+                flatEl.readOnly = true;
+                flatEl.style.backgroundColor = '#e9ecef';
+              }
+              const resCountEl = document.getElementById('input_permanent_residents_count');
+              if (resCountEl) {
+                resCountEl.value = data.data.confirmed_residents_count !== undefined ? data.data.confirmed_residents_count : 1;
+                resCountEl.readOnly = true;
+                resCountEl.style.backgroundColor = '#e9ecef';
+              }
+              if (infoEl) {
+                infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-building"></i> Flat No: ${escapeHtml(data.data.flatno)} • ${data.data.confirmed_residents_count} Confirmed Resident(s) Attending</div>`;
+              }
+            }
+
+            // Attach listener to guest capacity field if present
+            const guestCapEl = document.getElementById('input_guest_capacity_count');
+            if (guestCapEl && !guestCapEl.dataset.hasCapListener) {
+              guestCapEl.dataset.hasCapListener = 'true';
+              guestCapEl.addEventListener('input', (e) => {
+                updateGuestListInputs(e.target.value, 'guests_list');
+              });
+              guestCapEl.addEventListener('change', (e) => {
+                updateGuestListInputs(e.target.value, 'guests_list');
+              });
+            }
+
+            // Fetch previous response to pre-fill form and disable past dates (ONLY once per unique auth input, not on submit re-validation)
+            if (window.lastPrefilledAuthValue !== val) {
+              window.lastPrefilledAuthValue = val;
+              try {
+                const flatnoParam = data.data.flatno ? `&flatno=${encodeURIComponent(data.data.flatno)}` : '';
+                const deptParam = data.data.department ? `&department=${encodeURIComponent(data.data.department)}` : '';
+                const prevRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formData.id}/my-response?type=${type}&value=${encodeURIComponent(val)}${flatnoParam}${deptParam}`);
+                const prevData = await prevRes.json();
+                if (prevData.success && prevData.data) {
+                  window.previousResponseId = prevData.data.responseId;
+                  prefillPreviousResponse(prevData.data);
+                } else {
+                  window.previousResponseId = null;
+                  disablePastDateRows();
+                }
+              } catch (prevErr) {
+                console.warn('Could not fetch previous response:', prevErr);
+                disablePastDateRows();
+              }
+            }
+
+            return true;
+          } else {
+            $(inputEl).css('border-color', '#dc3545');
+            if (infoEl) {
+              infoEl.innerHTML = `<span style="color:#dc3545; font-weight:600;"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.message || 'Not registered')}</span>`;
+            }
+            return false;
+          }
+        } catch (err) {
+          console.error('Error checking registration:', err);
+          if (infoEl) infoEl.innerHTML = '';
+          return false;
+        }
+      }
+
+      function checkAuthInputValidation(inputEl) {
+        clearTimeout(lookupTimeout);
+        lookupTimeout = setTimeout(() => {
+          performAuthLookup(inputEl);
+        }, 200);
+        return true;
+      }
+
+      async function validateAndGoToPage(from, to) {
+        const pageContainer = document.getElementById(`formPage_${from}`);
+        
+        let isValid = true;
+        let firstInvalidMsg = '';
+
+        if (from === 0 && !formData.isPublic) {
+          const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+          if (authInput) {
+            const authOk = await performAuthLookup(authInput);
+            if (!authOk || window.isAuthVerified === false) {
+              isValid = false;
+              firstInvalidMsg = window.lastAuthErrorMessage || (document.getElementById('input_mobno') ? 'Please enter a valid registered mobile number' : 'Please enter a valid card number');
+            } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
+              isValid = false;
+              firstInvalidMsg = 'Please verify your mobile number using OTP first';
+            }
+          }
+        }
+
+        const visibleGroups = $(pageContainer).find('.field-group:visible');
+        visibleGroups.each(function() {
+          const check = checkFieldValidation(this);
+          if (!check.isValid) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = check.errorMsg;
+          }
+        });
+
+        if (!isValid) {
+          showFormAlertOnPage(from, firstInvalidMsg || 'Please correct the errors in the form', 'danger');
+          return;
+        }
+
+        // Clear general alert if valid
+        const alert = document.getElementById(`formAlert_${from}`);
+        if (alert) alert.style.display = 'none';
+
+        goToPage(to);
+      }
+
+      function showFormAlertOnPage(pageIdx, msg, type) {
+        const alert = document.getElementById(`formAlert_${pageIdx}`);
+        if (!alert) return;
+        alert.className = `alert-${type}`;
+        alert.textContent = msg;
+        alert.style.display = 'block';
+        window.scrollTo({ top: alert.offsetTop - 50, behavior: 'smooth' });
+      }
+
+      function renderField(field) {
+        const requiredMark = field.required ? '<span class="required">*</span>' : '';
+        const requiredAttr = field.required ? 'required' : '';
+        const inputId = `input_${field.id}`;
+        let inputHtml = '';
+
+        if (isGuestListField(field)) {
+          inputHtml = `
+            <div id="guestListWrapper_${field.id}" style="margin-top: 0.5rem;">
+              <div id="guestListContainer_${field.id}">
+                <!-- Dynamic Guest inputs -->
+              </div>
+              <div id="noGuestsNotice_${field.id}" style="padding: 0.85rem 1rem; background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 8px; color: #6c757d; font-size: 0.88rem; text-align: center;">
+                <i class="fas fa-user-friends"></i> Select number of guests above to list guest mobile numbers.
+              </div>
+            </div>
+          `;
+        } else if (isGuestCapacityField(field)) {
+          const maxCap = field.max !== undefined && field.max !== null ? parseInt(field.max, 10) : 6;
+          let pillsHtml = '';
+          for (let i = 0; i <= maxCap; i++) {
+            pillsHtml += `<button type="button" class="btn btn-outline-secondary btn-cap-pill" data-cap-val="${i}" onclick="selectGuestCapPill('${field.id}', ${i}, this)" style="min-width: 48px; height: 42px; font-weight: 700; border-radius: 8px; font-size: 1rem; border: 1.5px solid #ced4da; transition: all 0.2s; background: #fff; color: #204060; margin-right: 6px; margin-bottom: 6px;">${i}</button>`;
+          }
+          inputHtml = `
+            <input type="hidden" id="${inputId}" value="0" ${requiredAttr} />
+            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px;">
+              ${pillsHtml}
+            </div>
+          `;
+        } else if (field.type === 'text') {
+          inputHtml = `<input type="text" id="${inputId}" placeholder="Your answer" data-word-limit="20" maxlength="200" ${requiredAttr} />`;
+        } else if (field.type === 'textarea') {
+          inputHtml = `<textarea id="${inputId}" rows="4" placeholder="Your answer" ${requiredAttr}></textarea>`;
+        } else if (field.type === 'email') {
+          inputHtml = `<input type="email" id="${inputId}" placeholder="Your email address" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+        } else if (field.type === 'phone') {
+          inputHtml = `<input type="tel" id="${inputId}" placeholder="10-digit mobile number" maxlength="10" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+        } else if (field.type === 'number') {
+          const minAttr = field.min !== undefined && field.min !== null ? `min="${field.min}"` : '';
+          const maxAttr = field.max !== undefined && field.max !== null ? `max="${field.max}"` : '';
+          const maxVal = field.max !== undefined && field.max !== null ? parseFloat(field.max) : null;
+          const minVal = field.min !== undefined && field.min !== null ? parseFloat(field.min) : 0;
+          const onInputHandler = maxVal !== null ? `oninput="if(this.value !== '' && parseFloat(this.value) > ${maxVal}) this.value = ${maxVal}; if(this.value !== '' && parseFloat(this.value) < ${minVal}) this.value = ${minVal};"` : '';
+          inputHtml = `<input type="number" id="${inputId}" placeholder="Your answer" ${minAttr} ${maxAttr} ${onInputHandler} ${requiredAttr} style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem;" />`;
+        } else if (field.type === 'date') {
+          let minAttr = '';
+          let maxAttr = '';
+          if (field.dateConstraints) {
+            const today = new Date();
+            const getLocalDateString = (d) => {
+              const year = d.getFullYear();
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            const todayStr = getLocalDateString(today);
+            let computedMin = null;
+            if (field.dateConstraints.minType === 'today') {
+              computedMin = todayStr;
+            } else if (field.dateConstraints.minType === 'tomorrow') {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              computedMin = getLocalDateString(tomorrow);
+            } else if (field.dateConstraints.minType === 'fixed' && field.dateConstraints.minFixed) {
+              computedMin = field.dateConstraints.minFixed;
+            }
+            if (!computedMin || computedMin < todayStr) {
+              computedMin = todayStr;
+            }
+            minAttr = `min="${computedMin}"`;
+
+            if (field.dateConstraints.maxType === 'today') {
+              maxAttr = `max="${todayStr}"`;
+            } else if (field.dateConstraints.maxType === 'fixed' && field.dateConstraints.maxFixed) {
+              maxAttr = `max="${field.dateConstraints.maxFixed}"`;
+            }
+          }
+          inputHtml = `<input type="date" id="${inputId}" ${minAttr} ${maxAttr} ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+        } else if (field.type === 'time') {
+          inputHtml = `<input type="time" id="${inputId}" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+        } else if (field.type === 'rating') {
+          inputHtml = `
+            <div class="star-rating" data-id="${field.id}">
+              <span class="star" data-val="1">★</span>
+              <span class="star" data-val="2">★</span>
+              <span class="star" data-val="3">★</span>
+              <span class="star" data-val="4">★</span>
+              <span class="star" data-val="5">★</span>
+              <input type="hidden" id="${inputId}" class="input-rating-val" ${requiredAttr} />
+            </div>
+          `;
+        } else if (field.type === 'select') {
+          const options = field.options || [];
+          inputHtml = `
+            <select id="${inputId}" ${requiredAttr}>
+              <option value="">-- Choose Option --</option>
+              ${options.map(opt => `<option value="${escapeAttr(opt)}">${escapeHtml(opt)}</option>`).join('')}
+            </select>
+          `;
+        } else if (field.type === 'radio') {
+          const options = field.options || [];
+          inputHtml = options.map((opt, oi) => `
+            <div class="option-item">
+              <input type="radio" name="${field.id}" id="${inputId}_${oi}" value="${escapeAttr(opt)}" ${requiredAttr} />
+              <label for="${inputId}_${oi}">${escapeHtml(opt)}</label>
+            </div>
+          `).join('');
+        } else if (field.type === 'checkbox') {
+          const options = field.options || [];
+          inputHtml = options.map((opt, oi) => `
+            <div class="option-item">
+              <input type="checkbox" name="${field.id}" id="${inputId}_${oi}" value="${escapeAttr(opt)}" />
+              <label for="${inputId}_${oi}">${escapeHtml(opt)}</label>
+            </div>
+          `).join('');
+        } else if (field.type === 'grid_radio' || field.type === 'grid_checkbox') {
+          const rows = field.rows || [];
+          const cols = field.columns || [];
+          const isRadio = field.type === 'grid_radio';
+
+          if (field.dynamicRows === 'utsav' && field.noActiveUtsav) {
+            inputHtml = `
+              <div class="dynamic-grid-unavailable" style="background:#fff3cd; border:1px solid #ffeeba; color:#856404; border-radius:6px; padding:0.75rem 1rem; font-size:0.9rem;">
+                <i class="fas fa-exclamation-triangle"></i> No upcoming event is currently configured, so this section can't be filled out yet. Please check back later.
+              </div>
+            `;
+          } else {
+            const showQuickfill = rows.length > 1;
+            let tableHtml = `
+              <div style="overflow-x: auto;">
+                <table class="grid-table">
+                  <thead>
+                    <tr>
+                      <th>Row</th>
+                      ${cols.map((c, ci) => showQuickfill
+                        ? `<th class="grid-col-quickfill" onclick="applyColumnToAllRows('${field.id}', ${ci}, ${isRadio})" title="Apply '${escapeAttr(c)}' to every row">${escapeHtml(c)}<span class="grid-col-quickfill-hint"><i class="fas fa-check-double"></i> Apply to all</span></th>`
+                        : `<th>${escapeHtml(c)}</th>`
+                      ).join('')}
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
+
+            rows.forEach((r, ri) => {
+              tableHtml += `
+                <tr>
+                  <td>${escapeHtml(r)}</td>
+                  ${cols.map((c, ci) => `
+                    <td>
+                      <input type="${isRadio ? 'radio' : 'checkbox'}"
+                        name="response_${field.id}_${ri}"
+                        value="${escapeAttr(c)}"
+                        class="grid-input"
+                        data-field-id="${field.id}"
+                        data-row-index="${ri}"
+                        data-col-index="${ci}" />
+                    </td>
+                  `).join('')}
+                </tr>
+              `;
+            });
+
+            tableHtml += `
+                  </tbody>
+                </table>
+              </div>
+            `;
+            inputHtml = tableHtml;
+          }
+        } else if (field.type === 'grid_number') {
+          const rows = field.rows || [];
+          const cols = field.columns || [];
+          const showQuickfill = rows.length > 1;
+
+          let tableHtml = `
+            <div style="overflow-x: auto; margin-top: 0.5rem; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); background: #fff;">
+              <table class="grid-table matrix-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background: #f1f4f8; border-bottom: 2px solid #ced4da;">
+                    <th style="padding: 0.5rem 0.5rem; text-align: left; font-weight: 700; color: #204060; font-size: 0.85rem;">Date</th>
+                    ${cols.map((c, ci) => `
+                      <th style="padding: 0.5rem 0.35rem; text-align: center; font-weight: 700; color: #204060; border-left: 1px solid #e9ecef;">
+                        <div style="font-size: 0.85rem; margin-bottom: 0.25rem;">${escapeHtml(c)}</div>
+                        ${showQuickfill ? `
+                          <div style="display: flex; align-items: center; justify-content: center;">
+                            <input type="number"
+                              min="0"
+                              step="1"
+                              placeholder="Set all"
+                              title="Set count for all dates in ${escapeAttr(c)}"
+                              oninput="applyNumberToAllRows('${field.id}', ${ci}, this.value)"
+                              style="width: 100%; max-width: 68px; height: 28px; padding: 0.2rem 0.3rem; font-size: 0.78rem; font-weight: 600; text-align: center; border: 1px dashed #204060; border-radius: 4px; background: #fff; color: #204060; box-sizing: border-box;" />
+                          </div>
+                        ` : ''}
+                      </th>
+                    `).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          rows.forEach((r, ri) => {
+            const isAlt = ri % 2 === 1;
+            tableHtml += `
+              <tr style="background: ${isAlt ? '#fbfcfe' : '#fff'}; border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 0.45rem 0.5rem; font-weight: 600; color: #204060; font-size: 0.85rem; white-space: nowrap;">${escapeHtml(r)}</td>
+                ${cols.map((c, ci) => `
+                  <td style="padding: 0.35rem 0.25rem; text-align: center; border-left: 1px solid #f0f0f0;">
+                    <input type="number"
+                      min="0"
+                      step="1"
+                      name="response_${field.id}_${ri}_${ci}"
+                      id="input_${field.id}_${ri}_${ci}"
+                      data-field-id="${field.id}"
+                      data-row-index="${ri}"
+                      data-col-index="${ci}"
+                      data-row="${escapeAttr(r)}"
+                      data-col="${escapeAttr(c)}"
+                      placeholder="0"
+                      value="0"
+                      class="grid-number-cell"
+                      style="width: 100%; max-width: 62px; padding: 0.35rem 0.2rem; text-align: center; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9rem; font-weight: 600; color: #204060; background: #fff;" />
+                  </td>
+                `).join('')}
+              </tr>
+            `;
+          });
+
+          tableHtml += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          inputHtml = tableHtml;
+        }
+
+        return `
+          <div class="field-group" data-field-id="${field.id}">
+            <label for="${inputId}" style="margin-bottom:0.25rem;">${renderRichText(field.label)} ${requiredMark}</label>
+            ${field.description ? `<p style="font-size:0.8rem; color:#6c757d; margin-top:-0.15rem; margin-bottom:0.5rem; font-weight:400; line-height:1.4;">${renderRichText(field.description)}</p>` : ''}
+            ${inputHtml}
+            ${field.type === 'text' && !isGuestListField(field) ? `<div class="word-count-hint" id="wordCount_${field.id}" style="font-size:0.78rem; color:#6c757d; margin-top:0.3rem; text-align:right;">0/20 words</div>` : ''}
+            <div class="inline-error-msg" id="error_${field.id}" style="color: #dc3545; font-size: 0.82rem; margin-top: 0.35rem; display: none; font-weight: 500;"><i class="fas fa-exclamation-circle"></i> <span></span></div>
+          </div>
+        `;
+      }
+
+      function initStarRatings() {
+        $('.star-rating .star').on('click', function() {
+          const val = $(this).data('val');
+          const parent = $(this).parent();
+          parent.find('.input-rating-val').val(val).trigger('change');
+          
+          parent.find('.star').removeClass('selected');
+          $(this).addClass('selected').prevAll().addClass('selected');
+        });
+
+        $('.star-rating .star').on('mouseenter', function() {
+          $(this).addClass('hovered').prevAll().addClass('hovered');
+        }).on('mouseleave', function() {
+          $(this).parent().find('.star').removeClass('hovered');
+        });
+      }
+
+      function evaluateLogic() {
+        if (!formData || !formData.fields) return;
+
+        formData.fields.forEach(field => {
+          let hasLogic = false;
+          let show = true;
+
+          // Support conditions array format
+          if (field.conditions && Array.isArray(field.conditions) && field.conditions.length > 0) {
+            hasLogic = true;
+            show = field.conditions.every(cond => {
+              const depField = formData.fields.find(f => f.id === cond.fieldId);
+              if (!depField) return true;
+              
+              const currentVal = getFieldValue(depField);
+              const targetVal = cond.value;
+              const op = cond.operator || 'equals';
+
+              if (op === 'equals') {
+                if (Array.isArray(currentVal)) return currentVal.includes(targetVal);
+                return String(currentVal) === String(targetVal);
+              } else if (op === 'not_equals') {
+                if (Array.isArray(currentVal)) return !currentVal.includes(targetVal);
+                return String(currentVal) !== String(targetVal);
+              } else if (op === 'contains') {
+                const currentStr = Array.isArray(currentVal) ? currentVal.join(',') : String(currentVal);
+                return currentStr.toLowerCase().includes(targetVal.toLowerCase());
+              }
+              return true;
+            });
+          } 
+          // Backward compatibility for old single condition logic format
+          else if (field.logic) {
+            hasLogic = true;
+            const dependsOn = field.logic.dependsOn;
+            const targetVal = field.logic.value;
+            const op = field.logic.operator || 'equals';
+            const depField = formData.fields.find(f => f.id === dependsOn);
+
+            if (depField) {
+              const currentVal = getFieldValue(depField);
+              if (op === 'equals') {
+                if (Array.isArray(currentVal)) show = currentVal.includes(targetVal);
+                else show = String(currentVal) === String(targetVal);
+              } else if (op === 'not_equals') {
+                if (Array.isArray(currentVal)) show = !currentVal.includes(targetVal);
+                else show = String(currentVal) !== String(targetVal);
+              } else if (op === 'contains') {
+                const currentStr = Array.isArray(currentVal) ? currentVal.join(',') : String(currentVal);
+                show = currentStr.toLowerCase().includes(targetVal.toLowerCase());
+              }
+            } else {
+              show = true;
+            }
+          }
+
+          if (hasLogic) {
+            const group = $(`.field-group[data-field-id="${field.id}"]`);
+          const pageContainer = group.closest('.form-page');
+          const pageIdx = pageContainer.length > 0 ? parseInt(pageContainer.attr('id').split('_')[1]) : 0;
+          const isOnActivePage = (pageIdx === window.currentPageIdx);
+
+            if (show) {
+            group.removeClass('conditional-hidden');
+            if (isOnActivePage) {
+              if (group.css('display') === 'none') {
+                group.slideDown(250);
+              }
+            } else {
+              group.css('display', '');
+            }
+          } else {
+            group.addClass('conditional-hidden');
+            if (isOnActivePage) {
+              if (group.css('display') !== 'none') {
+                group.slideUp(250, function() {
+                  clearFieldValue(field);
+                });
+              } else {
+                clearFieldValue(field);
+              }
+            } else {
+              group.css('display', 'none');
+              clearFieldValue(field);
+              }
+            }
+          }
+        });
+      }
+
+      function getFieldValue(field) {
+        const inputId = `input_${field.id}`;
+        if (field.type === 'checkbox') {
+          const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+          return Array.from(checked).map(c => c.value);
+        } else if (field.type === 'radio') {
+          const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+          return selected ? selected.value : '';
+        } else {
+          const el = document.getElementById(inputId);
+          return el ? el.value : '';
+        }
+      }
+
+      function clearFieldValue(field) {
+        const inputId = `input_${field.id}`;
+        if (field.type === 'checkbox' || field.type === 'radio') {
+        $(`input[name="${field.id}"]`).prop('checked', false);
+        } else if (field.type === 'rating') {
+        $(`#${inputId}`).val('');
+          $(`.star-rating[data-id="${field.id}"] .star`).removeClass('selected');
+        } else if (field.type === 'grid_radio' || field.type === 'grid_checkbox') {
+          $(`input[name^="response_${field.id}_"]`).prop('checked', false);
+        } else {
+        $(`#${inputId}`).val('');
+        }
+      }
+
+      $(document).on('keydown', 'input[data-word-limit]', function(e) {
+        // Once the word limit is reached: block whitespace (which would start
+        // a new word), and let the user keep typing the word they're already
+        // on, but only up to a sane length — otherwise holding a key down
+        // lets a single "word" grow forever even though the count stays
+        // at the cap.
+        if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) {
+          return;
+        }
+        const hasSelection = this.selectionStart !== this.selectionEnd;
+        if (hasSelection) {
+          return;
+        }
+        const maxWords = parseInt($(this).attr('data-word-limit'), 10);
+        const words = this.value.split(/\s+/).filter(Boolean);
+        const currentWords = words.length;
+        if (currentWords < maxWords) {
+          return;
+        }
+
+        const isWhitespace = /\s/.test(e.key);
+        if (isWhitespace) {
+          e.preventDefault();
+          return;
+        }
+
+        const MAX_LAST_WORD_LENGTH = 25;
+        const lastWord = words[words.length - 1] || '';
+        if (lastWord.length >= MAX_LAST_WORD_LENGTH) {
+          e.preventDefault();
+        }
+      });
+
+      $(document).on('input', 'input[data-word-limit]', function() {
+        const maxWords = parseInt($(this).attr('data-word-limit'), 10);
+        const words = this.value.split(/\s+/).filter(Boolean);
+        if (words.length > maxWords) {
+          this.value = words.slice(0, maxWords).join(' ');
+        }
+
+        const fieldId = $(this).closest('.field-group').data('field-id');
+        const countEl = document.getElementById(`wordCount_${fieldId}`);
+        if (countEl) {
+          const currentCount = this.value.split(/\s+/).filter(Boolean).length;
+          countEl.textContent = `${currentCount}/${maxWords} words`;
+          countEl.style.color = currentCount >= maxWords ? '#dc3545' : '#6c757d';
+        }
+      });
+
+      $(document).on('change input blur', 'input, select, textarea', function() {
+        // The save-progress/email-copy checkboxes and emails are meta-controls,
+        // not form answers — they have their own dedicated handlers below and
+        // must never themselves trigger an autosave of (possibly still-empty)
+        // form fields.
+        const elId = $(this).attr('id');
+        if (elId === 'saveProgressEmail' || elId === 'saveProgressToggle' ||
+            elId === 'emailCopyEmail' || elId === 'emailCopyToggle') return;
+
+        // Find the parent field group
+        const group = $(this).closest('.field-group');
+        if (group.length > 0) {
+          checkFieldValidation(group[0]);
+        }
+        
+        // Also check if it's the auth section input
+        if ($(this).attr('id') === 'input_cardno' || $(this).attr('id') === 'input_mobno') {
+          checkAuthInputValidation(this);
+        }
+
+        evaluateLogic();
+        scheduleDraftSave();
+      });
+
+      // Collects current answers from every visible field across all pages.
+      // Shared by the final submit and the in-progress draft autosave.
+      function collectResponses() {
+        const responses = {};
+        formData.fields.forEach(field => {
+          if (field.type === 'section') return;
+
+        const group = $(`.field-group[data-field-id="${field.id}"]`);
+        if (group.hasClass('conditional-hidden')) return; // Do not submit hidden fields
+
+          if (field.type === 'checkbox') {
+            const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+            responses[field.id] = Array.from(checked).map(c => c.value);
+          } else if (field.type === 'radio') {
+            const selected = document.querySelector(`input[name="${field.id}"]:checked`);
+            responses[field.id] = selected ? selected.value : '';
+          } else if (field.type === 'grid_radio') {
+            const rowAnswers = {};
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelector(`input[name="response_${field.id}_${ri}"]:checked`);
+              rowAnswers[r] = checked ? checked.value : '';
+            });
+            responses[field.id] = rowAnswers;
+          } else if (field.type === 'grid_checkbox') {
+            const rowAnswers = {};
+            field.rows.forEach((r, ri) => {
+              const checked = document.querySelectorAll(`input[name="response_${field.id}_${ri}"]:checked`);
+              rowAnswers[r] = Array.from(checked).map(c => c.value);
+            });
+            responses[field.id] = rowAnswers;
+          } else if (field.type === 'grid_number') {
+            const rowAnswers = {};
+            (field.rows || []).forEach((r, ri) => {
+              rowAnswers[r] = {};
+              (field.columns || []).forEach((c, ci) => {
+                const input = document.querySelector(`input[name="response_${field.id}_${ri}_${ci}"]`);
+                rowAnswers[r][c] = input && input.value.trim() !== '' ? input.value.trim() : '0';
+              });
+            });
+            responses[field.id] = rowAnswers;
+          } else if (isGuestListField(field)) {
+            const list = [];
+            const container = document.getElementById(`guestListContainer_${field.id}`);
+            if (container) {
+              container.querySelectorAll('.guest-card').forEach(card => {
+                const mobInput = card.querySelector('.guest-mobno-input');
+                const mob = mobInput ? mobInput.value.trim() : '';
+                const cardno = card.dataset.cardno || '';
+                const name = card.dataset.name || '';
+                const center = card.dataset.center || '';
+                if (mob || cardno || name) {
+                  list.push({ mobno: mob, cardno, name, center });
+                }
+              });
+            }
+            responses[field.id] = list;
+          } else {
+            const el = document.getElementById(`input_${field.id}`);
+            responses[field.id] = el ? el.value.trim() : '';
+          }
+        });
+        return responses;
+      }
+
+      async function submitForm(e) {
+        e.preventDefault();
+
+        const currentPageIdx = window.currentPageIdx || 0;
+        const submitBtn = document.querySelector(`#formPage_${currentPageIdx} #submitBtn`) || document.getElementById('submitBtn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting...';
+        }
+
+        // Perform final page validation on the current active page
+        const pageContainer = document.getElementById(`formPage_${currentPageIdx}`);
+        let isValid = true;
+        let firstInvalidMsg = '';
+
+        if (currentPageIdx === 0 && !formData.isPublic) {
+          const authInput = document.getElementById('input_mobno') || document.getElementById('input_cardno');
+          if (authInput) {
+            const authOk = await performAuthLookup(authInput);
+            if (!authOk || window.isAuthVerified === false) {
+              isValid = false;
+              firstInvalidMsg = window.lastAuthErrorMessage || (document.getElementById('input_mobno') ? 'Please enter a valid registered mobile number' : 'Please enter a valid card number');
+            } else if (formData.requireOtp && authInput.id === 'input_mobno' && !isOtpVerified) {
+              isValid = false;
+              firstInvalidMsg = 'Please verify your mobile number using OTP first';
+            }
+          }
+        }
+
+        const visibleGroups = $(pageContainer).find('.field-group:visible');
+        visibleGroups.each(function() {
+          const check = checkFieldValidation(this);
+          if (!check.isValid) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = check.errorMsg;
+          }
+        });
+
+        let saveProgressEmailToSend = null;
+        const saveProgressToggle = document.getElementById('saveProgressToggle');
+        if (saveProgressToggle && saveProgressToggle.checked) {
+          const saveEmailValue = document.getElementById('saveProgressEmail').value.trim();
+          if (!EMAIL_REGEX.test(saveEmailValue)) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = 'Please enter a valid email address to save your progress';
+          } else {
+            saveProgressEmailToSend = saveEmailValue;
+          }
+        }
+
+        let copyEmailToSend = null;
+        const emailCopyToggle = document.getElementById('emailCopyToggle');
+        if (emailCopyToggle && emailCopyToggle.checked) {
+          const copyEmailValue = document.getElementById('emailCopyEmail').value.trim();
+          if (!EMAIL_REGEX.test(copyEmailValue)) {
+            isValid = false;
+            if (!firstInvalidMsg) firstInvalidMsg = 'Please enter a valid email address to receive a copy of your response';
+          } else {
+            copyEmailToSend = copyEmailValue;
+          }
+        }
+
+        if (!isValid) {
+          showFormAlertOnPage(currentPageIdx, firstInvalidMsg || 'Please correct the errors in the form', 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+          return;
+        }
+
+        // Clear general alert if valid
+        const alert = document.getElementById(`formAlert_${currentPageIdx}`);
+        if (alert) alert.style.display = 'none';
+
+        // Collect responses across ALL pages
+        const responses = collectResponses();
+
+        const body = { responses };
+        // Always tell the backend which email (if any) a draft exists under
+        // for this session, even if the checkbox got unchecked right before
+        // submitting — otherwise an orphaned draft is never cleaned up and
+        // resurfaces on a later visit.
+        const cleanupEmail = saveProgressEmailToSend || sessionDraftEmail;
+        if (cleanupEmail) {
+          body.email = cleanupEmail;
+        }
+
+        if (urlParams.get('preview') === 'true') {
+          showFormAlertOnPage(currentPageIdx, 'Validation Passed! This is a preview, so no response was recorded.', 'success');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+          return;
+        }
+
+        if (!formData.isPublic) {
+          if (formData.authType === 'mobno') {
+            const mobno = document.getElementById('input_mobno')?.value?.trim();
+            if (!mobno) {
+              showFormAlertOnPage(currentPageIdx, 'Mobile Number is required', 'danger');
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Response';
+              }
+              return;
+            }
+            body.mobno = mobno;
+          } else {
+            const cardno = document.getElementById('input_cardno')?.value?.trim();
+            if (!cardno) {
+              showFormAlertOnPage(currentPageIdx, 'Card Number is required', 'danger');
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Response';
+              }
+              return;
+            }
+            body.cardno = cardno;
+          }
+        }
+
+        try {
+          const responseId = urlParams.get('responseId');
+          const isEdit = responseId && formData.allowEdit;
+
+          const url = isEdit
+            ? `${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${responseId}`
+            : `${CONFIG.baseUrl}/admin/forms/public/${formId}/submit`;
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            if (!isEdit && formData.limitOneResponse) {
+              localStorage.setItem(`form_submitted_${formId}`, 'true');
+            }
+            // A completed submission means this fill session is over — wipe
+            // all local state so the next visit (or "submit another
+            // response") starts from a genuinely blank form, not whatever
+            // was last typed here. Also cancel any pending autosave: if one
+            // was already scheduled from typing right before hitting submit,
+            // letting it fire afterward would silently recreate a draft.
+            clearTimeout(draftSaveTimeout);
+            localStorage.removeItem(`form_has_draft_${formId}`);
+            sessionDraftEmail = null;
+            lastRestoredDraftEmail = null;
+            const newRespId = data.data?.id || responseId;
+            if (copyEmailToSend && newRespId) {
+              fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${newRespId}/email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: copyEmailToSend })
+              }).catch(() => {});
+            }
+            showSuccessScreen(newRespId, copyEmailToSend);
+          } else {
+            showFormAlertOnPage(currentPageIdx, data.message || 'Failed to submit response', 'danger');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Response';
+            }
+          }
+        } catch (err) {
+          showFormAlertOnPage(currentPageIdx, 'Network error. Please try again.', 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Response';
+          }
+        }
+      }
+
+      function showSuccessScreen(respId, emailedTo) {
+        const container = document.getElementById('formContainer');
+        const isEdit = urlParams.get('responseId') ? true : false;
+        
+        let actionsHtml = '';
+        
+        // Edit Response button
+        if (formData.allowEdit && respId) {
+          actionsHtml += `
+            <a href="view.html?id=${formId}&responseId=${respId}" class="submit-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; width:240px; text-align:center; margin:0.5rem; box-sizing:border-box;">
+              <i class="fas fa-edit"></i> Edit Response
+            </a>
+          `;
+        }
+
+        // Submit Another Response link
+        const alreadySubmittedLimit = formData.limitOneResponse && !formData.allowEdit;
+        if (formData.showSubmitAnother && !alreadySubmittedLimit) {
+          actionsHtml += `
+            <a href="view.html?id=${formId}" class="submit-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; width:240px; text-align:center; background-color:#6c757d; margin:0.5rem; box-sizing:border-box;">
+              <i class="fas fa-redo"></i> Submit another response
+            </a>
+          `;
+        }
+
+        let msgText = formData.confirmationMessage || 'Thank you for filling out the form. Your response has been recorded.';
+        const isPaarnaForm = (formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna');
+        if (isPaarnaForm) {
+          if (window.isPaarnaEligible === true) {
+            msgText = 'Jai Jinendra! Your Paarna registration at the Research Centre is confirmed for 16th Sept.';
+          } else {
+            msgText = 'Thank you! Your Paarna request has been submitted and will be reviewed and confirmed by the seva team.';
+          }
+        }
+
+        const emailedNoticeHtml = emailedTo
+          ? `<p style="margin-top:1rem; font-size:0.9rem; color:#28a745;"><i class="fas fa-envelope"></i> A copy of your response has been emailed to ${emailedTo}.</p>`
+          : '';
+
+        container.innerHTML = `
+          <div class="success-screen">
+            <div class="success-icon" style="color:#28a745;">✓</div>
+            <h2>${isEdit ? 'Response Updated!' : 'Response Submitted!'}</h2>
+            <p>${renderRichText(msgText)}</p>
+            ${emailedNoticeHtml}
+            <div style="margin-top:2rem; display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem;">
+              ${actionsHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      function showAlreadySubmittedState() {
+        const container = document.getElementById('formContainer');
+        container.innerHTML = `
+          <div class="success-screen">
+            <div class="success-icon" style="color:#ffc107;">⚠️</div>
+            <h2>Already Submitted</h2>
+            <p>You have already submitted a response to this form. Each user is limited to one response.</p>
+          </div>
+        `;
+      }
+
+      async function loadAndPopulateResponse(responseId) {
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/${formId}/responses/${responseId}`);
+          const data = await res.json();
+
+          if (!data.success) {
+            showFormAlertOnPage(0, 'Failed to load your previous response for editing.', 'danger');
+            return;
+          }
+
+          populateFormFields(data.data);
+        } catch (err) {
+          showFormAlertOnPage(0, 'Failed to load your previous response due to a network error.', 'danger');
+        }
+      }
+
+      function populateFormFields(responseObj) {
+        const answers = responseObj.responses || {};
+        if (responseObj.respondent?.mobno && document.getElementById('input_mobno')) {
+          const mob = responseObj.respondent.mobno;
+          document.getElementById('input_mobno').value = mob;
+          document.getElementById('input_mobno').readOnly = true;
+          document.getElementById('input_mobno').style.backgroundColor = '#e9ecef';
+          $('#input_mobno').after(`
+            <div id="info_mobno" style="color: #28a745; font-size: 0.88rem; margin-top: 0.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
+              <i class="fas fa-check-circle"></i> Registered to: ${responseObj.respondent.issuedto || 'Registered User'} (${responseObj.respondent.center || 'No Center'})
+            </div>
+          `);
+        } else if (responseObj.cardno && document.getElementById('input_cardno')) {
+          const card = responseObj.cardno;
+          document.getElementById('input_cardno').value = card;
+          document.getElementById('input_cardno').readOnly = true;
+          document.getElementById('input_cardno').style.backgroundColor = '#e9ecef';
+          $('#input_cardno').after(`
+            <div id="info_cardno" style="color: #28a745; font-size: 0.88rem; margin-top: 0.35rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem;">
+              <i class="fas fa-check-circle"></i> Registered to: ${responseObj.respondent?.issuedto || 'Registered User'} (${responseObj.respondent?.center || 'No Center'})
+            </div>
+          `);
+        }
+
+        populateAnswers(answers);
+      }
+
+
+
+      function showErrorState(message) {
+        const container = document.getElementById('formContainer');
+        container.innerHTML = `
+          <div class="error-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>An Error Occurred</h2>
+            <p>${escapeHtml(message)}</p>
+          </div>
+        `;
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      let otpCountdownTimer = null;
+
+      async function handleSendOtp() {
+        const mobInput = document.getElementById('input_mobno');
+        const mobVal = mobInput ? mobInput.value.trim().replace(/\D/g, '') : '';
+        const infoEl = document.getElementById('info_mobno');
+        const btn = document.getElementById('sendOtpBtn');
+
+        if (mobVal.length !== 10) {
+          infoEl.innerHTML = '<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> Please enter a valid 10-digit mobile number</span>';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        infoEl.innerHTML = '<span style="color:#6c757d;"><i class="fas fa-spinner fa-spin"></i> Checking authorization...</span>';
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobno: mobVal, formId: formData.id })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            infoEl.innerHTML = '<span style="color:#28a745; font-weight:600;"><i class="fas fa-check-circle"></i> OTP sent to your WhatsApp/SMS!</span>';
+            $('#otpInputSection').slideDown();
+            $('#input_otp').focus();
+            startOtpTimer(60);
+          } else {
+            infoEl.innerHTML = `<span style="color:#dc3545; font-weight:600;"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.message || 'Failed to send OTP')}</span>`;
+          }
+        } catch (err) {
+          infoEl.innerHTML = '<span style="color:#dc3545;"><i class="fas fa-exclamation-circle"></i> Network error. Please try again.</span>';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Send OTP';
+        }
+      }
+
+      function startOtpTimer(seconds) {
+        clearInterval(otpCountdownTimer);
+        $('#resendOtpBtn').hide();
+        let remaining = seconds;
+        const timerText = document.getElementById('otpTimerText');
+        timerText.textContent = `Resend OTP in ${remaining}s`;
+
+        otpCountdownTimer = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) {
+            clearInterval(otpCountdownTimer);
+            timerText.textContent = '';
+            $('#resendOtpBtn').show();
+          } else {
+            timerText.textContent = `Resend OTP in ${remaining}s`;
+          }
+        }, 1000);
+      }
+
+      async function handleVerifyOtp() {
+        const mobInput = document.getElementById('input_mobno');
+        const mobVal = mobInput ? mobInput.value.trim().replace(/\D/g, '') : '';
+        const otpInput = document.getElementById('input_otp');
+        const otpVal = otpInput ? otpInput.value.trim() : '';
+        const errEl = document.getElementById('otpErrorMsg');
+        const btn = document.getElementById('verifyOtpBtn');
+
+        if (otpVal.length !== 6) {
+          errEl.textContent = 'Please enter the complete 6-digit OTP';
+          errEl.style.display = 'block';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+        errEl.style.display = 'none';
+
+        try {
+          const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/otp/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobno: mobVal, otp: otpVal })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            isOtpVerified = true;
+            clearInterval(otpCountdownTimer);
+
+            // Fetch member info & allowlist department
+            const identRes = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${mobVal}&formId=${formData.id}`);
+            const identData = await identRes.json();
+
+            const memberName = identData.data?.name || 'Registered Member';
+            const nameEl = document.getElementById('verifiedUserName');
+            const mobEl = document.getElementById('verifiedUserMob');
+            if (nameEl) nameEl.textContent = memberName;
+            if (mobEl) mobEl.textContent = mobVal;
+
+            $('#otpGateContainer').hide();
+            $('#verifiedUserBanner').css('display', 'flex');
+            $('#formContentWrapper').show();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Pre-fill and lock Department if linked in allowlist
+            if (identData.data?.department) {
+              const deptField = (formData.fields || []).find(f => f.vendorRole === 'department' || f.label.toLowerCase().includes('department'));
+              if (deptField) {
+                const deptEl = document.getElementById(`input_${deptField.id}`);
+                if (deptEl) {
+                  deptEl.value = identData.data.department;
+                  deptEl.disabled = true;
+                  deptEl.style.backgroundColor = '#e9ecef';
+                  deptEl.dispatchEvent(new Event('change'));
+                }
+              }
+            }
+
+            // Restore draft if available
+            if (identData.data?.email) {
+              const saveEmailInput = document.getElementById('saveProgressEmail');
+              if (saveEmailInput) saveEmailInput.value = identData.data.email;
+              attemptRestoreDraft(identData.data.email);
+            }
+          } else {
+            errEl.textContent = data.message || 'Invalid or expired OTP';
+            errEl.style.display = 'block';
+          }
+        } catch (err) {
+          errEl.textContent = 'Network error during verification. Please try again.';
+          errEl.style.display = 'block';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Verify & Open';
+        }
+      }
+
+      function signOutOtp() {
+        isOtpVerified = false;
+        clearInterval(otpCountdownTimer);
+        document.getElementById('input_otp').value = '';
+        $('#otpInputSection').hide();
+        $('#info_mobno').html('');
+        $('#verifiedUserBanner').hide();
+        $('#formContentWrapper').slideUp();
+        $('#otpGateContainer').slideDown();
+      }
+
+      $(document).on('click', '#sendOtpBtn, #resendOtpBtn', handleSendOtp);
+      $(document).on('click', '#verifyOtpBtn', handleVerifyOtp);
+      $(document).on('input', '#input_otp', function() {
+        if (this.value.trim().length === 6) {
+          handleVerifyOtp();
+        }
+      });
+      $(document).on('keypress', '#input_otp', function(e) {
+        if (e.which === 13) {
+          e.preventDefault();
+          handleVerifyOtp();
+        }
+      });
+      $(document).on('keypress', '#input_mobno', function(e) {
+        if (e.which === 13) {
+          e.preventDefault();
+          handleSendOtp();
+        }
+      });
+
+      // Start fetching on load
+      loadForm();
+    </script>
+  </body>
+
+</html>
