@@ -119,7 +119,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         const dateStr = (report.date || '').substring(0, 10);
         row.innerHTML = `
           <td><center>${formatDate(report.date)}</center></td>
-          <td><center>${count} (${nonSpicy}) M + ${guestCount} G = ${regdTotal}</center></td>
+          <td><center>
+            ${count} (${nonSpicy}) M + ${guestCount} G = ${regdTotal}
+            ${meal === "lunch" && (report.lunch_aayambil > 0) ? `<div style="font-size:0.85em; color:#155724; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:4px; padding:2px 5px; margin-top:4px; font-weight:700;">🥘 Aayambil: ${report.lunch_aayambil} <span style="font-weight:400; font-size:0.9em; color:#28a745;">(Aayambil ${report.lunch_aayambil_direct || 0} + Ras Tyaag ${report.lunch_ras_tyaag || 0})</span> | Reg. Lunch: ${report.lunch_regular || 0}</div>` : ""}
+          </center></td>
           <td><center>
             <a href="issuedPlateReport.html?${issuedReportParams}">${plateIssued}</a> M +
             <a href="issuedGuestPlateReport.html?${issuedGuestParams}">${guestIssued}</a> G = ${issuedTotal}
