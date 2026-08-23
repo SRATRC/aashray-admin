@@ -737,8 +737,8 @@
           ${otpGateHtml}
           <div id="formContentWrapper" style="display: ${requiresOtpGate ? 'none' : 'block'};">
             ${verifiedBannerHtml}
-            ${saveProgressHtml}
             <div id="pagesContainer">${pagesHtml}</div>
+            ${saveProgressHtml}
             ${progressHtml}
           </div>
         `;
@@ -878,7 +878,7 @@
         const notice = document.getElementById('noGuestsNotice_' + fieldId);
         if (!container) return;
 
-        const num = Math.max(0, Math.min(6, parseInt(count, 10) || 0));
+        const num = Math.max(0, Math.min(12, parseInt(count, 10) || 0));
         if (num === 0) {
           container.innerHTML = '';
           if (notice) notice.style.display = 'block';
@@ -1349,15 +1349,76 @@
         });
       }
 
+      // Allow clicking an already-selected radio in a grid_radio row to deselect it.
+      // We capture the checked state on mousedown (before the browser toggles it),
+      // then on click we uncheck if it was already selected.
+      let _lastMouseDownGridRadio = null;
+      let _gridRadioWasChecked = false;
+      document.addEventListener('mousedown', function(e) {
+        const t = e.target;
+        if (t && t.tagName === 'INPUT' && t.type === 'radio' && t.classList.contains('grid-input')) {
+          _lastMouseDownGridRadio = t;
+          _gridRadioWasChecked = t.checked;
+        } else {
+          _lastMouseDownGridRadio = null;
+          _gridRadioWasChecked = false;
+        }
+      }, true);
+      document.addEventListener('click', function(e) {
+        const t = e.target;
+        if (t && t.tagName === 'INPUT' && t.type === 'radio' && t.classList.contains('grid-input')) {
+          if (t === _lastMouseDownGridRadio && _gridRadioWasChecked) {
+            t.checked = false;
+            t.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          _lastMouseDownGridRadio = null;
+          _gridRadioWasChecked = false;
+        }
+      }, true);
+
+      // Tracks which column headers are in "applied" state for toggle behaviour
+      const _gridColAppliedState = {};
+
       function applyColumnToAllRows(fieldId, colIndex, isRadio) {
         const inputs = document.querySelectorAll(`input[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
         if (inputs.length === 0) return;
 
+        const stateKey = fieldId + '_' + colIndex;
+
         if (isRadio) {
-          inputs.forEach(input => {
-            input.checked = true;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-          });
+          const allChecked = Array.from(inputs).every(input => input.checked);
+          if (allChecked) {
+            // Toggle OFF — deselect all in this column
+            inputs.forEach(input => {
+              input.checked = false;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            _gridColAppliedState[stateKey] = false;
+          } else {
+            // Apply all
+            inputs.forEach(input => {
+              input.checked = true;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            _gridColAppliedState[stateKey] = true;
+            // Reset other column headers for this field back to Apply to all
+            document.querySelectorAll(`th.grid-col-quickfill[data-field-id="${fieldId}"]`).forEach(function(otherTh) {
+              var otherColIdx = parseInt(otherTh.dataset.colIndex, 10);
+              if (otherColIdx !== colIndex) {
+                _gridColAppliedState[fieldId + "_" + otherColIdx] = false;
+                var otherHint = otherTh.querySelector(".grid-col-quickfill-hint");
+                if (otherHint) otherHint.innerHTML = "<i class=\"fas fa-check-double\"></i> Apply to all";
+              }
+            });
+          }
+          // Update header hint text
+          const th = document.querySelector(`th.grid-col-quickfill[data-field-id="${fieldId}"][data-col-index="${colIndex}"]`);
+          if (th) {
+            const hint = th.querySelector('.grid-col-quickfill-hint');
+            if (hint) hint.innerHTML = _gridColAppliedState[stateKey]
+              ? '<i class="fas fa-times-circle"></i> Deselect all'
+              : '<i class="fas fa-check-double"></i> Apply to all';
+          }
         } else {
           const allChecked = Array.from(inputs).every(input => input.checked);
           inputs.forEach(input => {
@@ -1365,6 +1426,22 @@
             input.dispatchEvent(new Event('change', { bubbles: true }));
           });
         }
+      }
+
+      function clearAllGridSelections(fieldId) {
+        const inputs = document.querySelectorAll(`input[data-field-id="${fieldId}"]`);
+        inputs.forEach(input => {
+          input.checked = false;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        // Reset all header hint texts
+        document.querySelectorAll(`th.grid-col-quickfill[data-field-id="${fieldId}"] .grid-col-quickfill-hint`).forEach(hint => {
+          hint.innerHTML = '<i class="fas fa-check-double"></i> Apply to all';
+        });
+        // Reset state map
+        Object.keys(_gridColAppliedState).forEach(k => {
+          if (k.startsWith(fieldId + '_')) delete _gridColAppliedState[k];
+        });
       }
 
       function checkFieldValidation(group) {
@@ -1853,7 +1930,7 @@
               updatePaarnaEligibilityBadge(tappField.id, tappEl ? tappEl.value : data.data.tapp_details, data.data.is_paarna_eligible);
             }
 
-            if (data.data.tapp_details && infoEl) {
+            if (tappField && data.data.tapp_details && infoEl) {
               infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-utensils"></i> Tapascharya: ${escapeHtml(data.data.tapp_details)}</div>`;
             }
       function evaluatePaarnaEligibility(tappText, isServerEligible) {
@@ -1969,6 +2046,14 @@
                 if (prevData.success && prevData.data) {
                   window.previousResponseId = prevData.data.responseId;
                   prefillPreviousResponse(prevData.data);
+                  // Re-apply fresh tapp_details from resolveIdentity — saved value may be stale
+                  if (tappField && data.data.tapp_details) {
+                    const tappEl2 = document.getElementById(`input_${tappField.id}`);
+                    if (tappEl2) {
+                      tappEl2.value = data.data.tapp_details;
+                      updatePaarnaEligibilityBadge(tappField.id, data.data.tapp_details, data.data.is_paarna_eligible);
+                    }
+                  }
                 } else {
                   window.previousResponseId = null;
                   disablePastDateRows();
@@ -2070,7 +2155,7 @@
             </div>
           `;
         } else if (isGuestCapacityField(field)) {
-          const maxCap = field.max !== undefined && field.max !== null ? parseInt(field.max, 10) : 6;
+          const maxCap = field.max !== undefined && field.max !== null ? parseInt(field.max, 10) : 12;
           let pillsHtml = '';
           for (let i = 0; i <= maxCap; i++) {
             pillsHtml += `<button type="button" class="btn btn-outline-secondary btn-cap-pill" data-cap-val="${i}" onclick="selectGuestCapPill('${field.id}', ${i}, this)" style="min-width: 48px; height: 42px; font-weight: 700; border-radius: 8px; font-size: 1rem; border: 1.5px solid #ced4da; transition: all 0.2s; background: #fff; color: #204060; margin-right: 6px; margin-bottom: 6px;">${i}</button>`;
@@ -2187,7 +2272,7 @@
                     <tr>
                       <th>Row</th>
                       ${cols.map((c, ci) => showQuickfill
-                        ? `<th class="grid-col-quickfill" onclick="applyColumnToAllRows('${field.id}', ${ci}, ${isRadio})" title="Apply '${escapeAttr(c)}' to every row">${escapeHtml(c)}<span class="grid-col-quickfill-hint"><i class="fas fa-check-double"></i> Apply to all</span></th>`
+                        ? `<th class="grid-col-quickfill" onclick="applyColumnToAllRows('${field.id}', ${ci}, ${isRadio})" data-field-id="${field.id}" data-col-index="${ci}" title="Click to apply '${escapeAttr(c)}' to all rows; click again to deselect all">${escapeHtml(c)}<span class="grid-col-quickfill-hint"><i class="fas fa-check-double"></i> Apply to all</span></th>`
                         : `<th>${escapeHtml(c)}</th>`
                       ).join('')}
                     </tr>
@@ -2217,6 +2302,14 @@
             tableHtml += `
                   </tbody>
                 </table>
+              </div>
+              <div style="text-align:right; margin-top:0.5rem;">
+                <button type="button"
+                  onclick="clearAllGridSelections('${field.id}')"
+                  style="background:none; border:none; color:#dc3545; font-size:0.82rem; font-weight:600; cursor:pointer; padding:0.3rem 0.5rem; border-radius:4px; transition:background 0.2s;"
+                  onmouseover="this.style.background='#fff0f0'" onmouseout="this.style.background='none'">
+                  <i class="fas fa-times-circle"></i> Clear all selections
+                </button>
               </div>
             `;
             inputHtml = tableHtml;
