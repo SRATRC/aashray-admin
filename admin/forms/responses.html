@@ -694,6 +694,77 @@
             });
             activeCharts.push(chart);
 
+          } else if (field.type === 'grid_radio' || field.type === 'grid_checkbox') {
+            card.style.gridColumn = '1 / -1';
+            card.style.minHeight = 'auto';
+            card.style.alignItems = 'stretch';
+
+            const rows = field.rows || [];
+            const cols = field.columns || [];
+
+            const matrixCounts = {};
+            rows.forEach(r => {
+              matrixCounts[r] = {};
+              cols.forEach(c => matrixCounts[r][c] = 0);
+            });
+
+            answers.forEach(val => {
+              if (val && typeof val === 'object' && !Array.isArray(val)) {
+                Object.entries(val).forEach(([rLabel, cVal]) => {
+                  if (matrixCounts[rLabel] && cVal) {
+                    if (Array.isArray(cVal)) {
+                      cVal.forEach(c => {
+                        if (matrixCounts[rLabel][c] !== undefined) matrixCounts[rLabel][c]++;
+                      });
+                    } else if (matrixCounts[rLabel][cVal] !== undefined) {
+                      matrixCounts[rLabel][cVal]++;
+                    }
+                  }
+                });
+              }
+            });
+
+            const hasAayambil = cols.some(c => c.toLowerCase() === 'aayambil');
+            const hasRasTyaag = cols.some(c => c.toLowerCase().includes('ras tyaag'));
+            const isTapp = hasAayambil || hasRasTyaag;
+
+            let matrixHtml = `
+              <div style="overflow-x:auto; width:100%; margin-top:0.5rem;">
+                <table class="table table-bordered table-striped" style="width:100%; font-size:0.85rem; margin-bottom:0;">
+                  <thead style="background:#f1f4f8; color:#204060;">
+                    <tr>
+                      <th style="font-weight:700;">Date</th>
+                      ${isTapp ? '<th style="background:#e8f8f0; color:#155724; font-weight:700; text-align:center;">🥘 Total Aayambil Lunch Count</th>' : ''}
+                      ${cols.map(c => `<th style="text-align:center; font-weight:600;">${escapeHtml(c)}</th>`).join('')}
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
+
+            rows.forEach(r => {
+              const aCount = matrixCounts[r]['Aayambil'] || 0;
+              let rasCount = 0;
+              cols.forEach(c => {
+                if (c.toLowerCase().includes('ras tyaag')) rasCount += (matrixCounts[r][c] || 0);
+              });
+              const totalAayambil = aCount + rasCount;
+
+              matrixHtml += `
+                <tr>
+                  <td><strong>${escapeHtml(r)}</strong></td>
+                  ${isTapp ? ('<td style="background:#f2fcf6; text-align:center; font-weight:700; color:#155724; font-size:0.95rem;">' + totalAayambil + ' <span style="font-size:0.75rem; font-weight:400; color:#28a745;">(Aayambil ' + aCount + ' + Ras Tyaag ' + rasCount + ')</span></td>') : ''}
+                  ${cols.map(c => `<td style="text-align:center; font-weight:600;">${matrixCounts[r][c] || 0}</td>`).join('')}
+                </tr>
+              `;
+            });
+
+            matrixHtml += `
+                  </tbody>
+                </table>
+              </div>
+            `;
+
+            card.insertAdjacentHTML('beforeend', matrixHtml);
           } else {
             // Text list
             if (answers.length === 0) {
