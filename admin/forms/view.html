@@ -737,8 +737,8 @@
           ${otpGateHtml}
           <div id="formContentWrapper" style="display: ${requiresOtpGate ? 'none' : 'block'};">
             ${verifiedBannerHtml}
-            ${saveProgressHtml}
             <div id="pagesContainer">${pagesHtml}</div>
+            ${saveProgressHtml}
             ${progressHtml}
           </div>
         `;
@@ -1352,20 +1352,26 @@
       // Allow clicking an already-selected radio in a grid_radio row to deselect it.
       // We capture the checked state on mousedown (before the browser toggles it),
       // then on click we uncheck if it was already selected.
+      let _lastMouseDownGridRadio = null;
       let _gridRadioWasChecked = false;
       document.addEventListener('mousedown', function(e) {
         const t = e.target;
         if (t && t.tagName === 'INPUT' && t.type === 'radio' && t.classList.contains('grid-input')) {
+          _lastMouseDownGridRadio = t;
           _gridRadioWasChecked = t.checked;
+        } else {
+          _lastMouseDownGridRadio = null;
+          _gridRadioWasChecked = false;
         }
       }, true);
       document.addEventListener('click', function(e) {
         const t = e.target;
         if (t && t.tagName === 'INPUT' && t.type === 'radio' && t.classList.contains('grid-input')) {
-          if (_gridRadioWasChecked) {
+          if (t === _lastMouseDownGridRadio && _gridRadioWasChecked) {
             t.checked = false;
             t.dispatchEvent(new Event('change', { bubbles: true }));
           }
+          _lastMouseDownGridRadio = null;
           _gridRadioWasChecked = false;
         }
       }, true);
@@ -1912,7 +1918,7 @@
 
             if (tappField) {
               const tappEl = document.getElementById(`input_${tappField.id}`);
-              if (data.data.tapp_details && tappEl) {
+              if (data.data.tapp_details && tappEl && (!tappEl.value || tappEl.value.trim() === '')) {
                 tappEl.value = data.data.tapp_details;
               }
               if (tappEl && !tappEl.dataset.hasTappListener) {
