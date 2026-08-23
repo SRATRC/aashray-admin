@@ -1,0 +1,828 @@
+<!-- Role Access Check -->
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['utsavAdmin', 'superAdmin', 'utsavAdminReadOnly', 'utsavAdminRaj']);
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Room Allocation</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body { background: #f0f4f8; font-family: 'Segoe UI', sans-serif; color: #1e293b; }
+    .header { background: #204060; color: white; padding: 12px 0; }
+    .header .logout a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
+    .header .logout a:hover { color: white; }
+
+    /* Tabs */
+    .tab-nav { display: flex; background: white; border-bottom: 2px solid #e2e8f0; padding: 0 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .tab-btn { padding: 14px 22px; font-size: 0.9rem; font-weight: 600; border: none; background: none; cursor: pointer; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; display: flex; align-items: center; gap: 7px; }
+    .tab-btn:hover { color: #204060; }
+    .tab-btn.active { color: #204060; border-bottom-color: #204060; }
+    .tab-pane { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
+    .tab-pane.active { display: block; }
+
+    /* Cards */
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 20px; margin-bottom: 20px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #204060; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* KPIs */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+    .kpi-icon { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .kpi-val { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+    .kpi-label { font-size: 0.78rem; color: #64748b; font-weight: 500; margin-top: 2px; }
+
+    /* Table */
+    .tbl-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
+    table.smart-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+        table.smart-table th { background: #204060; color: white; padding: 10px 12px; text-align: left; white-space: nowrap; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+    table.smart-table th.sortable { cursor: pointer; user-select: none; transition: background 0.15s; }
+    table.smart-table th.sortable:hover { background: #152c42; }
+    table.smart-table th .sort-icon { margin-left: 5px; font-size: 0.72rem; opacity: 0.4; }
+    table.smart-table th.active-sort .sort-icon { opacity: 1; color: #fde047; }
+    table.smart-table td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    table.smart-table tbody tr:hover { background: #f8fafc; }
+    table.smart-table tbody tr.row-selected { background: #f0fdf4 !important; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 0.76rem; font-weight: 700; white-space: nowrap; }
+    .badge-gf { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+    .badge-ff { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .badge-nri { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .badge-senior { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-full-pkg { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-review { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+    .badge-rc { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-ext { background: #faf5ff; color: #6d28d9; border: 1px solid #e9d5ff; }
+    .badge-oag { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-nag { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+
+    /* Buttons */
+    .btn-sm { padding: 5px 12px; border-radius: 5px; font-size: 0.83rem; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .btn-primary-sm { background: #204060; color: white; }
+    .btn-primary-sm:hover { background: #173048; }
+    .btn-success-sm { background: #28a745; color: white; }
+    .btn-success-sm:hover { background: #218838; }
+    .btn-danger-sm { background: #dc3545; color: white; }
+    .btn-danger-sm:hover { background: #c82333; }
+    .btn-outline-sm { background: white; color: #475569; border: 1px solid #cbd5e1; }
+    .btn-outline-sm:hover { background: #f1f5f9; }
+    .btn-disabled { opacity: 0.5; cursor: not-allowed !important; }
+
+    /* Toolbar */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .toolbar-left, .toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+    .filter-group { display: flex; flex-direction: column; gap: 3px; }
+    .filter-group label { font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .filter-group input, .filter-group select { height: 34px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 0.87rem; background: white; min-width: 140px; }
+    .filter-group input:focus, .filter-group select:focus { border-color: #204060; outline: none; }
+
+    /* Inline editable */
+    .room-inp { width: 100px; padding: 4px 7px; border: 1.5px solid #cbd5e1; border-radius: 4px; font-size: 0.88rem; font-weight: 600; text-align: center; color: #204060; }
+    .room-inp.highlighted { border-color: #28a745; background: #f0fdf4; }
+    .num-inp { width: 60px; padding: 4px 7px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.87rem; text-align: center; }
+
+    /* Toast */
+    .toast-msg { position: fixed; bottom: 22px; right: 22px; padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; z-index: 9999; display: none; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+
+    /* Upload drop zone */
+    .drop-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; color: #64748b; }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: #204060; background: #f0f4ff; color: #204060; }
+    .drop-zone .dz-icon { font-size: 2rem; margin-bottom: 8px; }
+
+    /* Config section */
+    .config-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 18px; }
+    .config-field { display: flex; flex-direction: column; gap: 5px; }
+    .config-field label { font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; }
+    .config-field input, .config-field select { height: 38px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; background: white; }
+
+    .prog-bar-wrap { height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+    .prog-bar { height: 100%; background: #28a745; border-radius: 4px; transition: width 0.4s; }
+  
+    .sticky-apply-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      display: none;
+      align-items: center;
+      gap: 16px;
+      z-index: 1000;
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translate(-50%, 20px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+
+  
+    .history-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 7px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #0284c7;
+      background: #e0f2fe;
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      outline: none;
+    }
+    .history-chip:hover {
+      background: #0284c7;
+      color: white;
+      border-color: #0284c7;
+      box-shadow: 0 2px 4px rgba(2,132,199,0.25);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()"><i class="fas fa-arrow-left"></i> Back</a> &nbsp;|&nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()"><i class="fas fa-home"></i> Home</a> &nbsp;|&nbsp;
+        <a href="javascript:void(0);" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('tab-inventory', this)">
+      <i class="fas fa-bed"></i> Room Inventory
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-config', this)">
+      <i class="fas fa-sliders-h"></i> Allocation Config
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-run', this)">
+      <i class="fas fa-magic"></i> Run Allocation
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-review', this)">
+      <i class="fas fa-flag"></i> Review Flags
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-housekeeping', this); loadHousekeepingReport();">
+      <i class="fas fa-broom"></i> Housekeeping Extra Beds
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-allotted-beds', this); loadAllottedBedsReport();">
+      <i class="fas fa-bed"></i> Allotted Beds &amp; Switching
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-uncheckedin', this); loadUncheckedInReport();">
+      <i class="fas fa-user-clock"></i> Unchecked-In Beds
+    </button>
+    <div style="flex:1; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; gap:8px;">
+      <span id="utsavBadge" style="font-size:0.82rem; font-weight:700; color:#204060; background:#e0f2fe; padding:4px 12px; border-radius:4px;"></span>
+    </div>
+  </div>
+
+  <!-- TAB 1: ROOM INVENTORY -->
+  <div id="tab-inventory" class="tab-pane active">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-building" style="color:#204060;"></i> RC Room Inventory</div>
+      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:16px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <button class="btn-sm btn-primary-sm" onclick="initRCRooms()"><i class="fas fa-sync"></i> Initialize / Refresh RC Rooms</button>
+          <button class="btn-sm btn-outline-sm" onclick="loadInventory()"><i class="fas fa-redo"></i> Reload Inventory</button>
+        </div>
+        <div>
+          <button class="btn-sm btn-success-sm" id="saveAllInventoryBtn" onclick="saveAllRoomConfigs()" style="background:#16a34a; font-weight:700; padding:7px 18px; box-shadow:0 2px 6px rgba(22,163,74,0.3); font-size:0.86rem;">
+            <i class="fas fa-save"></i> Save All Room Changes
+          </button>
+        </div>
+      </div>
+      <p style="font-size:0.85rem; color:#64748b; margin-bottom:16px;">
+        RC rooms (RC_OAG &amp; RC_NAG) are auto-populated from the room master. You can adjust <strong>floor beds</strong>, <strong>block status</strong>, and <strong>gender overrides</strong> per event without changing the room master.
+      </p>
+      <div id="inventoryTableWrap">
+        <p style="color:#94a3b8; text-align:center; padding:30px;">Click "View Current Inventory" to load rooms.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-hotel" style="color:#6d28d9;"></i> External Rooms (Hotels / Outside RC)</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        <button class="btn-sm btn-success-sm" onclick="document.getElementById('extExcelInput').click()">
+          <i class="fas fa-file-excel"></i> Upload External Rooms (Excel)
+        </button>
+        <input type="file" id="extExcelInput" accept=".xlsx,.xls" style="display:none;" onchange="handleExternalRoomsUpload(this)" />
+        <button class="btn-sm btn-outline-sm" onclick="downloadExternalTemplate()">
+          <i class="fas fa-download"></i> Download Template
+        </button>
+        <button class="btn-sm btn-outline-sm" onclick="addExternalRoomRow()">
+          <i class="fas fa-plus"></i> Add Manually
+        </button>
+      </div>
+      <div id="externalRoomsWrap">
+        <p style="color:#94a3b8; text-align:center; padding:20px;">No external rooms added for this event.</p>
+      </div>
+      <div id="externalRoomsBtnWrap" style="display:none; margin-top:10px;">
+        <button class="btn-sm btn-success-sm" onclick="saveExternalRooms()"><i class="fas fa-save"></i> Save External Rooms</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: ALLOCATION CONFIG -->
+  <div id="tab-config" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-sliders-h" style="color:#204060;"></i> Allocation Parameters</div>
+      <div class="config-row">
+        <div class="config-field">
+          <label>Senior Citizen Age Threshold</label>
+          <input type="number" id="cfgSeniorAge" value="65" min="55" max="90" style="width:100px;" />
+          <span style="font-size:0.75rem; color:#64748b;">Guests at or above this age get Ground Floor + RC priority</span>
+        </div>
+        <div class="config-field">
+          <label>Split Package Date (Optional)</label>
+          <input type="date" id="cfgSplitDate" />
+          <span style="font-size:0.75rem; color:#64748b;">Mid-event date when Phase 1 short-stay guests check out. Leave blank if no split.</span>
+        </div>
+      </div>
+      <hr style="margin: 16px 0; border-color: #e2e8f0;" />
+      <div class="card-title" style="font-size:0.95rem;"><i class="fas fa-info-circle"></i> Priority Rules (Fixed — Per Design)</div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:12px; font-size:0.87rem; color:#475569;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:12px;">
+          <strong style="color:#16a34a;"><i class="fas fa-star"></i> RC Inside Priority</strong><br/>
+          Full-event package guests, No RC in last 2 events (Fairness Priority), Seniors (65+), NRI/International
+        </div>
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:12px;">
+          <strong style="color:#1e40af;"><i class="fas fa-layer-group"></i> Ground Floor Priority</strong><br/>
+          All guests aged 65+. Rooms 1–18 (OAG) and 37–48 (NAG)
+        </div>
+        <div style="background:#fef9c3; border:1px solid #fde68a; border-radius:6px; padding:12px;">
+          <strong style="color:#713f12;"><i class="fas fa-venus-mars"></i> Gender Segregation</strong><br/>
+          Strict: a room's first occupant determines gender. No mixing ever.
+        </div>
+        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; padding:12px;">
+          <strong style="color:#9a3412;"><i class="fas fa-mattress-pillow"></i> Bed Assignment</strong><br/>
+          Youngest → _FLOOR (if mats added), older → _A, _B, _C by age
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: RUN ALLOCATION -->
+  <div id="tab-run" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-magic" style="color:#28a745;"></i> Smart Allocation Engine</div>
+      <p style="font-size:0.88rem; color:#475569; margin-bottom:16px;">
+        Runs the full allocation algorithm as a <strong>dry-run</strong> first. Review suggestions, make adjustments, then apply.
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
+        <button class="btn-sm btn-success-sm" id="runAllocBtn" onclick="runSmartAllocation()">
+          <i class="fas fa-play"></i> Run Smart Allocation
+        </button>
+        <button class="btn-sm btn-outline-sm" id="selectAutoRunBtn" onclick="selectAllAllocated()" style="display:none;">
+          <i class="fas fa-check-double"></i> Select All Suggested
+        </button>
+                <button class="btn-sm btn-outline-sm" id="downloadRunExcelBtn" onclick="downloadDryRunExcel()" style="display:none;">
+          <i class="fas fa-file-excel" style="color:#16a34a;"></i> Download Dry Run Excel
+        </button>
+        <button class="btn-sm btn-outline-sm" id="uploadRunExcelBtn" onclick="triggerAllocationExcelUpload()" style="display:inline-flex;">
+          <i class="fas fa-file-upload" style="color:#0284c7;"></i> Upload Allocation Excel
+        </button>
+        <input type="file" id="allocationExcelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleAllocationExcelUpload(event)" />
+        <button class="btn-sm btn-outline-sm" onclick="clearRunSelection()" id="clearRunSelBtn" style="display:none;">
+          <i class="fas fa-times"></i> Clear
+        </button>
+        <button class="btn-sm btn-success-sm" id="topApplyAllocBtn" onclick="applyRunAllocations()" style="display:none; background:#16a34a; font-weight:700;">
+          <i class="fas fa-save"></i> Apply Selected Allocations to Bookings
+        </button>
+        <span id="runSelCount" style="font-size:0.85rem; font-weight:700; color:#475569;"></span>
+      </div>
+
+      <!-- Summary KPIs -->
+      <div class="kpi-row" id="runKpiRow" style="display:none;">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-users"></i></div>
+          <div><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-label">Total Guests</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-check-circle"></i></div>
+          <div><div class="kpi-val" id="kpiAllocated" style="color:#16a34a;">0</div><div class="kpi-label">Allocated</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#fff1f2; color:#e11d48;"><i class="fas fa-exclamation-triangle"></i></div>
+          <div><div class="kpi-val" id="kpiUnallocated" style="color:#e11d48;">0</div><div class="kpi-label">Unallocated</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#fef3c7; color:#d97706;"><i class="fas fa-flag"></i></div>
+          <div><div class="kpi-val" id="kpiReview">0</div><div class="kpi-label">Need Review</div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#f0fdf4; color:#166534;"><i class="fas fa-door-open"></i></div>
+          <div><div class="kpi-val" id="kpiRoomsUsed">0</div><div class="kpi-label">Rooms Used</div></div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div id="runProgress" style="display:none; margin-bottom:14px;">
+        <div style="font-size:0.82rem; font-weight:600; color:#204060; margin-bottom:4px;" id="runProgressLabel">Running allocation...</div>
+        <div class="prog-bar-wrap"><div class="prog-bar" id="runProgressBar" style="width:0%"></div></div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar" id="runFilterBar" style="display:none;">
+        <div class="filter-group" style="flex:1; min-width:200px;">
+          <label>Search</label>
+          <input type="text" id="runSearch" placeholder="Name, mobile, card, room..." oninput="renderRunTable()" />
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="runStatusFilter" onchange="renderRunTable()">
+            <option value="all">All</option>
+            <option value="allocated">Allocated</option>
+            <option value="unallocated">Unallocated</option>
+            <option value="review">Review Required</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Package</label>
+          <select id="runPackageFilter" onchange="renderRunTable()">
+            <option value="all">All Packages</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Priority</label>
+          <select id="runPriorityFilter" onchange="renderRunTable()">
+            <option value="all">All Categories</option>
+            <option value="flat">Flat Owners &amp; Guests</option>
+            <option value="pr_seva">PR / Seva Kutir</option>
+            <option value="senior">Senior (65+)</option>
+            <option value="nri">NRI / International</option>
+            <option value="full_pkg">Full-Event Package</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Gender</label>
+          <select id="runGenderFilter" onchange="renderRunTable()">
+            <option value="all">All</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="runTableWrap"></div>
+
+      <div id="applyAllocWrap" style="display:none; margin-top:16px; border-top:1px solid #e2e8f0; padding-top:14px;">
+        <button class="btn-sm btn-success-sm" id="applyAllocBtn" onclick="applyRunAllocations()">
+          <i class="fas fa-save"></i> Apply Selected Allocations to Bookings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: REVIEW FLAGS -->
+  <div id="tab-review" class="tab-pane">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-flag" style="color:#e11d48;"></i> Guests Requiring Manual Review</div>
+      <p style="font-size:0.87rem; color:#64748b; margin-bottom:14px;">
+        These guests have missing <strong>age</strong>, <strong>gender</strong>, or <strong>center</strong> data and were skipped by the allocation engine. Fix their card data first, then re-run allocation.
+      </p>
+      <div id="reviewTableWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Run the allocation engine first to see flagged guests.</p>
+      </div>
+    </div>
+  </div>
+
+  
+  
+  <!-- TAB 5: HOUSEKEEPING EXTRA BEDS REPORT -->
+  <div id="tab-housekeeping" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:0;">
+          <i class="fas fa-broom" style="color:#0284c7;"></i> Housekeeping Extra Beds &amp; Beddings Report
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadHousekeepingReport()"><i class="fas fa-sync"></i> Refresh Report</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadHousekeepingExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="printHousekeepingReport()"><i class="fas fa-print"></i> Print Checklist</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row" id="hkKpiRow">
+        <div class="kpi-card" style="border-left:4px solid #16a34a;">
+          <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="hkRcExtraBeds" style="color:#16a34a;">0</div><div class="kpi-label">RC Rooms Floor Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-building"></i></div>
+          <div><div class="kpi-val" id="hkFlatsExtraBeds" style="color:#8b5cf6;">0</div><div class="kpi-label">Flats Extra Beddings</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-layer-group"></i></div>
+          <div><div class="kpi-val" id="hkGrandTotalBeds" style="color:#0284c7;">0</div><div class="kpi-label">Grand Total Required</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar" style="margin-top:14px;">
+        <div class="filter-group" style="flex:1; min-width:220px;">
+          <label>Search</label>
+          <input type="text" id="hkSearchInp" placeholder="Search room, flat, building, owner, remarks..." oninput="renderHousekeepingTables()" />
+        </div>
+        <div class="filter-group">
+          <label>View Section</label>
+          <select id="hkSectionFilter" onchange="renderHousekeepingTables()">
+            <option value="all">All Sections (RC Rooms + Flats)</option>
+            <option value="rc">RC Rooms Only</option>
+            <option value="flats">Flats Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tables Wrap -->
+      <div id="hkReportContentWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Loading housekeeping report...</p>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- TAB 6: UNCHECKED-IN BEDS TRACKER & RE-ALLOTMENT -->
+  <div id="tab-uncheckedin" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">
+            <i class="fas fa-user-clock" style="color:#f59e0b;"></i> Unchecked-In Allocated Beds (Vacant Beds Tracker)
+          </div>
+          <p style="margin:0; font-size:0.85rem; color:#64748b;">
+            Confirmed participants with allocated beds who have not checked in yet. Re-allot vacant beds to other confirmed or checked-in Utsav participants on the fly.
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadUncheckedInReport()"><i class="fas fa-sync"></i> Refresh</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadUncheckedInExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="printUncheckedInReport()"><i class="fas fa-print"></i> Print List</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card" style="border-left:4px solid #f59e0b;">
+          <div class="kpi-icon" style="background:#fef3c7; color:#d97706;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInTotal" style="color:#d97706;">0</div><div class="kpi-label">Total Unchecked-In Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-mars"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInMale" style="color:#0284c7;">0</div><div class="kpi-label">Male Vacant Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #ec4899;">
+          <div class="kpi-icon" style="background:#fce7f3; color:#db2777;"><i class="fas fa-venus"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInFemale" style="color:#db2777;">0</div><div class="kpi-label">Female Vacant Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-users"></i></div>
+          <div><div class="kpi-val" id="kpiUnallocatedGuests" style="color:#8b5cf6;">0</div><div class="kpi-label">Confirmed Utsav Participants</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar" style="margin-top:14px;">
+        <div class="filter-group" style="flex:1; min-width:200px;">
+          <label>Search</label>
+          <input type="text" id="uncheckedInSearch" placeholder="Search room, bed, name, card, mobile..." oninput="renderUncheckedInTable()" />
+        </div>
+        <div class="filter-group">
+          <label>Gender</label>
+          <select id="uncheckedInGenderFilter" onchange="renderUncheckedInTable()">
+            <option value="all">All Genders</option>
+            <option value="M">Male Only</option>
+            <option value="F">Female Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Building / Property</label>
+          <select id="uncheckedInPropFilter" onchange="renderUncheckedInTable()">
+            <option value="all">All Buildings</option>
+            <option value="OAG">OAG Only</option>
+            <option value="NAG">NAG Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Wrap -->
+      <div id="uncheckedInTableWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Loading unchecked-in beds...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-Allot Modal -->
+  <div id="reallotModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:550px; width:90%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-exchange-alt" style="color:#0284c7;"></i> Re-Allot Bed
+        </h3>
+        <button type="button" onclick="closeReallotModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <div id="reallotBedSummary" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:16px; font-size:0.88rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:6px;">
+          OPTION 1: Pick from Confirmed / Checked-in Participants (<span id="reallotGenderLabel">Matching Gender</span>)
+        </label>
+        <select id="reallotWaitingSelect" style="width:100%; height:38px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;" onchange="onSelectWaitingGuest(this)">
+          <option value="">-- Choose confirmed Utsav participant --</option>
+        </select>
+      </div>
+
+      <div style="display:flex; align-items:center; margin:14px 0; text-align:center;">
+        <div style="flex:1; border-bottom:1px solid #e2e8f0;"></div>
+        <span style="padding:0 10px; color:#94a3b8; font-size:0.75rem; font-weight:700; text-transform:uppercase;">OR</span>
+        <div style="flex:1; border-bottom:1px solid #e2e8f0;"></div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:6px;">
+          OPTION 2: Search Confirmed Participant by Mobile No or Card No
+        </label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="reallotSearchInp" placeholder="Enter 10-digit mobile or card no of confirmed participant..." style="flex:1; height:38px; padding:0 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;" />
+          <button type="button" class="btn-sm btn-primary-sm" onclick="searchGuestForReallot()"><i class="fas fa-search"></i> Find</button>
+        </div>
+        <div id="reallotLookupResult" style="margin-top:8px; font-size:0.85rem; min-height:20px;"></div>
+      </div>
+
+      <div style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 14px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:600; color:#166534; margin:0;">
+          <input type="checkbox" id="reallotCheckinToggle" checked style="width:16px; height:16px; cursor:pointer;" />
+          <span>Check-in new guest immediately upon re-allotment</span>
+        </label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeReallotModal()">Cancel</button>
+        <button type="button" class="btn-sm btn-success-sm" id="confirmReallotBtn" onclick="submitReallotment()" style="padding:8px 18px; font-weight:700;">
+          <i class="fas fa-check"></i> Confirm &amp; Re-Allot Bed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- TAB 7: ALLOTTED BEDS & SWITCHING -->
+  <div id="tab-allotted-beds" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">
+            <i class="fas fa-bed" style="color:#0284c7;"></i> Confirmed Allotted Beds &amp; Bed Switching
+          </div>
+          <p style="margin:0; font-size:0.85rem; color:#64748b;">
+            Manage all confirmed room allocations. Easily move participants to vacant beds or perform mutual 2-way bed swaps between guests.
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadAllottedBedsReport()"><i class="fas fa-sync"></i> Refresh</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadAllottedBedsExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="printAllottedBedsReport()"><i class="fas fa-print"></i> Print List</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="kpiAllottedTotal" style="color:#0284c7;">0</div><div class="kpi-label">Total Allotted Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #16a34a;">
+          <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-check-circle"></i></div>
+          <div><div class="kpi-val" id="kpiAllottedCheckedIn" style="color:#16a34a;">0</div><div class="kpi-label">Checked-In Guests</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #f59e0b;">
+          <div class="kpi-icon" style="background:#fef3c7; color:#d97706;"><i class="fas fa-clock"></i></div>
+          <div><div class="kpi-val" id="kpiAllottedUncheckedIn" style="color:#d97706;">0</div><div class="kpi-label">Not Checked-In</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-door-open"></i></div>
+          <div><div class="kpi-val" id="kpiVacantBedsCount" style="color:#8b5cf6;">0</div><div class="kpi-label">Vacant Free Beds in RC</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="filter-bar" style="margin-top:14px;">
+        <div class="filter-group" style="flex:1; min-width:200px;">
+          <label>Search</label>
+          <input type="text" id="allottedSearch" placeholder="Search room, name, card, mobile, center..." oninput="renderAllottedBedsTable()" />
+        </div>
+        <div class="filter-group">
+          <label>Gender</label>
+          <select id="allottedGenderFilter" onchange="renderAllottedBedsTable()">
+            <option value="all">All Genders</option>
+            <option value="M">Male Only</option>
+            <option value="F">Female Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Check-in Status</label>
+          <select id="allottedStatusFilter" onchange="renderAllottedBedsTable()">
+            <option value="all">All Statuses</option>
+            <option value="checkedin">Checked-In Only</option>
+            <option value="uncheckedin">Not Checked-In Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Building / Type</label>
+          <select id="allottedBuildingFilter" onchange="renderAllottedBedsTable()">
+            <option value="all">All Locations</option>
+            <option value="RC_OAG">RC OAG</option>
+            <option value="RC_NAG">RC NAG</option>
+            <option value="Flat">Flats</option>
+            <option value="External">External Hotels</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Wrap -->
+      <div id="allottedBedsTableWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;">Loading allotted beds...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Switch / Swap Bed Modal -->
+  <div id="swapBedModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:600px; width:92%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-random" style="color:#0284c7;"></i> Change / Swap Bed
+        </h3>
+        <button type="button" onclick="closeSwapModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <!-- Person A Details Box -->
+      <div id="swapPersonASummary" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:12px; margin-bottom:18px; font-size:0.88rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Action Mode Switch -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:8px; text-transform:uppercase;">Select Action:</label>
+        <div style="display:flex; gap:16px;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.9rem; font-weight:600; color:#0369a1;">
+            <input type="radio" name="swapModeRadio" value="move" checked onchange="toggleSwapMode('move')" />
+            <span>Move to Vacant Bed</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.9rem; font-weight:600; color:#6d28d9;">
+            <input type="radio" name="swapModeRadio" value="swap" onchange="toggleSwapMode('swap')" />
+            <span>Mutual 2-Way Swap with another Person</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Mode 1: Move to Vacant Bed -->
+      <div id="swapModeMoveWrap" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:6px;">
+          Choose Vacant / Free Bed (<span id="swapVacantGenderLabel">Matching Gender</span>)
+        </label>
+        <select id="swapVacantSelect" style="width:100%; height:38px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;">
+          <option value="">-- Choose vacant bed --</option>
+        </select>
+        <p style="margin:8px 0 0 0; font-size:0.8rem; color:#64748b;">
+          The participant will move to the selected bed, and their current bed will become free.
+        </p>
+      </div>
+
+      <!-- Mode 2: Mutual 2-Way Swap -->
+      <div id="swapModeSwapWrap" style="display:none; background:#faf5ff; border:1px solid #e9d5ff; border-radius:8px; padding:14px; margin-bottom:16px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#5b21b6; display:block; margin-bottom:6px;">
+          Select Person B to Swap With (<span id="swapPartnerGenderLabel">Matching Gender</span>)
+        </label>
+        <select id="swapPartnerSelect" style="width:100%; height:38px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.88rem;" onchange="onSelectSwapPartner(this)">
+          <option value="">-- Select participant to swap with --</option>
+        </select>
+
+        <div style="margin-top:10px;">
+          <label style="font-size:0.75rem; font-weight:700; color:#64748b; display:block; margin-bottom:4px; text-transform:uppercase;">
+            OR Search Person B by Mobile or Card No:
+          </label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="swapSearchInp" placeholder="Enter mobile or card no..." style="flex:1; height:36px; padding:0 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;" />
+            <button type="button" class="btn-sm btn-primary-sm" onclick="searchPartnerForSwap()"><i class="fas fa-search"></i> Find</button>
+          </div>
+        </div>
+
+        <div id="swapPreviewResult" style="margin-top:10px; font-size:0.85rem; min-height:20px;"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeSwapModal()">Cancel</button>
+        <button type="button" class="btn-sm btn-success-sm" id="confirmSwapBtn" onclick="submitBedSwap()" style="padding:8px 20px; font-weight:700;">
+          <i class="fas fa-check"></i> Confirm Bed Switch
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Excel Import Preview Modal -->
+  <div id="excelImportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:650px; width:92%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out; max-height:85vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-file-excel" style="color:#16a34a;"></i> Review &amp; Apply Excel Allocations
+        </h3>
+        <button type="button" onclick="closeExcelImportModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <div id="excelImportSummary" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:12px; margin-bottom:14px; font-size:0.88rem; color:#166534;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:16px;">
+        <div id="excelImportPreviewWrap"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeExcelImportModal()">Cancel</button>
+        <button type="button" class="btn-sm btn-success-sm" id="confirmExcelImportBtn" onclick="submitExcelAllocations()" style="padding:8px 22px; font-weight:700;">
+          <i class="fas fa-save"></i> Apply All to Bookings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Stay History Modal -->
+  <div id="stayHistoryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:10px; max-width:650px; width:92%; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); animation:modalSlideUp 0.2s ease-out; max-height:85vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#204060; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-history" style="color:#0284c7;"></i> Past 2-Year Utsav Stay History
+        </h3>
+        <button type="button" onclick="closeStayHistoryModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+
+      <!-- Participant Header -->
+      <div id="stayHistoryProfile" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:12px; font-size:0.88rem;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Stay Stats Summary KPIs -->
+      <div id="stayHistoryKpis" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin-bottom:12px;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- History Table Wrap -->
+      <div style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:14px;">
+        <div id="stayHistoryTableWrap"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button type="button" class="btn-sm btn-outline-sm" onclick="closeStayHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Sticky Apply Bar -->
+  <div id="stickyApplyBar" class="sticky-apply-bar">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="badge" style="background:#22c55e; color:#052e16; font-weight:800; font-size:0.85rem; padding:4px 10px;" id="stickyCount">0 selected</span>
+      <span style="font-size:0.88rem; font-weight:500;">Ready to assign to bookings</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-sm" style="background:#22c55e; color:#052e16; font-weight:700; padding:7px 16px; border-radius:30px;" onclick="applyRunAllocations()">
+        <i class="fas fa-save"></i> Apply to Bookings
+      </button>
+      <button class="btn-sm btn-outline-sm" style="background:rgba(255,255,255,0.15); color:white; border:none; padding:7px 12px; border-radius:30px;" onclick="clearRunSelection()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="toastMsg" class="toast-msg"></div>
+
+  <script src="systemRoomAllocation.js"></script>
+</body>
+</html>

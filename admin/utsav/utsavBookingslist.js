@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
   if (uploadRoomNoBtn) uploadRoomNoBtn.addEventListener('click',()=>window.location.href=`uploadRoomNo.html?utsavId=${utsavid}`);
+  const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
+  if (systemRoomAllocationBtn) {
+    systemRoomAllocationBtn.addEventListener('click', () => {
+      window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
+    });
+  }
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
   const storedScroll = sessionStorage.getItem('utsavScrollTop');
