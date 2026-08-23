@@ -703,6 +703,8 @@
             const cols = field.columns || [];
 
             const matrixCounts = {};
+            const aayambilCol = cols.find(c => c.toLowerCase() === 'aayambil');
+
             rows.forEach(r => {
               matrixCounts[r] = {};
               cols.forEach(c => matrixCounts[r][c] = 0);
@@ -741,8 +743,10 @@
                   <tbody>
             `;
 
+            const aayambilCol = cols.find(c => c.toLowerCase() === 'aayambil');
+
             rows.forEach(r => {
-              const aCount = matrixCounts[r]['Aayambil'] || 0;
+              const aCount = aayambilCol ? (matrixCounts[r][aayambilCol] || 0) : 0;
               let rasCount = 0;
               cols.forEach(c => {
                 if (c.toLowerCase().includes('ras tyaag')) rasCount += (matrixCounts[r][c] || 0);
