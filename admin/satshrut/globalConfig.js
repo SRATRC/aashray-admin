@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       // Populate Bhakti offset
       const bhaktiOffsetEl = document.getElementById('bhakti_offset_select');
       if (bhaktiOffsetEl) {
-        bhaktiOffsetEl.value = String(cfg.bhakti_offset || 0);
+        bhaktiOffsetEl.value = String(((cfg.bhakti_offset || 0) % 4 + 4) % 4);
       }
 
       // Populate 17th Morning config
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
         const data = await res.json();
         if (res.ok) {
-          const newOff = data.data?.bhakti_offset || 0;
+          const newOff = ((data.data?.bhakti_offset || 0) % 4 + 4) % 4;
           document.getElementById('bhakti_offset_select').value = String(newOff);
           alert(`Success: Bhakti rotation shifted by +1 week! (Current shift: +${newOff} week(s))`);
         } else {
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const payload = {
       no_session_days: noSessionDays,
-      bhakti_offset: parseInt(document.getElementById('bhakti_offset_select')?.value) || 0
+      bhakti_offset: ((parseInt(document.getElementById('bhakti_offset_select')?.value) || 0) % 4 + 4) % 4
     };
 
     const audio1Url = document.getElementById('default_audio1_youtube_url').value.trim();

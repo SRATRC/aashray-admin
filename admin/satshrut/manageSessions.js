@@ -20,7 +20,8 @@ const BHAKTI_EPOCH_MONDAY_UTC = Date.UTC(2026, 7, 3);
 function getBhaktiWeekIndex(dateStr) {
   const targetD = new Date(dateStr + 'T12:00:00Z').getTime();
   const priorMondays = [];
-  const curr = new Date(Date.UTC(2026, 7, 3, 12, 0, 0));
+  const curr = new Date(BHAKTI_EPOCH_MONDAY_UTC);
+  curr.setUTCHours(12, 0, 0, 0);
 
   while (curr.getTime() < targetD) {
     priorMondays.push(curr.toISOString().split('T')[0]);
