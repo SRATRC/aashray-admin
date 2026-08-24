@@ -11,15 +11,40 @@ const DAY_NAMES_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // Mon-Sun grid offset: convert getDay() → Mon-based index
 let NO_SESSION_DAYS = [1, 4]; // default: Mon, Thu — dynamically refreshed from backend config
 let BHAKTI_VIDEOS = null;     // Array of 4 bhakti video objects from config, or null if not configured
+let BHAKTI_OFFSET = 0;        // Manual rotation shift (in weeks) applied via the "Shift Bhakti" action
 
-// Base Monday anchor for continuous rolling 4-week Bhakti rotation (2026-08-03 is Monday, Week 1)
+// Base Monday anchor for sequential 4-week Bhakti rotation (2026-08-03 is Monday, Week 1)
 const BHAKTI_EPOCH_MONDAY_UTC = Date.UTC(2026, 7, 3);
 
-// Returns 0-based week index (0–3) in continuous 4-week cycle across month boundaries
+// Returns 0-based week index (0–3) in sequential 4-week cycle shifted by manual overrides
 function getBhaktiWeekIndex(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00Z').getTime();
-  const weeksDiff = Math.floor((d - BHAKTI_EPOCH_MONDAY_UTC) / (7 * 24 * 3600 * 1000));
-  return ((weeksDiff % 4) + 4) % 4; // 0–3
+  const targetD = new Date(dateStr + 'T12:00:00Z').getTime();
+  const curr = new Date(BHAKTI_EPOCH_MONDAY_UTC);
+  curr.setUTCHours(12, 0, 0, 0);
+
+  if (targetD < curr.getTime()) {
+    const weeksDiff = Math.floor((targetD - curr.getTime()) / (7 * 24 * 3600 * 1000));
+    return (((weeksDiff + BHAKTI_OFFSET) % 4) + 4) % 4;
+  }
+
+  const priorMondays = [];
+
+  while (curr.getTime() < targetD) {
+    priorMondays.push(curr.toISOString().split('T')[0]);
+    curr.setUTCDate(curr.getUTCDate() + 7);
+  }
+
+  let overriddenCount = 0;
+  priorMondays.forEach((mDate) => {
+    // Check against allSessions (cross-month) or currently loaded month map
+    const s = allSessions.find((x) => x.session_date === mDate) || sessionsMap[mDate];
+    if (s && s.status === 'active' && s.youtube_video_id && s.youtube_video_id !== 'none') {
+      overriddenCount++;
+    }
+  });
+
+  const actualBhaktiPlayed = priorMondays.length - overriddenCount;
+  return (((actualBhaktiPlayed + BHAKTI_OFFSET) % 4) + 4) % 4; // 0–3
 }
 
 function escapeHtml(str) {
@@ -213,6 +238,9 @@ function renderCalendar() {
     if (isToday) cls += ' is-today';
 
     let inner = `<span class="day-num">${d}</span>`;
+    if (d === 17) {
+      inner += `<div class="morning-17th-tag" onclick="play17thMorning(event, '${dateStr}')" title="Play 17th Monthly Morning Sadhana (7 steps)">🌅 17th Morning ▶</div>`;
+    }
 
     const activeUtsav = allUtsavs.find(u => dateStr >= u.start_date && dateStr <= u.end_date);
     const hasValidVideo = session && session.status === 'active' && session.youtube_video_id && session.youtube_video_id !== 'none' && (session.video_end_seconds > (session.video_start_seconds || 0));
@@ -269,6 +297,13 @@ function renderCalendar() {
 
   html += `</div>`; // /.cal-grid
   document.getElementById('calContainer').innerHTML = html;
+}
+
+function play17thMorning(e, dateStr) {
+  if (e && typeof e.stopPropagation === 'function') {
+    e.stopPropagation();
+  }
+  window.location.href = `player.html?date=${dateStr}&slot=morning&play=true`;
 }
 
 function playSessionDate(e, dateStr) {
@@ -926,9 +961,30 @@ async function loadConfig() {
       if (Array.isArray(json.data.bhakti_videos) && json.data.bhakti_videos.length === 4) {
         BHAKTI_VIDEOS = json.data.bhakti_videos;
       }
+      BHAKTI_OFFSET = json.data.bhakti_offset || 0;
     }
   } catch (e) {
     console.warn('Could not load satshrut config:', e);
+  }
+}
+
+async function shiftBhaktiRotation() {
+  if (!confirm('Shift the Monday Bhakti rotation by +1 week forward?')) return;
+  try {
+    const res = await fetch(`${CONFIG.basePath}/satshrut/bhakti/shift`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ shift: 1 })
+    });
+    const json = await res.json();
+    if (res.ok) {
+      BHAKTI_OFFSET = json.data?.bhakti_offset || 0;
+      await refreshAll();
+    } else {
+      alert(`Error: ${json.message || 'Could not shift Bhakti rotation'}`);
+    }
+  } catch (e) {
+    alert('Network error while shifting Bhakti rotation.');
   }
 }
 

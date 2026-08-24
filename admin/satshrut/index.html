@@ -5,50 +5,52 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Satshrut Management</title>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../sessionstorage.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Satshrut Management</title>
 
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-  </head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
 
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
+  </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Satshrut Management</h1>
-            </div>
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Satshrut Management</h1>
+          </div>
 
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="player.html">▶&nbsp; Play Today's Session</a>
-                <a class="menu-btn" href="manageSessions.html">📋&nbsp; Manage Sessions</a>
-                <a class="menu-btn" href="globalConfig.html">⚙️&nbsp; Audio Configuration</a>
-              </div>
+          <div class="admin-menu">
+            <div class="menu-grid">
+              <a class="menu-btn" href="player.html">▶&nbsp; Play Today's Session</a>
+              <a class="menu-btn" href="manageSessions.html">📋&nbsp; Manage Sessions</a>
+              <a class="menu-btn" href="globalConfig.html">⚙️&nbsp; Configuration</a>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
