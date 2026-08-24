@@ -19,9 +19,15 @@ const BHAKTI_EPOCH_MONDAY_UTC = Date.UTC(2026, 7, 3);
 // Returns 0-based week index (0–3) in sequential 4-week cycle shifted by manual overrides
 function getBhaktiWeekIndex(dateStr) {
   const targetD = new Date(dateStr + 'T12:00:00Z').getTime();
-  const priorMondays = [];
   const curr = new Date(BHAKTI_EPOCH_MONDAY_UTC);
   curr.setUTCHours(12, 0, 0, 0);
+
+  if (targetD < curr.getTime()) {
+    const weeksDiff = Math.floor((targetD - curr.getTime()) / (7 * 24 * 3600 * 1000));
+    return (((weeksDiff + BHAKTI_OFFSET) % 4) + 4) % 4;
+  }
+
+  const priorMondays = [];
 
   while (curr.getTime() < targetD) {
     priorMondays.push(curr.toISOString().split('T')[0]);

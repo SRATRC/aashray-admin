@@ -92,8 +92,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   if (monthSelect) {
     monthSelect.addEventListener('change', function () {
-      // Save current input values into previous month before switching
+      // Save current input values into previous month before switching (preserving loaded IDs)
       seventeenthMonthlyMap[currentMonthKey] = {
+        ...(seventeenthMonthlyMap[currentMonthKey] || {}),
         bhakti_youtube_url: document.getElementById('seventeenth_bhakti_url').value.trim(),
         clip1_youtube_url: document.getElementById('seventeenth_clip1_url').value.trim(),
         clip2_youtube_url: document.getElementById('seventeenth_clip2_url').value.trim()
@@ -273,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       // Ensure the currently displayed month inputs are captured into the multi-month map
       seventeenthMonthlyMap[currentMonthKey] = {
+        ...(seventeenthMonthlyMap[currentMonthKey] || {}),
         bhakti_youtube_url: document.getElementById('seventeenth_bhakti_url').value.trim() || null,
         clip1_youtube_url: document.getElementById('seventeenth_clip1_url').value.trim() || null,
         clip2_youtube_url: document.getElementById('seventeenth_clip2_url').value.trim() || null
