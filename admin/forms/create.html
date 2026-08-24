@@ -1,0 +1,2988 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Form - Aashray Admin</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+    <script src="../../style/js/roleCheck.js"></script>
+    <script>
+      checkRoleAccess([
+        'superAdmin', 'accountsAdmin', 'roomAdmin', 'cardAdmin',
+        'officeAdmin', 'foodAdmin', 'gateAdmin', 'adhyayanAdmin',
+        'travelAdmin', 'maintenanceAdmin', 'housekeepingAdmin',
+        'electricalAdmin', 'utsavAdmin', 'avtAdmin', 'wifiAdmin'
+      ]);
+    </script>
+
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+
+    <style>
+      .form-builder-container {
+        max-width: 850px;
+        margin: 0 auto;
+      }
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .top-bar h1 {
+        color: #204060;
+        font-size: 1.8rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .settings-section {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 1.75rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      }
+      .settings-section h3 {
+        margin-bottom: 1.25rem;
+        color: #204060;
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+      }
+      .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+      }
+      .settings-grid .full-width {
+        grid-column: 1 / -1;
+      }
+
+      /* Field cards */
+      .fields-section h3 {
+        color: #204060;
+        margin-bottom: 1.25rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .field-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-left: 5px solid #204060; /* Left indicator border */
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      }
+      .field-card:hover {
+        box-shadow: 0 8px 16px rgba(32, 64, 96, 0.08);
+        transform: translateY(-2px);
+      }
+      .field-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+      .field-number {
+        background: #204060;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .field-actions {
+        display: flex;
+        gap: 0.4rem;
+      }
+      .field-actions button {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        color: #4c86b0;
+      }
+      .field-actions button:hover {
+        background: #e8f4fd;
+        border-color: #4c86b0;
+      }
+      .field-actions .btn-remove {
+        color: #dc3545;
+        border-color: #f5c6cb;
+      }
+      .field-actions .btn-remove:hover {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+      }
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .field-row .full-width {
+        grid-column: 1 / -1;
+      }
+      .field-row label {
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+        font-weight: 600;
+        color: #495057;
+      }
+      .field-row input,
+      .field-row select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        background-color: #fafafa;
+        transition: border-color 0.2s, background-color 0.2s;
+      }
+      .field-row input:focus,
+      .field-row select:focus {
+        border-color: #4c86b0;
+        background-color: #fff;
+        outline: none;
+      }
+
+      /* Options list */
+      .options-container {
+        margin-top: 0.75rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px dashed #ced4da;
+      }
+      .options-container label {
+        font-size: 0.85rem;
+        color: #204060;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      .option-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .option-row input {
+        flex: 1;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .option-row button {
+        background: #fdf2f2;
+        border: 1px solid #f5c6cb;
+        color: #dc3545;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+      }
+      .option-row button:hover {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+      }
+      .add-option-btn {
+        background: white;
+        border: 1px dashed #4c86b0;
+        color: #4c86b0;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .add-option-btn:hover {
+        background: #e8f4fd;
+        border-color: #204060;
+        color: #204060;
+      }
+      .required-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .required-toggle input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #204060;
+        cursor: pointer;
+      }
+
+      .action-buttons-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .action-buttons-row button {
+        flex: 1;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        box-sizing: border-box;
+      }
+      #addFieldBtn {
+        border: 2px dashed #4c86b0;
+        color: #4c86b0;
+      }
+      #addFieldBtn:hover {
+        background: #e8f4fd;
+        border-color: #204060;
+        color: #204060;
+      }
+      #addSectionBtn {
+        border: 2px dashed #6f42c1;
+        color: #6f42c1;
+        background: #fcfbfe;
+      }
+      #addSectionBtn:hover {
+        background: #f3ebff;
+        border-color: #52278f;
+        color: #52278f;
+      }
+
+      .submit-bar {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #dee2e6;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+      }
+      .btn-secondary:hover {
+        background-color: #5a6268;
+      }
+
+      #alert {
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: none;
+        font-weight: 500;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      #alert.alert-success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+      #alert.alert-danger { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+      /* Logic config panel styling */
+      .logic-container {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f1f3f5;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+      .logic-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #204060;
+        cursor: pointer;
+      }
+      
+      @media (max-width: 600px) {
+        .settings-grid, .field-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    
+      /* Toast Notifications */
+      #toastContainer {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .custom-toast {
+        min-width: 280px;
+        max-width: 420px;
+        padding: 14px 18px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: toastSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        pointer-events: auto;
+      }
+      .custom-toast.toast-success {
+        background: #28a745;
+        color: #ffffff;
+      }
+      .custom-toast.toast-error {
+        background: #dc3545;
+        color: #ffffff;
+      }
+      .custom-toast.toast-info {
+        background: #204060;
+        color: #ffffff;
+      }
+      @keyframes toastSlideIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes toastFadeOut {
+        from { transform: translateY(0); opacity: 1; }
+        to { transform: translateY(20px); opacity: 0; }
+      }
+
+    
+      .floating-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 950px;
+        z-index: 9999;
+        background: #ffffff;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid #d0d7de;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.12);
+        padding: 0.85rem 1.5rem;
+        box-sizing: border-box;
+      }
+      .floating-action-bar-inner {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .form-builder-container {
+        padding-bottom: 90px;
+      }
+
+    
+      /* Enable sticky positioning inside whitesec */
+      .whitesec {
+        overflow: visible !important;
+      }
+      .collapsible-header {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 60px !important; /* Docks right below the top sticky blue navbar */
+        z-index: 95 !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid #b8d0e5 !important;
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        box-shadow: 0 6px 18px rgba(32, 64, 96, 0.12) !important;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+      .collapsible-header:hover {
+        background: #f0f6fc !important;
+        border-color: #204060 !important;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Forms</a> |
+          <a id="homelink" href="../index.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating formatting toolbar -->
+    <div id="formattingToolbar" style="display:none; position:absolute; background:white; border:1px solid #dee2e6; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:0.25rem; gap:0.25rem; z-index:10000; align-items:center;">
+      <button type="button" onclick="applyFormat('b')" title="Bold" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-weight:bold; font-size:0.9rem; color:#495057;">B</button>
+      <button type="button" onclick="applyFormat('i')" title="Italic" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-style:italic; font-size:0.9rem; color:#495057;">I</button>
+      <button type="button" onclick="applyFormat('u')" title="Underline" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; text-decoration:underline; font-size:0.9rem; color:#495057;">U</button>
+      <button type="button" onclick="applyFormat('link')" title="Insert Link" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-size:0.85rem; color:#495057;"><i class="fas fa-link"></i></button>
+      <div style="width:1px; height:18px; background:#dee2e6; margin:0 0.2rem;"></div>
+      <button type="button" onclick="applyFormat('clear')" title="Clear Formatting" style="background:none; border:none; padding:0.25rem 0.5rem; cursor:pointer; font-size:0.85rem; color:#dc3545;"><i class="fas fa-eraser"></i></button>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="form-builder-container">
+              <div class="top-bar">
+                <h1 id="pageTitle"><i class="fas fa-tools"></i> Create New Form</h1>
+                <button class="btn btn-info" onclick="previewForm()" type="button" style="display:none;"><i class="fas fa-eye"></i> Preview Form</button>
+              </div>
+
+              <!-- Draft Recovery Banner -->
+              <div id="draftRecoveryBanner" style="display:none; background:#e2f0d9; border:1px solid #a9d08e; border-radius:6px; padding:0.75rem 1rem; margin-bottom:1rem; justify-content:space-between; align-items:center; font-size:0.88rem; color:#385723;">
+                <span><i class="fas fa-history"></i> You have an unsaved draft from <strong id="draftTime"></strong>.</span>
+                <div style="display:flex; gap:0.5rem;">
+                  <button type="button" onclick="restoreDraft()" class="btn btn-success" style="padding:0.25rem 0.75rem; font-size:0.78rem; height:auto; background:#28a745; border:none; color:#fff; border-radius:4px; cursor:pointer;">Restore Draft</button>
+                  <button type="button" onclick="discardDraft()" class="btn btn-secondary" style="padding:0.25rem 0.75rem; font-size:0.78rem; height:auto; background:#6c757d; border:none; color:#fff; border-radius:4px; cursor:pointer;">Discard</button>
+                </div>
+              </div>
+
+              <div id="alert"></div>
+
+              <!-- Form Settings (Collapsible) -->
+              <div class="settings-section" style="padding-bottom:1.25rem;">
+                <div class="collapsible-header" onclick="toggleSectionCollapse('settings')">
+                  <h3 style="margin:0; border-bottom:none; padding-bottom:0; display:flex; align-items:center; gap:0.5rem; font-size:1.2rem; font-weight:700; color:#204060;">
+                    <i class="fas fa-cog"></i> Form Settings
+                  </h3>
+                  <div style="display:flex; align-items:center; gap:0.5rem; color:#204060; font-size:0.9rem; font-weight:600;">
+                    <span style="font-size:0.8rem; color:#6c757d;">(Click to collapse/expand)</span>
+                    <i id="settingsCollapseIcon" class="fas fa-chevron-down" style="font-size:1rem; transition:transform 0.25s ease;"></i>
+                  </div>
+                </div>
+                <div id="settingsCollapseBody" style="display:none;">
+                  <div class="settings-grid">
+                  <div class="full-width">
+                    <label for="formTitle">Form Title *</label>
+                    <input type="text" id="formTitle" class="form-control" placeholder="e.g. Food Preference Survey" />
+                  </div>
+                  <div class="full-width">
+                    <label for="formDescription">Description</label>
+                    <textarea id="formDescription" class="form-control" rows="2" placeholder="Brief description of this form..."></textarea>
+                  </div>
+                  <div>
+                    <label for="formDept">Department *</label>
+                    <select id="formDept" class="form-control" onchange="handleDeptChange()">
+                      <option value="">-- Select Department --</option>
+                      <option value="accounts">Accounts</option>
+                      <option value="office">Office</option>
+                      <option value="food">Food</option>
+                      <option value="adhyayan">Adhyayan</option>
+                      <option value="room">Room</option>
+                      <option value="travel">Travel</option>
+                      <option value="avt">AVT</option>
+                      <option value="wifi">WiFi</option>
+                      <option value="utsav">Utsav</option>
+                      <option value="smilestone">Smilestone</option>
+                    </select>
+                  </div>
+                  <div id="deptEventContainer" style="display:none;">
+                    <label id="deptEventLabel" for="deptEventSelect" style="font-weight:700; color:#204060;">Event *</label>
+                    <select id="deptEventSelect" class="form-control" style="font-weight:600; color:#204060;">
+                      <option value="">-- Select Event --</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="formType">Access Type</label>
+                    <select id="formType" class="form-control" onchange="handleFormTypeChange()">
+                      <option value="public">Public (anyone can fill)</option>
+                      <option value="cardno">Authenticated (requires Card No.)</option>
+                      <option value="mobno">Authenticated (requires Mobile No.)</option>
+                      <option value="reg_cardno">Registered Participants Only (requires Card No.)</option>
+                      <option value="reg_mobno">Registered Participants Only (requires Mobile No.)</option>
+                    </select>
+                    <!-- OTP Verification option: only visible when authType = mobno -->
+                    <div id="requireOtpRow" style="display:none; flex-direction:column; gap:0.35rem; margin-top:0.6rem;">
+                      <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <input type="checkbox" id="requireOtp" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" onchange="handleRequireOtpChange()" />
+                        <label for="requireOtp" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Require OTP Verification</label>
+                      </div>
+                      <div id="manageAllowlistWrap" style="display:none; margin-top:0.35rem;">
+                        <button type="button" onclick="openAllowlistModal()" class="btn btn-sm" style="background:#eef4f9; border:1px solid #b8d0e5; color:#204060; font-weight:700; font-size:0.85rem; padding:0.4rem 0.85rem; border-radius:6px; display:inline-flex; align-items:center; gap:0.45rem; cursor:pointer;">
+                          <i class="fas fa-users-cog"></i> Allowed Phone Numbers <span id="allowlistBadge" style="background:#204060; color:#fff; font-size:0.75rem; padding:2px 7px; border-radius:10px; font-weight:700;">0</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="formCategory">Form Category</label>
+                    <select id="formCategory" class="form-control" onchange="handleFormCategoryChange()">
+                      <option value="generic">Generic</option>
+                      <option value="vendor">Vendor Registration</option>
+                    </select>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="limitOneResponse" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
+                      <label for="limitOneResponse" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Limit to 1 response</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="allowEdit" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
+                      <label for="allowEdit" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Allow response editing</label>
+                    </div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="showProgressBar" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" checked />
+                      <label for="showProgressBar" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Show progress bar by default</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <input type="checkbox" id="showSubmitAnother" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" checked />
+                      <label for="showSubmitAnother" style="margin:0; font-weight:600; font-size:0.9rem; color:#204060; cursor:pointer;">Show link to submit another response</label>
+                    </div>
+                  </div>
+                  <div class="full-width">
+                    <label for="confirmationMessage">Confirmation Message</label>
+                    <input type="text" id="confirmationMessage" class="form-control" placeholder="Thank you, your response has been recorded." value="Thank you, your response has been recorded." />
+                  </div>
+                  <div class="full-width">
+                    <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:#204060;">Theme Accent Color</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;" id="themeColorPicker">
+                      <div class="theme-swatch active" data-color="#204060" style="background:#204060; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 2px #204060; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#6f42c1" style="background:#6f42c1; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#28a745" style="background:#28a745; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#e83e8c" style="background:#e83e8c; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#fd7e14" style="background:#fd7e14; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <div class="theme-swatch" data-color="#20c997" style="background:#20c997; width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px #ccc; transition:all 0.15s ease;"></div>
+                      <input type="hidden" id="themeColor" value="#204060" />
+                    </div>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; grid-column: span 2; margin-top:0.5rem;">
+                    <div>
+                      <label for="expiresAt" style="font-weight:600; color:#204060;">Form Expiration Date & Time (optional)</label>
+                      <input type="datetime-local" id="expiresAt" class="form-control" />
+                    </div>
+                    <div>
+                      <label for="maxResponses" style="font-weight:600; color:#204060;">Maximum Submissions Limit (optional)</label>
+                      <input type="number" id="maxResponses" class="form-control" placeholder="e.g. 100" min="1" />
+                    </div>
+                  </div>
+                  <div class="full-width">
+                    <label for="closeMessage" style="font-weight:600; color:#204060;">Form Closed Message (optional)</label>
+                    <textarea id="closeMessage" class="form-control" placeholder="e.g. This form is no longer accepting responses." rows="2" style="resize:vertical;"></textarea>
+                  </div>
+
+                  <div class="full-width">
+                    <label for="formSlug">Short URL Slug (optional)</label>
+                    <div style="display:flex; align-items:center; gap:0.25rem;">
+                      <span style="color:#6c757d; font-size:0.95rem; font-weight:600; padding: 0.5rem 0 0.5rem 0.25rem;">/go/</span>
+                      <input type="text" id="formSlug" class="form-control" placeholder="e.g. registration-form" />
+                    </div>
+                  </div>
+
+                  <!-- OTP Allowlist: shown whenever Access Type = mobno, in both create and edit mode -->
+                  <div class="full-width" id="otpAllowlistSection" style="display:none; border-top: 1px dashed #ced4da; padding-top: 1rem; margin-top: 0.5rem;">
+                    <label style="font-weight:600; color:#204060;">Authorized Numbers (OTP Allowlist)</label>
+                    <small style="display:block; color:#6c757d; margin-bottom:0.5rem;">
+                      Restricts access and submission on this form to these mobile numbers only (each must already be a registered member). Leave empty to allow any registered member.
+                      While creating a new form, numbers added here are staged and saved once you click Save Form.
+                    </small>
+                    <div id="otpAllowlistList" style="margin-bottom:0.5rem;"></div>
+                    <div style="display:flex; gap:0.5rem; align-items:flex-end; flex-wrap:wrap;">
+                      <div>
+                        <label style="font-size:0.75rem; font-weight:600; color:#6c757d; display:block;">Mobile Number</label>
+                        <input type="text" id="allowlistMobno" class="form-control" placeholder="10-digit number" style="width:180px; padding:0.4rem 0.6rem;" />
+                      </div>
+                      <div>
+                        <label style="font-size:0.75rem; font-weight:600; color:#6c757d; display:block;">Department</label>
+                        <input type="text" id="allowlistDepartment" class="form-control" placeholder="e.g. Kitchen" style="width:180px; padding:0.4rem 0.6rem;" />
+                      </div>
+                      <button type="button" class="btn" style="padding:0.4rem 0.9rem;" onclick="addOtpAllowlistEntry()"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              </div>
+
+              <!-- Fields Section (Collapsible) -->
+              <div class="fields-section">
+                <div class="collapsible-header" onclick="toggleSectionCollapse('fields')">
+                  <h3 style="margin:0; display:flex; align-items:center; gap:0.6rem; font-size:1.2rem; font-weight:700; color:#204060;">
+                    <i class="fas fa-list-ol"></i> Form Fields 
+                    <span id="fieldsCountBadge" style="background:#eef4f9; color:#204060; font-size:0.82rem; font-weight:700; padding:3px 10px; border-radius:12px; border:1px solid #b8d0e5;">0 questions</span>
+                  </h3>
+                  <div style="display:flex; align-items:center; gap:0.5rem; color:#204060; font-size:0.9rem; font-weight:600;">
+                    <span style="font-size:0.8rem; color:#6c757d;">(Click to collapse/expand)</span>
+                    <i id="fieldsCollapseIcon" class="fas fa-chevron-down" style="font-size:1rem; transition:transform 0.25s ease;"></i>
+                  </div>
+                </div>
+                <div id="fieldsCollapseBody" style="display:none;">
+                  <div id="fieldsContainer"></div>
+                  <div class="action-buttons-row">
+                    <button id="addFieldBtn" type="button" onclick="addField()"><i class="fas fa-plus-circle"></i> Add Question</button>
+                    <button id="addSectionBtn" type="button" onclick="addField({type: 'section'})"><i class="fas fa-folder-plus"></i> Add Section Break</button>
+                  </div>
+                </div>
+              </div>
+
+              
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function escapeAttr(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      
+      function showToast(message, type = 'success', duration = 3500) {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toastContainer';
+          document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `custom-toast toast-${type}`;
+        
+        let icon = 'fas fa-check-circle';
+        if (type === 'error') icon = 'fas fa-exclamation-circle';
+        if (type === 'info') icon = 'fas fa-info-circle';
+
+        toast.innerHTML = `<i class="${icon}" style="font-size:1.2rem;"></i> <span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.animation = 'toastFadeOut 0.4s forwards';
+          setTimeout(() => toast.remove(), 400);
+        }, duration);
+      }
+
+      function showSuccess(message) {
+        const alertEl = document.getElementById('alert');
+        if (alertEl) {
+          alertEl.className = 'alert alert-success';
+          alertEl.innerHTML = `<i class="fas fa-check-circle"></i> ${escapeHtml(message)}`;
+          alertEl.style.display = 'block';
+        }
+        showToast(message, 'success');
+      }
+
+      function showError(message) {
+        const alertEl = document.getElementById('alert');
+        if (alertEl) {
+          alertEl.className = 'alert alert-danger';
+          alertEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(message)}`;
+          alertEl.style.display = 'block';
+        }
+        showToast(message, 'error', 4500);
+      }
+
+      const getToken = () => sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = getToken();
+      const urlParams = new URLSearchParams(window.location.search);
+      // editId initialized above
+      
+      let isFormDirty = false;
+      let isLoadingForm = false;
+      let editId = urlParams.get('id');
+
+      function markDirty() {
+        if (isLoadingForm) return;
+        if (!isFormDirty) {
+          isFormDirty = true;
+          updateSaveButtonState();
+        }
+      }
+
+      function markClean() {
+        isFormDirty = false;
+        updateSaveButtonState();
+      }
+
+      function updateSaveButtonState() {
+        const saveBtn = document.getElementById('saveFormBtn');
+        const statusEl = document.getElementById('saveStatusIndicator');
+        if (!saveBtn) return;
+
+        if (isFormDirty) {
+          saveBtn.disabled = false;
+          saveBtn.style.opacity = '1';
+          saveBtn.style.cursor = 'pointer';
+          saveBtn.style.background = '#204060';
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Form';
+          if (statusEl) {
+            statusEl.style.color = '#fd7e14';
+            statusEl.innerHTML = '<i class="fas fa-dot-circle"></i> Unsaved changes';
+          }
+        } else {
+          saveBtn.disabled = true;
+          saveBtn.style.opacity = '0.5';
+          saveBtn.style.cursor = 'not-allowed';
+          saveBtn.style.background = '#6c757d';
+          saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+          if (statusEl) {
+            statusEl.style.color = '#28a745';
+            statusEl.innerHTML = '<i class="fas fa-check-circle"></i> All changes saved';
+          }
+        }
+      }
+
+      // Automatically track dirty state on any user interaction
+      $(document).on('input change', 'input, textarea, select', function() {
+        markDirty();
+      });
+
+      let fieldCounter = 0;
+      let activeFormatInput = null;
+
+      // Staged OTP allowlist entries for a form that doesn't exist yet (create
+      // mode). Held in memory and flushed to the real endpoint right after the
+      // form is created, since custom_form_otp_allowlist rows need a form_id.
+      let pendingOtpAllowlist = [];
+      let pendingOtpAllowlistNextId = 1;
+
+      const FIELD_TYPES = [
+        { value: 'text', label: 'Short Answer' },
+        { value: 'textarea', label: 'Paragraph' },
+        { value: 'email', label: 'Email' },
+        { value: 'phone', label: 'Phone Number (10-digit)' },
+        { value: 'number', label: 'Number' },
+        { value: 'date', label: 'Date' },
+        { value: 'time', label: 'Time' },
+        { value: 'rating', label: 'Star Rating (1-5)' },
+        { value: 'select', label: 'Dropdown' },
+        { value: 'radio', label: 'Multiple Choice (Radio)' },
+        { value: 'checkbox', label: 'Checkboxes' },
+        { value: 'grid_radio', label: 'Multiple Choice Grid' },
+        { value: 'grid_checkbox', label: 'Checkbox Grid' },
+        { value: 'grid_number', label: 'Matrix Table (Dropdown Grid)' },
+        { value: 'section', label: 'Section Divider' }
+      ];
+
+      const OPTION_TYPES = ['select', 'radio', 'checkbox'];
+
+      // Show formatting toolbar above active input
+      $(document).on('focus', 'input[type="text"], textarea', function() {
+        if ($(this).hasClass('option-value') || $(this).hasClass('grid-row-value') || $(this).hasClass('grid-col-value') || $(this).attr('id') === 'formSlug') return;
+        
+        activeFormatInput = this;
+        const rect = this.getBoundingClientRect();
+        const toolbar = document.getElementById('formattingToolbar');
+        
+        toolbar.style.display = 'flex';
+        toolbar.style.top = `${window.scrollY + rect.top - 40}px`;
+        toolbar.style.left = `${window.scrollX + rect.left}px`;
+      });
+
+      $(document).on('blur', 'input[type="text"], textarea', function() {
+        setTimeout(() => {
+          if (activeFormatInput === this) {
+            document.getElementById('formattingToolbar').style.display = 'none';
+          }
+        }, 200);
+      });
+
+      $(document).on('click', '.theme-swatch', function() {
+        $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
+        $(this).addClass('active').css('box-shadow', `0 0 0 2px ${$(this).data('color')}`);
+        $('#themeColor').val($(this).data('color'));
+      });
+
+      function applyFormat(tag) {
+        if (!activeFormatInput) return;
+        const inputEl = activeFormatInput;
+        const start = inputEl.selectionStart;
+        const end = inputEl.selectionEnd;
+        const text = inputEl.value;
+        if (start === undefined || end === undefined) return;
+        
+        const selected = text.substring(start, end);
+        let replacement = '';
+        if (tag === 'link') {
+          const url = prompt('Enter URL:', 'https://');
+          if (!url) return;
+          replacement = `<a href="${url}" target="_blank">${selected || 'link'}</a>`;
+        } else if (tag === 'clear') {
+          replacement = selected.replace(/<[^>]*>/g, '');
+        } else {
+          replacement = `<${tag}>${selected}</${tag}>`;
+        }
+        
+        inputEl.value = text.substring(0, start) + replacement + text.substring(end);
+        inputEl.focus();
+        inputEl.setSelectionRange(start, start + replacement.length);
+        inputEl.dispatchEvent(new Event('input'));
+      }
+
+      function addField(fieldData) {
+        markDirty();
+        fieldCounter++;
+        const idx = fieldCounter;
+        const container = document.getElementById('fieldsContainer');
+
+        const fieldId = fieldData?.id || `field_${idx}`;
+        const fieldLabel = fieldData?.labelIsPlaceholder ? '' : (fieldData?.label || '');
+        const fieldLabelPlaceholder = fieldData?.labelIsPlaceholder ? fieldData.label : 'e.g. Full Name';
+        const fieldType = fieldData?.type || 'text';
+        const fieldRequired = fieldData?.required || false;
+        const fieldOptions = fieldData?.options || [];
+        const fieldLogic = fieldData?.logic || (fieldData?.conditions && fieldData.conditions[0] ? { dependsOn: fieldData.conditions[0].fieldId, operator: fieldData.conditions[0].operator, value: fieldData.conditions[0].value } : null);
+        const fieldDesc = fieldData?.description || '';
+        const fieldRows = fieldData?.rows && fieldData.rows.length > 0 ? fieldData.rows : ['Row 1', 'Row 2'];
+        const fieldCols = fieldData?.columns && fieldData.columns.length > 0 ? fieldData.columns : ['Column 1', 'Column 2'];
+
+        const dateConstraints = fieldData?.dateConstraints || {};
+        const minType = dateConstraints.minType || '';
+        const minFixed = dateConstraints.minFixed || '';
+        const maxType = dateConstraints.maxType || '';
+        const maxFixed = dateConstraints.maxFixed || '';
+        const cutoffHourVal = dateConstraints.cutoffHour !== undefined && dateConstraints.cutoffHour !== null ? dateConstraints.cutoffHour : '';
+
+        const card = document.createElement('div');
+        card.className = 'field-card';
+        card.id = `fieldCard_${idx}`;
+        card.dataset.idx = idx;
+
+        updateCardAccent(card, fieldType);
+
+        card.innerHTML = `
+          <div class="field-card-header">
+            <span class="field-number">${idx}</span>
+            <div class="field-actions">
+              <button onclick="moveField(${idx}, -1)" title="Move up"><i class="fas fa-arrow-up"></i></button>
+              <button onclick="moveField(${idx}, 1)" title="Move down"><i class="fas fa-arrow-down"></i></button>
+              <button class="btn-remove" onclick="removeField(${idx})" title="Remove field"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+          <div class="section-action-row" style="display: ${fieldType === 'section' ? 'block' : 'none'}; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #ced4da;">
+            <div class="full-width" style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="section-action-label" style="font-weight:700; color:#6f42c1; font-size:0.9rem;">After Section X:</span>
+              <select class="section-next-action form-control" style="width: auto; max-width: 300px; padding: 0.3rem 0.5rem; font-size: 0.85rem; background-color:#fcfbfe; border-color:#d6c4eb; color:#6f42c1; font-weight:600; cursor:pointer;">
+                <option value="next">Continue to next section</option>
+                <option value="submit">Submit form</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="label-title">Field Label *</label>
+              <input type="text" class="field-label" value="${escapeAttr(fieldLabel)}" placeholder="${escapeAttr(fieldLabelPlaceholder)}" />
+            </div>
+            <div>
+              <label>Input Type</label>
+              <select class="field-type" onchange="onTypeChange(${idx})">
+                ${FIELD_TYPES.map(t => `<option value="${t.value}" ${t.value === fieldType ? 'selected' : ''}>${t.label}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="full-width">
+              <label class="label-desc">Description / Help Text (optional)</label>
+              <input type="text" class="field-description" value="${escapeAttr(fieldDesc)}" placeholder="e.g. Enter phone number without country code" />
+            </div>
+          </div>
+          <div class="field-row required-toggle-wrapper">
+            <div class="required-toggle">
+              <input type="checkbox" class="field-required" id="req_${idx}" ${fieldRequired ? 'checked' : ''} />
+              <label for="req_${idx}" style="margin:0; font-weight:400;">Required field</label>
+            </div>
+          </div>
+
+          <!-- Vendor field role (only shown when Form Category = Vendor Registration) -->
+          <div class="vendor-field-role-wrapper" style="display:none; margin-top:0.5rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:#204060;">Vendor Field Role (optional)</label>
+            <select class="field-vendor-role form-control" style="padding:0.3rem 0.5rem; font-size:0.85rem; height:auto;">
+              <option value="" ${!fieldData?.vendorRole ? 'selected' : ''}>-- None --</option>
+              <option value="department" ${fieldData?.vendorRole === 'department' ? 'selected' : ''}>Department</option>
+              <option value="kitchen_type" ${fieldData?.vendorRole === 'kitchen_type' ? 'selected' : ''}>Kitchen Type</option>
+              <option value="remarks" ${fieldData?.vendorRole === 'remarks' ? 'selected' : ''}>Remarks</option>
+            </select>
+            <small style="color:#6c757d;">Tags this field so vendor submissions map into the structured Vendor Registrations table.</small>
+          </div>
+
+          <!-- Validation Rules Container -->
+          <div class="validation-trigger-wrapper" style="margin-top: 0.75rem; border-top: 1px dashed #eee; padding-top: 0.75rem; display: ${['text', 'textarea', 'checkbox', 'number', 'date'].includes(fieldType) ? 'block' : 'none'}">
+            <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="toggleValidationPanel(${idx})">
+              <span style="font-size:0.85rem; font-weight:600; color:#4c86b0;"><i class="fas fa-tasks"></i> Validation Rules (Optional)</span>
+              <i class="fas fa-chevron-down val-arrow_${idx}" style="font-size:0.8rem; color:#4c86b0; transition: transform 0.2s;"></i>
+            </div>
+            <div class="validation-rules-panel" id="validationRulesPanel_${idx}" style="display: none; margin-top:0.75rem; background:#fdfdfd; border: 1px solid #e9ecef; border-radius: 6px; padding: 0.75rem;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                <div>
+                  <label class="val-category-label" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Category</label>
+                  <select class="validation-category form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" onchange="onValidationCategoryChange(${idx})">
+                    <option value="">-- No Validation --</option>
+                  </select>
+                </div>
+                <div class="val-rule-wrapper" style="display:none;">
+                  <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Rule</label>
+                  <select class="validation-rule form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" onchange="onValidationRuleChange(${idx})">
+                  </select>
+                </div>
+              </div>
+              <div class="validation-params-wrapper" id="validationParams_${idx}" style="display:none; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.5rem;">
+                <div>
+                  <label class="val-param-label-1" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Value</label>
+                  <input type="text" class="validation-param-1 form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+                  <div class="regex-presets-container" id="regexPresets_${idx}" style="display:none; margin-top: 0.35rem;">
+                    <small style="color:#6c757d; font-size:0.72rem; line-height: 1.4; display:block;">
+                      Presets: 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^[a-zA-Z ]+$', 'Only letters and spaces allowed')" style="color:#4c86b0; text-decoration:underline;">Letters only</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^\\\\d{6}$', 'Must be a 6-digit PIN code')" style="color:#4c86b0; text-decoration:underline;">6-digit PIN</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^[A-Z]{5}\\\\d{4}[A-Z]{1}$', 'Must be a valid PAN card number')" style="color:#4c86b0; text-decoration:underline;">PAN Card</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^\\\\d{12}$', 'Must be a 12-digit Aadhaar number')" style="color:#4c86b0; text-decoration:underline;">Aadhaar</a> | 
+                      <a href="javascript:void(0)" onclick="setRegexPreset(${idx}, '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$', 'Must be a valid email address')" style="color:#4c86b0; text-decoration:underline;">Email</a>
+                    </small>
+                  </div>
+                </div>
+                <div>
+                  <label class="val-param-label-2" style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Max</label>
+                  <input type="text" class="validation-param-2 form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+                </div>
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Custom Error Warning</label>
+                <input type="text" class="validation-error-msg form-control" placeholder="Input is invalid" style="padding:0.25rem 0.5rem; font-size:0.8rem; height: auto;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Date Constraints (only for date-type fields) -->
+          <div class="date-constraints-wrapper" style="margin-top:0.75rem; border-top:1px dashed #eee; padding-top:0.75rem; display:${fieldType === 'date' ? 'block' : 'none'}">
+            <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('i').classList.toggle('fa-chevron-down'); this.querySelector('i').classList.toggle('fa-chevron-up');">
+              <span style="font-size:0.85rem; font-weight:600; color:#28a745;"><i class="fas fa-calendar-check"></i> Date Constraints (Optional)</span>
+              <i class="fas fa-chevron-down" style="font-size:0.8rem; color:#28a745; transition: transform 0.2s;"></i>
+            </div>
+            <div style="display:none; margin-top:0.75rem; background:#f8fff8; border:1px solid #c3e6cb; border-radius:6px; padding:0.75rem;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                <div>
+                  <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Earliest Allowed Date</label>
+                  <select class="date-min-type form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height:auto;" onchange="toggleDateFixedInputs(this)">
+                    <option value="" ${minType === '' ? 'selected' : ''}>No minimum</option>
+                    <option value="today" ${minType === 'today' ? 'selected' : ''}>Today (or later)</option>
+                    <option value="tomorrow" ${minType === 'tomorrow' ? 'selected' : ''}>Tomorrow (or later)</option>
+                    <option value="fixed" ${minType === 'fixed' ? 'selected' : ''}>Fixed date...</option>
+                  </select>
+                  <input type="date" class="date-min-fixed" value="${escapeAttr(minFixed)}" style="display:${minType === 'fixed' ? 'block' : 'none'}; margin-top:0.3rem; padding:0.25rem 0.5rem; font-size:0.8rem; border:1px solid #ced4da; border-radius:4px; width:100%; box-sizing:border-box;" />
+                </div>
+                <div>
+                  <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Latest Allowed Date</label>
+                  <select class="date-max-type form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height:auto;" onchange="toggleDateFixedInputs(this)">
+                    <option value="" ${maxType === '' ? 'selected' : ''}>No maximum</option>
+                    <option value="today" ${maxType === 'today' ? 'selected' : ''}>Today (or earlier)</option>
+                    <option value="fixed" ${maxType === 'fixed' ? 'selected' : ''}>Fixed date...</option>
+                  </select>
+                  <input type="date" class="date-max-fixed" value="${escapeAttr(maxFixed)}" style="display:${maxType === 'fixed' ? 'block' : 'none'}; margin-top:0.3rem; padding:0.25rem 0.5rem; font-size:0.8rem; border:1px solid #ced4da; border-radius:4px; width:100%; box-sizing:border-box;" />
+                </div>
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <label style="font-size:0.75rem; font-weight:600; color:#6c757d; margin-bottom:0.2rem; display:block;">Cutoff Hour (24h format, previous day cutoff for selected date)</label>
+                <select class="date-cutoff-hour form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; height:auto;">
+                  <option value="" ${cutoffHourVal === '' ? 'selected' : ''}>No cutoff</option>
+                  ${Array.from({length: 24}, (_, i) => `<option value="${i}" ${cutoffHourVal === i ? 'selected' : ''}>${i}:00 (${i < 12 ? i || 12 : i - 12} ${i < 12 ? 'AM' : 'PM'})</option>`).join('')}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="options-container" id="optionsContainer_${idx}" style="display: ${OPTION_TYPES.includes(fieldType) ? 'block' : 'none'}">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <label style="margin:0; font-weight:700; color:#204060;">Options</label>
+              <button type="button" class="btn btn-sm" onclick="populateEventDatesToOptions(${idx})" style="padding:2px 9px; font-size:0.78rem; background:#eef4f9; border:1px solid #b8d0e5; color:#204060; border-radius:4px; font-weight:700; cursor:pointer;" title="Auto-fill options with all event dates">
+                <i class="fas fa-calendar-alt"></i> Fill Event Dates
+              </button>
+            </div>
+            <div id="optionsList_${idx}">
+              ${fieldOptions.length > 0
+                ? fieldOptions.map((opt, oi) => createOptionRowHtml(idx, opt)).join('')
+                : createOptionRowHtml(idx, '') + createOptionRowHtml(idx, '')
+              }
+            </div>
+            <button type="button" class="add-option-btn" onclick="addOption(${idx})"><i class="fas fa-plus"></i> Add Option</button>
+          </div>
+
+          <!-- Matrix Grid editor -->
+          <div class="options-container" id="gridContainer_${idx}" style="display: ${['grid_radio', 'grid_checkbox', 'grid_number'].includes(fieldType) ? 'block' : 'none'}; border-color: #ced4da;">
+            <div class="vendor-dynamic-rows-wrapper" style="display:none; margin-bottom:0.75rem; padding-bottom:0.75rem; border-bottom:1px dashed #ced4da;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <input type="checkbox" class="field-dynamic-rows" id="dynrows_${idx}" ${fieldData?.dynamicRows === 'utsav' ? 'checked' : ''} onchange="toggleDynamicRows(${idx})" />
+                <label for="dynrows_${idx}" style="margin:0; font-weight:600; font-size:0.85rem; color:#204060;">Use live dates from the active Utsav (instead of manual rows)</label>
+              </div>
+              <div class="dynamic-rows-role-wrapper" style="display:${fieldData?.dynamicRows === 'utsav' ? 'block' : 'none'}; margin-top:0.5rem;">
+                <label style="font-size:0.8rem; font-weight:600; color:#204060;">Date Role</label>
+                <select class="field-date-role form-control" style="padding:0.3rem 0.5rem; font-size:0.85rem; height:auto;">
+                  <option value="accommodation" ${fieldData?.dateRole === 'accommodation' ? 'selected' : ''}>Accommodation (one choice per night)</option>
+                  <option value="food_meals" ${fieldData?.dateRole === 'food_meals' ? 'selected' : ''}>Food - Meals (checkboxes per day)</option>
+                  <option value="food_headcount" ${fieldData?.dateRole === 'food_headcount' ? 'selected' : ''}>Food - Headcount (one choice per day)</option>
+                </select>
+                <small style="color:#6c757d;">Rows will be replaced with the current/upcoming Utsav's dates whenever this form is opened or submitted.</small>
+              </div>
+            </div>
+            <div class="grid-manual-rows-wrapper" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <label style="color:#204060; font-weight:700; font-size:0.85rem; margin:0;">Rows</label>
+                  <button type="button" class="btn btn-sm" onclick="populateEventDatesToGrid(${idx}, 'row')" style="padding:2px 8px; font-size:0.75rem; background:#eef4f9; border:1px solid #b8d0e5; color:#204060; border-radius:4px; font-weight:700; cursor:pointer;" title="Auto-fill rows with all event dates">
+                    <i class="fas fa-calendar-alt"></i> Fill Dates
+                  </button>
+                </div>
+                <div id="gridRowsList_${idx}">
+                  ${fieldRows.length > 0
+                    ? fieldRows.map(r => createGridRowHtml(idx, 'row', r)).join('')
+                    : createGridRowHtml(idx, 'row', 'Row 1') + createGridRowHtml(idx, 'row', 'Row 2')
+                  }
+                </div>
+                <button type="button" class="add-option-btn" onclick="addGridItem(${idx}, 'row')"><i class="fas fa-plus"></i> Add Row</button>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <label style="color:#204060; font-weight:700; font-size:0.85rem; margin:0;">Columns</label>
+                  <button type="button" class="btn btn-sm" onclick="populateEventDatesToGrid(${idx}, 'col')" style="padding:2px 8px; font-size:0.75rem; background:#eef4f9; border:1px solid #b8d0e5; color:#204060; border-radius:4px; font-weight:700; cursor:pointer;" title="Auto-fill columns with all event dates">
+                    <i class="fas fa-calendar-alt"></i> Fill Dates
+                  </button>
+                </div>
+                <div id="gridColsList_${idx}">
+                  ${fieldCols.length > 0
+                    ? fieldCols.map(c => createGridRowHtml(idx, 'col', c)).join('')
+                    : createGridRowHtml(idx, 'col', 'Column 1') + createGridRowHtml(idx, 'col', 'Column 2')
+                  }
+                </div>
+                <button type="button" class="add-option-btn" onclick="addGridItem(${idx}, 'col')"><i class="fas fa-plus"></i> Add Column</button>
+              </div>
+            </div>
+            <div style="margin-top:0.75rem; border-top:1px dashed #eee; padding-top:0.75rem; display: ${fieldType === 'grid_radio' ? 'flex' : 'none'}; align-items:center; gap:0.5rem;" class="grid-limit-column-wrapper">
+              <input type="checkbox" class="grid-limit-column" id="limit_col_${idx}" ${fieldData?.limitOnePerColumn ? 'checked' : ''} />
+              <label for="limit_col_${idx}" style="margin:0; font-weight:600; font-size:0.85rem; color:#204060;">Limit to one response per column</label>
+            </div>
+          </div>
+
+          <!-- Logic panel -->
+          <div class="logic-container">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <input type="checkbox" class="field-logic-enable" id="logic_enable_${idx}" onchange="toggleLogicSection(${idx})" ${fieldLogic ? 'checked' : ''} />
+              <label for="logic_enable_${idx}" style="margin:0; font-weight:600; font-size:0.85rem; color:#204060;">Show this field based on logic</label>
+            </div>
+            <div id="logicRules_${idx}" style="display: ${fieldLogic ? 'block' : 'none'}; margin-top:0.5rem; font-size:0.85rem;">
+              <span>Show only if </span>
+              <select class="logic-depends-on" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:180px;">
+                <!-- Dynamically populated -->
+              </select>
+              <select class="logic-operator" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:120px;">
+                <option value="equals" ${fieldLogic?.operator === 'equals' ? 'selected' : ''}>equals</option>
+                <option value="not_equals" ${fieldLogic?.operator === 'not_equals' ? 'selected' : ''}>not equals</option>
+                <option value="contains" ${fieldLogic?.operator === 'contains' ? 'selected' : ''}>contains</option>
+              </select>
+              <input type="text" class="logic-value" value="${escapeAttr(fieldLogic?.value || '')}" placeholder="Value" style="padding:0.25rem; border:1px solid #ced4da; border-radius:4px; max-width:150px;" />
+            </div>
+          </div>
+          <input type="hidden" class="field-id" value="${escapeAttr(fieldId)}" />
+        `;
+
+        container.appendChild(card);
+
+        // Attach dynamic logic mapping on label change
+        card.querySelector('.field-label').addEventListener('input', () => {
+          updateLogicDropdowns();
+          updateSectionActionDropdowns();
+        });
+
+        if (fieldLogic) {
+          const select = card.querySelector('.logic-depends-on');
+          select.dataset.pendingValue = fieldLogic.dependsOn;
+        }
+
+        if (fieldType === 'section') {
+          const select = card.querySelector('.section-next-action');
+          if (select && fieldData?.nextAction) {
+            select.dataset.pendingValue = fieldData.nextAction;
+          }
+        }
+
+        // Apply visual layout rules based on initial type (handles sections)
+        onTypeChange(idx);
+        if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(fieldType)) {
+          toggleDynamicRows(idx);
+        }
+
+        updateLogicDropdowns();
+        updateSectionActionDropdowns();
+        populateValidationRuleOptions(idx, fieldType, fieldData);
+
+        // Restore pending logic values
+        if (fieldLogic) {
+          const select = card.querySelector('.logic-depends-on');
+          if (select && select.dataset.pendingValue) {
+            select.value = select.dataset.pendingValue;
+            delete select.dataset.pendingValue;
+          }
+        }
+        
+        // Restore pending section actions
+        if (fieldType === 'section') {
+          const select = card.querySelector('.section-next-action');
+          if (select && select.dataset.pendingValue) {
+            select.value = select.dataset.pendingValue;
+            delete select.dataset.pendingValue;
+          }
+        }
+        renumberFields();
+      }
+
+      
+      function getOrdinalSuffix(day) {
+        if (day > 3 && day < 21) return 'th';
+        switch (day % 10) {
+          case 1: return 'st';
+          case 2: return 'nd';
+          case 3: return 'rd';
+          default: return 'th';
+        }
+      }
+
+      function generateEventDateLabels(startDateStr, endDateStr) {
+        if (!startDateStr || !endDateStr) return [];
+        const start = new Date(startDateStr + 'T00:00:00');
+        const end = new Date(endDateStr + 'T00:00:00');
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const labels = [];
+        const curr = new Date(start);
+
+        while (curr <= end) {
+          const day = curr.getDate();
+          const month = months[curr.getMonth()];
+          labels.push(`${day}${getOrdinalSuffix(day)} ${month}`);
+          curr.setDate(curr.getDate() + 1);
+        }
+        return labels;
+      }
+
+      function getCurrentEventDates() {
+        const select = document.getElementById('deptEventSelect');
+        if (!select || !select.value) {
+          const dept = document.getElementById('formDept')?.value;
+          if (dept === 'utsav' || dept === 'adhyayan') {
+            alert('Please select an event from the Event dropdown in Form Settings first.');
+          } else {
+            alert('Please set Department to Utsav or Adhyayan and select an event in Form Settings first.');
+          }
+          return null;
+        }
+
+        const selectedOpt = select.options[select.selectedIndex];
+        let start = selectedOpt ? selectedOpt.getAttribute('data-start') : null;
+        let end = selectedOpt ? selectedOpt.getAttribute('data-end') : null;
+
+        if (!start || !end) {
+          if (window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
+            const ev = window.currentDeptEvents.find(e => String(e.id) === String(select.value));
+            if (ev) {
+              start = ev.start_date;
+              end = ev.end_date;
+            }
+          }
+        }
+
+        if (!start || !end) {
+          alert('Could not find start and end dates for the selected event.');
+          return null;
+        }
+
+        return generateEventDateLabels(start, end);
+      }
+
+      function populateEventDatesToGrid(fieldIdx, type) {
+        const dates = getCurrentEventDates();
+        if (!dates || dates.length === 0) return;
+
+        const containerId = type === 'row' ? `gridRowsList_${fieldIdx}` : `gridColsList_${fieldIdx}`;
+        const listEl = document.getElementById(containerId);
+        if (!listEl) return;
+
+        listEl.innerHTML = dates.map(dateLabel => createGridRowHtml(fieldIdx, type, dateLabel)).join('');
+        markDirty();
+        showSuccess(`Populated ${dates.length} event dates (${dates[0]} to ${dates[dates.length - 1]}) as ${type === 'row' ? 'Rows' : 'Columns'}!`);
+      }
+
+      function populateEventDatesToOptions(fieldIdx) {
+        const dates = getCurrentEventDates();
+        if (!dates || dates.length === 0) return;
+
+        const listEl = document.getElementById(`optionsList_${fieldIdx}`);
+        if (!listEl) return;
+
+        listEl.innerHTML = dates.map(dateLabel => createOptionRowHtml(fieldIdx, dateLabel)).join('');
+        markDirty();
+        showSuccess(`Populated ${dates.length} event dates (${dates[0]} to ${dates[dates.length - 1]}) as Options!`);
+      }
+
+      
+      function toggleSectionCollapse(section) {
+        const settingsBody = document.getElementById('settingsCollapseBody');
+        const settingsIcon = document.getElementById('settingsCollapseIcon');
+        const fieldsBody = document.getElementById('fieldsCollapseBody');
+        const fieldsIcon = document.getElementById('fieldsCollapseIcon');
+
+        if (section === 'settings') {
+          const isCurrentlyHidden = !settingsBody || settingsBody.style.display === 'none';
+          if (isCurrentlyHidden) {
+            if (settingsBody) settingsBody.style.display = 'block';
+            if (settingsIcon) settingsIcon.className = 'fas fa-chevron-up';
+            if (fieldsBody) fieldsBody.style.display = 'none';
+            if (fieldsIcon) fieldsIcon.className = 'fas fa-chevron-down';
+          } else {
+            if (settingsBody) settingsBody.style.display = 'none';
+            if (settingsIcon) settingsIcon.className = 'fas fa-chevron-down';
+          }
+        } else if (section === 'fields') {
+          const isCurrentlyHidden = !fieldsBody || fieldsBody.style.display === 'none';
+          if (isCurrentlyHidden) {
+            if (fieldsBody) fieldsBody.style.display = 'block';
+            if (fieldsIcon) fieldsIcon.className = 'fas fa-chevron-up';
+            if (settingsBody) settingsBody.style.display = 'none';
+            if (settingsIcon) settingsIcon.className = 'fas fa-chevron-down';
+          } else {
+            if (fieldsBody) fieldsBody.style.display = 'none';
+            if (fieldsIcon) fieldsIcon.className = 'fas fa-chevron-down';
+          }
+        }
+      }
+
+      function updateFieldsCountBadge() {
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        const badge = document.getElementById('fieldsCountBadge');
+        if (badge) {
+          const count = cards.length;
+          badge.textContent = count === 1 ? '1 field' : `${count} fields`;
+        }
+      }
+
+      function updateCardAccent(card, type) {
+        const colors = {
+          text: '#204060',
+          textarea: '#4c86b0',
+          number: '#ffc107',
+          date: '#28a745',
+          time: '#17a2b8',
+          rating: '#ffc107',
+          select: '#6f42c1',
+          radio: '#fd7e14',
+          checkbox: '#e83e8c',
+          grid_radio: '#20c997',
+          grid_number: '#204060',
+          grid_checkbox: '#e83e8c',
+          section: '#6f42c1'
+        };
+        card.style.borderLeftColor = colors[type] || '#204060';
+        if (type === 'section') {
+          card.style.borderLeftWidth = '8px';
+          card.style.backgroundColor = '#fbf9ff';
+        } else {
+          card.style.borderLeftWidth = '5px';
+          card.style.backgroundColor = '#fff';
+        }
+      }
+
+      function createOptionRowHtml(fieldIdx, value) {
+        return `
+          <div class="option-row" style="display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem;">
+            <input type="text" class="option-value" value="${escapeAttr(value)}" placeholder="Option text" />
+            <button type="button" class="btn-move-option" onclick="moveOption(this, -1)" title="Move Up" style="width:26px; height:26px; border:1px solid #ced4da; background:#f8f9fa; color:#495057; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"><i class="fas fa-arrow-up"></i></button>
+            <button type="button" class="btn-move-option" onclick="moveOption(this, 1)" title="Move Down" style="width:26px; height:26px; border:1px solid #ced4da; background:#f8f9fa; color:#495057; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"><i class="fas fa-arrow-down"></i></button>
+            <button type="button" class="btn-delete-option" onclick="deleteOptionRow(this)" title="Delete option" style="width:26px; height:26px; border:1px solid #f5c6cb; background:#fdf2f2; color:#dc3545; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"><i class="fas fa-times"></i></button>
+          </div>
+        `;
+      }
+
+      function createGridRowHtml(fieldIdx, type, value) {
+        return `
+          <div class="option-row" style="display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem;">
+            <input type="text" class="grid-${type}-value" value="${escapeAttr(value)}" placeholder="${type === 'row' ? 'Row text' : 'Column text'}" style="padding:0.35rem 0.5rem; font-size:0.8rem; flex:1;" />
+            <button type="button" class="btn-move-option" onclick="moveOption(this, -1)" title="Move Up" style="width:26px; height:26px; border:1px solid #ced4da; background:#f8f9fa; color:#495057; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"><i class="fas fa-arrow-up"></i></button>
+            <button type="button" class="btn-move-option" onclick="moveOption(this, 1)" title="Move Down" style="width:26px; height:26px; border:1px solid #ced4da; background:#f8f9fa; color:#495057; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"><i class="fas fa-arrow-down"></i></button>
+            <button type="button" class="btn-delete-option" onclick="deleteOptionRow(this)" title="Delete" style="width:26px; height:26px; border:1px solid #f5c6cb; background:#fdf2f2; color:#dc3545; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"><i class="fas fa-times"></i></button>
+          </div>
+        `;
+      }
+
+      function moveOption(btn, direction) {
+        markDirty();
+        const row = btn.closest('.option-row');
+        if (!row) return;
+        if (direction === -1) {
+          const prev = row.previousElementSibling;
+          if (prev && prev.classList.contains('option-row')) {
+            row.parentElement.insertBefore(row, prev);
+          }
+        } else if (direction === 1) {
+          const next = row.nextElementSibling;
+          if (next && next.classList.contains('option-row')) {
+            row.parentElement.insertBefore(next, row);
+          }
+        }
+      }
+
+      function deleteOptionRow(btn) {
+        markDirty();
+        const row = btn.closest('.option-row');
+        if (row) row.remove();
+      }
+
+      function addOption(fieldIdx) {
+        markDirty();
+        const list = document.getElementById(`optionsList_${fieldIdx}`);
+        list.insertAdjacentHTML('beforeend', createOptionRowHtml(fieldIdx, ''));
+      }
+
+      function addGridItem(fieldIdx, type) {
+        markDirty();
+        const list = document.getElementById(`grid${type === 'row' ? 'Rows' : 'Cols'}List_${fieldIdx}`);
+        const count = list.children.length + 1;
+        list.insertAdjacentHTML('beforeend', createGridRowHtml(fieldIdx, type, `${type === 'row' ? 'Row' : 'Column'} ${count}`));
+      }
+
+      function onTypeChange(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        if (!card) return;
+        const typeEl = card.querySelector('.field-type');
+        const type = typeEl ? typeEl.value : 'text';
+        
+        const optContainer = document.getElementById(`optionsContainer_${idx}`);
+        const gridContainer = document.getElementById(`gridContainer_${idx}`);
+        const reqToggle = card.querySelector('.required-toggle-wrapper');
+        const logicContainer = card.querySelector('.logic-container');
+        const actionRow = card.querySelector('.section-action-row');
+        const labelTitle = card.querySelector('.label-title');
+        const labelDesc = card.querySelector('.label-desc');
+
+        if (optContainer) optContainer.style.display = OPTION_TYPES.includes(type) ? 'block' : 'none';
+        if (gridContainer) gridContainer.style.display = ['grid_radio', 'grid_checkbox', 'grid_number'].includes(type) ? 'block' : 'none';
+        
+        const dateConstraintsWrapper = card.querySelector('.date-constraints-wrapper');
+        if (dateConstraintsWrapper) {
+          dateConstraintsWrapper.style.display = type === 'date' ? 'block' : 'none';
+        }
+
+        const valTriggerWrapper = card.querySelector('.validation-trigger-wrapper');
+        if (valTriggerWrapper) {
+          valTriggerWrapper.style.display = ['text', 'textarea', 'checkbox', 'number', 'date'].includes(type) ? 'block' : 'none';
+        }
+        
+        if (type === 'section') {
+          if (reqToggle) reqToggle.style.display = 'none';
+          if (logicContainer) logicContainer.style.display = 'none';
+          if (actionRow) actionRow.style.display = 'block';
+          if (labelTitle) labelTitle.textContent = 'Section Title *';
+          if (labelDesc) labelDesc.textContent = 'Section Description (optional)';
+        } else {
+          if (reqToggle) reqToggle.style.display = 'block';
+          if (logicContainer) logicContainer.style.display = 'block';
+          if (actionRow) actionRow.style.display = 'none';
+          if (labelTitle) labelTitle.textContent = 'Field Label *';
+          if (labelDesc) labelDesc.textContent = 'Description / Help Text (optional)';
+        }
+
+        const limitColWrapper = card.querySelector('.grid-limit-column-wrapper');
+        if (limitColWrapper) {
+          limitColWrapper.style.display = type === 'grid_radio' ? 'flex' : 'none';
+        }
+
+        updateCardAccent(card, type);
+        updateSectionActionDropdowns();
+        populateValidationRuleOptions(idx, type, null);
+        updateVendorFieldUI(idx);
+      }
+
+      function updateVendorFieldUI(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        if (!card) return;
+        const typeEl = card.querySelector('.field-type');
+        const type = typeEl ? typeEl.value : 'text';
+        const isVendorForm = document.getElementById('formCategory')?.value === 'vendor';
+        const isGrid = ['grid_radio', 'grid_checkbox', 'grid_number'].includes(type);
+
+        const roleWrapper = card.querySelector('.vendor-field-role-wrapper');
+        if (roleWrapper) {
+          roleWrapper.style.display = (isVendorForm && !isGrid && type !== 'section') ? 'block' : 'none';
+        }
+
+        const dynRowsWrapper = card.querySelector('.vendor-dynamic-rows-wrapper');
+        if (dynRowsWrapper) {
+          dynRowsWrapper.style.display = (isVendorForm && isGrid) ? 'block' : 'none';
+        }
+      }
+
+      function onFormCategoryChange() {
+        const container = document.getElementById('fieldsContainer');
+        container.querySelectorAll('.field-card').forEach(card => {
+          const idx = card.dataset.idx;
+          if (idx) updateVendorFieldUI(idx);
+        });
+      }
+
+      // Fires only on a real user interaction with the Form Category select
+      // (not when a form is loaded for editing — see initFormForEdit, which
+      // calls onFormCategoryChange() directly instead). Auto-populates the
+      // standard vendor field set the very first time someone switches a
+      // blank form to Vendor Registration, so they don't have to hand-build
+      // and hand-tag every field the backend's vendor mapping expects.
+      function handleFormCategoryChange() {
+        const container = document.getElementById('fieldsContainer');
+        // A brand-new form always starts with one blank starter field
+        // (see checkAndShowDraftRecovery), so the container is never
+        // truly empty — treat it as "still blank" when every field card
+        // present has no label typed in yet.
+        const cards = Array.from(container.querySelectorAll('.field-card'));
+        const isBlank = cards.every(card => !card.querySelector('.field-label').value.trim());
+        if (document.getElementById('formCategory').value === 'vendor' && isBlank) {
+          container.innerHTML = '';
+          insertVendorFieldTemplate();
+        }
+        onFormCategoryChange();
+        setTimeout(markClean, 200);
+        // allowlist managed via modal
+      }
+
+      // Mirrors the field structure of the existing production "Vendors List"
+      // form (form id 4, dept "utsav") so newly created vendor forms start
+      // from the same shape that's already proven out, rather than a fresh
+      // guess. Admin can freely edit/remove/reorder afterward.
+      function insertVendorFieldTemplate() {
+        addField({
+          label: 'Name Of Department',
+          labelIsPlaceholder: true,
+          type: 'select',
+          required: true,
+          vendorRole: 'department',
+          options: [
+            'Ashram Staff', 'Camera', 'Decor', 'Infra (Generator)', 'Infra (Labour)',
+            'Infra (Mandap)', 'Infra (Shoe)', 'Kitchen', 'LED', 'Light',
+            'Logistics (Echo & Rickshaw)', 'Logistics (Tempo Traveler)', 'Medical Staff',
+            'Musician', 'RC Kitchen Staff', 'School Staff', 'Sound', 'Others'
+          ]
+        });
+        addField({
+          label: 'Accommodation Requirement (per night)',
+          labelIsPlaceholder: true,
+          type: 'grid_radio',
+          required: true,
+          dynamicRows: 'utsav',
+          dateRole: 'accommodation',
+          columns: ['0-15', 'More Than 15'],
+          limitOnePerColumn: false
+        });
+        addField({
+          label: 'Food Requirement - Meals (per day)',
+          labelIsPlaceholder: true,
+          type: 'grid_checkbox',
+          required: true,
+          dynamicRows: 'utsav',
+          dateRole: 'food_meals',
+          columns: ['Breakfast', 'Lunch', 'Dinner']
+        });
+        addField({
+          label: 'Food Requirement - Headcount (per day)',
+          labelIsPlaceholder: true,
+          type: 'grid_radio',
+          required: true,
+          dynamicRows: 'utsav',
+          dateRole: 'food_headcount',
+          columns: ['0-15', 'More Than 15'],
+          limitOnePerColumn: false
+        });
+        addField({
+          label: 'Kitchen Type',
+          labelIsPlaceholder: true,
+          type: 'select',
+          required: true,
+          vendorRole: 'kitchen_type',
+          options: ['Main Kitchen Mandap', 'K1 Kitchen']
+        });
+        addField({
+          label: 'Remarks',
+          labelIsPlaceholder: true,
+          type: 'text',
+          required: false,
+          vendorRole: 'remarks'
+        });
+      }
+
+      // Toggles a grid field between manually-defined rows and live Utsav dates.
+      function toggleDynamicRows(idx) {
+        const card = document.getElementById(`fieldCard_${idx}`);
+        if (!card) return;
+        const dynInput = card.querySelector('.field-dynamic-rows');
+        const checked = dynInput ? dynInput.checked : false;
+        const roleWrapper = card.querySelector('.dynamic-rows-role-wrapper');
+        const manualWrapper = card.querySelector('.grid-manual-rows-wrapper');
+        if (roleWrapper) roleWrapper.style.display = checked ? 'block' : 'none';
+        if (manualWrapper) manualWrapper.style.display = checked ? 'none' : 'grid';
+      }
+
+      function removeField(idx) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          if (card) {
+            card.remove();
+          }
+          renumberFields();
+          updateLogicDropdowns();
+          updateSectionActionDropdowns();
+        } catch (e) {
+          console.error("Error removing field:", e);
+        }
+      }
+
+      function moveField(idx, direction) {
+        try {
+          const container = document.getElementById('fieldsContainer');
+          const cards = Array.from(container.querySelectorAll('.field-card'));
+          const currentIndex = cards.findIndex(c => c.id === `fieldCard_${idx}`);
+          const targetIndex = currentIndex + direction;
+
+          if (targetIndex < 0 || targetIndex >= cards.length) return;
+
+          const currentCard = cards[currentIndex];
+          const targetCard = cards[targetIndex];
+
+          if (direction === -1) {
+            container.insertBefore(currentCard, targetCard);
+          } else {
+            container.insertBefore(targetCard, currentCard);
+          }
+
+          renumberFields();
+          updateLogicDropdowns();
+          updateSectionActionDropdowns();
+        } catch (e) {
+          console.error("Error moving field:", e);
+        }
+      }
+
+      function renumberFields() {
+        updateFieldsCountBadge();
+        try {
+          const cards = document.querySelectorAll('#fieldsContainer .field-card');
+          cards.forEach((card, i) => {
+            const numEl = card.querySelector('.field-number');
+            if (numEl) {
+              numEl.textContent = i + 1;
+            }
+          });
+        } catch (e) {
+          console.error("Error renumbering fields:", e);
+        }
+      }
+
+      function toggleLogicSection(idx) {
+        const checkbox = document.getElementById(`logic_enable_${idx}`);
+        const rules = document.getElementById(`logicRules_${idx}`);
+        rules.style.display = checkbox.checked ? 'block' : 'none';
+        if (!checkbox.checked) {
+          rules.querySelector('.logic-depends-on').value = '';
+          rules.querySelector('.logic-value').value = '';
+        }
+      }
+
+      function updateLogicDropdowns() {
+        try {
+          const cards = Array.from(document.querySelectorAll('#fieldsContainer .field-card'));
+          cards.forEach((card, i) => {
+            const idx = card.dataset.idx;
+            const select = card.querySelector('.logic-depends-on');
+            if (!select) return;
+
+            const currentValue = select.value || select.dataset.pendingValue;
+
+            let optionsHtml = '<option value="">-- Choose Field --</option>';
+            for (let j = 0; j < i; j++) {
+              const prevCard = cards[j];
+              if (!prevCard) continue;
+              const labelEl = prevCard.querySelector('.field-label');
+              const idEl = prevCard.querySelector('.field-id');
+              const prevLabel = (labelEl ? labelEl.value.trim() : '') || `Field ${j + 1}`;
+              const prevId = (idEl ? idEl.value.trim() : '') || `field_${prevCard.dataset.idx}`;
+              optionsHtml += `<option value="${escapeAttr(prevId)}">${escapeHtml(prevLabel)}</option>`;
+            }
+
+            select.innerHTML = optionsHtml;
+            if (currentValue) {
+              select.value = currentValue;
+            }
+          });
+          saveBuilderDraft();
+        } catch (e) {
+          console.error("Error updating logic dropdowns:", e);
+        }
+      }
+
+      function updateSectionActionDropdowns() {
+        try {
+          const cards = Array.from(document.querySelectorAll('#fieldsContainer .field-card'));
+          const sections = [];
+          
+          sections.push({ id: 'page_0', label: 'Section 1 (Form Header)' });
+          
+          let sectionCounter = 2;
+          cards.forEach(card => {
+            const type = card.querySelector('.field-type').value;
+            if (type === 'section') {
+              const label = card.querySelector('.field-label').value.trim() || `Untitled Section`;
+              const idEl = card.querySelector('.field-id');
+              const fieldId = idEl ? idEl.value.trim() : `field_${card.dataset.idx}`;
+              sections.push({ 
+                id: fieldId, 
+                label: `Section ${sectionCounter} (${label})` 
+              });
+              sectionCounter++;
+            }
+          });
+
+          // Update Section 1 dropdown logic (we don't have a top dropdown anymore)
+          // The first section card represents "After Section 1"
+          let currentSectionIndex = 1;
+          cards.forEach((card, ci) => {
+            const type = card.querySelector('.field-type').value;
+            if (type === 'section') {
+              const labelSpan = card.querySelector('.section-action-label');
+              const select = card.querySelector('.section-next-action');
+              if (labelSpan) {
+                labelSpan.textContent = `After Section ${currentSectionIndex}:`;
+              }
+              
+              if (select) {
+                const currentValue = select.value || select.dataset.pendingValue || 'next';
+                const currentSectionId = card.querySelector('.field-id').value.trim() || `field_${card.dataset.idx}`;
+                
+                let html = `
+                  <option value="next">Continue to next section</option>
+                  <option value="submit">Submit form</option>
+                `;
+                
+                sections.forEach(sec => {
+                  if (sec.id !== currentSectionId) {
+                    html += `<option value="${escapeAttr(sec.id)}">Go to ${escapeHtml(sec.label)}</option>`;
+                  }
+                });
+
+                select.innerHTML = html;
+                select.value = currentValue;
+              }
+              currentSectionIndex++;
+            }
+          });
+        } catch (e) {
+          console.error("Error updating section action dropdowns:", e);
+        }
+      }
+
+      function toggleDateFixedInputs(selectEl) {
+        const nextInput = selectEl.nextElementSibling;
+        if (selectEl.value === 'fixed') {
+          nextInput.style.display = 'block';
+        } else {
+          nextInput.style.display = 'none';
+          nextInput.value = '';
+        }
+      }
+
+      function toggleValidationPanel(idx) {
+        const panel = document.getElementById(`validationRulesPanel_${idx}`);
+        const arrow = document.querySelector(`.val-arrow_${idx}`);
+        if (panel.style.display === 'none') {
+          panel.style.display = 'block';
+          arrow.style.transform = 'rotate(180deg)';
+        } else {
+          panel.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+        }
+      }
+
+      function onValidationCategoryChange(idx) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          const category = card.querySelector('.validation-category').value;
+          const ruleSelect = card.querySelector('.validation-rule');
+          const ruleWrapper = card.querySelector('.val-rule-wrapper');
+          const paramsWrapper = document.getElementById(`validationParams_${idx}`);
+
+          if (!category) {
+            ruleWrapper.style.display = 'none';
+            paramsWrapper.style.display = 'none';
+            ruleSelect.innerHTML = '';
+            return;
+          }
+
+          ruleWrapper.style.display = 'block';
+
+          let rulesHtml = '';
+          if (category === 'number') {
+            rulesHtml += `
+              <option value="greater_than">Greater than</option>
+              <option value="greater_than_or_equal">Greater than or equal to</option>
+              <option value="less_than">Less than</option>
+              <option value="less_than_or_equal">Less than or equal to</option>
+              <option value="equal">Equal to</option>
+              <option value="not_equal">Not equal to</option>
+              <option value="between">Between</option>
+              <option value="not_between">Not between</option>
+              <option value="is_number">Is number</option>
+              <option value="whole_number">Whole number</option>
+              <option value="ten_digit">10-digit number</option>
+            `;
+          } else if (category === 'number_range') {
+            rulesHtml += `
+              <option value="range">Number Range Limit</option>
+            `;
+          } else if (category === 'date_range') {
+            rulesHtml += `
+              <option value="date_range">Date Limit Range</option>
+            `;
+          } else if (category === 'text') {
+            rulesHtml += `
+              <option value="contains">Contains</option>
+              <option value="does_not_contain">Doesn't contain</option>
+              <option value="email">Email</option>
+              <option value="url">URL</option>
+            `;
+          } else if (category === 'length') {
+            rulesHtml += `
+              <option value="max_char_count">Maximum character count</option>
+              <option value="min_char_count">Minimum character count</option>
+            `;
+          } else if (category === 'regex') {
+            rulesHtml += `
+              <option value="contains">Contains</option>
+              <option value="does_not_contain">Doesn't contain</option>
+              <option value="matches">Matches</option>
+              <option value="does_not_match">Doesn't match</option>
+            `;
+          } else if (category === 'checkbox') {
+            rulesHtml += `
+              <option value="select_at_least">Select at least</option>
+              <option value="select_at_most">Select at most</option>
+              <option value="select_exactly">Select exactly</option>
+            `;
+          }
+
+          ruleSelect.innerHTML = rulesHtml;
+          onValidationRuleChange(idx);
+        } catch (e) {
+          console.error("Error on category change:", e);
+        }
+      }
+
+      function setRegexPreset(idx, pattern, errorMsg) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          if (card) {
+            card.querySelector('.validation-param-1').value = pattern;
+            card.querySelector('.validation-error-msg').value = errorMsg;
+          }
+        } catch (e) {
+          console.error("Error setting regex preset:", e);
+        }
+      }
+
+      function onValidationRuleChange(idx) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          const category = card.querySelector('.validation-category').value;
+          const rule = card.querySelector('.validation-rule').value;
+          const paramsWrapper = document.getElementById(`validationParams_${idx}`);
+          const lbl1 = card.querySelector('.val-param-label-1');
+          const lbl2 = card.querySelector('.val-param-label-2');
+          const param1 = card.querySelector('.validation-param-1');
+          const param2 = card.querySelector('.validation-param-2');
+
+          paramsWrapper.style.display = 'grid';
+          lbl1.style.display = 'block';
+          lbl2.style.display = 'block';
+          param1.style.display = 'block';
+          param2.style.display = 'block';
+          
+          param1.type = 'text';
+          param2.type = 'text';
+
+          // Show or hide regex presets helper
+          const presetsEl = document.getElementById(`regexPresets_${idx}`);
+          if (presetsEl) {
+            presetsEl.style.display = (category === 'regex') ? 'block' : 'none';
+          }
+
+          if (['is_number', 'whole_number', 'email', 'url', 'ten_digit'].includes(rule)) {
+            paramsWrapper.style.display = 'none';
+          } else if (rule === 'between' || rule === 'not_between') {
+            lbl1.textContent = 'Minimum';
+            lbl2.textContent = 'Maximum';
+            param1.type = 'number';
+            param2.type = 'number';
+          } else if (rule === 'range') {
+            lbl1.textContent = 'Minimum Value';
+            lbl2.textContent = 'Maximum Value';
+            param1.type = 'number';
+            param2.type = 'number';
+          } else if (rule === 'date_range') {
+            lbl1.textContent = 'Earliest Date';
+            lbl2.textContent = 'Latest Date';
+            param1.type = 'date';
+            param2.type = 'date';
+          } else if (['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal'].includes(rule)) {
+            lbl1.textContent = 'Value';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+            param1.type = 'number';
+          } else if (category === 'text') {
+            lbl1.textContent = 'Text';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+          } else if (category === 'length') {
+            lbl1.textContent = 'Number';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+            param1.type = 'number';
+          } else if (category === 'regex') {
+            lbl1.textContent = 'Pattern';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+          } else if (category === 'checkbox') {
+            lbl1.textContent = 'Number';
+            lbl2.style.display = 'none';
+            param2.style.display = 'none';
+            param1.type = 'number';
+          }
+        } catch (e) {
+          console.error("Error setting validation param inputs:", e);
+        }
+      }
+
+      function populateValidationRuleOptions(idx, currentType, fieldData) {
+        try {
+          const card = document.getElementById(`fieldCard_${idx}`);
+          const categorySelect = card.querySelector('.validation-category');
+          const ruleSelect = card.querySelector('.validation-rule');
+          const ruleWrapper = card.querySelector('.val-rule-wrapper');
+          const paramsWrapper = document.getElementById(`validationParams_${idx}`);
+          const triggerWrapper = card.querySelector('.validation-trigger-wrapper');
+
+          const validTypes = ['text', 'textarea', 'checkbox', 'number', 'date'];
+          if (!validTypes.includes(currentType)) {
+            triggerWrapper.style.display = 'none';
+            return;
+          }
+
+          triggerWrapper.style.display = 'block';
+
+          // Show all validation categories for all validateable fields
+          let catHtml = `
+            <option value="">-- No Validation --</option>
+            <option value="number">Number</option>
+            <option value="text">Text</option>
+            <option value="length">Length</option>
+            <option value="regex">Regular expression</option>
+            <option value="checkbox">Selection Limit</option>
+            <option value="number_range">Number Range</option>
+            <option value="date_range">Date Range</option>
+          `;
+
+          categorySelect.innerHTML = catHtml;
+          ruleSelect.innerHTML = '';
+          ruleWrapper.style.display = 'none';
+          paramsWrapper.style.display = 'none';
+          card.querySelector('.validation-error-msg').value = '';
+
+          if (fieldData?.validation) {
+            const val = fieldData.validation;
+            categorySelect.value = val.category || '';
+            onValidationCategoryChange(idx);
+            
+            ruleSelect.value = val.rule || '';
+            card.querySelector('.validation-error-msg').value = val.errorMsg || '';
+            onValidationRuleChange(idx);
+            
+            if (val.value !== undefined) card.querySelector('.validation-param-1').value = val.value;
+            if (val.min !== undefined) card.querySelector('.validation-param-1').value = val.min;
+            if (val.max !== undefined) card.querySelector('.validation-param-2').value = val.max;
+          }
+        } catch (e) {
+          console.error("Error populating validation options:", e);
+        }
+      }
+
+      function collectFields() {
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        const fields = [];
+
+        cards.forEach((card, i) => {
+          const label = card.querySelector('.field-label').value.trim();
+          const type = card.querySelector('.field-type').value;
+          const required = card.querySelector('.field-required').checked;
+          let fieldId = card.querySelector('.field-id').value.trim();
+
+          if (!label) return; // Skip empty labels
+
+          // Auto-generate id from label if not set
+          if (!fieldId || fieldId.startsWith('field_')) {
+            fieldId = label.toLowerCase().replace(/<[^>]*>/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+          }
+
+          const description = card.querySelector('.field-description').value.trim();
+
+          const field = { id: fieldId, label, type, required: type === 'section' ? false : required, description: description || null };
+
+          if (OPTION_TYPES.includes(type)) {
+            const optionInputs = card.querySelectorAll('.option-value');
+            field.options = Array.from(optionInputs)
+              .map(inp => inp.value.trim())
+              .filter(v => v.length > 0);
+          }
+
+          if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(type)) {
+            const rowInputs = card.querySelectorAll('.grid-row-value');
+            const colInputs = card.querySelectorAll('.grid-col-value');
+            field.rows = Array.from(rowInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
+            field.columns = Array.from(colInputs).map(inp => inp.value.trim()).filter(v => v.length > 0);
+
+            if (type === 'grid_radio') {
+              const limitColBox = card.querySelector('.grid-limit-column');
+              field.limitOnePerColumn = limitColBox ? limitColBox.checked : false;
+            }
+
+            const dynRowsBox = card.querySelector('.field-dynamic-rows');
+            if (dynRowsBox && dynRowsBox.checked) {
+              field.dynamicRows = 'utsav';
+              field.dateRole = card.querySelector('.field-date-role').value;
+            }
+          } else if (type !== 'section') {
+            const vendorRoleSelect = card.querySelector('.field-vendor-role');
+            if (vendorRoleSelect && vendorRoleSelect.value) {
+              field.vendorRole = vendorRoleSelect.value;
+            }
+          }
+
+          if (type === 'section') {
+            const nextActionSelect = card.querySelector('.section-next-action');
+            field.nextAction = nextActionSelect ? nextActionSelect.value : 'next';
+          }
+
+          if (type !== 'section') {
+            const logicEnable = card.querySelector('.field-logic-enable').checked;
+            const dependsOn = card.querySelector('.logic-depends-on').value;
+            const operator = card.querySelector('.logic-operator').value;
+            const logicVal = card.querySelector('.logic-value').value.trim();
+
+            if (logicEnable && dependsOn && logicVal) {
+              field.logic = {
+                dependsOn,
+                operator,
+                value: logicVal
+              };
+              field.conditions = [{
+                fieldId: dependsOn,
+                operator: operator,
+                value: logicVal
+              }];
+            }
+
+            // Collect Validation rules if configured
+            const valCatSelect = card.querySelector('.validation-category');
+            const valRuleSelect = card.querySelector('.validation-rule');
+            if (valCatSelect && valCatSelect.value && valRuleSelect && valRuleSelect.value) {
+              const category = valCatSelect.value;
+              const rule = valRuleSelect.value;
+              const errorMsg = card.querySelector('.validation-error-msg').value.trim() || 'Input value is invalid';
+              const param1 = card.querySelector('.validation-param-1').value.trim();
+              const param2 = card.querySelector('.validation-param-2').value.trim();
+
+              const validation = { category, rule, errorMsg };
+
+              if (['between', 'not_between', 'range', 'date_range'].includes(rule)) {
+                if (param1) validation.min = param1;
+                if (param2) validation.max = param2;
+              } else {
+                if (param1) validation.value = param1;
+              }
+
+              field.validation = validation;
+            }
+
+            // Collect Date constraints if configured
+            if (type === 'date') {
+              const minType = card.querySelector('.date-min-type').value;
+              const minFixed = card.querySelector('.date-min-fixed').value;
+              const maxType = card.querySelector('.date-max-type').value;
+              const maxFixed = card.querySelector('.date-max-fixed').value;
+              const cutoffHour = card.querySelector('.date-cutoff-hour').value;
+              
+              field.dateConstraints = {
+                minType: minType || null,
+                minFixed: minFixed || null,
+                maxType: maxType || null,
+                maxFixed: maxFixed || null,
+                cutoffHour: cutoffHour !== "" ? parseInt(cutoffHour, 10) : null
+              };
+            }
+          }
+
+          fields.push(field);
+        });
+
+        return fields;
+      }
+
+      async       function handleRequireOtpChange() {
+        const accessVal = document.getElementById('formType')?.value;
+        const isMob = (accessVal === 'mobno' || accessVal === 'reg_mobno');
+        const wrap = document.getElementById('manageAllowlistWrap');
+        if (wrap) {
+          wrap.style.display = isMob ? 'block' : 'none';
+        }
+        updateAllowlistBadge();
+      }
+
+      async function saveForm() {
+        const saveBtn = document.getElementById('saveFormBtn');
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Form...';
+        }
+
+        const resetBtn = () => {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.background = '';
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Form';
+          }
+        };
+
+        const title = document.getElementById('formTitle').value.trim();
+        const description = document.getElementById('formDescription').value.trim();
+        const dept_name = document.getElementById('formDept').value.trim();
+        
+        const accessVal = document.getElementById('formType').value;
+        const isPublic = accessVal === 'public';
+        const requireRegistration = (accessVal === 'reg_cardno' || accessVal === 'reg_mobno');
+        const authType = (accessVal === 'mobno' || accessVal === 'reg_mobno') ? 'mobno' : (isPublic ? 'public' : 'cardno');
+
+        const limitOneResponse = document.getElementById('limitOneResponse').checked;
+        const allowEdit = document.getElementById('allowEdit').checked;
+        const showProgressBar = document.getElementById('showProgressBar').checked;
+        const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
+        const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        let section1Action = 'next';
+        const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+        if (firstSectionCard) {
+          section1Action = firstSectionCard.value;
+        }
+        const themeColor = document.getElementById('themeColor').value;
+        
+        const expiresAt = document.getElementById('expiresAt').value || null;
+        const maxResponses = document.getElementById('maxResponses').value || null;
+        const closeMessage = document.getElementById('closeMessage').value.trim() || null;
+
+        const slug = document.getElementById('formSlug').value.trim();
+        const fields = collectFields();
+
+        if (!title) { showError('Form title is required'); resetBtn(); return; }
+        if (!dept_name) { showError('Department is required'); resetBtn(); return; }
+        if (fields.length === 0) { showError('At least one field is required'); resetBtn(); return; }
+
+        // Validate that option/grid fields have items
+        for (const f of fields) {
+          if (OPTION_TYPES.includes(f.type) && (!f.options || f.options.length === 0)) {
+            showError(`Field "${f.label}" needs at least one option`);
+            resetBtn();
+            return;
+          }
+          if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(f.type) && f.dynamicRows !== 'utsav' && (!f.rows || f.rows.length === 0 || !f.columns || f.columns.length === 0)) {
+            showError(`Grid field "${f.label}" needs at least one row and one column`);
+            resetBtn();
+            return;
+          }
+          if (['grid_radio', 'grid_checkbox', 'grid_number'].includes(f.type) && f.dynamicRows === 'utsav' && (!f.columns || f.columns.length === 0)) {
+            showError(`Grid field "${f.label}" needs at least one column`);
+            resetBtn();
+            return;
+          }
+        }
+
+        const requireOtp = document.getElementById('requireOtp').checked;
+                const formCategory = document.getElementById('formCategory').value;
+
+        const deptEventSelect = document.getElementById('deptEventSelect');
+        let event_id = null;
+        let event_name = null;
+        let event_type = null;
+        if (dept_name === 'utsav' || dept_name === 'adhyayan') {
+          if (deptEventSelect && deptEventSelect.value) {
+            event_id = parseInt(deptEventSelect.value, 10);
+            const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
+            event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
+            event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+          }
+        }
+
+        const body = { 
+          title, description, dept_name, fields, isPublic, authType, slug, 
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+          expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
+          event_id, event_name, event_type,
+          otpAllowlist: window.stagedOtpAllowlist || []
+        };
+
+        try {
+          const url = editId
+            ? `${CONFIG.basePath}/forms/${editId}`
+            : `${CONFIG.basePath}/forms`;
+          const method = editId ? 'PUT' : 'POST';
+
+          const res = await fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(body)
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            isFormSaved = true;
+            localStorage.removeItem('form_builder_draft');
+
+            // If a new form was just created, smoothly switch to edit mode without leaving
+            if (!editId && data.data && data.data.id) {
+              const newId = data.data.id;
+              editId = String(newId);
+              urlParams.set('id', newId);
+              const newUrl = `create.html?id=${newId}`;
+              window.history.replaceState({ path: newUrl }, '', newUrl);
+              const pageTitleEl = document.getElementById('pageTitle');
+              if (pageTitleEl) pageTitleEl.innerHTML = '<i class="fas fa-edit"></i> Edit Form';
+            }
+
+            let allowlistWarning = '';
+            if (pendingOtpAllowlist.length > 0 && data.data?.id) {
+              allowlistWarning = await flushPendingOtpAllowlist(data.data.id);
+            }
+
+            showSuccess((editId ? 'Form saved successfully!' : 'Form created successfully!') + allowlistWarning);
+            markClean();
+          } else {
+            resetBtn();
+            showError(data.message || 'Failed to save form');
+          }
+        } catch (err) {
+          resetBtn();
+          showError('Error saving form: ' + err.message);
+        }
+      }
+
+      // Load existing form data if editing
+      async function loadForm(id) {
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+
+          if (!data.success) {
+            showError(data.message || 'Failed to load form');
+            return;
+          }
+
+          const form = data.data;
+          document.getElementById('pageTitle').textContent = '✏️ Edit Form';
+          populateFormBuilder(form);
+        } catch (err) {
+          showError('Error loading form: ' + err.message);
+        }
+      }
+
+      // Persists numbers staged in create mode once the form actually has an
+      // id. Runs sequentially so a duplicate/failed entry doesn't abort the
+      // rest. Returns a short warning suffix (empty string if everything saved).
+      async function flushPendingOtpAllowlist(newFormId) {
+        return '';
+      }
+
+      function previewForm() {
+        try {
+          const title = document.getElementById('formTitle')?.value?.trim() || 'Untitled Form';
+          const description = document.getElementById('formDescription')?.value?.trim() || '';
+          const dept_name = document.getElementById('formDept')?.value?.trim() || '';
+          
+          const accessVal = document.getElementById('formType')?.value || 'public';
+          const isPublic = accessVal === 'public';
+          const requireRegistration = (accessVal === 'reg_cardno' || accessVal === 'reg_mobno');
+          const authType = (accessVal === 'mobno' || accessVal === 'reg_mobno') ? 'mobno' : (isPublic ? 'cardno' : accessVal);
+
+          const limitOneResponse = document.getElementById('limitOneResponse')?.checked || false;
+          const allowEdit = document.getElementById('allowEdit')?.checked || false;
+          const showProgressBar = document.getElementById('showProgressBar')?.checked !== false;
+          const showSubmitAnother = document.getElementById('showSubmitAnother')?.checked !== false;
+          const confirmationMessage = document.getElementById('confirmationMessage')?.value?.trim() || 'Thank you, your response has been recorded.';
+          
+          let section1Action = 'next';
+          const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+          if (firstSectionCard) {
+            section1Action = firstSectionCard.value;
+          }
+
+          const themeColor = document.getElementById('themeColor')?.value || '#204060';
+          const expiresAt = document.getElementById('expiresAt')?.value || null;
+          const maxResponses = document.getElementById('maxResponses')?.value || null;
+          const closeMessage = document.getElementById('closeMessage')?.value?.trim() || null;
+          const slug = document.getElementById('formSlug')?.value?.trim() || '';
+          const fields = collectFields();
+
+          const requireOtp = document.getElementById('requireOtp')?.checked || false;
+          const formCategory = document.getElementById('formCategory')?.value || 'generic';
+
+          const deptEventSelect = document.getElementById('deptEventSelect');
+          let event_id = null;
+          let event_name = null;
+          let event_type = null;
+          if (dept_name === 'utsav' || dept_name === 'adhyayan') {
+            if (deptEventSelect && deptEventSelect.value) {
+              event_id = parseInt(deptEventSelect.value, 10);
+              const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
+              event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
+              event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+            }
+          }
+
+          const previewData = { 
+            id: editId ? parseInt(editId, 10) : undefined,
+            title, description, dept_name, fields, isPublic, authType, slug, 
+            limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+            expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
+            event_id, event_name, event_type
+          };
+          sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
+          window.open('view.html?preview=true' + (editId ? '&id=' + editId : ''), '_blank');
+        } catch (e) {
+          console.error('Error in previewForm:', e);
+          showError('Preview error: ' + e.message);
+        }
+      }
+
+      // Keep track of draft state and page unload confirmation
+      let isFormSaved = false;
+
+      window.addEventListener('beforeunload', function (e) {
+        if (isFormSaved) return;
+        const title = document.getElementById('formTitle').value.trim();
+        const fields = collectFields();
+        if (title || fields.length > 0) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
+
+      function saveBuilderDraft() {
+        if (editId) return; // Don't autosave draft when editing an existing database form
+        const title = document.getElementById('formTitle').value.trim();
+        const description = document.getElementById('formDescription').value.trim();
+        const dept_name = document.getElementById('formDept').value.trim();
+        
+        const accessVal = document.getElementById('formType').value;
+        const isPublic = accessVal === 'public';
+        const requireRegistration = (accessVal === 'reg_cardno' || accessVal === 'reg_mobno');
+        const authType = (accessVal === 'mobno' || accessVal === 'reg_mobno') ? 'mobno' : (isPublic ? 'public' : 'cardno');
+
+        const limitOneResponse = document.getElementById('limitOneResponse').checked;
+        const allowEdit = document.getElementById('allowEdit').checked;
+        const showProgressBar = document.getElementById('showProgressBar').checked;
+        const showSubmitAnother = document.getElementById('showSubmitAnother').checked;
+        const confirmationMessage = document.getElementById('confirmationMessage').value.trim();
+        
+        let section1Action = 'next';
+        const firstSectionCard = document.querySelector('#fieldsContainer .field-card .section-next-action');
+        if (firstSectionCard) {
+          section1Action = firstSectionCard.value;
+        }
+
+        const themeColor = document.getElementById('themeColor').value;
+        const expiresAt = document.getElementById('expiresAt').value || null;
+        const maxResponses = document.getElementById('maxResponses').value || null;
+        const closeMessage = document.getElementById('closeMessage').value.trim() || null;
+        const slug = document.getElementById('formSlug').value.trim();
+        const fields = collectFields();
+        const requireOtp = document.getElementById('requireOtp').checked;
+        const formCategory = document.getElementById('formCategory').value;
+
+        const draft = {
+          title, description, dept_name, isPublic, authType, accessVal,
+          limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
+          expiresAt, closeMessage, maxResponses, requireOtp, formCategory, fields,
+          timestamp: Date.now()
+        };
+
+        if (title || description || fields.length > 0) {
+          localStorage.setItem('form_builder_draft', JSON.stringify(draft));
+        } else {
+          localStorage.removeItem('form_builder_draft');
+        }
+      }
+
+      function checkAndShowDraftRecovery() {
+        if (editId) return;
+        const rawDraft = localStorage.getItem('form_builder_draft');
+        if (!rawDraft) {
+          addField();
+          return;
+        }
+
+        try {
+          const draft = JSON.parse(rawDraft);
+          const timeString = new Date(draft.timestamp).toLocaleString();
+          document.getElementById('draftTime').textContent = timeString;
+          document.getElementById('draftRecoveryBanner').style.display = 'flex';
+        } catch (e) {
+          localStorage.removeItem('form_builder_draft');
+          addField();
+        }
+      }
+
+      function restoreDraft() {
+        const rawDraft = localStorage.getItem('form_builder_draft');
+        if (!rawDraft) return;
+
+        try {
+          const draft = JSON.parse(rawDraft);
+          populateFormBuilder(draft);
+          document.getElementById('draftRecoveryBanner').style.display = 'none';
+        } catch (e) {
+          console.error("Error restoring draft:", e);
+        }
+      }
+
+      function discardDraft() {
+        localStorage.removeItem('form_builder_draft');
+        document.getElementById('draftRecoveryBanner').style.display = 'none';
+        document.getElementById('fieldsContainer').innerHTML = '';
+        addField();
+      }
+
+      // ── OTP Allowlist State & Modal Handlers ────────────────────────────────
+      window.stagedOtpAllowlist = [];
+
+      function handleRequireOtpChange() {
+        const accessVal = document.getElementById('formType')?.value;
+        const isMob = (accessVal === 'mobno' || accessVal === 'reg_mobno');
+        const wrap = document.getElementById('manageAllowlistWrap');
+        if (wrap) {
+          wrap.style.display = isMob ? 'block' : 'none';
+        }
+        updateAllowlistBadge();
+      }
+
+      function getDepartmentOptionsFromForm() {
+        const departments = new Set([
+          'Ashram Staff', 'Camera', 'Decor', 'Infra (Generator)', 'Infra (Labour)',
+          'Infra (Mandap)', 'Infra (Shoe)', 'Kitchen', 'LED', 'Light',
+          'Logistics (Echo & Rickshaw)', 'Logistics (Tempo Traveler)', 'Medical Staff',
+          'Musician', 'RC Kitchen Staff', 'School Staff', 'Sound'
+        ]);
+
+        // Extract from actual form cards if present
+        const cards = document.querySelectorAll('#fieldsContainer .field-card');
+        cards.forEach(card => {
+          const label = card.querySelector('.field-label')?.value?.toLowerCase() || '';
+          if (label.includes('department') || label.includes('seva')) {
+            card.querySelectorAll('.option-value').forEach(opt => {
+              const val = opt.value.trim();
+              if (val && val.toLowerCase() !== 'others') departments.add(val);
+            });
+          }
+        });
+
+        return Array.from(departments);
+      }
+
+      function populateAllowlistDepartmentDropdown() {
+        const select = document.getElementById('allowlistDeptSelect');
+        if (!select) return;
+        const currentVal = select.value;
+        const depts = getDepartmentOptionsFromForm();
+
+        let html = '<option value="">-- Select Department --</option>';
+        depts.forEach(d => {
+          html += `<option value="${escapeAttr(d)}">${escapeHtml(d)}</option>`;
+        });
+        html += '<option value="__other__">+ Other (Type custom)...</option>';
+        select.innerHTML = html;
+        if (currentVal) select.value = currentVal;
+      }
+
+      function handleAllowlistDeptSelectChange(select) {
+        const customInput = document.getElementById('allowlistDeptCustomInput');
+        if (!customInput) return;
+        if (select.value === '__other__') {
+          customInput.style.display = 'block';
+          customInput.focus();
+        } else {
+          customInput.style.display = 'none';
+          customInput.value = '';
+        }
+      }
+
+      function openAllowlistModal() {
+        populateAllowlistDepartmentDropdown();
+        renderAllowlistTable();
+        const modal = document.getElementById('allowlistModal');
+        if (modal) modal.style.display = 'flex';
+      }
+
+      async function closeAllowlistModal() {
+        const modal = document.getElementById('allowlistModal');
+        if (modal) modal.style.display = 'none';
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      function updateAllowlistBadge() {
+        const list = window.stagedOtpAllowlist || [];
+        const configuredCount = list.filter(e => e.mobno && String(e.mobno).length === 10).length;
+        const uniqueDepts = new Set(list.map(e => e.department).filter(Boolean)).size;
+        const badge = document.getElementById('allowlistBadge');
+        if (badge) badge.textContent = configuredCount;
+        const countText = document.getElementById('allowlistModalCountText');
+        if (countText) {
+          countText.textContent = `${configuredCount} number${configuredCount === 1 ? '' : 's'} assigned (${uniqueDepts} total department${uniqueDepts === 1 ? '' : 's'})`;
+        }
+      }
+
+      let allowlistLookupTimeout = null;
+      $(document).on('input', '#allowlistMobInput', function() {
+        const val = this.value.trim().replace(/\D/g, '');
+        const lookupEl = document.getElementById('allowlistMobLookup');
+        if (!lookupEl) return;
+        
+        if (val.length !== 10) {
+          lookupEl.innerHTML = '';
+          return;
+        }
+
+        lookupEl.innerHTML = '<span style="color:#6c757d;"><i class="fas fa-spinner fa-spin"></i> Looking up member...</span>';
+        clearTimeout(allowlistLookupTimeout);
+        allowlistLookupTimeout = setTimeout(async () => {
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${val}`);
+            const data = await res.json();
+            if (data.success) {
+              const cardStr = data.data.cardno ? ` (Card: ${escapeHtml(data.data.cardno)})` : '';
+              const centerStr = data.data.center ? `, ${escapeHtml(data.data.center)}` : '';
+              lookupEl.innerHTML = `<span style="color:#28a745; font-weight:700;"><i class="fas fa-check-circle"></i> ${escapeHtml(data.data.name)}${cardStr}${centerStr}</span>`;
+            } else {
+              lookupEl.innerHTML = '<span style="color:#dc3545; font-weight:600;"><i class="fas fa-exclamation-circle"></i> Not registered in Ashram DB</span>';
+            }
+          } catch (e) {
+            lookupEl.innerHTML = '';
+          }
+        }, 250);
+      });
+
+      async function addAllowedNumber() {
+        const deptSelect = document.getElementById('allowlistDeptSelect');
+        const customDeptInput = document.getElementById('allowlistDeptCustomInput');
+        const mobInput = document.getElementById('allowlistMobInput');
+
+        let deptVal = deptSelect ? deptSelect.value.trim() : '';
+        if (deptVal === '__other__') {
+          deptVal = customDeptInput ? customDeptInput.value.trim() : '';
+        }
+
+        if (!deptVal) {
+          alert('Please select or enter a department');
+          return;
+        }
+
+        const mobVal = mobInput ? mobInput.value.trim().replace(/\D/g, '') : '';
+        if (mobVal && mobVal.length !== 10) {
+          alert('Please enter a valid 10-digit mobile number or leave blank to assign later');
+          return;
+        }
+
+        let memberName = mobVal ? 'Ashram Member' : '— (Pending assignment)';
+        let cardno = null;
+        if (mobVal) {
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${mobVal}`);
+            const data = await res.json();
+            if (data.success && data.data) {
+              memberName = data.data.name || memberName;
+              cardno = data.data.cardno || null;
+            }
+          } catch (e) {}
+        }
+
+        // If an unassigned placeholder exists for this department, fill it first
+        const emptyPlaceholderIdx = window.stagedOtpAllowlist.findIndex(e => 
+          (e.department || '').toLowerCase() === deptVal.toLowerCase() && (!e.mobno || String(e.mobno).trim() === '')
+        );
+
+        if (emptyPlaceholderIdx !== -1 && mobVal) {
+          window.stagedOtpAllowlist[emptyPlaceholderIdx].mobno = mobVal;
+          window.stagedOtpAllowlist[emptyPlaceholderIdx].name = memberName;
+          window.stagedOtpAllowlist[emptyPlaceholderIdx].cardno = cardno;
+        } else {
+          // Check if this exact mobile number is already added for this department
+          const duplicateIdx = window.stagedOtpAllowlist.findIndex(e => 
+            (e.department || '').toLowerCase() === deptVal.toLowerCase() && e.mobno === mobVal
+          );
+          if (duplicateIdx !== -1 && mobVal) {
+            alert(`Mobile number ${mobVal} is already added for ${deptVal}`);
+            return;
+          }
+
+          // Otherwise add as an additional head for this department
+          window.stagedOtpAllowlist.push({
+            department: deptVal,
+            mobno: mobVal || null,
+            cardno: cardno,
+            name: memberName
+          });
+        }
+
+        if (deptSelect) deptSelect.value = '';
+        if (customDeptInput) { customDeptInput.value = ''; customDeptInput.style.display = 'none'; }
+        if (mobInput) mobInput.value = '';
+        const lookup = document.getElementById('allowlistMobLookup');
+        if (lookup) lookup.innerHTML = '';
+
+        renderAllowlistTable();
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      async function syncAllowlistToBackend() {
+        if (!editId) return;
+        try {
+          await fetch(`${CONFIG.basePath}/forms/${editId}/allowlist`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ entries: window.stagedOtpAllowlist || [] })
+          });
+        } catch (e) {
+          console.error('Error syncing allowlist to backend:', e);
+        }
+      }
+
+      async function removeAllowedNumber(index) {
+        window.stagedOtpAllowlist.splice(index, 1);
+        renderAllowlistTable();
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      async function saveInlineMobno(index) {
+        const input = document.getElementById(`inline_mob_${index}`);
+        if (!input) return;
+        const val = input.value.trim().replace(/\D/g, '');
+        if (val && val.length !== 10) {
+          alert('Please enter a valid 10-digit mobile number');
+          return;
+        }
+
+        let memberName = val ? 'Ashram Member' : '— (Pending assignment)';
+        let cardno = null;
+        if (val) {
+          try {
+            const res = await fetch(`${CONFIG.baseUrl}/admin/forms/public/resolve-identity?type=mobno&value=${val}`);
+            const data = await res.json();
+            if (data.success && data.data) {
+              memberName = data.data.name || memberName;
+              cardno = data.data.cardno || null;
+            }
+          } catch (e) {}
+        }
+
+        window.stagedOtpAllowlist[index].mobno = val || null;
+        window.stagedOtpAllowlist[index].name = memberName;
+        window.stagedOtpAllowlist[index].cardno = cardno;
+        renderAllowlistTable();
+        updateAllowlistBadge();
+        await syncAllowlistToBackend();
+      }
+
+      function renderAllowlistTable() {
+        const tbody = document.getElementById('allowlistTableBody');
+        if (!tbody) return;
+
+        if (!window.stagedOtpAllowlist || window.stagedOtpAllowlist.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align:center; padding:1.5rem; color:#6c757d;">
+                <i class="fas fa-info-circle"></i> No departments configured yet.
+              </td>
+            </tr>
+          `;
+          updateAllowlistBadge();
+          return;
+        }
+
+        tbody.innerHTML = window.stagedOtpAllowlist.map((item, idx) => {
+          const hasMob = item.mobno && String(item.mobno).length === 10;
+          const mobCell = hasMob
+            ? `<div style="display:flex; align-items:center; gap:0.4rem;"><strong style="color:#204060;">${escapeHtml(item.mobno)}</strong> <a href="javascript:void(0)" onclick="editInlineMobno(${idx})" style="font-size:0.75rem; color:#4c86b0;"><i class="fas fa-pencil-alt"></i></a></div>`
+            : `<div style="display:flex; align-items:center; gap:0.35rem;">
+                <input type="tel" id="inline_mob_${idx}" maxlength="10" placeholder="10-digit no." value="" style="width:110px; height:28px; padding:2px 6px; font-size:0.82rem; border:1px solid #ced4da; border-radius:4px; font-weight:600;" />
+                <button type="button" onclick="saveInlineMobno(${idx})" class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:#204060; color:#fff; border-radius:4px; border:none; cursor:pointer;">Save</button>
+              </div>`;
+
+          const cardCell = item.cardno
+            ? `<span style="color:#495057; font-family:monospace; font-weight:600;">${escapeHtml(item.cardno)}</span>`
+            : `<span style="color:#adb5bd;">—</span>`;
+
+          const nameCell = hasMob
+            ? `<span style="color:#204060; font-weight:600;">${escapeHtml(item.name || 'Ashram Member')}</span>`
+            : `<span style="color:#adb5bd; font-style:italic;">Pending assignment</span>`;
+
+          return `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:0.6rem 0.85rem;"><span class="badge" style="background:#eef4f9; color:#204060; border:1px solid #c8daf0; font-weight:700; padding:4px 8px; border-radius:4px; font-size:0.84rem;">${escapeHtml(item.department || 'General')}</span></td>
+              <td style="padding:0.6rem 0.85rem;">${mobCell}</td>
+              <td style="padding:0.6rem 0.85rem;">${cardCell}</td>
+              <td style="padding:0.6rem 0.85rem;">${nameCell}</td>
+              <td style="padding:0.6rem 0.85rem; text-align:center;">
+                <button type="button" onclick="removeAllowedNumber(${idx})" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:0.95rem; padding:2px 6px;" title="Remove">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        updateAllowlistBadge();
+      }
+
+      function editInlineMobno(idx) {
+        const item = window.stagedOtpAllowlist[idx];
+        const tbody = document.getElementById('allowlistTableBody');
+        const rows = tbody.querySelectorAll('tr');
+        if (rows[idx]) {
+          const cells = rows[idx].querySelectorAll('td');
+          cells[1].innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.35rem;">
+              <input type="tel" id="inline_mob_${idx}" maxlength="10" placeholder="10-digit no." value="${escapeAttr(item.mobno || '')}" style="width:115px; height:28px; padding:2px 6px; font-size:0.82rem; border:1px solid #ced4da; border-radius:4px; font-weight:600;" />
+              <button type="button" onclick="saveInlineMobno(${idx})" class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:#28a745; color:#fff; border-radius:4px; border:none; cursor:pointer;">Update</button>
+            </div>
+          `;
+          const input = document.getElementById(`inline_mob_${idx}`);
+          if (input) input.focus();
+        }
+      }
+
+      
+      async function handleDeptChange(selectedEventId = null) {
+        const deptEl = document.getElementById('formDept');
+        const dept = deptEl ? deptEl.value : '';
+        const container = document.getElementById('deptEventContainer');
+        const label = document.getElementById('deptEventLabel');
+        const select = document.getElementById('deptEventSelect');
+
+        if (!container || !select) return;
+
+        if (dept === 'utsav' || dept === 'adhyayan') {
+          label.innerHTML = dept === 'utsav' 
+            ? '<i class="fas fa-calendar-alt"></i> Utsav Event (Ongoing & Upcoming) *' 
+            : '<i class="fas fa-book-reader"></i> Adhyayan Event (Ongoing & Upcoming) *';
+          select.innerHTML = '<option value="">Loading events from database...</option>';
+          container.style.display = 'block';
+
+          try {
+            const res = await fetch(`${CONFIG.basePath}/forms/events?dept=${dept}`, {
+              headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            const data = await res.json();
+            if (data.success && data.data && data.data.length > 0) {
+              window.currentDeptEvents = data.data;
+              select.innerHTML = `<option value="">-- Select ${dept === 'utsav' ? 'Utsav' : 'Adhyayan'} Event --</option>` +
+                data.data.map(ev => {
+                  const dates = ev.start_date && ev.end_date ? ` (${ev.start_date} to ${ev.end_date})` : '';
+                  return `<option value="${ev.id}" data-name="${escapeAttr(ev.name)}" data-start="${escapeAttr(ev.start_date || '')}" data-end="${escapeAttr(ev.end_date || '')}" data-type="${escapeAttr(data.eventType || dept)}">${escapeHtml(ev.name)}${dates}</option>`;
+                }).join('');
+
+              if (selectedEventId) {
+                select.value = String(selectedEventId);
+              }
+            } else {
+              select.innerHTML = `<option value="">No ongoing or upcoming ${dept} events found</option>`;
+            }
+          } catch (err) {
+            console.error('Error fetching department events:', err);
+            select.innerHTML = `<option value="">Error loading events</option>`;
+          }
+        } else {
+          container.style.display = 'none';
+          select.innerHTML = '<option value="">-- Select Event --</option>';
+        }
+      }
+
+      
+      function formatDateTimeLocal(dt) {
+        if (!dt) return '';
+        const d = new Date(dt);
+        if (isNaN(d.getTime())) return '';
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${mins}`;
+      }
+
+      function populateFormBuilder(form) {
+        document.getElementById('formTitle').value = form.title || '';
+        document.getElementById('formDescription').value = form.description || '';
+        document.getElementById('formDept').value = form.dept_name || '';
+        if (form.dept_name === 'utsav' || form.dept_name === 'adhyayan') {
+          handleDeptChange(form.event_id);
+        } else {
+          const evtCont = document.getElementById('deptEventContainer');
+          if (evtCont) evtCont.style.display = 'none';
+        }
+
+        let accessVal = 'public';
+        if (form.isPublic === false) {
+          if (form.requireRegistration) {
+            accessVal = (form.authType === 'mobno') ? 'reg_mobno' : 'reg_cardno';
+          } else {
+            accessVal = (form.authType === 'mobno') ? 'mobno' : 'cardno';
+          }
+        }
+        document.getElementById('formType').value = accessVal;
+
+        document.getElementById('limitOneResponse').checked = form.limitOneResponse || false;
+        document.getElementById('allowEdit').checked = form.allowEdit || false;
+        document.getElementById('showProgressBar').checked = form.showProgressBar !== undefined ? form.showProgressBar : true;
+        document.getElementById('showSubmitAnother').checked = form.showSubmitAnother !== undefined ? form.showSubmitAnother : true;
+        document.getElementById('confirmationMessage').value = form.confirmationMessage || 'Thank you, your response has been recorded.';
+        const themeColorVal = form.themeColor || '#204060';
+        document.getElementById('themeColor').value = themeColorVal;
+        $('.theme-swatch').removeClass('active').css('box-shadow', '0 0 0 1px #ccc');
+        $(`.theme-swatch[data-color="${themeColorVal}"]`).addClass('active').css('box-shadow', `0 0 0 2px ${themeColorVal}`);
+        
+        document.getElementById('expiresAt').value = formatDateTimeLocal(form.expiresAt);
+        document.getElementById('maxResponses').value = form.maxResponses || '';
+        document.getElementById('closeMessage').value = form.closeMessage || '';
+        
+        document.getElementById('formSlug').value = form.slug || '';
+        document.getElementById('requireOtp').checked = form.requireOtp || false;
+        const reqRegEl = document.getElementById('requireRegistration');
+        if (reqRegEl) reqRegEl.checked = form.requireRegistration || false;
+        const accessValNow = document.getElementById('formType').value;
+        document.getElementById('requireOtpRow').style.display = (accessValNow === 'mobno' || accessValNow === 'reg_mobno') ? 'flex' : 'none';
+        document.getElementById('formCategory').value = form.formCategory || 'generic';
+
+        // Load allowlist
+        window.stagedOtpAllowlist = form.otpAllowlist || [];
+        handleRequireOtpChange();
+
+        // Load fields
+        if (form.fields && Array.isArray(form.fields)) {
+          document.getElementById('fieldsContainer').innerHTML = '';
+          form.fields.forEach((f, fi) => {
+            try {
+              addField(f);
+            } catch (err) {
+              console.error('Error adding field #' + fi, err);
+            }
+          });
+        }
+
+        onFormCategoryChange();
+        
+      }
+
+      // Listen for formType and requireOtp changes
+      $(document).on('change', '#formType', function() {
+        const val = this.value;
+        const row = document.getElementById('requireOtpRow');
+        if (val === 'mobno') {
+          row.style.display = 'flex';
+        } else {
+          row.style.display = 'none';
+          document.getElementById('requireOtp').checked = false;
+        }
+        handleRequireOtpChange();
+        
+      });
+
+      $(document).on('change', '#requireOtp', function() {
+        handleRequireOtpChange();
+      });
+
+      // Bind input changes to save draft
+      $(document).on('change input blur', 'input, select, textarea', function() {
+        saveBuilderDraft();
+      });
+
+      // Initialize
+      if (editId) {
+        loadForm(editId);
+      } else {
+        checkAndShowDraftRecovery();
+      }
+    </script>
+  
+    <!-- Modal: Allowed Phone Numbers (OTP Allowlist) -->
+    <div id="allowlistModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.55); z-index:10050; align-items:center; justify-content:center; padding:1rem;">
+      <div style="background:#fff; border-radius:12px; width:100%; max-width:680px; box-shadow:0 10px 35px rgba(0,0,0,0.25); overflow:hidden; display:flex; flex-direction:column; max-height:90vh;">
+        <div style="background:#204060; color:#fff; padding:1.1rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0; font-weight:700; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fas fa-user-shield"></i> Allowed Phone Numbers (OTP Allowlist)
+          </h4>
+          <button type="button" onclick="closeAllowlistModal()" style="color:#fff; opacity:0.85; font-size:1.5rem; border:none; background:none; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <div style="padding:1.5rem; overflow-y:auto; flex:1;">
+          <p style="color:#495057; font-size:0.88rem; margin-top:0; margin-bottom:1.25rem; line-height:1.5;">
+            Only phone numbers added here will be permitted to access and submit this form.
+            <br><span style="color:#6c757d; font-size:0.82rem;">(If list is empty, any registered Ashram member can receive OTP and fill the form).</span>
+          </p>
+
+          <!-- Add / Configure Department Entry Box -->
+          <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1rem; margin-bottom:1.25rem;">
+            <div style="font-weight:700; font-size:0.88rem; color:#204060; margin-bottom:0.5rem;"><i class="fas fa-user-plus"></i> Add / Link Authorized Department</div>
+            <div style="display:flex; gap:0.6rem; align-items:flex-start; flex-wrap:wrap;">
+              <div style="flex:1; min-width:200px;">
+                <select id="allowlistDeptSelect" onchange="handleAllowlistDeptSelectChange(this)" style="width:100%; height:38px; padding:0 0.75rem; border:1px solid #ced4da; border-radius:5px; font-size:0.9rem; font-weight:600; color:#204060; box-sizing:border-box; background:#fff; cursor:pointer;">
+                  <option value="">-- Select Department --</option>
+                  <option value="__other__">+ Other (Type below)...</option>
+                </select>
+                <input type="text" id="allowlistDeptCustomInput" placeholder="Type custom department name" style="display:none; width:100%; height:34px; margin-top:0.4rem; padding:0 0.75rem; border:1px solid #ced4da; border-radius:5px; font-size:0.85rem; box-sizing:border-box;" />
+              </div>
+              <div style="flex:1; min-width:180px;">
+                <input type="tel" id="allowlistMobInput" maxlength="10" placeholder="10-digit mobile no. (optional)" style="width:100%; height:38px; padding:0 0.75rem; border:1px solid #ced4da; border-radius:5px; font-weight:600; font-size:0.92rem; box-sizing:border-box;" />
+                <div id="allowlistMobLookup" style="font-size:0.8rem; min-height:18px; margin-top:0.25rem;"></div>
+              </div>
+              <button type="button" onclick="addAllowedNumber()" style="height:38px; background:#204060; border:none; color:#fff; border-radius:5px; padding:0 1.25rem; font-weight:700; font-size:0.88rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;">
+                <i class="fas fa-plus"></i> Save
+              </button>
+            </div>
+          </div>
+
+          <!-- Table of Allowed Numbers -->
+          <div style="max-height:240px; overflow-y:auto; border:1px solid #dee2e6; border-radius:6px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+              <thead style="background:#204060; position:sticky; top:0; z-index:2;">
+                <tr style="background:#204060;">
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; width:150px; font-size:0.85rem;">Department</th>
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; width:160px; font-size:0.85rem;">Mobile Number</th>
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; width:110px; font-size:0.85rem;">Card No</th>
+                  <th style="padding:0.65rem 0.85rem; color:#ffffff !important; background:#204060 !important; font-weight:700; font-size:0.85rem;">Member Name</th>
+                  <th style="padding:0.65rem 0.85rem; text-align:center; color:#ffffff !important; background:#204060 !important; font-weight:700; width:55px; font-size:0.85rem;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="allowlistTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="background:#f8f9fa; border-top:1px solid #dee2e6; padding:0.85rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+          <span id="allowlistModalCountText" style="font-size:0.88rem; font-weight:600; color:#6c757d;">0 numbers configured</span>
+          <button type="button" onclick="closeAllowlistModal()" style="background:#28a745; border:none; color:#fff; padding:0.5rem 1.5rem; border-radius:6px; font-weight:700; font-size:0.9rem; cursor:pointer;">
+            <i class="fas fa-check"></i> Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+<div id="toastContainer"></div>
+  
+    <!-- Fixed Floating Action Bar (Stays on screen while scrolling) -->
+    <div class="floating-action-bar">
+      <div class="floating-action-bar-inner">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span id="saveStatusIndicator" style="font-size:0.9rem; font-weight:600; color:#28a745; display:inline-flex; align-items:center; gap:0.45rem;">
+            <i class="fas fa-check-circle"></i> All changes saved
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+          <button class="btn btn-info" onclick="previewForm()" type="button" style="background:#17a2b8; border:none; color:#fff; font-weight:600; padding:0.5rem 1.25rem; font-size:0.9rem; border-radius:6px; cursor:pointer;">
+            <i class="fas fa-eye"></i> Preview Form
+          </button>
+          <a href="index.html" class="btn btn-secondary" style="font-weight:600; padding:0.5rem 1.25rem; font-size:0.9rem; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center;">Cancel</a>
+          <button id="saveFormBtn" class="btn" onclick="saveForm()" style="font-weight:700; opacity:0.5; cursor:not-allowed; background:#6c757d; padding:0.5rem 1.5rem; font-size:0.9rem; border-radius:6px; border:none; color:#fff;" disabled>
+            <i class="fas fa-save"></i> Save Form
+          </button>
+        </div>
+      </div>
+    </div>
+
+</body>
+</html>

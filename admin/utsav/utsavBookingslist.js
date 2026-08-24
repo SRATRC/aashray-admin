@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
   if (uploadRoomNoBtn) uploadRoomNoBtn.addEventListener('click',()=>window.location.href=`uploadRoomNo.html?utsavId=${utsavid}`);
+  const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
+  if (systemRoomAllocationBtn) {
+    systemRoomAllocationBtn.addEventListener('click', () => {
+      window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
+    });
+  }
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
   const storedScroll = sessionStorage.getItem('utsavScrollTop');
@@ -44,8 +50,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       renderFilteredTable();
     });
 
-    downloadAllBtn.addEventListener('click',()=>triggerExcelDownload(utsavbookings,'utsav_all_packages.xlsx','All Bookings'));
-    downloadPkgBtn.addEventListener('click',()=>triggerExcelDownload(filteredBookings,'package_filtered.xlsx','Filtered Bookings'));
+    downloadAllBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(utsavbookings),'utsav_all_packages.xlsx','All Bookings'));
+    downloadPkgBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(filteredBookings),'package_filtered.xlsx','Filtered Bookings'));
 
     if(downloadRoomNoBtn) downloadRoomNoBtn.addEventListener('click',()=>{
       const minimalData = utsavbookings.map(b=>({bookingid:b.bookingid,cardno:b.cardno,issuedto:b.issuedto,utsavid:b.utsavid,packageid:b.packageid,roomno:b.roomno||''}));
@@ -245,6 +251,31 @@ function initStatusModal(){
 
 // Helper to format date
 function formatDateTime(dt){ if(!dt) return '-'; const d=new Date(dt); return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth()+1).padStart(2, '0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+
+function formatBookingsForExcel(data) {
+  return (data || []).map((item, index) => ({
+    '#': index + 1,
+    'Booking ID': item.bookingid || '',
+    'Booked For': item.cardno || '',
+    'Name': item.issuedto || '',
+    'Age': item.age ?? '',
+    'Package Name': item.package_name || '',
+    'Room No': item.roomno || '',
+    'Registration Time': formatDateTime(item.createdAt),
+    'Arrival?': item.arrival || '',
+    'Car Number': item.carno || '',
+    'Volunteering': item.volunteer || '',
+    'Mumukshu Comments': item.other || '',
+    'Admin Comments': item.comments || '',
+    'Mobile': item.mobno || '',
+    'Gender': item.gender || '',
+    'Center': item.center || '',
+    'Mumukshu Status': item.res_status || '',
+    'Booking Status': item.status || '',
+    'Transaction Status': item.transaction_status || '',
+    'Booked By': item.bookedby || ''
+  }));
+}
 
 function triggerExcelDownload(data, fileName, sheetName) {
   console.log("Download triggered with data:", data);
