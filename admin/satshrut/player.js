@@ -8,6 +8,9 @@ let player = null;           // Single unified YT.Player instance
 let playerReady = false;
 let sessionStarted = false;
 let isBhaktiMode = false;    // Monday Bhakti: single-phase video-only session
+let is17thMorningMode = false; // 17th Monthly Morning Sadhana: 7-phase session
+let seventeenthSteps = [];   // Active steps for 17th morning
+let currentStepPlayCount = 1;// For repeating clips (1 or 2)
 
 // Timing
 let currentPhase = -1;       // 0–3
@@ -57,9 +60,13 @@ function authHeaders() {
 async function loadSession() {
   const params = new URLSearchParams(window.location.search);
   const dateParam = params.get('date');
-  const url = dateParam
-    ? `${CONFIG.basePath}/satshrut/today?date=${dateParam}`
-    : `${CONFIG.basePath}/satshrut/today`;
+  const slotParam = params.get('slot');
+
+  let url = `${CONFIG.basePath}/satshrut/today`;
+  const query = [];
+  if (dateParam) query.push(`date=${dateParam}`);
+  if (slotParam) query.push(`slot=${slotParam}`);
+  if (query.length > 0) url += `?${query.join('&')}`;
 
   try {
     const res = await fetch(url, { headers: authHeaders() });
@@ -76,6 +83,19 @@ async function loadSession() {
     }
 
     sessionData = json.data;
+
+    // ── 17th Monthly Morning mode (7-step sequence) ────────────────────────────
+    if (sessionData.session_type === '17th_morning') {
+      is17thMorningMode = true;
+      seventeenthSteps = (sessionData.steps || []).filter(st => st.youtube_id);
+      if (seventeenthSteps.length === 0) {
+        showNoSession('No videos configured for this month\'s 17th Morning session.');
+        return;
+      }
+      populate17thMorningInfo();
+      loadYouTubeAPI();
+      return;
+    }
 
     // ── Bhakti mode: single-phase video-only session (Monday) ──────────────────
     if (sessionData.session_type === 'bhakti') {
@@ -110,6 +130,11 @@ function showNoSession(msg) {
 
 function updateTitleForSegment() {
   const s = sessionData;
+  if (is17thMorningMode) {
+    document.getElementById('pageTitle').textContent =
+      `Satshrut — 17th Morning Sadhana (${s.session_date})`;
+    return;
+  }
   if (isBhaktiMode) {
     const weekText = s.notes || (s.week_index !== undefined ? `Week ${s.week_index + 1}` : 'Week 1');
     document.getElementById('pageTitle').textContent =
@@ -122,6 +147,47 @@ function updateTitleForSegment() {
   }
   document.getElementById('pageTitle').textContent =
     `Satshrut — ${s.session_date}${activeNotes ? ` (${activeNotes})` : ''}`;
+}
+
+// ── 17th Morning info population (7-phase sequence) ───────────────────────────
+
+function populate17thMorningInfo() {
+  const s = sessionData;
+  updateTitleForSegment();
+
+  document.getElementById('chipDate').textContent = s.session_date;
+  document.getElementById('chipVideoDur').textContent = `${seventeenthSteps.length} Steps`;
+
+  const audioChipEl = document.getElementById('chipAudioDur')?.closest('.info-chip');
+  const totalChipEl = document.getElementById('chipTotal')?.closest('.info-chip');
+  if (audioChipEl) audioChipEl.style.display = 'none';
+  if (totalChipEl) totalChipEl.style.display = 'none';
+
+  // Render dynamic 7-phase timeline
+  const timeline = document.getElementById('phaseTimeline');
+  if (timeline) {
+    timeline.innerHTML = '';
+    seventeenthSteps.forEach((step, idx) => {
+      if (idx > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'phase-arrow';
+        arrow.textContent = '›';
+        timeline.appendChild(arrow);
+      }
+      const block = document.createElement('div');
+      block.className = 'phase-block';
+      block.id = `phase-17th-${idx}`;
+      block.onclick = () => jumpToPhase(idx);
+      block.title = `Step ${idx + 1}: ${step.label}`;
+      block.innerHTML = `
+        <div class="ph-label">Step ${idx + 1}</div>
+        <div class="ph-type">${step.label}</div>
+      `;
+      timeline.appendChild(block);
+    });
+  }
+
+  document.getElementById('player-panel').style.display = 'block';
 }
 
 // ── Bhakti info population (single-phase, video only) ──────────────────────────
@@ -274,15 +340,19 @@ function updateSessionDurations() {
 
 // Called by the YouTube IFrame API once it's ready
 window.onYouTubeIframeAPIReady = function () {
-  // In bhakti mode there are no audio tracks to pre-fetch
-  if (!isBhaktiMode) {
+  // In bhakti mode or 17th morning mode, there are no audio tracks to pre-fetch
+  if (!isBhaktiMode && !is17thMorningMode) {
     fetchAudioDurations();
   }
+
+  const initialVideoId = is17thMorningMode
+    ? (seventeenthSteps[0]?.youtube_id || '')
+    : sessionData.youtube_video_id;
 
   player = new YT.Player('yt-player', {
     height: '100%',
     width: '100%',
-    videoId: sessionData.youtube_video_id,
+    videoId: initialVideoId,
     playerVars: {
       autoplay: 0,
       controls: 1,        // Native YouTube player controls with scrubber bar
@@ -370,6 +440,23 @@ function onPlayerReady() {
 // ── State change handler ─────────────────────────────────────────────────────
 
 function handleVideoSegmentEnd() {
+  if (is17thMorningMode) {
+    const step = seventeenthSteps[currentPhase];
+    if (step && step.repeat > currentStepPlayCount) {
+      // Loop clip for the 2nd time!
+      currentStepPlayCount++;
+      document.getElementById('phaseDesc').textContent = `Playing (Pass ${currentStepPlayCount} of ${step.repeat})`;
+      phaseLoading = true;
+      player.seekTo(0, true);
+      player.playVideo();
+      startTimerTick();
+      return;
+    }
+    currentStepPlayCount = 1;
+    nextPhase();
+    return;
+  }
+
   const isVideoPhase = currentPhase === 0 || currentPhase === 2;
   const s = sessionData;
 
@@ -565,6 +652,7 @@ function beginSession() {
 function startPhase(phaseIndex) {
   currentPhase = phaseIndex;
   currentSubPhase = 0;
+  currentStepPlayCount = 1;
   updateTitleForSegment();
   phaseLoading = true; // Mark as loading until YT.PlayerState.PLAYING fires
 
@@ -573,15 +661,40 @@ function startPhase(phaseIndex) {
   document.getElementById('pauseBadge').style.display = 'none';
   document.getElementById('countdown').style.opacity = '1';
 
+  // ── 17th Morning Phase Execution ──────────────────────────────────────────
+  if (is17thMorningMode) {
+    const step = seventeenthSteps[phaseIndex];
+    for (let i = 0; i < seventeenthSteps.length; i++) {
+      const el = document.getElementById(`phase-17th-${i}`);
+      if (el) {
+        el.classList.remove('active', 'done');
+        if (i < phaseIndex) el.classList.add('done');
+        if (i === phaseIndex) el.classList.add('active');
+      }
+    }
+
+    document.getElementById('phaseLabel').textContent = `Step ${phaseIndex + 1} — ${step.label}`;
+    document.getElementById('phaseDesc').textContent = step.repeat > 1 ? `Playing (Pass 1 of ${step.repeat})` : 'Remaining in this step';
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.classList.toggle('audio-phase', step.type.startsWith('pause'));
+
+    player.loadVideoById({ videoId: step.youtube_id });
+    startTimerTick();
+    return;
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   const phase = PHASES[phaseIndex];
   const s = sessionData;
 
   // Update timeline UI
   for (let i = 0; i < 4; i++) {
     const el = document.getElementById(`phase-${i}`);
-    el.classList.remove('active', 'done');
-    if (i < phaseIndex) el.classList.add('done');
-    if (i === phaseIndex) el.classList.add('active');
+    if (el) {
+      el.classList.remove('active', 'done');
+      if (i < phaseIndex) el.classList.add('done');
+      if (i === phaseIndex) el.classList.add('active');
+    }
   }
 
   // Phase label + countdown class
@@ -614,6 +727,14 @@ function startPhase(phaseIndex) {
 
 function nextPhase() {
   clearInterval(timerInterval);
+  if (is17thMorningMode) {
+    if (currentPhase < seventeenthSteps.length - 1) {
+      startPhase(currentPhase + 1);
+    } else {
+      completeSession();
+    }
+    return;
+  }
   // Bhakti is a single-phase session — video end means session complete
   if (isBhaktiMode) {
     completeSession();
@@ -640,11 +761,23 @@ function completeSession() {
   document.getElementById('complete-panel').style.display = 'block';
 
   // Mark all completed phases done
-  const totalPhases = isBhaktiMode ? 1 : 4;
-  for (let i = 0; i < totalPhases; i++) {
-    const el = document.getElementById(`phase-${i}`);
-    el.classList.remove('active');
-    el.classList.add('done');
+  if (is17thMorningMode) {
+    for (let i = 0; i < seventeenthSteps.length; i++) {
+      const el = document.getElementById(`phase-17th-${i}`);
+      if (el) {
+        el.classList.remove('active');
+        el.classList.add('done');
+      }
+    }
+  } else {
+    const totalPhases = isBhaktiMode ? 1 : 4;
+    for (let i = 0; i < totalPhases; i++) {
+      const el = document.getElementById(`phase-${i}`);
+      if (el) {
+        el.classList.remove('active');
+        el.classList.add('done');
+      }
+    }
   }
 }
 
@@ -662,6 +795,25 @@ function startTimerTick() {
     let endSecs = 0;
     let phaseRemaining = 0;
     let currentSegmentRemaining = 0;
+
+    if (is17thMorningMode) {
+      endSecs = (typeof player.getDuration === 'function' ? player.getDuration() : 0);
+      const currentTime = player.getCurrentTime();
+      currentSegmentRemaining = Math.max(0, endSecs - currentTime);
+      phaseRemaining = currentSegmentRemaining;
+
+      document.getElementById('countdown').textContent = formatHMS(phaseRemaining);
+      const pct = endSecs > 0 ? Math.min(100, (currentTime / endSecs) * 100) : 0;
+      document.getElementById('progressBar').style.width   = `${pct.toFixed(1)}%`;
+      document.getElementById('progressLabel').textContent = `${Math.round(pct)}% of step`;
+      document.getElementById('elapsedLabel').textContent  = `${formatMinSec(currentTime)} / ${formatMinSec(endSecs)}`;
+
+      if (currentSegmentRemaining <= 0.5 && !isPaused && !phaseLoading && endSecs > 0) {
+        clearInterval(timerInterval);
+        handleVideoSegmentEnd();
+      }
+      return;
+    }
 
     if (isVideoPhase) {
       const v1Dur = s.video1_duration_seconds || (s.video_end_seconds > s.video_start_seconds ? (s.video_end_seconds - s.video_start_seconds) : 0);

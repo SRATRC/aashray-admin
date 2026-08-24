@@ -202,6 +202,29 @@
       }
       .bhakti-tag:hover { background: #e65100; transform: scale(1.03); }
 
+      /* 17th Morning Badge */
+      .morning-17th-tag {
+        display: block;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        background: linear-gradient(135deg, #d84315, #f57c00);
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        border-radius: 4px;
+        padding: 2px 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(216, 67, 21, 0.35);
+        transition: transform 0.1s, box-shadow 0.1s;
+      }
+      .morning-17th-tag:hover {
+        transform: scale(1.04);
+        box-shadow: 0 2px 6px rgba(216, 67, 21, 0.5);
+      }
+
       /* Legend */
       .cal-legend {
         display: flex;
@@ -449,6 +472,9 @@
             <div class="frm-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
               <h1 style="margin:0;">Session Calendar</h1>
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="shiftBhaktiRotation()" title="Shift the Monday Bhakti rotation by +1 week forward" style="font-size:0.9rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.4rem; background:#fff8e1; border-color:#f9a825; color:#b76e00;">
+                  🔄 Shift Bhakti (+1 Wk)
+                </button>
                 <button class="btn btn-secondary" onclick="openMoveModal()" style="font-size:0.9rem; padding:0.5rem 1rem; display:inline-flex; align-items:center; gap:0.4rem;">
                   ↔ Move Session
                 </button>

@@ -97,6 +97,21 @@
                   <em>00:00:00</em> to play the full video.
                 </p>
 
+                <div style="background:#fdfaf3; border:1px solid #f9e2b2; border-radius:8px; padding:1rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+                  <div>
+                    <label for="bhakti_offset_select" style="font-weight:600; color:#b76e00; margin-bottom:0.25rem; display:block;">🔄 Rotation Shift / Queue Position:</label>
+                    <select id="bhakti_offset_select" class="form-control" style="width:auto; display:inline-block;">
+                      <option value="0">Normal (No Shift)</option>
+                      <option value="1">Shift +1 Week Forward</option>
+                      <option value="2">Shift +2 Weeks Forward</option>
+                      <option value="3">Shift +3 Weeks Forward</option>
+                    </select>
+                  </div>
+                  <button type="button" id="quickShiftBtn" style="background:#f57f17; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:600; cursor:pointer;">
+                    ⏩ Shift Sequence +1 Week
+                  </button>
+                </div>
+
                 <div id="bhaktiVideosContainer">
                   <!-- Week 1 -->
                   <fieldset class="form-group" style="border:1px solid #c9d8e8;border-radius:8px;padding:1rem;margin-bottom:1rem;">
@@ -177,6 +192,66 @@
                       </div>
                     </div>
                   </fieldset>
+                </div>
+
+                <!-- 17th Monthly Morning Session Configuration -->
+                <hr style="margin: 2rem 0; border-color: #d9e6f2;" />
+                <h3 style="margin-bottom:0.25rem; color:#204060;">🌅 17th Monthly Morning Session (7 Steps)</h3>
+                <p style="color:#555; font-size:0.9rem; margin-bottom:1.5rem;">
+                  Plays every 17th morning of the month in 7 steps (all full videos):
+                  <strong>1. Intro &rarr; 2. Bhakti Song &rarr; 3. Clip 1 (2x) &rarr; 4. 5m Pause &rarr; 5. Clip 2 (2x) &rarr; 6. 5m Pause &rarr; 7. Conclusion</strong>.
+                </p>
+
+                <!-- Fixed Videos (Reused every month) -->
+                <div style="background:#f7fafd; border:1px solid #c9d8e8; border-radius:8px; padding:1.25rem; margin-bottom:1.5rem;">
+                  <h4 style="margin-top:0; margin-bottom:0.75rem; color:#204060;">Fixed Videos (Same Every Month)</h4>
+
+                  <div class="form-group">
+                    <label for="seventeenth_intro_url">Step 1 — Intro Video YouTube URL:</label>
+                    <input type="url" id="seventeenth_intro_url" class="form-control" placeholder="https://youtu.be/..." />
+                    <small id="seventeenthIntroInfo" style="color:#204060; font-weight:500;"></small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="seventeenth_pause_url">Step 4 &amp; 6 — 5-Minute Pause Video YouTube URL:</label>
+                    <input type="url" id="seventeenth_pause_url" class="form-control" placeholder="https://youtu.be/..." />
+                    <small id="seventeenthPauseInfo" style="color:#204060; font-weight:500;"></small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="seventeenth_conclusion_url">Step 7 — Conclusion Video YouTube URL:</label>
+                    <input type="url" id="seventeenth_conclusion_url" class="form-control" placeholder="https://youtu.be/..." />
+                    <small id="seventeenthConclusionInfo" style="color:#204060; font-weight:500;"></small>
+                  </div>
+                </div>
+
+                <!-- Monthly Dynamic Videos -->
+                <div style="background:#fffcf5; border:1px solid #ffe082; border-radius:8px; padding:1.25rem; margin-bottom:1.5rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+                    <h4 style="margin:0; color:#e65100;">Monthly Dynamic Videos (Changes Every Month)</h4>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <label for="seventeenth_month_select" style="margin:0; font-weight:600; font-size:0.9rem;">Select Month:</label>
+                      <input type="month" id="seventeenth_month_select" class="form-control" style="width:auto; display:inline-block; padding:0.25rem 0.5rem;" />
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="seventeenth_bhakti_url">Step 2 — Monthly Bhakti Song YouTube URL:</label>
+                    <input type="url" id="seventeenth_bhakti_url" class="form-control" placeholder="https://youtu.be/..." />
+                    <small id="seventeenthBhaktiInfo" style="color:#e65100; font-weight:500;"></small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="seventeenth_clip1_url">Step 3 — Clip 1 (Plays 2 Times) YouTube URL:</label>
+                    <input type="url" id="seventeenth_clip1_url" class="form-control" placeholder="https://youtu.be/..." />
+                    <small id="seventeenthClip1Info" style="color:#e65100; font-weight:500;"></small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="seventeenth_clip2_url">Step 5 — Clip 2 (Plays 2 Times) YouTube URL:</label>
+                    <input type="url" id="seventeenth_clip2_url" class="form-control" placeholder="https://youtu.be/..." />
+                    <small id="seventeenthClip2Info" style="color:#e65100; font-weight:500;"></small>
+                  </div>
                 </div>
 
                 <div class="form-group form-submit">
