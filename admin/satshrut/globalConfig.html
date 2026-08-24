@@ -8,7 +8,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Satshrut Audio Configuration</title>
+    <title>Satshrut Audio &amp; Bhakti Configuration</title>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="../../style/js/plugin.js"></script>
@@ -37,7 +37,7 @@
         <div class="whitesec">
           <div class="inner-padding">
             <div class="frm-head">
-              <h1>Audio Configuration</h1>
+              <h1>Audio &amp; Bhakti Configuration</h1>
             </div>
 
             <div class="form">
@@ -86,6 +86,97 @@
                     <label><input type="checkbox" class="no-session-day" value="6" /> Saturday</label>
                   </div>
                   <small style="color:#888;">Checked days will show a warning when creating a session on that day.</small>
+                </div>
+
+                <!-- Monday Bhakti Videos (4-week rotation) -->
+                <hr style="margin: 2rem 0; border-color: #d9e6f2;" />
+                <h3 style="margin-bottom:0.25rem; color:#204060;">Monday Bhakti Videos</h3>
+                <p style="color:#555; font-size:0.9rem; margin-bottom:1.5rem;">
+                  4 videos rotate weekly (Week 1 &rarr; Week 4, then back to Week 1).
+                  Enter start/end times in <strong>HH:MM:SS</strong> format; leave both as
+                  <em>00:00:00</em> to play the full video.
+                </p>
+
+                <div id="bhaktiVideosContainer">
+                  <!-- Week 1 -->
+                  <fieldset class="form-group" style="border:1px solid #c9d8e8;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                    <legend style="font-weight:600;color:#f57f17;padding:0 0.5rem;">🙏 Week 1</legend>
+                    <div class="form-group">
+                      <label for="bhakti1_url">YouTube URL:</label>
+                      <input type="url" id="bhakti1_url" class="form-control" placeholder="https://youtu.be/..." />
+                      <small id="bhakti1Info" style="color:#204060;font-weight:500;"></small>
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti1_start">Start Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti1_start" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti1_end">End Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti1_end" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <!-- Week 2 -->
+                  <fieldset class="form-group" style="border:1px solid #c9d8e8;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                    <legend style="font-weight:600;color:#f57f17;padding:0 0.5rem;">🙏 Week 2</legend>
+                    <div class="form-group">
+                      <label for="bhakti2_url">YouTube URL:</label>
+                      <input type="url" id="bhakti2_url" class="form-control" placeholder="https://youtu.be/..." />
+                      <small id="bhakti2Info" style="color:#204060;font-weight:500;"></small>
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti2_start">Start Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti2_start" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti2_end">End Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti2_end" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <!-- Week 3 -->
+                  <fieldset class="form-group" style="border:1px solid #c9d8e8;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                    <legend style="font-weight:600;color:#f57f17;padding:0 0.5rem;">🙏 Week 3</legend>
+                    <div class="form-group">
+                      <label for="bhakti3_url">YouTube URL:</label>
+                      <input type="url" id="bhakti3_url" class="form-control" placeholder="https://youtu.be/..." />
+                      <small id="bhakti3Info" style="color:#204060;font-weight:500;"></small>
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti3_start">Start Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti3_start" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti3_end">End Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti3_end" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <!-- Week 4 -->
+                  <fieldset class="form-group" style="border:1px solid #c9d8e8;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                    <legend style="font-weight:600;color:#f57f17;padding:0 0.5rem;">🙏 Week 4</legend>
+                    <div class="form-group">
+                      <label for="bhakti4_url">YouTube URL:</label>
+                      <input type="url" id="bhakti4_url" class="form-control" placeholder="https://youtu.be/..." />
+                      <small id="bhakti4Info" style="color:#204060;font-weight:500;"></small>
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti4_start">Start Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti4_start" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                      <div class="form-group" style="flex:1;">
+                        <label for="bhakti4_end">End Time (HH:MM:SS):</label>
+                        <input type="text" id="bhakti4_end" class="form-control" placeholder="00:00:00" maxlength="8" />
+                      </div>
+                    </div>
+                  </fieldset>
                 </div>
 
                 <div class="form-group form-submit">

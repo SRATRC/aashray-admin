@@ -7,6 +7,7 @@ let sessionData = null;      // Loaded from API
 let player = null;           // Single unified YT.Player instance
 let playerReady = false;
 let sessionStarted = false;
+let isBhaktiMode = false;    // Monday Bhakti: single-phase video-only session
 
 // Timing
 let currentPhase = -1;       // 0–3
@@ -76,6 +77,15 @@ async function loadSession() {
 
     sessionData = json.data;
 
+    // ── Bhakti mode: single-phase video-only session (Monday) ──────────────────
+    if (sessionData.session_type === 'bhakti') {
+      isBhaktiMode = true;
+      populateBhaktiInfo();
+      loadYouTubeAPI();
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     if (!sessionData.audio1_youtube_id && !sessionData.audio2_youtube_id) {
       showNoSession('No meditation audio configured. Please set the default audio in Audio Configuration.');
       return;
@@ -100,6 +110,12 @@ function showNoSession(msg) {
 
 function updateTitleForSegment() {
   const s = sessionData;
+  if (isBhaktiMode) {
+    const weekText = s.notes || (s.week_index !== undefined ? `Week ${s.week_index + 1}` : 'Week 1');
+    document.getElementById('pageTitle').textContent =
+      `Satshrut — Monday Bhakti (${weekText})`;
+    return;
+  }
   let activeNotes = s.notes;
   if (currentSubPhase === 1 && s.notes2) {
     activeNotes = s.notes2;
@@ -107,6 +123,44 @@ function updateTitleForSegment() {
   document.getElementById('pageTitle').textContent =
     `Satshrut — ${s.session_date}${activeNotes ? ` (${activeNotes})` : ''}`;
 }
+
+// ── Bhakti info population (single-phase, video only) ──────────────────────────
+
+function populateBhaktiInfo() {
+  const s = sessionData;
+  const vidDur = s.video_duration_seconds || 0;
+
+  updateTitleForSegment();
+  document.getElementById('chipDate').textContent = s.session_date;
+  if (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0)) {
+    document.getElementById('chipVideoDur').textContent = `${formatHMS(s.video_start_seconds || 0)} – ${formatHMS(s.video_end_seconds)}`;
+  } else {
+    document.getElementById('chipVideoDur').textContent = 'Full video';
+  }
+
+  // Hide audio + total chips — not relevant for single-video bhakti
+  const audioChipEl = document.getElementById('chipAudioDur')?.closest('.info-chip');
+  const totalChipEl = document.getElementById('chipTotal')?.closest('.info-chip');
+  if (audioChipEl) audioChipEl.style.display = 'none';
+  if (totalChipEl) totalChipEl.style.display = 'none';
+
+  // Phase durations — only phase 0 matters
+  phaseDurations = [vidDur, 0, 0, 0];
+  totalSessionDuration = vidDur;
+
+  // Phase timeline chip
+  document.getElementById('ph-dur-0').textContent = vidDur ? formatMinSec(vidDur) : '';
+
+  // Hide phases 1–3 and their separator arrows from the timeline
+  const timeline = document.getElementById('phaseTimeline');
+  if (timeline) {
+    Array.from(timeline.children).slice(1).forEach(el => (el.style.display = 'none'));
+  }
+
+  document.getElementById('player-panel').style.display = 'block';
+}
+
+// ── Regular session info population ─────────────────────────────────────────────
 
 function populateSessionInfo() {
   const s = sessionData;
@@ -116,7 +170,18 @@ function populateSessionInfo() {
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
-  document.getElementById('chipVideoDur').textContent = formatMinSec(videoDur);
+
+  // Show start - end time range (handles multi-video sessions as well)
+  const start1 = s.start_time_display || formatHMS(s.video_start_seconds || 0);
+  const end1 = s.end_time_display || formatHMS(s.video_end_seconds || 0);
+  let rangeStr = `${start1} – ${end1}`;
+  if (s.youtube2_video_id && s.video2_end_seconds > s.video2_start_seconds) {
+    const start2 = s.start2_time_display || formatHMS(s.video2_start_seconds || 0);
+    const end2 = s.end2_time_display || formatHMS(s.video2_end_seconds || 0);
+    rangeStr = `${start1}–${end1} + ${start2}–${end2}`;
+  }
+  document.getElementById('chipVideoDur').textContent = rangeStr;
+
   document.getElementById('chipAudioDur').textContent = '...';
   document.getElementById('chipTotal').textContent = '...';
 
@@ -209,7 +274,10 @@ function updateSessionDurations() {
 
 // Called by the YouTube IFrame API once it's ready
 window.onYouTubeIframeAPIReady = function () {
-  fetchAudioDurations();
+  // In bhakti mode there are no audio tracks to pre-fetch
+  if (!isBhaktiMode) {
+    fetchAudioDurations();
+  }
 
   player = new YT.Player('yt-player', {
     height: '100%',
@@ -258,9 +326,29 @@ function disableCaptions() {
   } catch (err) {}
 }
 
+function updateBhaktiDurationFromPlayer() {
+  if (!player || typeof player.getDuration !== 'function') return;
+  const d = player.getDuration();
+  if (d && d > 0) {
+    const s = sessionData;
+    if (!s.video_end_seconds || s.video_end_seconds === 0) {
+      s.video_end_seconds = Math.round(d);
+      s.video_duration_seconds = Math.max(0, s.video_end_seconds - (s.video_start_seconds || 0));
+      s.video1_duration_seconds = s.video_duration_seconds;
+      phaseDurations[0] = s.video_duration_seconds;
+      totalSessionDuration = s.video_duration_seconds;
+      document.getElementById('chipVideoDur').textContent = formatMinSec(s.video_duration_seconds);
+      document.getElementById('ph-dur-0').textContent = formatMinSec(s.video_duration_seconds);
+    }
+  }
+}
+
 function onPlayerReady() {
   playerReady = true;
   disableCaptions();
+  if (isBhaktiMode) {
+    updateBhaktiDurationFromPlayer();
+  }
   if (player && typeof player.getIframe === 'function') {
     const iframe = player.getIframe();
     if (iframe) {
@@ -312,7 +400,9 @@ function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
     phaseLoading = false; // Video is now actively playing
     disableCaptions();
-    if (currentPhase === 1 || currentPhase === 3) {
+    if (isBhaktiMode) {
+      updateBhaktiDurationFromPlayer();
+    } else if (currentPhase === 1 || currentPhase === 3) {
       updateAudioDurationFromPlayer();
     }
     resumeSession();
@@ -362,11 +452,11 @@ function seekBySeconds(delta) {
 
   if (isVideoPhase) {
     if (currentSubPhase === 0) {
-      minSec = s.video_start_seconds;
-      maxSec = s.video_end_seconds;
+      minSec = s.video_start_seconds || 0;
+      maxSec = (s.video_end_seconds && s.video_end_seconds > minSec) ? s.video_end_seconds : dur;
     } else {
-      minSec = s.video2_start_seconds;
-      maxSec = s.video2_end_seconds;
+      minSec = s.video2_start_seconds || 0;
+      maxSec = (s.video2_end_seconds && s.video2_end_seconds > minSec) ? s.video2_end_seconds : dur;
     }
   }
 
@@ -383,17 +473,18 @@ function onSeekerClick(e) {
 
   const isVideoPhase = currentPhase === 0 || currentPhase === 2;
   const s = sessionData;
+  const dur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
 
   let startSec = 0;
-  let endSec = typeof player.getDuration === 'function' ? player.getDuration() : 0;
+  let endSec = dur;
 
   if (isVideoPhase) {
     if (currentSubPhase === 0) {
-      startSec = s.video_start_seconds;
-      endSec = s.video_end_seconds;
+      startSec = s.video_start_seconds || 0;
+      endSec = (s.video_end_seconds && s.video_end_seconds > startSec) ? s.video_end_seconds : dur;
     } else {
-      startSec = s.video2_start_seconds;
-      endSec = s.video2_end_seconds;
+      startSec = s.video2_start_seconds || 0;
+      endSec = (s.video2_end_seconds && s.video2_end_seconds > startSec) ? s.video2_end_seconds : dur;
     }
   }
 
@@ -500,11 +591,14 @@ function startPhase(phaseIndex) {
   countdownEl.classList.toggle('audio-phase', phase.type === 'audio');
 
   if (phase.type === 'video') {
-    player.loadVideoById({
+    const videoLoadOpts = {
       videoId: s.youtube_video_id,
-      startSeconds: s.video_start_seconds,
-      endSeconds: s.video_end_seconds
-    });
+      startSeconds: s.video_start_seconds || 0
+    };
+    if (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0)) {
+      videoLoadOpts.endSeconds = s.video_end_seconds;
+    }
+    player.loadVideoById(videoLoadOpts);
   } else if (phaseIndex === 1) {
     player.loadVideoById({
       videoId: s.audio1_youtube_id || s.audio2_youtube_id
@@ -520,6 +614,11 @@ function startPhase(phaseIndex) {
 
 function nextPhase() {
   clearInterval(timerInterval);
+  // Bhakti is a single-phase session — video end means session complete
+  if (isBhaktiMode) {
+    completeSession();
+    return;
+  }
   if (currentPhase < 3) {
     startPhase(currentPhase + 1);
   } else {
@@ -540,8 +639,9 @@ function completeSession() {
   document.getElementById('running-panel').style.display = 'none';
   document.getElementById('complete-panel').style.display = 'block';
 
-  // Mark all phases done
-  for (let i = 0; i < 4; i++) {
+  // Mark all completed phases done
+  const totalPhases = isBhaktiMode ? 1 : 4;
+  for (let i = 0; i < totalPhases; i++) {
     const el = document.getElementById(`phase-${i}`);
     el.classList.remove('active');
     el.classList.add('done');
@@ -564,18 +664,23 @@ function startTimerTick() {
     let currentSegmentRemaining = 0;
 
     if (isVideoPhase) {
-      const v1Dur = s.video1_duration_seconds || (s.video_end_seconds - s.video_start_seconds);
+      const v1Dur = s.video1_duration_seconds || (s.video_end_seconds > s.video_start_seconds ? (s.video_end_seconds - s.video_start_seconds) : 0);
       const v2Dur = s.video2_duration_seconds || 0;
+      const curDur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
 
       const currentTime = player.getCurrentTime();
 
       if (currentSubPhase === 0) {
-        endSecs = s.video_end_seconds;
-        currentSegmentRemaining = Math.max(0, s.video_end_seconds - currentTime);
+        endSecs = (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0))
+          ? s.video_end_seconds
+          : curDur;
+        currentSegmentRemaining = Math.max(0, endSecs - currentTime);
         phaseRemaining = currentSegmentRemaining + v2Dur;
       } else {
-        endSecs = s.video2_end_seconds;
-        currentSegmentRemaining = Math.max(0, s.video2_end_seconds - currentTime);
+        endSecs = (s.video2_end_seconds && s.video2_end_seconds > (s.video2_start_seconds || 0))
+          ? s.video2_end_seconds
+          : curDur;
+        currentSegmentRemaining = Math.max(0, endSecs - currentTime);
         phaseRemaining = currentSegmentRemaining;
       }
     } else {
@@ -585,14 +690,22 @@ function startTimerTick() {
       phaseRemaining = currentSegmentRemaining;
     }
 
+    // Dynamic duration fallback if totalSessionDuration wasn't known up front (e.g. full video)
+    if (totalSessionDuration === 0 && endSecs > 0) {
+      totalSessionDuration = endSecs;
+      phaseDurations[currentPhase] = endSecs;
+    }
+
     // Countdown always reflects actual video/audio position
     document.getElementById('countdown').textContent = formatHMS(phaseRemaining);
 
     // Overall session progress
     const completedSecs  = phaseDurations.slice(0, currentPhase).reduce((a, b) => a + b, 0);
-    const currentElapsed = Math.max(0, phaseDurations[currentPhase] - phaseRemaining);
+    const effectivePhaseDur = phaseDurations[currentPhase] || endSecs || 1;
+    const currentElapsed = Math.max(0, effectivePhaseDur - phaseRemaining);
     const sessionElapsed = completedSecs + currentElapsed;
-    const pct = Math.min(100, (sessionElapsed / totalSessionDuration) * 100);
+    const effectiveTotal = totalSessionDuration || endSecs || 1;
+    const pct = Math.min(100, (sessionElapsed / effectiveTotal) * 100);
 
     document.getElementById('progressBar').style.width    = `${pct.toFixed(1)}%`;
     document.getElementById('progressLabel').textContent  = `${Math.round(pct)}% complete`;

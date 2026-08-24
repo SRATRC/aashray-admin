@@ -10,6 +10,17 @@ const DAY_NAMES_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // JS getDay(): 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
 // Mon-Sun grid offset: convert getDay() → Mon-based index
 let NO_SESSION_DAYS = [1, 4]; // default: Mon, Thu — dynamically refreshed from backend config
+let BHAKTI_VIDEOS = null;     // Array of 4 bhakti video objects from config, or null if not configured
+
+// Base Monday anchor for continuous rolling 4-week Bhakti rotation (2026-08-03 is Monday, Week 1)
+const BHAKTI_EPOCH_MONDAY_UTC = Date.UTC(2026, 7, 3);
+
+// Returns 0-based week index (0–3) in continuous 4-week cycle across month boundaries
+function getBhaktiWeekIndex(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00Z').getTime();
+  const weeksDiff = Math.floor((d - BHAKTI_EPOCH_MONDAY_UTC) / (7 * 24 * 3600 * 1000));
+  return ((weeksDiff % 4) + 4) % 4; // 0–3
+}
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
@@ -229,9 +240,25 @@ function renderCalendar() {
       }
       inner += `<div class="no-session-tag" title="${escapeHtml(session.notes || '')}">${escapeHtml(tagText)}</div>`;
     } else if (isNoSession) {
-      cls += ' no-session-day clickable';
-      const dayTag = jsDay === 1 ? 'No session — Bhakti' : (jsDay === 4 ? 'No session — LGS' : 'No session');
-      inner += `<div class="no-session-tag">${escapeHtml(dayTag)}</div>`;
+      const isMondayBhakti = jsDay === 1 && BHAKTI_VIDEOS && BHAKTI_VIDEOS.length === 4;
+
+      if (isMondayBhakti) {
+        // Bhakti configured: show clickable play card for this week's bhakti video
+        cls += ' bhakti-day clickable';
+        const weekIdx = getBhaktiWeekIndex(dateStr);
+        const bhaktiVid = BHAKTI_VIDEOS[weekIdx];
+        const weekLabel = `Week ${weekIdx + 1}`;
+        const hasVideo = bhaktiVid && bhaktiVid.youtube_id;
+        if (hasVideo) {
+          inner += `<div class="bhakti-tag" onclick="playSessionDate(event, '${dateStr}')" title="Play Bhakti ${weekLabel}">🙏 Bhakti ${weekLabel} ▶</div>`;
+        } else {
+          inner += `<div class="no-session-tag" title="Bhakti ${weekLabel} not configured">🙏 Bhakti ${weekLabel}</div>`;
+        }
+      } else {
+        cls += ' no-session-day clickable';
+        const dayTag = jsDay === 1 ? 'No session — Bhakti' : (jsDay === 4 ? 'No session — LGS' : 'No session');
+        inner += `<div class="no-session-tag">${escapeHtml(dayTag)}</div>`;
+      }
     } else {
       cls += ' empty-day clickable';
       inner += `<span class="add-hint">+</span>`;
@@ -892,8 +919,13 @@ async function loadConfig() {
   try {
     const res = await fetch(`${CONFIG.basePath}/satshrut/config`, { headers: authHeaders() });
     const json = await res.json();
-    if (res.ok && json.data && Array.isArray(json.data.no_session_days)) {
-      NO_SESSION_DAYS = json.data.no_session_days;
+    if (res.ok && json.data) {
+      if (Array.isArray(json.data.no_session_days)) {
+        NO_SESSION_DAYS = json.data.no_session_days;
+      }
+      if (Array.isArray(json.data.bhakti_videos) && json.data.bhakti_videos.length === 4) {
+        BHAKTI_VIDEOS = json.data.bhakti_videos;
+      }
     }
   } catch (e) {
     console.warn('Could not load satshrut config:', e);
