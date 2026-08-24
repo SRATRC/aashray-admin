@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
 
+  let configLoaded = false;
+
   // ── Load existing config ──────────────────────────────────────────────────
 
   try {
@@ -42,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const data = await res.json();
 
     if (res.ok && data.data) {
+      configLoaded = true;
       const cfg = data.data;
 
       if (cfg.default_audio1_youtube_id) {
@@ -78,8 +81,11 @@ document.addEventListener('DOMContentLoaded', async function () {
           document.getElementById(`bhakti${week}_end`).value = secondsToHms(v?.end_seconds || 0);
         });
       }
+    } else {
+      showAlert('Failed to load existing configuration. Please refresh.');
     }
   } catch (err) {
+    showAlert('Error loading configuration. Please check your connection.');
     console.error('Failed to load config:', err);
   }
 
@@ -87,6 +93,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    if (!configLoaded) {
+      showAlert('Configuration has not loaded yet. Please refresh the page before saving.');
+      return;
+    }
 
     // Collect no-session days
     const noSessionDays = [];
@@ -104,13 +115,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     const audio2Url = document.getElementById('default_audio2_youtube_url').value.trim();
     if (audio2Url !== '') payload.default_audio2_youtube_url = audio2Url;
 
-    // Collect 4 bhakti video entries
-    const bhaktiVideos = [1, 2, 3, 4].map((week) => {
+    // Collect and validate 4 bhakti video entries
+    const bhaktiVideos = [];
+    for (let week = 1; week <= 4; week++) {
       const url = document.getElementById(`bhakti${week}_url`).value.trim();
       const start = hmsToSeconds(document.getElementById(`bhakti${week}_start`).value.trim());
       const end = hmsToSeconds(document.getElementById(`bhakti${week}_end`).value.trim());
-      return { youtube_url: url || null, start_seconds: start, end_seconds: end };
-    });
+
+      if (url && end > 0 && end <= start) {
+        showAlert(`Week ${week} Bhakti video: End time must be greater than start time.`);
+        return;
+      }
+
+      bhaktiVideos.push({ youtube_url: url || null, start_seconds: start, end_seconds: end });
+    }
     payload.bhakti_videos = bhaktiVideos;
 
     saveBtn.disabled = true;

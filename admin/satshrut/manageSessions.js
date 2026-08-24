@@ -12,11 +12,14 @@ const DAY_NAMES_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 let NO_SESSION_DAYS = [1, 4]; // default: Mon, Thu — dynamically refreshed from backend config
 let BHAKTI_VIDEOS = null;     // Array of 4 bhakti video objects from config, or null if not configured
 
-// Returns 0-based week index (0–3) for a given date string, for bhakti rotation
+// Base Monday anchor for continuous rolling 4-week Bhakti rotation (2026-08-03 is Monday, Week 1)
+const BHAKTI_EPOCH_MONDAY_UTC = Date.UTC(2026, 7, 3);
+
+// Returns 0-based week index (0–3) in continuous 4-week cycle across month boundaries
 function getBhaktiWeekIndex(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00Z');
-  const occurrence = Math.ceil(d.getUTCDate() / 7); // 1–5
-  return (occurrence - 1) % 4;                       // 0–3
+  const d = new Date(dateStr + 'T12:00:00Z').getTime();
+  const weeksDiff = Math.floor((d - BHAKTI_EPOCH_MONDAY_UTC) / (7 * 24 * 3600 * 1000));
+  return ((weeksDiff % 4) + 4) % 4; // 0–3
 }
 
 function escapeHtml(str) {

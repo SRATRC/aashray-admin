@@ -111,8 +111,9 @@ function showNoSession(msg) {
 function updateTitleForSegment() {
   const s = sessionData;
   if (isBhaktiMode) {
+    const weekText = s.notes || (s.week_index !== undefined ? `Week ${s.week_index}` : 'Week 1');
     document.getElementById('pageTitle').textContent =
-      `Satshrut — Monday Bhakti (${s.notes || `Week ${s.week_index || 1}`})`;
+      `Satshrut — Monday Bhakti (${weekText})`;
     return;
   }
   let activeNotes = s.notes;
@@ -131,7 +132,11 @@ function populateBhaktiInfo() {
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
-  document.getElementById('chipVideoDur').textContent = vidDur ? formatMinSec(vidDur) : 'Full video';
+  if (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0)) {
+    document.getElementById('chipVideoDur').textContent = `${formatHMS(s.video_start_seconds || 0)} – ${formatHMS(s.video_end_seconds)}`;
+  } else {
+    document.getElementById('chipVideoDur').textContent = 'Full video';
+  }
 
   // Hide audio + total chips — not relevant for single-video bhakti
   const audioChipEl = document.getElementById('chipAudioDur')?.closest('.info-chip');
@@ -165,7 +170,18 @@ function populateSessionInfo() {
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
-  document.getElementById('chipVideoDur').textContent = formatMinSec(videoDur);
+
+  // Show start - end time range (handles multi-video sessions as well)
+  const start1 = s.start_time_display || formatHMS(s.video_start_seconds || 0);
+  const end1 = s.end_time_display || formatHMS(s.video_end_seconds || 0);
+  let rangeStr = `${start1} – ${end1}`;
+  if (s.youtube2_video_id && s.video2_end_seconds > s.video2_start_seconds) {
+    const start2 = s.start2_time_display || formatHMS(s.video2_start_seconds || 0);
+    const end2 = s.end2_time_display || formatHMS(s.video2_end_seconds || 0);
+    rangeStr = `${start1}–${end1} + ${start2}–${end2}`;
+  }
+  document.getElementById('chipVideoDur').textContent = rangeStr;
+
   document.getElementById('chipAudioDur').textContent = '...';
   document.getElementById('chipTotal').textContent = '...';
 
@@ -310,9 +326,29 @@ function disableCaptions() {
   } catch (err) {}
 }
 
+function updateBhaktiDurationFromPlayer() {
+  if (!player || typeof player.getDuration !== 'function') return;
+  const d = player.getDuration();
+  if (d && d > 0) {
+    const s = sessionData;
+    if (!s.video_end_seconds || s.video_end_seconds === 0) {
+      s.video_end_seconds = Math.round(d);
+      s.video_duration_seconds = Math.max(0, s.video_end_seconds - (s.video_start_seconds || 0));
+      s.video1_duration_seconds = s.video_duration_seconds;
+      phaseDurations[0] = s.video_duration_seconds;
+      totalSessionDuration = s.video_duration_seconds;
+      document.getElementById('chipVideoDur').textContent = formatMinSec(s.video_duration_seconds);
+      document.getElementById('ph-dur-0').textContent = formatMinSec(s.video_duration_seconds);
+    }
+  }
+}
+
 function onPlayerReady() {
   playerReady = true;
   disableCaptions();
+  if (isBhaktiMode) {
+    updateBhaktiDurationFromPlayer();
+  }
   if (player && typeof player.getIframe === 'function') {
     const iframe = player.getIframe();
     if (iframe) {
@@ -364,7 +400,9 @@ function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
     phaseLoading = false; // Video is now actively playing
     disableCaptions();
-    if (currentPhase === 1 || currentPhase === 3) {
+    if (isBhaktiMode) {
+      updateBhaktiDurationFromPlayer();
+    } else if (currentPhase === 1 || currentPhase === 3) {
       updateAudioDurationFromPlayer();
     }
     resumeSession();
@@ -414,11 +452,11 @@ function seekBySeconds(delta) {
 
   if (isVideoPhase) {
     if (currentSubPhase === 0) {
-      minSec = s.video_start_seconds;
-      maxSec = s.video_end_seconds;
+      minSec = s.video_start_seconds || 0;
+      maxSec = (s.video_end_seconds && s.video_end_seconds > minSec) ? s.video_end_seconds : dur;
     } else {
-      minSec = s.video2_start_seconds;
-      maxSec = s.video2_end_seconds;
+      minSec = s.video2_start_seconds || 0;
+      maxSec = (s.video2_end_seconds && s.video2_end_seconds > minSec) ? s.video2_end_seconds : dur;
     }
   }
 
@@ -435,17 +473,18 @@ function onSeekerClick(e) {
 
   const isVideoPhase = currentPhase === 0 || currentPhase === 2;
   const s = sessionData;
+  const dur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
 
   let startSec = 0;
-  let endSec = typeof player.getDuration === 'function' ? player.getDuration() : 0;
+  let endSec = dur;
 
   if (isVideoPhase) {
     if (currentSubPhase === 0) {
-      startSec = s.video_start_seconds;
-      endSec = s.video_end_seconds;
+      startSec = s.video_start_seconds || 0;
+      endSec = (s.video_end_seconds && s.video_end_seconds > startSec) ? s.video_end_seconds : dur;
     } else {
-      startSec = s.video2_start_seconds;
-      endSec = s.video2_end_seconds;
+      startSec = s.video2_start_seconds || 0;
+      endSec = (s.video2_end_seconds && s.video2_end_seconds > startSec) ? s.video2_end_seconds : dur;
     }
   }
 
@@ -552,11 +591,14 @@ function startPhase(phaseIndex) {
   countdownEl.classList.toggle('audio-phase', phase.type === 'audio');
 
   if (phase.type === 'video') {
-    player.loadVideoById({
+    const videoLoadOpts = {
       videoId: s.youtube_video_id,
-      startSeconds: s.video_start_seconds,
-      endSeconds: s.video_end_seconds
-    });
+      startSeconds: s.video_start_seconds || 0
+    };
+    if (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0)) {
+      videoLoadOpts.endSeconds = s.video_end_seconds;
+    }
+    player.loadVideoById(videoLoadOpts);
   } else if (phaseIndex === 1) {
     player.loadVideoById({
       videoId: s.audio1_youtube_id || s.audio2_youtube_id
@@ -622,18 +664,23 @@ function startTimerTick() {
     let currentSegmentRemaining = 0;
 
     if (isVideoPhase) {
-      const v1Dur = s.video1_duration_seconds || (s.video_end_seconds - s.video_start_seconds);
+      const v1Dur = s.video1_duration_seconds || (s.video_end_seconds > s.video_start_seconds ? (s.video_end_seconds - s.video_start_seconds) : 0);
       const v2Dur = s.video2_duration_seconds || 0;
+      const curDur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
 
       const currentTime = player.getCurrentTime();
 
       if (currentSubPhase === 0) {
-        endSecs = s.video_end_seconds;
-        currentSegmentRemaining = Math.max(0, s.video_end_seconds - currentTime);
+        endSecs = (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0))
+          ? s.video_end_seconds
+          : curDur;
+        currentSegmentRemaining = Math.max(0, endSecs - currentTime);
         phaseRemaining = currentSegmentRemaining + v2Dur;
       } else {
-        endSecs = s.video2_end_seconds;
-        currentSegmentRemaining = Math.max(0, s.video2_end_seconds - currentTime);
+        endSecs = (s.video2_end_seconds && s.video2_end_seconds > (s.video2_start_seconds || 0))
+          ? s.video2_end_seconds
+          : curDur;
+        currentSegmentRemaining = Math.max(0, endSecs - currentTime);
         phaseRemaining = currentSegmentRemaining;
       }
     } else {
@@ -643,14 +690,22 @@ function startTimerTick() {
       phaseRemaining = currentSegmentRemaining;
     }
 
+    // Dynamic duration fallback if totalSessionDuration wasn't known up front (e.g. full video)
+    if (totalSessionDuration === 0 && endSecs > 0) {
+      totalSessionDuration = endSecs;
+      phaseDurations[currentPhase] = endSecs;
+    }
+
     // Countdown always reflects actual video/audio position
     document.getElementById('countdown').textContent = formatHMS(phaseRemaining);
 
     // Overall session progress
     const completedSecs  = phaseDurations.slice(0, currentPhase).reduce((a, b) => a + b, 0);
-    const currentElapsed = Math.max(0, phaseDurations[currentPhase] - phaseRemaining);
+    const effectivePhaseDur = phaseDurations[currentPhase] || endSecs || 1;
+    const currentElapsed = Math.max(0, effectivePhaseDur - phaseRemaining);
     const sessionElapsed = completedSecs + currentElapsed;
-    const pct = Math.min(100, (sessionElapsed / totalSessionDuration) * 100);
+    const effectiveTotal = totalSessionDuration || endSecs || 1;
+    const pct = Math.min(100, (sessionElapsed / effectiveTotal) * 100);
 
     document.getElementById('progressBar').style.width    = `${pct.toFixed(1)}%`;
     document.getElementById('progressLabel').textContent  = `${Math.round(pct)}% complete`;
