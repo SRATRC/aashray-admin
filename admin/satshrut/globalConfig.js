@@ -16,6 +16,28 @@ document.addEventListener('DOMContentLoaded', async function () {
     alertEl.style.display = 'block';
   }
 
+  // Converts HH:MM:SS string to total seconds
+  function hmsToSeconds(hms) {
+    if (!hms) return 0;
+    const parts = hms.split(':').map(Number);
+    if (parts.some(Number.isNaN)) return 0;
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    return parseInt(hms) || 0;
+  }
+
+  // Converts total seconds to HH:MM:SS string
+  function secondsToHms(secs) {
+    if (!secs) return '00:00:00';
+    secs = Math.round(secs);
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  let configLoaded = false;
+
   // ── Load existing config ──────────────────────────────────────────────────
 
   try {
@@ -23,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const data = await res.json();
 
     if (res.ok && data.data) {
+      configLoaded = true;
       const cfg = data.data;
 
       if (cfg.default_audio1_youtube_id) {
@@ -44,8 +67,26 @@ document.addEventListener('DOMContentLoaded', async function () {
       document.querySelectorAll('.no-session-day').forEach((cb) => {
         cb.checked = noSessionDays.includes(parseInt(cb.value));
       });
+
+      // Populate 4 Bhakti video slots
+      const bhaktiVideos = cfg.bhakti_videos;
+      if (Array.isArray(bhaktiVideos)) {
+        bhaktiVideos.forEach((v, i) => {
+          const week = i + 1;
+          if (v && v.youtube_url) {
+            document.getElementById(`bhakti${week}_url`).value = v.youtube_url;
+            document.getElementById(`bhakti${week}Info`).textContent =
+              `Current ID: ${v.youtube_id || '—'}`;
+          }
+          document.getElementById(`bhakti${week}_start`).value = secondsToHms(v?.start_seconds || 0);
+          document.getElementById(`bhakti${week}_end`).value = secondsToHms(v?.end_seconds || 0);
+        });
+      }
+    } else {
+      showAlert('Failed to load existing configuration. Please refresh.');
     }
   } catch (err) {
+    showAlert('Error loading configuration. Please check your connection.');
     console.error('Failed to load config:', err);
   }
 
@@ -53,6 +94,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    if (!configLoaded) {
+      showAlert('Configuration has not loaded yet. Please refresh the page before saving.');
+      return;
+    }
 
     // Collect no-session days
     const noSessionDays = [];
@@ -69,6 +115,22 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const audio2Url = document.getElementById('default_audio2_youtube_url').value.trim();
     if (audio2Url !== '') payload.default_audio2_youtube_url = audio2Url;
+
+    // Collect and validate 4 bhakti video entries
+    const bhaktiVideos = [];
+    for (let week = 1; week <= 4; week++) {
+      const url = document.getElementById(`bhakti${week}_url`).value.trim();
+      const start = hmsToSeconds(document.getElementById(`bhakti${week}_start`).value.trim());
+      const end = hmsToSeconds(document.getElementById(`bhakti${week}_end`).value.trim());
+
+      if (url && end > 0 && end <= start) {
+        showAlert(`Week ${week} Bhakti video: End time must be greater than start time.`);
+        return;
+      }
+
+      bhaktiVideos.push({ youtube_url: url || null, start_seconds: start, end_seconds: end });
+    }
+    payload.bhakti_videos = bhaktiVideos;
 
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
