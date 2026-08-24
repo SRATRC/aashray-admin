@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['maintenanceAdmin','electricalAdmin','housekeepingAdmin', 'superAdmin', 'utsavAdmin', 'utsavAdminReadOnly', 'utsavAdminRaj']);
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Housekeeping Extra Beds Requirement</title>
+
+  <!-- jQuery & Styles -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body { background: #f0f4f8; font-family: 'Segoe UI', sans-serif; color: #1e293b; margin: 0; }
+    .header { background: #204060; color: white; padding: 12px 0; }
+    .header .logout a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
+    .header .logout a:hover { color: white; }
+
+    .main-container { max-width: 1300px; margin: 24px auto; padding: 0 20px; }
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px; }
+
+    .card-title { font-size: 1.25rem; font-weight: 700; color: #204060; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+
+    /* KPIs */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; }
+    .kpi-icon { width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .kpi-val { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+    .kpi-label { font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 3px; }
+
+    /* Tables */
+    .tbl-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 24px; }
+    table.smart-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    table.smart-table th { background: #204060; color: white; padding: 10px 12px; text-align: left; white-space: nowrap; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+    table.smart-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    table.smart-table tbody tr:hover { background: #f8fafc; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 0.76rem; font-weight: 700; white-space: nowrap; }
+    .badge-gf { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+    .badge-ff { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .badge-rc { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-oag { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-nag { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+
+    /* Buttons */
+    .btn-sm { padding: 6px 14px; border-radius: 5px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; text-decoration: none; }
+    .btn-primary-sm { background: #204060; color: white; }
+    .btn-primary-sm:hover { background: #173048; }
+    .btn-success-sm { background: #16a34a; color: white; }
+    .btn-success-sm:hover { background: #15803d; }
+    .btn-outline-sm { background: white; color: #475569; border: 1px solid #cbd5e1; }
+    .btn-outline-sm:hover { background: #f1f5f9; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .filter-group input, .filter-group select { height: 36px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 0.88rem; background: white; min-width: 150px; }
+    .filter-group input:focus, .filter-group select:focus { border-color: #204060; outline: none; }
+
+    .toast-msg { position: fixed; bottom: 22px; right: 22px; padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; z-index: 9999; display: none; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+
+    @media print {
+      .header, .filter-bar, .actions-bar, .no-print { display: none !important; }
+      body { background: white; }
+      .card { box-shadow: none; padding: 0; }
+      .main-container { max-width: 100%; margin: 0; padding: 0; }
+      table.smart-table th { background: #e2e8f0 !important; color: #0f172a !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="header">
+    <div class="container" style="display:flex; justify-content:space-between; align-items:center; max-width:1300px; margin:0 auto; padding:0 20px;">
+      <div style="font-size:1.1rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+        <i class="fas fa-broom"></i> Housekeeping Portal
+      </div>
+      <div class="logout">
+        <a href="maintenance.html?department=housekeeping"><i class="fas fa-arrow-left"></i> Back to Housekeeping</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <h2 style="margin:0; font-size:1.35rem; color:#204060; display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-bed" style="color:#16a34a;"></i> Housekeeping Extra Beds &amp; Beddings Requirement
+          </h2>
+          <p style="margin:4px 0 0 0; color:#64748b; font-size:0.87rem;" id="eventSubtitle">
+            Extra floor mattresses and beddings required for Inside RC Rooms and Resident Flats
+          </p>
+        </div>
+        <div class="actions-bar" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-sm btn-outline-sm" onclick="loadReport()"><i class="fas fa-sync"></i> Refresh</button>
+          <button class="btn-sm btn-success-sm" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-sm btn-primary-sm" onclick="window.print()"><i class="fas fa-print"></i> Print Checklist</button>
+        </div>
+      </div>
+
+      <!-- Event Selector Bar -->
+      <div class="filter-bar" style="background:#f0f7ff; border-color:#bae6fd;">
+        <div class="filter-group" style="min-width:260px;">
+          <label><i class="fas fa-calendar-alt"></i> Select Event / Utsav</label>
+          <select id="eventSelect" onchange="onEventChange()" style="font-weight:600; color:#0369a1;">
+            <option value="24" selected>Paryushan Mahaparva 2026</option>
+          </select>
+        </div>
+        <div class="filter-group" style="flex:1; min-width:200px;">
+          <label><i class="fas fa-search"></i> Search Details</label>
+          <input type="text" id="searchInput" placeholder="Search room, flat, building, owner, notes..." oninput="renderTables()" />
+        </div>
+        <div class="filter-group">
+          <label><i class="fas fa-filter"></i> View Section</label>
+          <select id="sectionFilter" onchange="renderTables()">
+            <option value="all">All Sections (RC Rooms + Flats)</option>
+            <option value="rc">RC Rooms Only</option>
+            <option value="flats">Flats Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-row" id="kpiRow">
+        <div class="kpi-card" style="border-left:4px solid #16a34a;">
+          <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-bed"></i></div>
+          <div><div class="kpi-val" id="rcExtraBeds" style="color:#16a34a;">0</div><div class="kpi-label">RC Rooms Floor Beds</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-building"></i></div>
+          <div><div class="kpi-val" id="flatsExtraBeds" style="color:#8b5cf6;">0</div><div class="kpi-label">Flats Extra Beddings</div></div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #0284c7;">
+          <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-layer-group"></i></div>
+          <div><div class="kpi-val" id="grandTotalBeds" style="color:#0284c7;">0</div><div class="kpi-label">Grand Total Required</div></div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div id="reportContentWrap">
+        <p style="text-align:center; color:#94a3b8; padding:30px;"><i class="fas fa-spinner fa-spin"></i> Loading report...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastMsg" class="toast-msg"></div>
+
+  <script>
+    let currentReportData = null;
+    let selectedUtsavId = '24';
+
+    function apiBase() {
+      return (typeof CONFIG !== 'undefined' && CONFIG.basePath) ? `${CONFIG.basePath}/utsav` : '/api/v1/admin/utsav';
+    }
+    function token() {
+      return sessionStorage.getItem('token') || '';
+    }
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toastMsg');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.background = type === 'error' ? '#dc3545' : '#16a34a';
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      selectedUtsavId = params.get('utsavId') || params.get('utsavid') || '24';
+
+      await loadEventsDropdown();
+      await loadReport();
+    });
+
+    async function loadEventsDropdown() {
+      try {
+        const res = await fetch(`${CONFIG.baseUrl}/admin/forms/events`, {
+          headers: { Authorization: `Bearer ${token()}` }
+        });
+        const d = await res.json();
+        if (d.success && Array.isArray(d.data) && d.data.length > 0) {
+          const select = document.getElementById('eventSelect');
+          select.innerHTML = d.data.map(ev => 
+            `<option value="${ev.id}" ${String(ev.id) === String(selectedUtsavId) ? 'selected' : ''}>${esc(ev.name)}</option>`
+          ).join('');
+        }
+      } catch (err) {
+        console.warn('Could not load events dropdown:', err);
+      }
+    }
+
+    function onEventChange() {
+      selectedUtsavId = document.getElementById('eventSelect').value;
+      loadReport();
+    }
+
+    async function loadReport() {
+      const wrap = document.getElementById('reportContentWrap');
+      wrap.innerHTML = '<p style="text-align:center; padding:30px; color:#64748b;"><i class="fas fa-spinner fa-spin"></i> Loading report...</p>';
+
+      try {
+        const res = await fetch(`${apiBase()}/housekeeping-extra-beds-report?utsavid=${selectedUtsavId}`, {
+          headers: { Authorization: `Bearer ${token()}` }
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.message || 'Failed to load report');
+
+        currentReportData = d.data || { rc_rooms: [], flats: [], summary: {} };
+
+        // Update KPIs
+        const sum = currentReportData.summary || {};
+        document.getElementById('rcExtraBeds').textContent = sum.rc_extra_beds || 0;
+        document.getElementById('flatsExtraBeds').textContent = sum.flats_extra_beds || 0;
+        document.getElementById('grandTotalBeds').textContent = sum.grand_total_extra_beds || 0;
+
+        renderTables();
+      } catch (err) {
+        wrap.innerHTML = `<p style="color:#dc3545; text-align:center; padding:20px;">${esc(err.message)}</p>`;
+      }
+    }
+
+    function renderTables() {
+      const wrap = document.getElementById('reportContentWrap');
+      if (!wrap || !currentReportData) return;
+
+      const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+      const section = document.getElementById('sectionFilter')?.value || 'all';
+
+      let rcRooms = currentReportData.rc_rooms || [];
+      let flats = currentReportData.flats || [];
+
+      if (search) {
+        rcRooms = rcRooms.filter(r => 
+          String(r.room_group).toLowerCase().includes(search) ||
+          String(r.property).toLowerCase().includes(search) ||
+          String(r.floor).toLowerCase().includes(search) ||
+          String(r.notes).toLowerCase().includes(search)
+        );
+        flats = flats.filter(f => 
+          String(f.flatno).toLowerCase().includes(search) ||
+          String(f.owner_name).toLowerCase().includes(search) ||
+          String(f.mobno).toLowerCase().includes(search) ||
+          String(f.remarks).toLowerCase().includes(search)
+        );
+      }
+
+      let html = '';
+
+      // 1. Inside RC Rooms
+      if (section === 'all' || section === 'rc') {
+        html += `
+          <div style="margin-bottom:28px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#204060; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-hotel" style="color:#16a34a;"></i> Inside Ashram RC Rooms (${rcRooms.length} rooms needing extra beds)
+              </h3>
+              <span class="badge badge-rc" style="font-size:0.84rem; padding:5px 12px;">
+                Total Extra Floor Beds: ${rcRooms.reduce((s, r) => s + r.extra_beds, 0)}
+              </span>
+            </div>
+        `;
+
+        if (rcRooms.length === 0) {
+          html += '<p style="color:#94a3b8; font-size:0.88rem; padding:15px; background:#f8fafc; border-radius:6px; text-align:center;">No RC rooms require extra floor beds.</p>';
+        } else {
+          html += `
+            <div class="tbl-wrap"><table class="smart-table">
+              <thead><tr>
+                <th style="width:80px;">Room</th>
+                <th style="width:90px;">Building</th>
+                <th style="width:70px; text-align:center;">Floor</th>
+                <th style="width:90px; text-align:center;">Wood Bed</th>
+                <th style="width:120px; text-align:center; background:#1e3a8a;">Extra Floor Bed</th>
+                <th style="width:90px; text-align:center;">Total Bed</th>
+                <th style="width:100px; text-align:center;">Room Gender</th>
+                <th>Housekeeping Notes / Remarks</th>
+              </tr></thead><tbody>
+          `;
+
+          rcRooms.forEach(r => {
+            const propBadge = r.property === 'OAG'
+              ? '<span class="badge badge-oag">OAG</span>'
+              : '<span class="badge badge-nag">NAG</span>';
+
+            const floorBadge = r.floor === 'GF'
+              ? '<span class="badge badge-gf">GF</span>'
+              : '<span class="badge badge-ff">FF</span>';
+
+            html += `
+              <tr>
+                <td><strong>Room ${esc(r.room_group)}</strong></td>
+                <td>${propBadge}</td>
+                <td style="text-align:center;">${floorBadge}</td>
+                <td style="text-align:center;">${r.base_capacity}</td>
+                <td style="text-align:center; font-weight:800; font-size:1.1rem; color:#16a34a; background:#f0fdf4;">
+                  ${r.extra_beds}
+                </td>
+                <td style="text-align:center; font-weight:700;">${r.total_capacity}</td>
+                <td style="text-align:center;">${r.default_gender ? `<span class="badge">${esc(r.default_gender)}</span>` : '—'}</td>
+                <td style="color:#475569; font-size:0.85rem;">${r.notes ? esc(r.notes) : '<span style="color:#94a3b8;">—</span>'}</td>
+              </tr>
+            `;
+          });
+
+          html += '</tbody></table></div>';
+        }
+        html += '</div>';
+      }
+
+      // 2. Resident Flats
+      if (section === 'all' || section === 'flats') {
+        html += `
+          <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#204060; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-building" style="color:#8b5cf6;"></i> Resident Flats (${flats.length} flats requesting extra beddings)
+              </h3>
+              <span class="badge" style="background:#ede9fe; color:#6d28d9; font-size:0.84rem; padding:5px 12px;">
+                Total Extra Beddings: ${flats.reduce((s, f) => s + f.extra_beddings, 0)}
+              </span>
+            </div>
+        `;
+
+        if (flats.length === 0) {
+          html += '<p style="color:#94a3b8; font-size:0.88rem; padding:15px; background:#f8fafc; border-radius:6px; text-align:center;">No resident flats have requested extra beddings.</p>';
+        } else {
+          html += `
+            <div class="tbl-wrap"><table class="smart-table">
+              <thead><tr>
+                <th style="width:110px;">Flat No</th>
+                <th style="width:200px;">Flat Owner / Host</th>
+                <th style="width:140px;">Mobile Number</th>
+                <th style="width:140px; text-align:center; background:#5b21b6;">Extra Beddings</th>
+                <th>Remarks / Special Instructions</th>
+              </tr></thead><tbody>
+          `;
+
+          flats.forEach(f => {
+            html += `
+              <tr>
+                <td><strong style="color:#204060; font-size:0.95rem;">${esc(f.flatno)}</strong></td>
+                <td><strong>${esc(f.owner_name)}</strong></td>
+                <td><a href="tel:${esc(f.mobno)}" style="color:#0284c7; text-decoration:none; font-weight:600;"><i class="fas fa-phone-alt" style="font-size:0.75rem;"></i> ${esc(f.mobno || '—')}</a></td>
+                <td style="text-align:center; font-weight:800; font-size:1.1rem; color:#6d28d9; background:#faf5ff;">
+                  ${f.extra_beddings}
+                </td>
+                <td style="color:#475569; font-size:0.85rem;">${f.remarks ? esc(f.remarks) : '<span style="color:#94a3b8;">—</span>'}</td>
+              </tr>
+            `;
+          });
+
+          html += '</tbody></table></div>';
+        }
+        html += '</div>';
+      }
+
+      wrap.innerHTML = html;
+    }
+
+    function downloadExcel() {
+      if (!currentReportData) { showToast('No report data to export', 'error'); return; }
+      const wb = XLSX.utils.book_new();
+
+      const eventName = document.getElementById('eventSelect')?.selectedOptions[0]?.text || `Event_${selectedUtsavId}`;
+
+      // 1. RC Rooms Sheet
+      const rcRows = (currentReportData.rc_rooms || []).map(r => ({
+        'Room': `Room ${r.room_group}`,
+        'Building': r.property,
+        'Floor': r.floor,
+        'Wood Bed': r.base_capacity,
+        'Extra Floor Beds Needed': r.extra_beds,
+        'Total Beds': r.total_capacity,
+        'Room Gender': r.default_gender || '',
+        'Notes / Remarks': r.notes || ''
+      }));
+      const wsRC = XLSX.utils.json_to_sheet(rcRows.length ? rcRows : [{ 'Info': 'No RC rooms requiring extra beds' }]);
+      XLSX.utils.book_append_sheet(wb, wsRC, 'RC Rooms Extra Beds');
+
+      // 2. Flats Sheet
+      const flatRows = (currentReportData.flats || []).map(f => ({
+        'Flat No': f.flatno,
+        'Flat Owner / Host': f.owner_name,
+        'Mobile Number': f.mobno,
+        'Extra Beddings Requested': f.extra_beddings,
+        'Remarks / Special Instructions': f.remarks || ''
+      }));
+      const wsFlats = XLSX.utils.json_to_sheet(flatRows.length ? flatRows : [{ 'Info': 'No flats requesting extra beddings' }]);
+      XLSX.utils.book_append_sheet(wb, wsFlats, 'Flats Extra Beddings');
+
+      // 3. Summary Sheet
+      const sum = currentReportData.summary || {};
+      const sumRows = [
+        { 'Event': eventName, 'Count / Total': '' },
+        { 'Category': 'RC Rooms Floor Beds (Inside Ashram)', 'Count / Total': sum.rc_extra_beds || 0 },
+        { 'Category': 'Flats Extra Beddings', 'Count / Total': sum.flats_extra_beds || 0 },
+        { 'Category': 'Grand Total Extra Beddings Required', 'Count / Total': sum.grand_total_extra_beds || 0 }
+      ];
+      const wsSum = XLSX.utils.json_to_sheet(sumRows);
+      XLSX.utils.book_append_sheet(wb, wsSum, 'Summary');
+
+      XLSX.writeFile(wb, `Housekeeping_Extra_Beds_Report_${selectedUtsavId}.xlsx`);
+      showToast('Housekeeping Excel downloaded successfully!');
+    }
+  </script>
+</body>
+</html>

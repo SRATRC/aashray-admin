@@ -742,6 +742,15 @@ document.addEventListener('keydown', function (e) {
 
 // ── Kick off ──────────────────────────────────────────────────────────────────
 
+// Bust bfcache: if the browser restores this page from back-forward cache
+// the old JS state (sessionData, player, timer) would be stale. Force a
+// hard reload so the session is always freshly fetched.
+window.addEventListener('pageshow', function (e) {
+  if (e.persisted) {
+    window.location.reload();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
   const beginBtn = document.getElementById('begin-btn');
   beginBtn.disabled = true;
