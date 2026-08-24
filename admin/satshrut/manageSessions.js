@@ -11,6 +11,7 @@ const DAY_NAMES_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // Mon-Sun grid offset: convert getDay() → Mon-based index
 let NO_SESSION_DAYS = [1, 4]; // default: Mon, Thu — dynamically refreshed from backend config
 let BHAKTI_VIDEOS = null;     // Array of 4 bhakti video objects from config, or null if not configured
+let BHAKTI_OFFSET = 0;        // Manual rotation shift (in weeks) applied via the "Shift Bhakti" action
 
 // Base Monday anchor for sequential 4-week Bhakti rotation (2026-08-03 is Monday, Week 1)
 const BHAKTI_EPOCH_MONDAY_UTC = Date.UTC(2026, 7, 3);
@@ -28,14 +29,15 @@ function getBhaktiWeekIndex(dateStr) {
 
   let overriddenCount = 0;
   priorMondays.forEach((mDate) => {
-    const s = sessionsMap[mDate];
+    // Check against allSessions (cross-month) or currently loaded month map
+    const s = allSessions.find((x) => x.session_date === mDate) || sessionsMap[mDate];
     if (s && s.status === 'active' && s.youtube_video_id && s.youtube_video_id !== 'none') {
       overriddenCount++;
     }
   });
 
   const actualBhaktiPlayed = priorMondays.length - overriddenCount;
-  return ((actualBhaktiPlayed % 4) + 4) % 4; // 0–3
+  return (((actualBhaktiPlayed + BHAKTI_OFFSET) % 4) + 4) % 4; // 0–3
 }
 
 function escapeHtml(str) {

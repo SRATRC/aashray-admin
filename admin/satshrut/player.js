@@ -149,21 +149,25 @@ function updateTitleForSegment() {
     `Satshrut — ${s.session_date}${activeNotes ? ` (${activeNotes})` : ''}`;
 }
 
-// ── 17th Morning info population (7-phase sequence) ───────────────────────────
+// ── 17th Morning info population (6-phase sequence) ───────────────────────────
+
+let seventeenthStepDurations = {};
 
 function populate17thMorningInfo() {
   const s = sessionData;
   updateTitleForSegment();
 
   document.getElementById('chipDate').textContent = s.session_date;
-  document.getElementById('chipVideoDur').textContent = `${seventeenthSteps.length} Steps`;
+  const durLabel = document.getElementById('chipVideoDurLabel');
+  if (durLabel) durLabel.textContent = 'Total Duration';
+  document.getElementById('chipVideoDur').textContent = '...';
 
   const audioChipEl = document.getElementById('chipAudioDur')?.closest('.info-chip');
   const totalChipEl = document.getElementById('chipTotal')?.closest('.info-chip');
   if (audioChipEl) audioChipEl.style.display = 'none';
   if (totalChipEl) totalChipEl.style.display = 'none';
 
-  // Render dynamic 7-phase timeline
+  // Render dynamic 6-phase timeline
   const timeline = document.getElementById('phaseTimeline');
   if (timeline) {
     timeline.innerHTML = '';
@@ -182,12 +186,74 @@ function populate17thMorningInfo() {
       block.innerHTML = `
         <div class="ph-label">Step ${idx + 1}</div>
         <div class="ph-type">${step.label}</div>
+        <div class="ph-dur" id="ph-17th-dur-${idx}"></div>
       `;
       timeline.appendChild(block);
     });
   }
 
   document.getElementById('player-panel').style.display = 'block';
+}
+
+function fetch17thStepDurations() {
+  if (!is17thMorningMode || !seventeenthSteps.length) return;
+
+  const container = document.getElementById('yt-17th-previews') || document.body;
+
+  seventeenthSteps.forEach((step, idx) => {
+    if (!step.youtube_id) return;
+    const divId = `yt-17th-preview-${idx}`;
+    let el = document.getElementById(divId);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = divId;
+      el.style.cssText = 'position:fixed;bottom:-500px;left:-500px;width:1px;height:1px;overflow:hidden;pointer-events:none;visibility:hidden;';
+      container.appendChild(el);
+    }
+
+    const p = new YT.Player(divId, {
+      height: '1',
+      width: '1',
+      videoId: step.youtube_id,
+      events: {
+        onReady: () => {
+          let attempts = 0;
+          const poll = setInterval(() => {
+            attempts++;
+            if (typeof p.getDuration === 'function' && p.getDuration() > 0) {
+              const dur = p.getDuration();
+              seventeenthStepDurations[idx] = dur;
+              clearInterval(poll);
+              update17thTotalDuration();
+            } else if (attempts > 25) {
+              clearInterval(poll);
+            }
+          }, 300);
+        }
+      }
+    });
+  });
+}
+
+function update17thTotalDuration() {
+  let totalSecs = 0;
+
+  seventeenthSteps.forEach((step, idx) => {
+    const dur = seventeenthStepDurations[idx] || 0;
+    const durEl = document.getElementById(`ph-17th-dur-${idx}`);
+    if (durEl && dur > 0) {
+      durEl.textContent = `${formatMinSec(dur)}${step.repeat > 1 ? ` (${step.repeat}x)` : ''}`;
+    }
+    totalSecs += dur * (step.repeat || 1);
+  });
+
+  if (totalSecs > 0) {
+    totalSessionDuration = totalSecs;
+    const m = Math.floor(totalSecs / 60);
+    const s = Math.round(totalSecs % 60);
+    const durStr = m > 0 ? `${m}m ${s > 0 ? `${s}s` : ''}` : `${s}s`;
+    document.getElementById('chipVideoDur').textContent = `${formatHMS(totalSecs)} (${durStr.trim()})`;
+  }
 }
 
 // ── Bhakti info population (single-phase, video only) ──────────────────────────
@@ -340,8 +406,9 @@ function updateSessionDurations() {
 
 // Called by the YouTube IFrame API once it's ready
 window.onYouTubeIframeAPIReady = function () {
-  // In bhakti mode or 17th morning mode, there are no audio tracks to pre-fetch
-  if (!isBhaktiMode && !is17thMorningMode) {
+  if (is17thMorningMode) {
+    fetch17thStepDurations();
+  } else if (!isBhaktiMode) {
     fetchAudioDurations();
   }
 
@@ -370,6 +437,7 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 function updateAudioDurationFromPlayer() {
+  if (is17thMorningMode || isBhaktiMode) return;
   if (player && typeof player.getDuration === 'function') {
     const realDur = player.getDuration();
     if (realDur && realDur > 0 && (currentPhase === 1 || currentPhase === 3)) {
@@ -382,8 +450,10 @@ function updateAudioDurationFromPlayer() {
       // Update UI chips
       document.getElementById('chipAudioDur').textContent = formatMinSec(dur1 === dur2 ? dur1 : (dur1 + dur2) / 2);
       document.getElementById('chipTotal').textContent = formatMinSec(totalSessionDuration);
-      document.getElementById('ph-dur-1').textContent = formatMinSec(dur1);
-      document.getElementById('ph-dur-3').textContent = formatMinSec(dur2);
+      const ph1 = document.getElementById('ph-dur-1');
+      if (ph1) ph1.textContent = formatMinSec(dur1);
+      const ph3 = document.getElementById('ph-dur-3');
+      if (ph3) ph3.textContent = formatMinSec(dur2);
     }
   }
 }
@@ -489,7 +559,7 @@ function onPlayerStateChange(event) {
     disableCaptions();
     if (isBhaktiMode) {
       updateBhaktiDurationFromPlayer();
-    } else if (currentPhase === 1 || currentPhase === 3) {
+    } else if (!is17thMorningMode && (currentPhase === 1 || currentPhase === 3)) {
       updateAudioDurationFromPlayer();
     }
     resumeSession();
@@ -676,7 +746,7 @@ function startPhase(phaseIndex) {
     document.getElementById('phaseLabel').textContent = `Step ${phaseIndex + 1} — ${step.label}`;
     document.getElementById('phaseDesc').textContent = step.repeat > 1 ? `Playing (Pass 1 of ${step.repeat})` : 'Remaining in this step';
     const countdownEl = document.getElementById('countdown');
-    countdownEl.classList.toggle('audio-phase', step.type.startsWith('pause'));
+    countdownEl.classList.toggle('audio-phase', !!(step && step.type && step.type.startsWith('pause')));
 
     player.loadVideoById({ videoId: step.youtube_id });
     startTimerTick();
@@ -759,6 +829,18 @@ function completeSession() {
 
   document.getElementById('running-panel').style.display = 'none';
   document.getElementById('complete-panel').style.display = 'block';
+
+  // Customize completion message based on session type
+  const subtitleEl = document.getElementById('completeSubtitle');
+  if (subtitleEl) {
+    if (is17thMorningMode) {
+      subtitleEl.textContent = 'Jai Sadgurudev Vandan! The Aanand Tithi session has finished.';
+    } else if (isBhaktiMode) {
+      subtitleEl.textContent = 'Jai Sadgurudev Vandan! The Bhakti session has finished.';
+    } else {
+      subtitleEl.textContent = 'Jai Sadgurudev Vandan! The Satshrut session has finished.';
+    }
+  }
 
   // Mark all completed phases done
   if (is17thMorningMode) {

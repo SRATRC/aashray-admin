@@ -4,6 +4,39 @@ document.addEventListener('DOMContentLoaded', async function () {
   const saveBtn = document.getElementById('saveBtn');
   const monthSelect = document.getElementById('seventeenth_month_select');
 
+  // ── Tab Switching Logic ───────────────────────────────────────────────────
+  const tabBtns = document.querySelectorAll('.config-tab-btn');
+  const panes = {
+    daily: document.getElementById('pane-daily'),
+    bhakti: document.getElementById('pane-bhakti'),
+    aanand: document.getElementById('pane-aanand')
+  };
+
+  function activateTab(tabKey) {
+    tabBtns.forEach((btn) => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === tabKey);
+    });
+    Object.keys(panes).forEach((k) => {
+      if (panes[k]) {
+        panes[k].style.display = k === tabKey ? 'block' : 'none';
+      }
+    });
+    sessionStorage.setItem('satshrut_active_config_tab', tabKey);
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', function () {
+      activateTab(this.getAttribute('data-tab'));
+    });
+  });
+
+  const savedTab = sessionStorage.getItem('satshrut_active_config_tab');
+  if (savedTab && panes[savedTab]) {
+    activateTab(savedTab);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   function authHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -128,13 +161,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('seventeenth_intro_url').value = fixed.intro_youtube_url;
         document.getElementById('seventeenthIntroInfo').textContent = fixed.intro_youtube_id ? `Current ID: ${fixed.intro_youtube_id}` : '';
       }
-      if (fixed.pause_youtube_url) {
-        document.getElementById('seventeenth_pause_url').value = fixed.pause_youtube_url;
-        document.getElementById('seventeenthPauseInfo').textContent = fixed.pause_youtube_id ? `Current ID: ${fixed.pause_youtube_id}` : '';
+      if (fixed.pause1_youtube_url || fixed.pause_youtube_url) {
+        const p1 = fixed.pause1_youtube_url || fixed.pause_youtube_url;
+        document.getElementById('seventeenth_pause1_url').value = p1;
+        document.getElementById('seventeenthPause1Info').textContent = fixed.pause1_youtube_id || fixed.pause_youtube_id ? `Current ID: ${fixed.pause1_youtube_id || fixed.pause_youtube_id}` : '';
       }
-      if (fixed.conclusion_youtube_url) {
-        document.getElementById('seventeenth_conclusion_url').value = fixed.conclusion_youtube_url;
-        document.getElementById('seventeenthConclusionInfo').textContent = fixed.conclusion_youtube_id ? `Current ID: ${fixed.conclusion_youtube_id}` : '';
+      if (fixed.pause2_youtube_url || fixed.conclusion_youtube_url) {
+        const p2 = fixed.pause2_youtube_url || fixed.conclusion_youtube_url;
+        document.getElementById('seventeenth_pause2_url').value = p2;
+        document.getElementById('seventeenthPause2Info').textContent = fixed.pause2_youtube_id || fixed.conclusion_youtube_id ? `Current ID: ${fixed.pause2_youtube_id || fixed.conclusion_youtube_id}` : '';
       }
 
       seventeenthMonthlyMap = raw17.monthly || {};
@@ -236,19 +271,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         return;
       }
 
-      // 2. Save 17th Morning configuration
+      // Ensure the currently displayed month inputs are captured into the multi-month map
+      seventeenthMonthlyMap[currentMonthKey] = {
+        bhakti_youtube_url: document.getElementById('seventeenth_bhakti_url').value.trim() || null,
+        clip1_youtube_url: document.getElementById('seventeenth_clip1_url').value.trim() || null,
+        clip2_youtube_url: document.getElementById('seventeenth_clip2_url').value.trim() || null
+      };
+
+      // 2. Save 17th Morning configuration (fixed + all edited months)
       const seventeenthPayload = {
         fixed: {
           intro_youtube_url: document.getElementById('seventeenth_intro_url').value.trim() || null,
-          pause_youtube_url: document.getElementById('seventeenth_pause_url').value.trim() || null,
-          conclusion_youtube_url: document.getElementById('seventeenth_conclusion_url').value.trim() || null
+          pause1_youtube_url: document.getElementById('seventeenth_pause1_url').value.trim() || null,
+          pause2_youtube_url: document.getElementById('seventeenth_pause2_url').value.trim() || null
         },
-        month: currentMonthKey,
-        monthly_entry: {
-          bhakti_youtube_url: document.getElementById('seventeenth_bhakti_url').value.trim() || null,
-          clip1_youtube_url: document.getElementById('seventeenth_clip1_url').value.trim() || null,
-          clip2_youtube_url: document.getElementById('seventeenth_clip2_url').value.trim() || null
-        }
+        monthly: seventeenthMonthlyMap
       };
 
       const res17 = await fetch(`${CONFIG.basePath}/satshrut/17th-config`, {
