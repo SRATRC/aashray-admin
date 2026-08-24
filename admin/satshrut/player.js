@@ -111,7 +111,7 @@ function showNoSession(msg) {
 function updateTitleForSegment() {
   const s = sessionData;
   if (isBhaktiMode) {
-    const weekText = s.notes || (s.week_index !== undefined ? `Week ${s.week_index}` : 'Week 1');
+    const weekText = s.notes || (s.week_index !== undefined ? `Week ${s.week_index + 1}` : 'Week 1');
     document.getElementById('pageTitle').textContent =
       `Satshrut — Monday Bhakti (${weekText})`;
     return;
