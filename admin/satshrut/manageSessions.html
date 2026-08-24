@@ -178,6 +178,30 @@
       }
       .cal-day.empty-day:hover .add-hint { color: #4c86b0; }
 
+      /* Bhakti Monday cells */
+      .cal-day.bhakti-day {
+        background: linear-gradient(135deg, #fff8e1 0%, #ffe082 100%);
+        border: 2px solid #f9a825;
+        cursor: pointer;
+      }
+      .cal-day.bhakti-day .day-num { color: #795548; }
+      .bhakti-tag {
+        display: block;
+        margin-top: 4px;
+        background: #f57f17;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 600;
+        border-radius: 4px;
+        padding: 2px 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+      }
+      .bhakti-tag:hover { background: #e65100; transform: scale(1.03); }
+
       /* Legend */
       .cal-legend {
         display: flex;

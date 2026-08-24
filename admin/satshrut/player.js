@@ -7,6 +7,7 @@ let sessionData = null;      // Loaded from API
 let player = null;           // Single unified YT.Player instance
 let playerReady = false;
 let sessionStarted = false;
+let isBhaktiMode = false;    // Monday Bhakti: single-phase video-only session
 
 // Timing
 let currentPhase = -1;       // 0–3
@@ -76,6 +77,15 @@ async function loadSession() {
 
     sessionData = json.data;
 
+    // ── Bhakti mode: single-phase video-only session (Monday) ──────────────────
+    if (sessionData.session_type === 'bhakti') {
+      isBhaktiMode = true;
+      populateBhaktiInfo();
+      loadYouTubeAPI();
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     if (!sessionData.audio1_youtube_id && !sessionData.audio2_youtube_id) {
       showNoSession('No meditation audio configured. Please set the default audio in Audio Configuration.');
       return;
@@ -100,6 +110,11 @@ function showNoSession(msg) {
 
 function updateTitleForSegment() {
   const s = sessionData;
+  if (isBhaktiMode) {
+    document.getElementById('pageTitle').textContent =
+      `Satshrut — Monday Bhakti (${s.notes || `Week ${s.week_index || 1}`})`;
+    return;
+  }
   let activeNotes = s.notes;
   if (currentSubPhase === 1 && s.notes2) {
     activeNotes = s.notes2;
@@ -108,27 +123,61 @@ function updateTitleForSegment() {
     `Satshrut — ${s.session_date}${activeNotes ? ` (${activeNotes})` : ''}`;
 }
 
+// ── Bhakti info population (single-phase, video only) ──────────────────────────
+
+function populateBhaktiInfo() {
+  const s = sessionData;
+  const vidDur = s.video_duration_seconds || 0;
+
+  updateTitleForSegment();
+  document.getElementById('chipDate').textContent = s.session_date;
+  document.getElementById('chipVideoDur').textContent = vidDur ? formatMinSec(vidDur) : 'Full video';
+
+  // Hide audio + total chips — not relevant for single-video bhakti
+  const audioChipEl = document.getElementById('chipAudioDur')?.closest('.info-chip');
+  const totalChipEl = document.getElementById('chipTotal')?.closest('.info-chip');
+  if (audioChipEl) audioChipEl.style.display = 'none';
+  if (totalChipEl) totalChipEl.style.display = 'none';
+
+  // Phase durations — only phase 0 matters
+  phaseDurations = [vidDur, 0, 0, 0];
+  totalSessionDuration = vidDur;
+
+  // Phase timeline chip
+  document.getElementById('ph-dur-0').textContent = vidDur ? formatMinSec(vidDur) : '';
+
+  // Hide phases 1–3 and their separator arrows from the timeline
+  const timeline = document.getElementById('phaseTimeline');
+  if (timeline) {
+    Array.from(timeline.children).slice(1).forEach(el => (el.style.display = 'none'));
+  }
+
+  document.getElementById('player-panel').style.display = 'block';
+}
+
+// ── Regular session info population ─────────────────────────────────────────────
+
 function populateSessionInfo() {
   const s = sessionData;
   const videoDur = s.video_duration_seconds;
-  const audioDur = 300; // Initial placeholder until real duration is queried
-  const totalDur = videoDur * 2 + audioDur * 2;
+  // Don't pre-fill audio with a placeholder — show '...' until fetchAudioDurations() resolves
+  const audioDur = 300;
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
   document.getElementById('chipVideoDur').textContent = formatMinSec(videoDur);
-  document.getElementById('chipAudioDur').textContent = formatMinSec(audioDur);
-  document.getElementById('chipTotal').textContent = formatMinSec(totalDur);
+  document.getElementById('chipAudioDur').textContent = '...';
+  document.getElementById('chipTotal').textContent = '...';
 
-  // Phase durations
+  // Phase durations (audio will be overwritten by updateSessionDurations())
   phaseDurations = [videoDur, audioDur, videoDur, audioDur];
-  totalSessionDuration = totalDur;
+  totalSessionDuration = videoDur * 2 + audioDur * 2;
 
   // Phase timeline chips
   document.getElementById('ph-dur-0').textContent = formatMinSec(videoDur);
-  document.getElementById('ph-dur-1').textContent = formatMinSec(audioDur);
+  document.getElementById('ph-dur-1').textContent = '...';
   document.getElementById('ph-dur-2').textContent = formatMinSec(videoDur);
-  document.getElementById('ph-dur-3').textContent = formatMinSec(audioDur);
+  document.getElementById('ph-dur-3').textContent = '...';
 
   document.getElementById('player-panel').style.display = 'block';
 }
@@ -209,7 +258,10 @@ function updateSessionDurations() {
 
 // Called by the YouTube IFrame API once it's ready
 window.onYouTubeIframeAPIReady = function () {
-  fetchAudioDurations();
+  // In bhakti mode there are no audio tracks to pre-fetch
+  if (!isBhaktiMode) {
+    fetchAudioDurations();
+  }
 
   player = new YT.Player('yt-player', {
     height: '100%',
@@ -520,6 +572,11 @@ function startPhase(phaseIndex) {
 
 function nextPhase() {
   clearInterval(timerInterval);
+  // Bhakti is a single-phase session — video end means session complete
+  if (isBhaktiMode) {
+    completeSession();
+    return;
+  }
   if (currentPhase < 3) {
     startPhase(currentPhase + 1);
   } else {
@@ -540,8 +597,9 @@ function completeSession() {
   document.getElementById('running-panel').style.display = 'none';
   document.getElementById('complete-panel').style.display = 'block';
 
-  // Mark all phases done
-  for (let i = 0; i < 4; i++) {
+  // Mark all completed phases done
+  const totalPhases = isBhaktiMode ? 1 : 4;
+  for (let i = 0; i < totalPhases; i++) {
     const el = document.getElementById(`phase-${i}`);
     el.classList.remove('active');
     el.classList.add('done');
