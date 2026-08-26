@@ -1,3 +1,13 @@
+function parseSortValue(text) {
+  if (!text) return '';
+  const dateMatch = text.match(/^(\d{1,2})-(\d{1,2})-(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+  if (dateMatch) {
+    const [, day, month, year, hour = '00', min = '00'] = dateMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+  }
+  return text;
+}
+
 window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = true) {
   const table = document.getElementById(tableId);
   const tbody = table.querySelector('tbody');
@@ -70,9 +80,11 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
       rows.sort((a, b) => {
         const aText = a.children[colIndex]?.innerText.trim() || '';
         const bText = b.children[colIndex]?.innerText.trim() || '';
+        const aVal = parseSortValue(aText);
+        const bVal = parseSortValue(bText);
         return sortDirection[colIndex]
-          ? aText.localeCompare(bText, undefined, { numeric: true })
-          : bText.localeCompare(aText, undefined, { numeric: true });
+          ? aVal.localeCompare(bVal, undefined, { numeric: true })
+          : bVal.localeCompare(aVal, undefined, { numeric: true });
       });
 
       sortDirection[colIndex] = !sortDirection[colIndex];
