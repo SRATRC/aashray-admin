@@ -255,6 +255,8 @@ async function fetchReport() {
       reportsTableBody.appendChild(row);
     });
 
+    updateBulkActionBar();
+
   } catch (error) {
     console.error('Error fetching report:', error);
     showErrorMessage(error);
