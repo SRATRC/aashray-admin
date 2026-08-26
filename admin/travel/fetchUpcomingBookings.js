@@ -227,6 +227,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             travellingFrom = "Mumbai to Research Centre";
           }
           b.travellingFrom = travellingFrom;
+          b.bookingDate = formatDate(b.createdAt ? b.createdAt.split('T')[0] : '');
 
           const rowStyle = travellingFrom === "Research Centre to Mumbai" ? 'background-color: #ffff99;' : "";
 
@@ -250,6 +251,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   </span>
 </td>
 <td>${formatDate(b.date)}</td>
+    <td>${b.bookingDate}</td>
     <td>${b.issuedto}</td>
     <td>${b.type}</td>
     <td>${b.pickup_point}</td>

@@ -170,12 +170,20 @@ function populateUtsavTable(utsavs) {
   const tbody = document.querySelector('#utsavTable tbody');
   tbody.innerHTML = '';
 
-  if (utsavs.length === 0) {
+  if (!utsavs || utsavs.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">No Utsavs found.</td></tr>';
     return;
   }
 
-  utsavs.forEach(utsav => {
+  // Sort by latest event first (start_date DESC)
+  const sortedUtsavs = [...utsavs].sort((a, b) => {
+    const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+    const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+    if (dateB !== dateA) return dateB - dateA;
+    return (b.id || 0) - (a.id || 0);
+  });
+
+  sortedUtsavs.forEach(utsav => {
     const row = document.createElement('tr');
     
     const formattedDate = utsav.start_date ? new Date(utsav.start_date).toLocaleDateString(undefined, {
@@ -213,12 +221,47 @@ function populateShibirTable(shibirs) {
   const tbody = document.querySelector('#shibirTable tbody');
   tbody.innerHTML = '';
 
-  if (shibirs.length === 0) {
+  if (!shibirs || shibirs.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">No Shibirs found.</td></tr>';
     return;
   }
 
-  shibirs.forEach(shibir => {
+  // Start of current month in local time
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+  // Separate into upcoming/current month onwards vs past
+  const currentAndUpcoming = [];
+  const past = [];
+
+  shibirs.forEach(s => {
+    const sTime = s.start_date ? new Date(s.start_date).getTime() : 0;
+    if (sTime >= currentMonthStart) {
+      currentAndUpcoming.push(s);
+    } else {
+      past.push(s);
+    }
+  });
+
+  // Sort upcoming/current ascending (closest event first: current month -> next month -> etc.)
+  currentAndUpcoming.sort((a, b) => {
+    const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+    const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+    if (dateA !== dateB) return dateA - dateB;
+    return (a.id || 0) - (b.id || 0);
+  });
+
+  // Sort past descending (most recent past first)
+  past.sort((a, b) => {
+    const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+    const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+    if (dateB !== dateA) return dateB - dateA;
+    return (b.id || 0) - (a.id || 0);
+  });
+
+  const sortedShibirs = [...currentAndUpcoming, ...past];
+
+  sortedShibirs.forEach(shibir => {
     const row = document.createElement('tr');
     
     const formattedDate = shibir.start_date ? new Date(shibir.start_date).toLocaleDateString(undefined, {
