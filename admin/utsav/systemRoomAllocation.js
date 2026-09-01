@@ -407,6 +407,28 @@ async function runSmartAllocation() {
     runSelectedIds = new Set(allGuests.filter(g => g.allocated).map(g => g.bookingid));
 
     updateRunKpis(d.data.summary);
+    if (d.data.genderRoomSplit && d.data.genderRoomSplit.note) {
+      const split = d.data.genderRoomSplit;
+      const rcRooms = split.rcRooms || {};
+      const maleRoomsStr = rcRooms.maleRoomNumbers ? rcRooms.maleRoomNumbers.join(', ') : '';
+      const femaleRoomsStr = rcRooms.femaleRoomNumbers ? rcRooms.femaleRoomNumbers.join(', ') : '';
+      const maleCount = esc(rcRooms.male ?? 0);
+      const femaleCount = esc(rcRooms.female ?? 0);
+      const bannerEl = document.getElementById('genderSplitBanner');
+      const textEl = document.getElementById('genderSplitText');
+      if (textEl && bannerEl) {
+        textEl.innerHTML = '<p style="margin:0 0 6px 0;"><strong>' + esc(split.note) + '</strong></p>' +
+          '<div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.82rem; margin-top:6px;">' +
+            '<div><span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">' + maleCount + ' Male Rooms</span>: ' + (maleRoomsStr ? 'Room ' + esc(maleRoomsStr) : 'None') + '</div>' +
+            '<div><span class="badge" style="background:#fce7f3; color:#be185d; font-weight:700;">' + femaleCount + ' Female Rooms</span>: ' + (femaleRoomsStr ? 'Room ' + esc(femaleRoomsStr) : 'None') + '</div>' +
+          '</div>';
+        bannerEl.style.display = 'block';
+      }
+    } else {
+      const bannerEl = document.getElementById('genderSplitBanner');
+      if (bannerEl) bannerEl.style.display = 'none';
+    }
+
     populatePackageFilter(allGuests);
     document.getElementById('runKpiRow').style.display = 'grid';
     document.getElementById('runFilterBar').style.display = 'flex';
