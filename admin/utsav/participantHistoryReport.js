@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentRawData = [];
   let filteredData = [];
+  let currentEventTotals = {};
   let currentPage = 1;
   const pageSize = 15;
 
@@ -110,9 +111,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentRawData = result.data || [];
       const meta = result.meta || {};
+      currentEventTotals = meta.event_totals || {};
 
       if (meta.utsav_name) {
-        utsavMetaHeader.textContent = `Event: ${meta.utsav_name} | Start Date: ${meta.utsav_start_date || 'N/A'} | 1-Yr History Window: ${meta.one_year_ago_date} to ${meta.utsav_start_date}`;
+        let metaText = `Event: ${meta.utsav_name} | Start Date: ${meta.utsav_start_date || 'N/A'} | 1-Yr History Window: ${meta.one_year_ago_date} to ${meta.utsav_start_date}`;
+        if (currentEventTotals.total_pgs_in_year !== undefined) {
+          metaText += ` | Events in 1-Yr: ${currentEventTotals.total_pgs_in_year} PGS, ${currentEventTotals.total_non_pgs_in_year} Adhyayans | Past Utsavs (All-Time): ${currentEventTotals.total_past_utsavs_all_time}`;
+        }
+        utsavMetaHeader.textContent = metaText;
+      }
+
+      // Update Table Headers with Event Totals
+      const pgsHeaderTotal = document.getElementById('pgsHeaderTotal');
+      const nonPgsHeaderTotal = document.getElementById('nonPgsHeaderTotal');
+      const utsavHeaderTotal = document.getElementById('utsavHeaderTotal');
+      if (pgsHeaderTotal && currentEventTotals.total_pgs_in_year !== undefined) {
+        pgsHeaderTotal.textContent = `(Out of ${currentEventTotals.total_pgs_in_year} in 1Yr)`;
+      }
+      if (nonPgsHeaderTotal && currentEventTotals.total_non_pgs_in_year !== undefined) {
+        nonPgsHeaderTotal.textContent = `(Out of ${currentEventTotals.total_non_pgs_in_year} in 1Yr)`;
+      }
+      if (utsavHeaderTotal && currentEventTotals.total_past_utsavs_all_time !== undefined) {
+        utsavHeaderTotal.textContent = `(Out of ${currentEventTotals.total_past_utsavs_all_time} All-Time)`;
       }
 
       // Populate Package Breakdown & Package Filter Options
@@ -346,9 +366,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;">${escapeHtml(item.roomno || '-')}</td>
         <td style="text-align:center; font-weight:700; color:#2e7d32; font-size: 14px;">${Number(h.stay_days) || 0}</td>
         <td style="text-align:center; font-weight:700; color:#d97706; font-size: 14px;">${Number(h.single_day_visits) || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#7b1fa2;">${Number(h.pgs_adhyayan_count) || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#1976d2;">${Number(h.non_pgs_adhyayan_count) || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#e67e22;">${Number(h.utsav_count) || 0}</td>
+        <td style="text-align:center; font-weight:600; color:#7b1fa2;">${Number(h.pgs_adhyayan_count) || 0}${currentEventTotals.total_pgs_in_year !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${currentEventTotals.total_pgs_in_year}</span>` : ''}</td>
+        <td style="text-align:center; font-weight:600; color:#1976d2;">${Number(h.non_pgs_adhyayan_count) || 0}${currentEventTotals.total_non_pgs_in_year !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${currentEventTotals.total_non_pgs_in_year}</span>` : ''}</td>
+        <td style="text-align:center; font-weight:600; color:#e67e22;">${Number(h.utsav_count) || 0}${currentEventTotals.total_past_utsavs_all_time !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${currentEventTotals.total_past_utsavs_all_time}</span>` : ''}</td>
         <td>${badgesHtml || '<span style="color:#94a3b8; font-size:12px;">Standard</span>'}</td>
       `;
 
