@@ -115,8 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (meta.utsav_name) {
         let metaText = `Event: ${meta.utsav_name} | Start Date: ${meta.utsav_start_date || 'N/A'} | 1-Yr History Window: ${meta.one_year_ago_date} to ${meta.utsav_start_date}`;
-        if (currentEventTotals.total_pgs_in_year !== undefined) {
-          metaText += ` | Events in 1-Yr: ${currentEventTotals.total_pgs_in_year} PGS, ${currentEventTotals.total_non_pgs_in_year} Adhyayans | Past Utsavs (All-Time): ${currentEventTotals.total_past_utsavs_all_time}`;
+        if (currentEventTotals.total_pgs_in_year !== undefined && currentEventTotals.total_non_pgs_in_year !== undefined && currentEventTotals.total_past_utsavs_all_time !== undefined) {
+          metaText += ` | Events in 1-Yr: ${Number(currentEventTotals.total_pgs_in_year)} PGS, ${Number(currentEventTotals.total_non_pgs_in_year)} Adhyayans | Past Utsavs (All-Time): ${Number(currentEventTotals.total_past_utsavs_all_time)}`;
         }
         utsavMetaHeader.textContent = metaText;
       }
@@ -366,9 +366,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="text-align:center;">${escapeHtml(item.roomno || '-')}</td>
         <td style="text-align:center; font-weight:700; color:#2e7d32; font-size: 14px;">${Number(h.stay_days) || 0}</td>
         <td style="text-align:center; font-weight:700; color:#d97706; font-size: 14px;">${Number(h.single_day_visits) || 0}</td>
-        <td style="text-align:center; font-weight:600; color:#7b1fa2;">${Number(h.pgs_adhyayan_count) || 0}${currentEventTotals.total_pgs_in_year !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${currentEventTotals.total_pgs_in_year}</span>` : ''}</td>
-        <td style="text-align:center; font-weight:600; color:#1976d2;">${Number(h.non_pgs_adhyayan_count) || 0}${currentEventTotals.total_non_pgs_in_year !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${currentEventTotals.total_non_pgs_in_year}</span>` : ''}</td>
-        <td style="text-align:center; font-weight:600; color:#e67e22;">${Number(h.utsav_count) || 0}${currentEventTotals.total_past_utsavs_all_time !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${currentEventTotals.total_past_utsavs_all_time}</span>` : ''}</td>
+        <td style="text-align:center; font-weight:600; color:#7b1fa2;">${Number(h.pgs_adhyayan_count) || 0}${currentEventTotals.total_pgs_in_year !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${Number(currentEventTotals.total_pgs_in_year)}</span>` : ''}</td>
+        <td style="text-align:center; font-weight:600; color:#1976d2;">${Number(h.non_pgs_adhyayan_count) || 0}${currentEventTotals.total_non_pgs_in_year !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${Number(currentEventTotals.total_non_pgs_in_year)}</span>` : ''}</td>
+        <td style="text-align:center; font-weight:600; color:#e67e22;">${Number(h.utsav_count) || 0}${currentEventTotals.total_past_utsavs_all_time !== undefined ? ` <span style="font-size:11px; font-weight:normal; color:#64748b;">/ ${Number(currentEventTotals.total_past_utsavs_all_time)}</span>` : ''}</td>
         <td>${badgesHtml || '<span style="color:#94a3b8; font-size:12px;">Standard</span>'}</td>
       `;
 
