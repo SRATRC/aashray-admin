@@ -375,6 +375,23 @@
           box-sizing: border-box !important;
         }
       }
+          .btn-contact-picker {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: #204060;
+        cursor: pointer;
+        transition: transform 0.15s ease, color 0.15s ease;
+      }
+      .btn-contact-picker:hover {
+        color: var(--theme-color) !important;
+        transform: scale(1.12);
+      }
+      .btn-contact-picker:active {
+        transform: scale(0.95);
+      }
     </style>
   </head>
 
@@ -528,6 +545,51 @@
         `;
       }
 
+
+      // ── Native Phone Contact Picker Helper ──────────────────────────
+      function isContactPickerAvailable() {
+        return ('contacts' in navigator && 'ContactsManager' in window);
+      }
+
+      function initContactPickerButtons() {
+        if (!isContactPickerAvailable()) return;
+        document.querySelectorAll('.btn-contact-picker').forEach(btn => {
+          btn.style.display = 'inline-flex';
+        });
+      }
+
+      async function triggerContactPicker(targetInputId) {
+        if (!isContactPickerAvailable()) {
+          alert('Contact picker is not supported on this device/browser. Please type the 10-digit number.');
+          return;
+        }
+
+        try {
+          const props = ['tel'];
+          const contacts = await navigator.contacts.select(props, { multiple: false });
+          if (contacts && contacts.length > 0) {
+            const contact = contacts[0];
+            const rawTel = (contact.tel && contact.tel[0]) ? contact.tel[0] : '';
+            const cleanDigits = rawTel.replace(/\D/g, '').slice(-10);
+
+            if (cleanDigits.length === 10) {
+              const input = document.getElementById(targetInputId);
+              if (input) {
+                input.value = cleanDigits;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+            } else if (cleanDigits.length > 0) {
+              alert(`Selected contact number "${rawTel}" is not a valid 10-digit mobile number.`);
+            }
+          }
+        } catch (err) {
+          if (err.name !== 'TypeError' && err.name !== 'AbortError') {
+            console.warn('Contact picker error:', err);
+          }
+        }
+      }
+
       function renderForm(form) {
         const container = document.getElementById('formContainer');
 
@@ -598,7 +660,12 @@
               fieldsHtml += `
                 <div class="auth-section" style="margin-bottom: 1.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 1.25rem;">
                   <label for="input_mobno" style="font-weight: 700; color: var(--theme-color); display:block; margin-bottom:0.4rem;">Mobile Number *</label>
-                  <input type="tel" id="input_mobno" maxlength="10" autocomplete="off" placeholder="Enter your registered 10-digit mobile number" required style="width: 100%; height:42px; padding: 0 0.85rem; border: 1.5px solid #ced4da; border-radius: 6px; font-size: 1rem; font-weight:600; background-color: #fff; box-sizing:border-box;" />
+                  <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                    <input type="tel" id="input_mobno" maxlength="10" autocomplete="off" placeholder="Enter your registered 10-digit mobile number" required style="width: 100%; height:42px; padding: 0 2.2rem 0 0.85rem; border: 1.5px solid #ced4da; border-radius: 6px; font-size: 1rem; font-weight:600; background-color: #fff; box-sizing:border-box;" />
+                    <button type="button" class="btn-contact-picker" onclick="triggerContactPicker('input_mobno')" title="Pick from Phone Contacts" style="position: absolute; right: 6px; font-size: 1.15rem; padding: 4px 6px; z-index: 2;">
+                      <i class="fas fa-address-book"></i>
+                    </button>
+                  </div>
                   <div id="info_mobno" style="min-height: 22px; font-size: 0.88rem; margin-top: 0.5rem;"></div>
                 </div>
               `;
@@ -701,7 +768,12 @@
               <div id="mobInputWrapper">
                 <label for="input_mobno" style="font-size:0.85rem; font-weight:700; color:#204060; display:block; margin-bottom:0.4rem;">Mobile Number *</label>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                  <input type="tel" id="input_mobno" maxlength="10" placeholder="10-digit number" style="flex:1; height:44px; padding:0 0.85rem; border:1.5px solid #ced4da; border-radius:6px; font-size:1rem; font-weight:600; box-sizing:border-box;" />
+                  <div style="position: relative; display: flex; align-items: center; flex: 1;">
+                    <input type="tel" id="input_mobno" maxlength="10" placeholder="10-digit number" style="width: 100%; height:44px; padding:0 2.2rem 0 0.85rem; border:1.5px solid #ced4da; border-radius:6px; font-size:1rem; font-weight:600; box-sizing:border-box;" />
+                    <button type="button" class="btn-contact-picker" onclick="triggerContactPicker('input_mobno')" title="Pick from Phone Contacts" style="position: absolute; right: 6px; font-size: 1.15rem; padding: 4px 6px; z-index: 2;">
+                      <i class="fas fa-address-book"></i>
+                    </button>
+                  </div>
                   <button type="button" id="sendOtpBtn" class="submit-btn" style="width:auto; height:44px; padding:0 1.25rem; font-size:0.9rem; font-weight:600; white-space:nowrap; background-color:var(--theme-color); margin:0; border-radius:6px; display:inline-flex; align-items:center; justify-content:center;">Send OTP</button>
                 </div>
                 <div id="info_mobno" style="min-height:22px; font-size:0.85rem; margin-top:0.45rem;"></div>
@@ -748,6 +820,7 @@
 
         initStarRatings();
         evaluateLogic();
+        initContactPickerButtons();
       }
 
       const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -905,8 +978,11 @@
             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">' +
               '<span style="font-weight: 700; color: #204060; font-size: 0.85rem;"><i class="fas fa-user-check" style="color:#28a745;"></i> Mumukshu #' + (i + 1) + '</span>' +
             '</div>' +
-            '<div>' +
-              '<input type="tel" maxlength="10" class="guest-mobno-input" id="guest_mobno_' + fieldId + '_' + i + '" placeholder="Enter 10-digit Mobile Number" value="' + escapeAttr(existing.mobno || '') + '" oninput="handleGuestMobileInput(\'' + fieldId + '\', ' + i + ', this)" style="width: 100%; box-sizing: border-box; padding: 0.45rem 0.65rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;" />' +
+            '<div style="position: relative; display: flex; align-items: center; width: 100%;">' +
+              '<input type="tel" maxlength="10" class="guest-mobno-input" id="guest_mobno_' + fieldId + '_' + i + '" placeholder="Enter 10-digit Mobile Number" value="' + escapeAttr(existing.mobno || '') + '" oninput="handleGuestMobileInput(\'' + fieldId + '\', ' + i + ', this)" style="width: 100%; box-sizing: border-box; padding: 0.45rem 2.2rem 0.45rem 0.65rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;" />' +
+              '<button type="button" class="btn-contact-picker" onclick="triggerContactPicker(\'guest_mobno_' + fieldId + '_' + i + '\')" title="Pick from Phone Contacts" style="position: absolute; right: 6px; font-size: 1.05rem; padding: 4px 6px; z-index: 2;">' +
+                '<i class="fas fa-address-book"></i>' +
+              '</button>' +
             '</div>' +
             '<div id="guest_status_' + fieldId + '_' + i + '" style="margin-top: 0.3rem;">' +
               (existing.name ? '<span style="color:#28a745; font-weight:700; font-size:0.85rem;"><i class="fas fa-check-circle"></i> ' + escapeHtml(existing.name) + ' (' + escapeHtml(existing.center || 'Member') + ') - Confirmed Booking</span>' : '') +
@@ -914,6 +990,7 @@
           '</div>';
         }
         container.innerHTML = html;
+        initContactPickerButtons();
       }
 
 
@@ -1789,6 +1866,113 @@
         });
       }
 
+      function normalizeDateLabelToIso(label, defaultYear = (window.currentPackageInfo?.start_date ? window.currentPackageInfo.start_date.substring(0, 4) : new Date().getFullYear())) {
+        if (!label) return null;
+        const cleaned = String(label).trim();
+        const match = cleaned.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)/i);
+        if (match) {
+          const day = parseInt(match[1], 10);
+          const monthStr = match[2].toLowerCase();
+          const months = {
+            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+          };
+          for (const [mPrefix, mNum] of Object.entries(months)) {
+            if (monthStr.startsWith(mPrefix)) {
+              return `${defaultYear}-${mNum}-${String(day).padStart(2, '0')}`;
+            }
+          }
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+          return cleaned;
+        }
+        return null;
+      }
+
+      function applyPackageDateFilter(startDate, endDate) {
+        if (!startDate || !endDate) return;
+        const year = startDate.substring(0, 4);
+        const rows = document.querySelectorAll('table.grid-table tbody tr');
+        rows.forEach(tr => {
+          const label = tr.getAttribute('data-row-label') || tr.querySelector('td:first-child')?.innerText?.trim();
+          const isoDate = normalizeDateLabelToIso(label, year);
+          if (isoDate) {
+            if (isoDate >= startDate && isoDate <= endDate) {
+              tr.style.display = '';
+            } else {
+              tr.style.display = 'none';
+              tr.querySelectorAll('input').forEach(inp => {
+                if (inp.type === 'radio' || inp.type === 'checkbox') inp.checked = false;
+                if (inp.type === 'number') inp.value = '0';
+              });
+            }
+          }
+        });
+      }
+
+      function restoreAllMatrixRows() {
+        const rows = document.querySelectorAll('table.grid-table tbody tr');
+        rows.forEach(tr => {
+          tr.style.display = '';
+        });
+      }
+
+      function evaluatePaarnaEligibility(tappText, isServerEligible) {
+        if (isServerEligible === true) return true;
+        if (!tappText || typeof tappText !== 'string') return false;
+
+        const clean = tappText.toLowerCase().trim();
+        if (!clean) return false;
+
+        // Keywords for guaranteed eligibility
+        if (clean.includes('athai') || clean.includes('tevle') || clean.includes('8 upvaas') || clean.includes('8 upvas') || clean.includes('8 ekasna') || clean.includes('8 beasna') || clean.includes('8 biyasna') || clean.includes('8 aayambil') || clean.includes('8 liquid') || clean.includes('8 only liquid') || clean.includes('8 ras tyaag')) {
+          return true;
+        }
+
+        // Sum numbers in text: e.g. "6 upvaas, 2 ekasna" -> 6 + 2 = 8
+        const nums = clean.match(/\d+/g);
+        if (nums && nums.length > 0) {
+          const sum = nums.reduce((acc, n) => acc + parseInt(n, 10), 0);
+          if (sum >= 8) return true;
+        }
+
+        return false;
+      }
+
+      function updatePaarnaEligibilityBadge(fieldId, tappVal, isServerEligible) {
+        const isPaarnaForm = formData && ((formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna'));
+        if (!isPaarnaForm) return;
+
+        const tappEl = document.getElementById(`input_${fieldId}`);
+        if (!tappEl) return;
+
+        let badgeEl = document.getElementById('paarna_eligibility_badge');
+        if (!badgeEl) {
+          badgeEl = document.createElement('div');
+          badgeEl.id = 'paarna_eligibility_badge';
+          tappEl.parentElement.appendChild(badgeEl);
+        }
+
+        const isEligible = evaluatePaarnaEligibility(tappVal, isServerEligible);
+        window.isPaarnaEligible = isEligible;
+
+        if (isEligible) {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.45rem;">
+              <i class="fas fa-check-circle" style="font-size:1.05rem; color:#28a745;"></i>
+              <span>Eligible for Paarna at Research Centre (Confirmed)</span>
+            </div>
+          `;
+        } else {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#fff8e6; border:1px solid #ffe8a1; border-radius:6px; color:#856404; font-size:0.85rem; font-weight:600; display:flex; align-items:flex-start; gap:0.45rem;">
+              <i class="fas fa-info-circle" style="font-size:1.05rem; color:#f0ad4e; margin-top:2px;"></i>
+              <span>Note: Your Paarna request will be reviewed and confirmed by the seva team.</span>
+            </div>
+          `;
+        }
+      }
+
       function prefillPreviousResponse(prevData) {
         const prevResponses = prevData.responses || {};
         const submittedDate = prevData.submittedAt ? new Date(prevData.submittedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -1850,6 +2034,9 @@
           if (prevData.success && prevData.data) {
             window.previousResponseId = prevData.data.responseId;
             prefillPreviousResponse(prevData.data);
+                  if (prevData.data && prevData.data.package_info) {
+                    applyPackageDateFilter(prevData.data.package_info.start_date, prevData.data.package_info.end_date);
+                  }
           } else {
             window.previousResponseId = null;
             resetGridInputs();
@@ -1914,7 +2101,19 @@
           if (data.success) {
             $(inputEl).css('border-color', '#28a745');
             if (infoEl) {
-              infoEl.innerHTML = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
+              let regHtml = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
+              if (data.data.package_info) {
+                const pkg = data.data.package_info;
+                const fmtStart = (pkg.start_date || '').split('-').reverse().join('/');
+                const fmtEnd = (pkg.end_date || '').split('-').reverse().join('/');
+                regHtml += `
+                  <div id="package_info_badge" style="margin-top:0.5rem; padding:0.45rem 0.8rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:0.45rem;">
+                    <i class="fas fa-box-open" style="color:#28a745; font-size:1rem;"></i>
+                    <span>Registered for: ${escapeHtml(pkg.name)} (${fmtStart} to ${fmtEnd})</span>
+                  </div>
+                `;
+              }
+              infoEl.innerHTML = regHtml;
             }
 
             const deptField = (formData.fields || []).find(f => f.vendorRole === 'department' || f.id === 'name_of_department' || (f.label || '').toLowerCase().includes('department'));
@@ -1954,61 +2153,8 @@
             if (tappField && data.data.tapp_details && infoEl) {
               infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-utensils"></i> Tapascharya: ${escapeHtml(data.data.tapp_details)}</div>`;
             }
-      function evaluatePaarnaEligibility(tappText, isServerEligible) {
-        if (isServerEligible === true) return true;
-        if (!tappText || typeof tappText !== 'string') return false;
 
-        const clean = tappText.toLowerCase().trim();
-        if (!clean) return false;
 
-        // Keywords for guaranteed eligibility
-        if (clean.includes('athai') || clean.includes('tevle') || clean.includes('8 upvaas') || clean.includes('8 upvas') || clean.includes('8 ekasna') || clean.includes('8 beasna') || clean.includes('8 biyasna') || clean.includes('8 aayambil') || clean.includes('8 liquid') || clean.includes('8 only liquid') || clean.includes('8 ras tyaag')) {
-          return true;
-        }
-
-        // Sum numbers in text: e.g. "6 upvaas, 2 ekasna" -> 6 + 2 = 8
-        const nums = clean.match(/\d+/g);
-        if (nums && nums.length > 0) {
-          const sum = nums.reduce((acc, n) => acc + parseInt(n, 10), 0);
-          if (sum >= 8) return true;
-        }
-
-        return false;
-      }
-
-      function updatePaarnaEligibilityBadge(fieldId, tappVal, isServerEligible) {
-        const isPaarnaForm = formData && ((formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna'));
-        if (!isPaarnaForm) return;
-
-        const tappEl = document.getElementById(`input_${fieldId}`);
-        if (!tappEl) return;
-
-        let badgeEl = document.getElementById('paarna_eligibility_badge');
-        if (!badgeEl) {
-          badgeEl = document.createElement('div');
-          badgeEl.id = 'paarna_eligibility_badge';
-          tappEl.parentElement.appendChild(badgeEl);
-        }
-
-        const isEligible = evaluatePaarnaEligibility(tappVal, isServerEligible);
-        window.isPaarnaEligible = isEligible;
-
-        if (isEligible) {
-          badgeEl.innerHTML = `
-            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.45rem;">
-              <i class="fas fa-check-circle" style="font-size:1.05rem; color:#28a745;"></i>
-              <span>Eligible for Paarna at Research Centre (Confirmed)</span>
-            </div>
-          `;
-        } else {
-          badgeEl.innerHTML = `
-            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#fff8e6; border:1px solid #ffe8a1; border-radius:6px; color:#856404; font-size:0.85rem; font-weight:600; display:flex; align-items:flex-start; gap:0.45rem;">
-              <i class="fas fa-info-circle" style="font-size:1.05rem; color:#f0ad4e; margin-top:2px;"></i>
-              <span>Note: Your Paarna request will be reviewed and confirmed by the seva team.</span>
-            </div>
-          `;
-        }
-      }
 
 
             // Auto-populate Name field if present in form
@@ -2038,6 +2184,30 @@
                 resCountEl.value = data.data.confirmed_residents_count !== undefined ? data.data.confirmed_residents_count : 1;
                 resCountEl.readOnly = true;
                 resCountEl.style.backgroundColor = '#e9ecef';
+
+                // Display names of confirmed flat owners attending
+                let previewEl = document.getElementById('attending_residents_preview');
+                if (!previewEl) {
+                  previewEl = document.createElement('div');
+                  previewEl.id = 'attending_residents_preview';
+                  resCountEl.parentElement.appendChild(previewEl);
+                }
+
+                const residents = data.data.confirmed_residents || [];
+                if (residents.length > 0) {
+                  const pills = residents.map(r => {
+                    const nameStr = (typeof r === 'object' && r) ? r.name : r;
+                    return `<span style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.84rem; font-weight:600; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:3px 9px; border-radius:6px;"><i class="fas fa-user-check" style="color:#0284c7; font-size:0.75rem;"></i> ${escapeHtml(nameStr)}</span>`;
+                  }).join(' ');
+                  previewEl.innerHTML = `
+                    <div style="margin-top:0.45rem;">
+                      <div style="font-size:0.78rem; font-weight:700; color:#475569; margin-bottom:0.25rem; text-transform:uppercase; letter-spacing:0.5px;">Confirmed Attending:</div>
+                      <div style="display:flex; flex-wrap:wrap; gap:6px;">${pills}</div>
+                    </div>
+                  `;
+                } else {
+                  previewEl.innerHTML = `<div style="margin-top:0.35rem; font-size:0.82rem; color:#64748b; font-style:italic;">No confirmed registrations found for flat residents yet.</div>`;
+                }
               }
               if (infoEl) {
                 infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-building"></i> Flat No: ${escapeHtml(data.data.flatno)} • ${data.data.confirmed_residents_count} Confirmed Resident(s) Attending</div>`;
@@ -2054,6 +2224,16 @@
               guestCapEl.addEventListener('change', (e) => {
                 updateGuestListInputs(e.target.value, 'guests_list');
               });
+            }
+
+            // Handle Package Info & Option A Clean Filtering
+            if (data.data.package_info) {
+              window.currentPackageInfo = data.data.package_info;
+              const pkg = data.data.package_info;
+              applyPackageDateFilter(pkg.start_date, pkg.end_date);
+            } else {
+              window.currentPackageInfo = null;
+              restoreAllMatrixRows();
             }
 
             // Fetch previous response to pre-fill form and disable past dates (ONLY once per unique auth input, not on submit re-validation)
@@ -2194,7 +2374,14 @@
         } else if (field.type === 'email') {
           inputHtml = `<input type="email" id="${inputId}" placeholder="Your email address" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
         } else if (field.type === 'phone') {
-          inputHtml = `<input type="tel" id="${inputId}" placeholder="10-digit mobile number" maxlength="10" ${requiredAttr} style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />`;
+          inputHtml = `
+            <div style="position: relative; display: flex; align-items: center; width: 100%;">
+              <input type="tel" id="${inputId}" placeholder="10-digit mobile number" maxlength="10" ${requiredAttr} style="width: 100%; box-sizing: border-box; padding: 0.65rem 2.4rem 0.65rem 0.85rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; background-color: #fafafa;" />
+              <button type="button" class="btn-contact-picker" onclick="triggerContactPicker('${inputId}')" title="Pick from Phone Contacts" style="position: absolute; right: 8px; font-size: 1.15rem; padding: 4px 6px; z-index: 2;">
+                <i class="fas fa-address-book"></i>
+              </button>
+            </div>
+          `;
         } else if (field.type === 'number') {
           const minAttr = field.min !== undefined && field.min !== null ? `min="${field.min}"` : '';
           const maxAttr = field.max !== undefined && field.max !== null ? `max="${field.max}"` : '';
@@ -2303,7 +2490,7 @@
 
             rows.forEach((r, ri) => {
               tableHtml += `
-                <tr>
+                <tr data-row-label="${escapeAttr(r)}">
                   <td>${escapeHtml(r)}</td>
                   ${cols.map((c, ci) => `
                     <td>

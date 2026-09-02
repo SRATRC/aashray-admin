@@ -517,7 +517,7 @@
                     <textarea id="formDescription" class="form-control" rows="2" placeholder="Brief description of this form..."></textarea>
                   </div>
                   <div>
-                    <label for="formDept">Department *</label>
+                    <label for="formDept">Primary Department *</label>
                     <select id="formDept" class="form-control" onchange="handleDeptChange()">
                       <option value="">-- Select Department --</option>
                       <option value="accounts">Accounts</option>
@@ -532,11 +532,23 @@
                       <option value="smilestone">Smilestone</option>
                     </select>
                   </div>
-                  <div id="deptEventContainer" style="display:none;">
-                    <label id="deptEventLabel" for="deptEventSelect" style="font-weight:700; color:#204060;">Event *</label>
-                    <select id="deptEventSelect" class="form-control" style="font-weight:600; color:#204060;">
-                      <option value="">-- Select Event --</option>
-                    </select>
+                  <div>
+                    <label style="font-weight:600; color:#204060;">Additional Department Access <span style="font-size:0.8rem; font-weight:normal; color:#6c757d;">(Optional)</span></label>
+                    <div id="secondaryDeptsContainer" style="display:flex; flex-wrap:wrap; gap:0.45rem; padding:0.4rem 0.6rem; border:1px solid #ced4da; border-radius:6px; background:#f8fafc; min-height:38px; align-items:center;">
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="food" style="accent-color:#204060;"> Food</label>
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="utsav" style="accent-color:#204060;"> Utsav</label>
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="office" style="accent-color:#204060;"> Office</label>
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="room" style="accent-color:#204060;"> Room</label>
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="adhyayan" style="accent-color:#204060;"> Adhyayan</label>
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="travel" style="accent-color:#204060;"> Travel</label>
+                      <label style="margin:0; font-size:0.82rem; font-weight:600; color:#334155; display:inline-flex; align-items:center; gap:0.3rem; cursor:pointer;"><input type="checkbox" name="secondary_dept" value="wifi" style="accent-color:#204060;"> WiFi</label>
+                    </div>
+                  </div>
+                  <div id="deptEventContainer" style="display:none; grid-column: 1 / -1;">
+                    <label id="deptEventLabel" style="font-weight:700; color:#204060;"><i class="fas fa-calendar-alt"></i> Linked Events * <span style="font-size:0.8rem; font-weight:normal; color:#6c757d;">(You can select multiple events e.g. Paryushan + Samvatsari)</span></label>
+                    <div id="deptEventList" style="max-height:160px; overflow-y:auto; border:1px solid #ced4da; border-radius:6px; padding:8px 12px; background:#fff; display:flex; flex-direction:column; gap:6px;">
+                      <span style="color:#6c757d; font-size:0.85rem;">Select a department above to load events...</span>
+                    </div>
                   </div>
                   <div>
                     <label for="formType">Access Type</label>
@@ -1225,30 +1237,31 @@
       }
 
       function getCurrentEventDates() {
-        const select = document.getElementById('deptEventSelect');
-        if (!select || !select.value) {
+        const checkedBoxes = Array.from(document.querySelectorAll('.dept-event-cb:checked'));
+        if (checkedBoxes.length === 0) {
           const dept = document.getElementById('formDept')?.value;
           if (dept === 'utsav' || dept === 'adhyayan') {
-            alert('Please select an event from the Event dropdown in Form Settings first.');
+            alert('Please select at least one event from the Event checklist in Form Settings first.');
           } else {
             alert('Please set Department to Utsav or Adhyayan and select an event in Form Settings first.');
           }
           return null;
         }
 
-        const selectedOpt = select.options[select.selectedIndex];
-        let start = selectedOpt ? selectedOpt.getAttribute('data-start') : null;
-        let end = selectedOpt ? selectedOpt.getAttribute('data-end') : null;
-
-        if (!start || !end) {
-          if (window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
-            const ev = window.currentDeptEvents.find(e => String(e.id) === String(select.value));
+        let start = null, end = null;
+        checkedBoxes.forEach(cb => {
+          let s = cb.getAttribute('data-start');
+          let e = cb.getAttribute('data-end');
+          if ((!s || !e) && window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
+            const ev = window.currentDeptEvents.find(item => String(item.id) === String(cb.value));
             if (ev) {
-              start = ev.start_date;
-              end = ev.end_date;
+              s = ev.start_date;
+              e = ev.end_date;
             }
           }
-        }
+          if (s && (!start || s < start)) start = s;
+          if (e && (!end || e > end)) end = e;
+        });
 
         if (!start || !end) {
           alert('Could not find start and end dates for the selected event.');
@@ -2176,24 +2189,28 @@
         const requireOtp = document.getElementById('requireOtp').checked;
                 const formCategory = document.getElementById('formCategory').value;
 
-        const deptEventSelect = document.getElementById('deptEventSelect');
         let event_id = null;
+        let event_ids = [];
         let event_name = null;
         let event_type = null;
         if (dept_name === 'utsav' || dept_name === 'adhyayan') {
-          if (deptEventSelect && deptEventSelect.value) {
-            event_id = parseInt(deptEventSelect.value, 10);
-            const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
-            event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
-            event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+          const checkedEventCbs = Array.from(document.querySelectorAll('.dept-event-cb:checked'));
+          event_ids = checkedEventCbs.map(cb => parseInt(cb.value, 10));
+          if (checkedEventCbs.length > 0) {
+            const firstCb = checkedEventCbs[0];
+            event_id = parseInt(firstCb.value, 10);
+            event_name = firstCb.getAttribute('data-name');
+            event_type = firstCb.getAttribute('data-type') || dept_name;
           }
         }
 
+        const secondary_depts = Array.from(document.querySelectorAll('input[name="secondary_dept"]:checked')).map(cb => cb.value);
+
         const body = { 
-          title, description, dept_name, fields, isPublic, authType, slug, 
+          title, description, dept_name, secondary_depts, fields, isPublic, authType, slug, 
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
           expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
-          event_id, event_name, event_type,
+          event_id, event_ids, event_name, event_type,
           otpAllowlist: window.stagedOtpAllowlist || []
         };
 
@@ -2307,16 +2324,18 @@
           const requireOtp = document.getElementById('requireOtp')?.checked || false;
           const formCategory = document.getElementById('formCategory')?.value || 'generic';
 
-          const deptEventSelect = document.getElementById('deptEventSelect');
           let event_id = null;
+          let event_ids = [];
           let event_name = null;
           let event_type = null;
           if (dept_name === 'utsav' || dept_name === 'adhyayan') {
-            if (deptEventSelect && deptEventSelect.value) {
-              event_id = parseInt(deptEventSelect.value, 10);
-              const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
-              event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
-              event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+            const checkedBoxes = Array.from(document.querySelectorAll('.dept-event-cb:checked'));
+            if (checkedBoxes.length > 0) {
+              event_ids = checkedBoxes.map(cb => parseInt(cb.value, 10)).filter(n => !isNaN(n));
+              event_id = event_ids.length > 0 ? event_ids[0] : null;
+              const primaryBox = checkedBoxes[0];
+              event_name = primaryBox ? primaryBox.getAttribute('data-name') : null;
+              event_type = primaryBox ? primaryBox.getAttribute('data-type') : dept_name;
             }
           }
 
@@ -2325,7 +2344,7 @@
             title, description, dept_name, fields, isPublic, authType, slug, 
             limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
             expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
-            event_id, event_name, event_type
+            event_id, event_ids, event_name, event_type
           };
           sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
           window.open('view.html?preview=true' + (editId ? '&id=' + editId : ''), '_blank');
@@ -2747,20 +2766,25 @@
       }
 
       
-      async function handleDeptChange(selectedEventId = null) {
+      async function handleDeptChange(selectedEventIds = null) {
         const deptEl = document.getElementById('formDept');
         const dept = deptEl ? deptEl.value : '';
         const container = document.getElementById('deptEventContainer');
         const label = document.getElementById('deptEventLabel');
-        const select = document.getElementById('deptEventSelect');
+        const listEl = document.getElementById('deptEventList');
 
-        if (!container || !select) return;
+        if (!container || !listEl) return;
+
+        let targetIds = [];
+        if (selectedEventIds) {
+          targetIds = Array.isArray(selectedEventIds) ? selectedEventIds.map(String) : [String(selectedEventIds)];
+        }
 
         if (dept === 'utsav' || dept === 'adhyayan') {
           label.innerHTML = dept === 'utsav' 
-            ? '<i class="fas fa-calendar-alt"></i> Utsav Event (Ongoing & Upcoming) *' 
-            : '<i class="fas fa-book-reader"></i> Adhyayan Event (Ongoing & Upcoming) *';
-          select.innerHTML = '<option value="">Loading events from database...</option>';
+            ? '<i class="fas fa-calendar-alt"></i> Linked Utsav Events * <span style="font-size:0.8rem; font-weight:normal; color:#6c757d;">(Check all relevant events, e.g. Paryushan + Samvatsari)</span>' 
+            : '<i class="fas fa-book-reader"></i> Linked Adhyayan Events * <span style="font-size:0.8rem; font-weight:normal; color:#6c757d;">(Check all relevant events)</span>';
+          listEl.innerHTML = '<span style="color:#6c757d; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading events from database...</span>';
           container.style.display = 'block';
 
           try {
@@ -2770,25 +2794,26 @@
             const data = await res.json();
             if (data.success && data.data && data.data.length > 0) {
               window.currentDeptEvents = data.data;
-              select.innerHTML = `<option value="">-- Select ${dept === 'utsav' ? 'Utsav' : 'Adhyayan'} Event --</option>` +
-                data.data.map(ev => {
-                  const dates = ev.start_date && ev.end_date ? ` (${ev.start_date} to ${ev.end_date})` : '';
-                  return `<option value="${ev.id}" data-name="${escapeAttr(ev.name)}" data-start="${escapeAttr(ev.start_date || '')}" data-end="${escapeAttr(ev.end_date || '')}" data-type="${escapeAttr(data.eventType || dept)}">${escapeHtml(ev.name)}${dates}</option>`;
-                }).join('');
-
-              if (selectedEventId) {
-                select.value = String(selectedEventId);
-              }
+              listEl.innerHTML = data.data.map(ev => {
+                const dates = ev.start_date && ev.end_date ? ` (${ev.start_date} to ${ev.end_date})` : '';
+                const isChecked = targetIds.includes(String(ev.id));
+                return `
+                  <label style="margin:0; font-size:0.88rem; font-weight:600; color:#204060; display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:3px 0;">
+                    <input type="checkbox" class="dept-event-cb" value="${ev.id}" data-name="${escapeAttr(ev.name)}" data-start="${escapeAttr(ev.start_date || '')}" data-end="${escapeAttr(ev.end_date || '')}" data-type="${escapeAttr(data.eventType || dept)}" style="width:16px; height:16px; accent-color:#204060;" ${isChecked ? 'checked' : ''}>
+                    <span>${escapeHtml(ev.name)} <span style="font-weight:normal; color:#6c757d;">${dates}</span></span>
+                  </label>
+                `;
+              }).join('');
             } else {
-              select.innerHTML = `<option value="">No ongoing or upcoming ${dept} events found</option>`;
+              listEl.innerHTML = `<span style="color:#6c757d; font-size:0.85rem;">No ongoing or upcoming ${dept} events found</span>`;
             }
           } catch (err) {
             console.error('Error fetching department events:', err);
-            select.innerHTML = `<option value="">Error loading events</option>`;
+            listEl.innerHTML = `<span style="color:#dc3545; font-size:0.85rem;">Error loading events</span>`;
           }
         } else {
           container.style.display = 'none';
-          select.innerHTML = '<option value="">-- Select Event --</option>';
+          listEl.innerHTML = '';
         }
       }
 
@@ -2809,8 +2834,16 @@
         document.getElementById('formTitle').value = form.title || '';
         document.getElementById('formDescription').value = form.description || '';
         document.getElementById('formDept').value = form.dept_name || '';
+
+        // Pre-check secondary depts
+        const secDepts = Array.isArray(form.secondary_depts) ? form.secondary_depts : [];
+        document.querySelectorAll('input[name="secondary_dept"]').forEach(cb => {
+          cb.checked = secDepts.includes(cb.value);
+        });
+
         if (form.dept_name === 'utsav' || form.dept_name === 'adhyayan') {
-          handleDeptChange(form.event_id);
+          const evIds = (Array.isArray(form.event_ids) && form.event_ids.length > 0) ? form.event_ids : (form.event_id ? [form.event_id] : []);
+          handleDeptChange(evIds);
         } else {
           const evtCont = document.getElementById('deptEventContainer');
           if (evtCont) evtCont.style.display = 'none';
