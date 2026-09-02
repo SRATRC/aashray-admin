@@ -1237,7 +1237,7 @@
       }
 
       function getCurrentEventDates() {
-        const checkedBoxes = Array.from(document.querySelectorAll('#eventSelection input[type="checkbox"]:checked'));
+        const checkedBoxes = Array.from(document.querySelectorAll('.dept-event-cb:checked'));
         if (checkedBoxes.length === 0) {
           const dept = document.getElementById('formDept')?.value;
           if (dept === 'utsav' || dept === 'adhyayan') {
@@ -2328,7 +2328,7 @@
           let event_name = null;
           let event_type = null;
           if (dept_name === 'utsav' || dept_name === 'adhyayan') {
-            const checkedBoxes = Array.from(document.querySelectorAll('#eventSelection input[type="checkbox"]:checked'));
+            const checkedBoxes = Array.from(document.querySelectorAll('.dept-event-cb:checked'));
             if (checkedBoxes.length > 0) {
               event_ids = checkedBoxes.map(cb => parseInt(cb.value, 10)).filter(n => !isNaN(n));
               event_id = event_ids.length > 0 ? event_ids[0] : null;

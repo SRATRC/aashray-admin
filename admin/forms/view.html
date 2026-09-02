@@ -2191,9 +2191,10 @@
 
                 const residents = data.data.confirmed_residents || [];
                 if (residents.length > 0) {
-                  const pills = residents.map(r => 
-                    `<span style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.84rem; font-weight:600; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:3px 9px; border-radius:6px;"><i class="fas fa-user-check" style="color:#0284c7; font-size:0.75rem;"></i> ${escapeHtml(r.name)}</span>`
-                  ).join(' ');
+                  const pills = residents.map(r => {
+                    const nameStr = (typeof r === 'object' && r) ? r.name : r;
+                    return `<span style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.84rem; font-weight:600; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:3px 9px; border-radius:6px;"><i class="fas fa-user-check" style="color:#0284c7; font-size:0.75rem;"></i> ${escapeHtml(nameStr)}</span>`;
+                  }).join(' ');
                   previewEl.innerHTML = `
                     <div style="margin-top:0.45rem;">
                       <div style="font-size:0.78rem; font-weight:700; color:#475569; margin-bottom:0.25rem; text-transform:uppercase; letter-spacing:0.5px;">Confirmed Attending:</div>
