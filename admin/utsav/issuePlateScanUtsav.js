@@ -267,8 +267,9 @@ document.addEventListener('DOMContentLoaded', function () {
     qrStatus.className = 'success-status';
     if (data.auto_checkin && data.auto_checkin.performed) {
       const roomStr = data.auto_checkin.roomno ? ` (Room: ${data.auto_checkin.roomno})` : '';
-      qrStatus.innerText = `✅ Plate issued to ${data.issuedto} • Checked in for ${data.auto_checkin.utsav_name}!${roomStr}`;
-      showMessage(`Plate issued to ${data.issuedto}. Auto checked in for ${data.auto_checkin.utsav_name}!${roomStr}`, 'success');
+      const utsavNameStr = data.auto_checkin.utsav_name || 'the event';
+      qrStatus.innerText = `✅ Plate issued to ${data.issuedto} • Checked in for ${utsavNameStr}!${roomStr}`;
+      showMessage(`Plate issued to ${data.issuedto}. Auto checked in for ${utsavNameStr}!${roomStr}`, 'success');
     } else {
       qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
       showMessage(data.message || 'Plate issued successfully.', 'success');

@@ -170,90 +170,78 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     highteaReportTable.innerHTML = highteaRows;
 
-    // ── TAPASCHARYA (TAPP) SUMMARY & DAILY BREAKDOWN ──
-    const tappSummarySection = document.getElementById('tappSummarySection');
-    const tappDailyTableSection = document.getElementById('tappDailyTableSection');
-    const tappReportTable = document.getElementById('tappReportTable');
+    // ── TAPASCHARYA (TAPP) SUMMARY BUTTON & MODAL POPUP ──
+    const btnTappSummary = document.getElementById('btnTappSummary');
+    const tappModal = document.getElementById('tappModal');
+    const tappModalTableBody = document.getElementById('tappModalTableBody');
+    const tappEventDatesSubtitle = document.getElementById('tappEventDatesSubtitle');
+    const downloadTappCSVBtn = document.getElementById('downloadTappCSVBtn');
 
-    let totalUpvaas = 0;
-    let totalAayambil = 0;
-    let totalAayambilDirect = 0;
-    let totalRasTyaag = 0;
-    let totalEkasna = 0;
-    let totalBiyasna = 0;
-    let totalLiquid = 0;
-    let totalRegular = 0;
-    let hasTappData = false;
-
-    let tappRowsHtml = '';
-    data.data.forEach((report) => {
+    // Filter only dates that actually have Tapascharya entries
+    const tappDatesData = data.data.filter((report) => {
       const t = report.tapp || {};
       const u = t.upvaas || 0;
       const a = t.totalAayambil || report.lunch_aayambil || 0;
-      const aDirect = t.aayambil || report.lunch_aayambil_direct || 0;
-      const aRas = t.rasTyaag || report.lunch_ras_tyaag || 0;
       const e = t.ekasna || 0;
       const b = t.biyasna || 0;
       const l = t.onlyLiquid || 0;
-      const r = t.regular || report.lunch_regular || 0;
-
-      if (u > 0 || a > 0 || e > 0 || b > 0 || l > 0) {
-        hasTappData = true;
-      }
-
-      totalUpvaas += u;
-      totalAayambil += a;
-      totalAayambilDirect += aDirect;
-      totalRasTyaag += aRas;
-      totalEkasna += e;
-      totalBiyasna += b;
-      totalLiquid += l;
-      totalRegular += r;
-
-      tappRowsHtml += `
-        <tr>
-          <td><center>${formatDate(report.date)}</center></td>
-          <td><center>${u > 0 ? `<b style="color:#b91c1c;">${u}</b>` : '0'}</center></td>
-          <td><center>${a > 0 ? `<b style="color:#15803d;">${a}</b> <span style="font-size:0.8em; color:#16a34a;">(${aDirect} Direct + ${aRas} Ras)</span>` : '0'}</center></td>
-          <td><center>${e > 0 ? `<b style="color:#0369a1;">${e}</b>` : '0'}</center></td>
-          <td><center>${b > 0 ? `<b style="color:#4338ca;">${b}</b>` : '0'}</center></td>
-          <td><center>${l > 0 ? `<b style="color:#7c3aed;">${l}</b>` : '0'}</center></td>
-          <td><center>${r > 0 ? `<b>${r}</b>` : '0'}</center></td>
-        </tr>
-      `;
+      return u > 0 || a > 0 || e > 0 || b > 0 || l > 0;
     });
 
-    if (hasTappData) {
-      if (tappSummarySection) {
-        tappSummarySection.style.display = 'block';
-        document.getElementById('tappDateRangeBadge').textContent = `${formatDate(start_date)} to ${formatDate(end_date)}`;
-        document.getElementById('cardTappUpvaas').textContent = totalUpvaas;
-        document.getElementById('cardTappAayambil').textContent = totalAayambil;
-        document.getElementById('cardTappAayambilSub').textContent = `(${totalAayambilDirect} Direct + ${totalRasTyaag} Ras)`;
-        document.getElementById('cardTappEkasna').textContent = totalEkasna;
-        document.getElementById('cardTappBiyasna').textContent = totalBiyasna;
-        document.getElementById('cardTappLiquid').textContent = totalLiquid;
-        document.getElementById('cardTappRegular').textContent = totalRegular;
-      }
+    if (tappDatesData.length > 0 && btnTappSummary) {
+      btnTappSummary.style.display = 'inline-block';
 
-      if (tappDailyTableSection && tappReportTable) {
-        tappDailyTableSection.style.display = 'block';
-        tappRowsHtml += `
-          <tr style="background:#f8fafc; font-weight:bold;">
-            <td><center><b>TOTAL</b></center></td>
-            <td><center><b style="color:#b91c1c;">${totalUpvaas}</b></center></td>
-            <td><center><b style="color:#15803d;">${totalAayambil}</b> <span style="font-size:0.8em; color:#16a34a;">(${totalAayambilDirect} Direct + ${totalRasTyaag} Ras)</span></center></td>
-            <td><center><b style="color:#0369a1;">${totalEkasna}</b></center></td>
-            <td><center><b style="color:#4338ca;">${totalBiyasna}</b></center></td>
-            <td><center><b style="color:#7c3aed;">${totalLiquid}</b></center></td>
-            <td><center><b>${totalRegular}</b></center></td>
+      // Event date range (only dates that have Tapp events)
+      const firstEventDate = tappDatesData[0].date;
+      const lastEventDate = tappDatesData[tappDatesData.length - 1].date;
+      tappEventDatesSubtitle.textContent = `Event Dates: ${formatDate(firstEventDate)} to ${formatDate(lastEventDate)}`;
+
+      let tappModalRows = '';
+      tappDatesData.forEach((report) => {
+        const t = report.tapp || {};
+        const u = t.upvaas || 0;
+        const a = t.totalAayambil || report.lunch_aayambil || 0;
+        const aDirect = t.aayambil || report.lunch_aayambil_direct || 0;
+        const aRas = t.rasTyaag || report.lunch_ras_tyaag || 0;
+        const e = t.ekasna || 0;
+        const b = t.biyasna || 0;
+        const l = t.onlyLiquid || 0;
+        const r = t.regular || report.lunch_regular || 0;
+
+        tappModalRows += `
+          <tr>
+            <td><center>${formatDate(report.date)}</center></td>
+            <td><center>${u}</center></td>
+            <td><center>${a > 0 ? `<b>${a}</b> <span style="font-size:0.85em; color:#64748b;">(${aDirect} Dir + ${aRas} Ras)</span>` : '0'}</center></td>
+            <td><center>${e}</center></td>
+            <td><center>${b}</center></td>
+            <td><center>${l}</center></td>
+            <td><center>${r}</center></td>
           </tr>
         `;
-        tappReportTable.innerHTML = tappRowsHtml;
+      });
+      tappModalTableBody.innerHTML = tappModalRows;
+
+      btnTappSummary.onclick = () => {
+        tappModal.style.display = 'flex';
+      };
+
+      if (downloadTappCSVBtn) {
+        downloadTappCSVBtn.onclick = () => {
+          downloadTappReportCSV(tappDatesData, firstEventDate, lastEventDate);
+        };
       }
-    } else {
-      if (tappSummarySection) tappSummarySection.style.display = 'none';
-      if (tappDailyTableSection) tappDailyTableSection.style.display = 'none';
+
+      const closeModal = () => {
+        tappModal.style.display = 'none';
+      };
+      document.getElementById('closeTappModal').onclick = closeModal;
+      document.getElementById('closeTappModalBtn').onclick = closeModal;
+      window.onclick = (event) => {
+        if (event.target === tappModal) closeModal();
+      };
+    } else if (btnTappSummary) {
+      btnTappSummary.style.display = 'none';
     }
 
   } catch (err) {
@@ -343,7 +331,15 @@ function downloadCSV() {
   });
 
   // Tapascharya (Tapp) Section in CSV
-  const hasTapp = _reportData.some(r => r.tapp && (r.tapp.upvaas > 0 || r.tapp.totalAayambil > 0 || r.tapp.ekasna > 0 || r.tapp.biyasna > 0));
+  const hasTapp = _reportData.some(r => {
+    const t = r.tapp || {};
+    const u = t.upvaas || 0;
+    const a = t.totalAayambil || r.lunch_aayambil || 0;
+    const e = t.ekasna || 0;
+    const b = t.biyasna || 0;
+    const l = t.onlyLiquid || 0;
+    return u > 0 || a > 0 || e > 0 || b > 0 || l > 0;
+  });
   if (hasTapp) {
     rows.push(['Tapascharya (Tapp) Breakdown']);
     rows.push(['Date', 'Upvaas (Fasting)', 'Aayambil Total', 'Aayambil Direct', 'Ras Tyaag', 'Ekasna (1 Meal)', 'Biyasna (2 Meals)', 'Only Liquid', 'Regular Meals']);
@@ -384,6 +380,54 @@ function downloadCSV() {
   const a = document.createElement('a');
   a.href = url;
   a.download = `food_report_${startDate}_to_${endDate}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+function downloadTappReportCSV(tappData, firstDate, lastDate) {
+  if (!tappData || !tappData.length) return;
+  const rows = [
+    ['Tapascharya (Tapp) Date-Wise Breakdown'],
+    [`Event Dates: ${formatDate(firstDate)} to ${formatDate(lastDate)}`],
+    [],
+    ['Date', 'Upvaas', 'Aayambil Total', 'Aayambil Direct', 'Ras Tyaag', 'Ekasna', 'Biyasna', 'Only Liquid', 'Regular Meals']
+  ];
+
+  tappData.forEach((report) => {
+    const t = report.tapp || {};
+    const u = t.upvaas || 0;
+    const a = t.totalAayambil || report.lunch_aayambil || 0;
+    const aDirect = t.aayambil || report.lunch_aayambil_direct || 0;
+    const aRas = t.rasTyaag || report.lunch_ras_tyaag || 0;
+    const e = t.ekasna || 0;
+    const b = t.biyasna || 0;
+    const l = t.onlyLiquid || 0;
+    const r = t.regular || report.lunch_regular || 0;
+
+    rows.push([
+      formatDate(report.date),
+      u,
+      a,
+      aDirect,
+      aRas,
+      e,
+      b,
+      l,
+      r
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const sStr = (firstDate || '').substring(0, 10);
+  const eStr = (lastDate || '').substring(0, 10);
+  a.download = `tapascharya_report_${sStr}_to_${eStr}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
