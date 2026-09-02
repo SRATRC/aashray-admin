@@ -1850,6 +1850,9 @@
           if (prevData.success && prevData.data) {
             window.previousResponseId = prevData.data.responseId;
             prefillPreviousResponse(prevData.data);
+                  if (data.data.package_info) {
+                    applyPackageDateFilter(data.data.package_info.start_date, data.data.package_info.end_date);
+                  }
           } else {
             window.previousResponseId = null;
             resetGridInputs();
@@ -1914,7 +1917,19 @@
           if (data.success) {
             $(inputEl).css('border-color', '#28a745');
             if (infoEl) {
-              infoEl.innerHTML = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
+              let regHtml = `<span style="color:#28a745; font-weight:700; display:flex; align-items:center; gap:0.3rem;"><i class="fas fa-check-circle"></i> Registered to: ${escapeHtml(data.data.name)} (${escapeHtml(data.data.center || 'Ashram Member')})</span>`;
+              if (data.data.package_info) {
+                const pkg = data.data.package_info;
+                const fmtStart = (pkg.start_date || '').split('-').reverse().join('/');
+                const fmtEnd = (pkg.end_date || '').split('-').reverse().join('/');
+                regHtml += `
+                  <div id="package_info_badge" style="margin-top:0.5rem; padding:0.45rem 0.8rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:0.45rem;">
+                    <i class="fas fa-box-open" style="color:#28a745; font-size:1rem;"></i>
+                    <span>Registered for: ${escapeHtml(pkg.name)} (${fmtStart} to ${fmtEnd})</span>
+                  </div>
+                `;
+              }
+              infoEl.innerHTML = regHtml;
             }
 
             const deptField = (formData.fields || []).find(f => f.vendorRole === 'department' || f.id === 'name_of_department' || (f.label || '').toLowerCase().includes('department'));
@@ -1954,6 +1969,56 @@
             if (tappField && data.data.tapp_details && infoEl) {
               infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-utensils"></i> Tapascharya: ${escapeHtml(data.data.tapp_details)}</div>`;
             }
+
+      function normalizeDateLabelToIso(label, defaultYear = 2026) {
+        if (!label) return null;
+        const cleaned = String(label).trim();
+        const match = cleaned.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)/i);
+        if (match) {
+          const day = parseInt(match[1], 10);
+          const monthStr = match[2].toLowerCase();
+          const months = {
+            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+          };
+          for (const [mPrefix, mNum] of Object.entries(months)) {
+            if (monthStr.startsWith(mPrefix)) {
+              return `${defaultYear}-${mNum}-${String(day).padStart(2, '0')}`;
+            }
+          }
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+          return cleaned;
+        }
+        return null;
+      }
+
+      function applyPackageDateFilter(startDate, endDate) {
+        if (!startDate || !endDate) return;
+        const rows = document.querySelectorAll('table.grid-table tbody tr');
+        rows.forEach(tr => {
+          const label = tr.getAttribute('data-row-label') || tr.querySelector('td:first-child')?.innerText?.trim();
+          const isoDate = normalizeDateLabelToIso(label, 2026);
+          if (isoDate) {
+            if (isoDate >= startDate && isoDate <= endDate) {
+              tr.style.display = '';
+            } else {
+              tr.style.display = 'none';
+              tr.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(inp => {
+                inp.checked = false;
+              });
+            }
+          }
+        });
+      }
+
+      function restoreAllMatrixRows() {
+        const rows = document.querySelectorAll('table.grid-table tbody tr');
+        rows.forEach(tr => {
+          tr.style.display = '';
+        });
+      }
+
       function evaluatePaarnaEligibility(tappText, isServerEligible) {
         if (isServerEligible === true) return true;
         if (!tappText || typeof tappText !== 'string') return false;
@@ -2054,6 +2119,16 @@
               guestCapEl.addEventListener('change', (e) => {
                 updateGuestListInputs(e.target.value, 'guests_list');
               });
+            }
+
+            // Handle Package Info & Option A Clean Filtering
+            if (data.data.package_info) {
+              window.currentPackageInfo = data.data.package_info;
+              const pkg = data.data.package_info;
+              applyPackageDateFilter(pkg.start_date, pkg.end_date);
+            } else {
+              window.currentPackageInfo = null;
+              restoreAllMatrixRows();
             }
 
             // Fetch previous response to pre-fill form and disable past dates (ONLY once per unique auth input, not on submit re-validation)
@@ -2303,7 +2378,7 @@
 
             rows.forEach((r, ri) => {
               tableHtml += `
-                <tr>
+                <tr data-row-label="${escapeAttr(r)}">
                   <td>${escapeHtml(r)}</td>
                   ${cols.map((c, ci) => `
                     <td>
