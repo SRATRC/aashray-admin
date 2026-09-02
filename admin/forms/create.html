@@ -1237,24 +1237,23 @@
       }
 
       function getCurrentEventDates() {
-        const select = document.getElementById('deptEventSelect');
-        if (!select || !select.value) {
+        const checkedBoxes = Array.from(document.querySelectorAll('#eventSelection input[type="checkbox"]:checked'));
+        if (checkedBoxes.length === 0) {
           const dept = document.getElementById('formDept')?.value;
           if (dept === 'utsav' || dept === 'adhyayan') {
-            alert('Please select an event from the Event dropdown in Form Settings first.');
+            alert('Please select at least one event from the Event checklist in Form Settings first.');
           } else {
             alert('Please set Department to Utsav or Adhyayan and select an event in Form Settings first.');
           }
           return null;
         }
 
-        const selectedOpt = select.options[select.selectedIndex];
-        let start = selectedOpt ? selectedOpt.getAttribute('data-start') : null;
-        let end = selectedOpt ? selectedOpt.getAttribute('data-end') : null;
+        let start = checkedBoxes[0].getAttribute('data-start');
+        let end = checkedBoxes[0].getAttribute('data-end');
 
         if (!start || !end) {
           if (window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
-            const ev = window.currentDeptEvents.find(e => String(e.id) === String(select.value));
+            const ev = window.currentDeptEvents.find(e => String(e.id) === String(checkedBoxes[0].value));
             if (ev) {
               start = ev.start_date;
               end = ev.end_date;
@@ -2324,16 +2323,18 @@
           const requireOtp = document.getElementById('requireOtp')?.checked || false;
           const formCategory = document.getElementById('formCategory')?.value || 'generic';
 
-          const deptEventSelect = document.getElementById('deptEventSelect');
           let event_id = null;
+          let event_ids = [];
           let event_name = null;
           let event_type = null;
           if (dept_name === 'utsav' || dept_name === 'adhyayan') {
-            if (deptEventSelect && deptEventSelect.value) {
-              event_id = parseInt(deptEventSelect.value, 10);
-              const selectedOpt = deptEventSelect.options[deptEventSelect.selectedIndex];
-              event_name = selectedOpt ? selectedOpt.getAttribute('data-name') : null;
-              event_type = selectedOpt ? selectedOpt.getAttribute('data-type') : dept_name;
+            const checkedBoxes = Array.from(document.querySelectorAll('#eventSelection input[type="checkbox"]:checked'));
+            if (checkedBoxes.length > 0) {
+              event_ids = checkedBoxes.map(cb => parseInt(cb.value, 10)).filter(n => !isNaN(n));
+              event_id = event_ids.length > 0 ? event_ids[0] : null;
+              const primaryBox = checkedBoxes[0];
+              event_name = primaryBox ? primaryBox.getAttribute('data-name') : null;
+              event_type = primaryBox ? primaryBox.getAttribute('data-type') : dept_name;
             }
           }
 
@@ -2342,7 +2343,7 @@
             title, description, dept_name, fields, isPublic, authType, slug, 
             limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
             expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
-            event_id, event_name, event_type
+            event_id, event_ids, event_name, event_type
           };
           sessionStorage.setItem('preview_form_data', JSON.stringify(previewData));
           window.open('view.html?preview=true' + (editId ? '&id=' + editId : ''), '_blank');
