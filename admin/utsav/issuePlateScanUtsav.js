@@ -265,8 +265,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ✅ SUCCESS
     qrStatus.className = 'success-status';
-    qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
-    showMessage(data.message || 'Plate issued successfully.', 'success');
+    if (data.auto_checkin && data.auto_checkin.performed) {
+      const roomStr = data.auto_checkin.roomno ? ` (Room: ${data.auto_checkin.roomno})` : '';
+      qrStatus.innerText = `✅ Plate issued to ${data.issuedto} • Checked in for ${data.auto_checkin.utsav_name}!${roomStr}`;
+      showMessage(`Plate issued to ${data.issuedto}. Auto checked in for ${data.auto_checkin.utsav_name}!${roomStr}`, 'success');
+    } else {
+      qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
+      showMessage(data.message || 'Plate issued successfully.', 'success');
+    }
 
     return data;
   }
