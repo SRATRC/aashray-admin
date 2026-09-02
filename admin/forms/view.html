@@ -1866,6 +1866,113 @@
         });
       }
 
+      function normalizeDateLabelToIso(label, defaultYear = (window.currentPackageInfo?.start_date ? window.currentPackageInfo.start_date.substring(0, 4) : new Date().getFullYear())) {
+        if (!label) return null;
+        const cleaned = String(label).trim();
+        const match = cleaned.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)/i);
+        if (match) {
+          const day = parseInt(match[1], 10);
+          const monthStr = match[2].toLowerCase();
+          const months = {
+            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+          };
+          for (const [mPrefix, mNum] of Object.entries(months)) {
+            if (monthStr.startsWith(mPrefix)) {
+              return `${defaultYear}-${mNum}-${String(day).padStart(2, '0')}`;
+            }
+          }
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+          return cleaned;
+        }
+        return null;
+      }
+
+      function applyPackageDateFilter(startDate, endDate) {
+        if (!startDate || !endDate) return;
+        const year = startDate.substring(0, 4);
+        const rows = document.querySelectorAll('table.grid-table tbody tr');
+        rows.forEach(tr => {
+          const label = tr.getAttribute('data-row-label') || tr.querySelector('td:first-child')?.innerText?.trim();
+          const isoDate = normalizeDateLabelToIso(label, year);
+          if (isoDate) {
+            if (isoDate >= startDate && isoDate <= endDate) {
+              tr.style.display = '';
+            } else {
+              tr.style.display = 'none';
+              tr.querySelectorAll('input').forEach(inp => {
+                if (inp.type === 'radio' || inp.type === 'checkbox') inp.checked = false;
+                if (inp.type === 'number') inp.value = '0';
+              });
+            }
+          }
+        });
+      }
+
+      function restoreAllMatrixRows() {
+        const rows = document.querySelectorAll('table.grid-table tbody tr');
+        rows.forEach(tr => {
+          tr.style.display = '';
+        });
+      }
+
+      function evaluatePaarnaEligibility(tappText, isServerEligible) {
+        if (isServerEligible === true) return true;
+        if (!tappText || typeof tappText !== 'string') return false;
+
+        const clean = tappText.toLowerCase().trim();
+        if (!clean) return false;
+
+        // Keywords for guaranteed eligibility
+        if (clean.includes('athai') || clean.includes('tevle') || clean.includes('8 upvaas') || clean.includes('8 upvas') || clean.includes('8 ekasna') || clean.includes('8 beasna') || clean.includes('8 biyasna') || clean.includes('8 aayambil') || clean.includes('8 liquid') || clean.includes('8 only liquid') || clean.includes('8 ras tyaag')) {
+          return true;
+        }
+
+        // Sum numbers in text: e.g. "6 upvaas, 2 ekasna" -> 6 + 2 = 8
+        const nums = clean.match(/\d+/g);
+        if (nums && nums.length > 0) {
+          const sum = nums.reduce((acc, n) => acc + parseInt(n, 10), 0);
+          if (sum >= 8) return true;
+        }
+
+        return false;
+      }
+
+      function updatePaarnaEligibilityBadge(fieldId, tappVal, isServerEligible) {
+        const isPaarnaForm = formData && ((formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna'));
+        if (!isPaarnaForm) return;
+
+        const tappEl = document.getElementById(`input_${fieldId}`);
+        if (!tappEl) return;
+
+        let badgeEl = document.getElementById('paarna_eligibility_badge');
+        if (!badgeEl) {
+          badgeEl = document.createElement('div');
+          badgeEl.id = 'paarna_eligibility_badge';
+          tappEl.parentElement.appendChild(badgeEl);
+        }
+
+        const isEligible = evaluatePaarnaEligibility(tappVal, isServerEligible);
+        window.isPaarnaEligible = isEligible;
+
+        if (isEligible) {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.45rem;">
+              <i class="fas fa-check-circle" style="font-size:1.05rem; color:#28a745;"></i>
+              <span>Eligible for Paarna at Research Centre (Confirmed)</span>
+            </div>
+          `;
+        } else {
+          badgeEl.innerHTML = `
+            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#fff8e6; border:1px solid #ffe8a1; border-radius:6px; color:#856404; font-size:0.85rem; font-weight:600; display:flex; align-items:flex-start; gap:0.45rem;">
+              <i class="fas fa-info-circle" style="font-size:1.05rem; color:#f0ad4e; margin-top:2px;"></i>
+              <span>Note: Your Paarna request will be reviewed and confirmed by the seva team.</span>
+            </div>
+          `;
+        }
+      }
+
       function prefillPreviousResponse(prevData) {
         const prevResponses = prevData.responses || {};
         const submittedDate = prevData.submittedAt ? new Date(prevData.submittedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -2047,110 +2154,7 @@
               infoEl.innerHTML += `<div style="color:#204060; font-size:0.85rem; font-weight:700; margin-top:0.25rem;"><i class="fas fa-utensils"></i> Tapascharya: ${escapeHtml(data.data.tapp_details)}</div>`;
             }
 
-      function normalizeDateLabelToIso(label, defaultYear = new Date().getFullYear()) {
-        if (!label) return null;
-        const cleaned = String(label).trim();
-        const match = cleaned.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)/i);
-        if (match) {
-          const day = parseInt(match[1], 10);
-          const monthStr = match[2].toLowerCase();
-          const months = {
-            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
-            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
-          };
-          for (const [mPrefix, mNum] of Object.entries(months)) {
-            if (monthStr.startsWith(mPrefix)) {
-              return `${defaultYear}-${mNum}-${String(day).padStart(2, '0')}`;
-            }
-          }
-        }
-        if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
-          return cleaned;
-        }
-        return null;
-      }
 
-      function applyPackageDateFilter(startDate, endDate) {
-        if (!startDate || !endDate) return;
-        const rows = document.querySelectorAll('table.grid-table tbody tr');
-        rows.forEach(tr => {
-          const label = tr.getAttribute('data-row-label') || tr.querySelector('td:first-child')?.innerText?.trim();
-          const isoDate = normalizeDateLabelToIso(label);
-          if (isoDate) {
-            if (isoDate >= startDate && isoDate <= endDate) {
-              tr.style.display = '';
-            } else {
-              tr.style.display = 'none';
-              tr.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(inp => {
-                inp.checked = false;
-              });
-            }
-          }
-        });
-      }
-
-      function restoreAllMatrixRows() {
-        const rows = document.querySelectorAll('table.grid-table tbody tr');
-        rows.forEach(tr => {
-          tr.style.display = '';
-        });
-      }
-
-      function evaluatePaarnaEligibility(tappText, isServerEligible) {
-        if (isServerEligible === true) return true;
-        if (!tappText || typeof tappText !== 'string') return false;
-
-        const clean = tappText.toLowerCase().trim();
-        if (!clean) return false;
-
-        // Keywords for guaranteed eligibility
-        if (clean.includes('athai') || clean.includes('tevle') || clean.includes('8 upvaas') || clean.includes('8 upvas') || clean.includes('8 ekasna') || clean.includes('8 beasna') || clean.includes('8 biyasna') || clean.includes('8 aayambil') || clean.includes('8 liquid') || clean.includes('8 only liquid') || clean.includes('8 ras tyaag')) {
-          return true;
-        }
-
-        // Sum numbers in text: e.g. "6 upvaas, 2 ekasna" -> 6 + 2 = 8
-        const nums = clean.match(/\d+/g);
-        if (nums && nums.length > 0) {
-          const sum = nums.reduce((acc, n) => acc + parseInt(n, 10), 0);
-          if (sum >= 8) return true;
-        }
-
-        return false;
-      }
-
-      function updatePaarnaEligibilityBadge(fieldId, tappVal, isServerEligible) {
-        const isPaarnaForm = formData && ((formData.title || '').toLowerCase().includes('paarna') || (formData.title || '').toLowerCase().includes('parna'));
-        if (!isPaarnaForm) return;
-
-        const tappEl = document.getElementById(`input_${fieldId}`);
-        if (!tappEl) return;
-
-        let badgeEl = document.getElementById('paarna_eligibility_badge');
-        if (!badgeEl) {
-          badgeEl = document.createElement('div');
-          badgeEl.id = 'paarna_eligibility_badge';
-          tappEl.parentElement.appendChild(badgeEl);
-        }
-
-        const isEligible = evaluatePaarnaEligibility(tappVal, isServerEligible);
-        window.isPaarnaEligible = isEligible;
-
-        if (isEligible) {
-          badgeEl.innerHTML = `
-            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#e8f8f0; border:1px solid #b8ebd0; border-radius:6px; color:#155724; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.45rem;">
-              <i class="fas fa-check-circle" style="font-size:1.05rem; color:#28a745;"></i>
-              <span>Eligible for Paarna at Research Centre (Confirmed)</span>
-            </div>
-          `;
-        } else {
-          badgeEl.innerHTML = `
-            <div style="margin-top:0.5rem; padding:0.6rem 0.85rem; background:#fff8e6; border:1px solid #ffe8a1; border-radius:6px; color:#856404; font-size:0.85rem; font-weight:600; display:flex; align-items:flex-start; gap:0.45rem;">
-              <i class="fas fa-info-circle" style="font-size:1.05rem; color:#f0ad4e; margin-top:2px;"></i>
-              <span>Note: Your Paarna request will be reviewed and confirmed by the seva team.</span>
-            </div>
-          `;
-        }
-      }
 
 
             // Auto-populate Name field if present in form

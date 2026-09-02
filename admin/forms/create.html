@@ -1248,18 +1248,20 @@
           return null;
         }
 
-        let start = checkedBoxes[0].getAttribute('data-start');
-        let end = checkedBoxes[0].getAttribute('data-end');
-
-        if (!start || !end) {
-          if (window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
-            const ev = window.currentDeptEvents.find(e => String(e.id) === String(checkedBoxes[0].value));
+        let start = null, end = null;
+        checkedBoxes.forEach(cb => {
+          let s = cb.getAttribute('data-start');
+          let e = cb.getAttribute('data-end');
+          if ((!s || !e) && window.currentDeptEvents && Array.isArray(window.currentDeptEvents)) {
+            const ev = window.currentDeptEvents.find(item => String(item.id) === String(cb.value));
             if (ev) {
-              start = ev.start_date;
-              end = ev.end_date;
+              s = ev.start_date;
+              e = ev.end_date;
             }
           }
-        }
+          if (s && (!start || s < start)) start = s;
+          if (e && (!end || e > end)) end = e;
+        });
 
         if (!start || !end) {
           alert('Could not find start and end dates for the selected event.');
@@ -2187,7 +2189,6 @@
         const requireOtp = document.getElementById('requireOtp').checked;
                 const formCategory = document.getElementById('formCategory').value;
 
-        const deptEventSelect = document.getElementById('deptEventSelect');
         let event_id = null;
         let event_ids = [];
         let event_name = null;
