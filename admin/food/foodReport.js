@@ -170,6 +170,92 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     highteaReportTable.innerHTML = highteaRows;
 
+    // ── TAPASCHARYA (TAPP) SUMMARY & DAILY BREAKDOWN ──
+    const tappSummarySection = document.getElementById('tappSummarySection');
+    const tappDailyTableSection = document.getElementById('tappDailyTableSection');
+    const tappReportTable = document.getElementById('tappReportTable');
+
+    let totalUpvaas = 0;
+    let totalAayambil = 0;
+    let totalAayambilDirect = 0;
+    let totalRasTyaag = 0;
+    let totalEkasna = 0;
+    let totalBiyasna = 0;
+    let totalLiquid = 0;
+    let totalRegular = 0;
+    let hasTappData = false;
+
+    let tappRowsHtml = '';
+    data.data.forEach((report) => {
+      const t = report.tapp || {};
+      const u = t.upvaas || 0;
+      const a = t.totalAayambil || report.lunch_aayambil || 0;
+      const aDirect = t.aayambil || report.lunch_aayambil_direct || 0;
+      const aRas = t.rasTyaag || report.lunch_ras_tyaag || 0;
+      const e = t.ekasna || 0;
+      const b = t.biyasna || 0;
+      const l = t.onlyLiquid || 0;
+      const r = t.regular || report.lunch_regular || 0;
+
+      if (u > 0 || a > 0 || e > 0 || b > 0 || l > 0) {
+        hasTappData = true;
+      }
+
+      totalUpvaas += u;
+      totalAayambil += a;
+      totalAayambilDirect += aDirect;
+      totalRasTyaag += aRas;
+      totalEkasna += e;
+      totalBiyasna += b;
+      totalLiquid += l;
+      totalRegular += r;
+
+      tappRowsHtml += `
+        <tr>
+          <td><center>${formatDate(report.date)}</center></td>
+          <td><center>${u > 0 ? `<b style="color:#b91c1c;">${u}</b>` : '0'}</center></td>
+          <td><center>${a > 0 ? `<b style="color:#15803d;">${a}</b> <span style="font-size:0.8em; color:#16a34a;">(${aDirect} Direct + ${aRas} Ras)</span>` : '0'}</center></td>
+          <td><center>${e > 0 ? `<b style="color:#0369a1;">${e}</b>` : '0'}</center></td>
+          <td><center>${b > 0 ? `<b style="color:#4338ca;">${b}</b>` : '0'}</center></td>
+          <td><center>${l > 0 ? `<b style="color:#7c3aed;">${l}</b>` : '0'}</center></td>
+          <td><center>${r > 0 ? `<b>${r}</b>` : '0'}</center></td>
+        </tr>
+      `;
+    });
+
+    if (hasTappData) {
+      if (tappSummarySection) {
+        tappSummarySection.style.display = 'block';
+        document.getElementById('tappDateRangeBadge').textContent = `${formatDate(start_date)} to ${formatDate(end_date)}`;
+        document.getElementById('cardTappUpvaas').textContent = totalUpvaas;
+        document.getElementById('cardTappAayambil').textContent = totalAayambil;
+        document.getElementById('cardTappAayambilSub').textContent = `(${totalAayambilDirect} Direct + ${totalRasTyaag} Ras)`;
+        document.getElementById('cardTappEkasna').textContent = totalEkasna;
+        document.getElementById('cardTappBiyasna').textContent = totalBiyasna;
+        document.getElementById('cardTappLiquid').textContent = totalLiquid;
+        document.getElementById('cardTappRegular').textContent = totalRegular;
+      }
+
+      if (tappDailyTableSection && tappReportTable) {
+        tappDailyTableSection.style.display = 'block';
+        tappRowsHtml += `
+          <tr style="background:#f8fafc; font-weight:bold;">
+            <td><center><b>TOTAL</b></center></td>
+            <td><center><b style="color:#b91c1c;">${totalUpvaas}</b></center></td>
+            <td><center><b style="color:#15803d;">${totalAayambil}</b> <span style="font-size:0.8em; color:#16a34a;">(${totalAayambilDirect} Direct + ${totalRasTyaag} Ras)</span></center></td>
+            <td><center><b style="color:#0369a1;">${totalEkasna}</b></center></td>
+            <td><center><b style="color:#4338ca;">${totalBiyasna}</b></center></td>
+            <td><center><b style="color:#7c3aed;">${totalLiquid}</b></center></td>
+            <td><center><b>${totalRegular}</b></center></td>
+          </tr>
+        `;
+        tappReportTable.innerHTML = tappRowsHtml;
+      }
+    } else {
+      if (tappSummarySection) tappSummarySection.style.display = 'none';
+      if (tappDailyTableSection) tappDailyTableSection.style.display = 'none';
+    }
+
   } catch (err) {
     console.error(err);
     showErrorMessage(err.message || err);
@@ -255,6 +341,30 @@ function downloadCSV() {
     rows.push(['TOTAL', '', '', tRegd, tIssuedM, tIssuedG, tIssuedM + tIssuedG, tNoShowM, tNoShowG, tNoShowM + tNoShowG, tPhysical]);
     rows.push([]);  // blank separator
   });
+
+  // Tapascharya (Tapp) Section in CSV
+  const hasTapp = _reportData.some(r => r.tapp && (r.tapp.upvaas > 0 || r.tapp.totalAayambil > 0 || r.tapp.ekasna > 0 || r.tapp.biyasna > 0));
+  if (hasTapp) {
+    rows.push(['Tapascharya (Tapp) Breakdown']);
+    rows.push(['Date', 'Upvaas (Fasting)', 'Aayambil Total', 'Aayambil Direct', 'Ras Tyaag', 'Ekasna (1 Meal)', 'Biyasna (2 Meals)', 'Only Liquid', 'Regular Meals']);
+    let tU = 0, tA = 0, tAD = 0, tRT = 0, tE = 0, tB = 0, tL = 0, tR = 0;
+    _reportData.forEach(r => {
+      const t = r.tapp || {};
+      const u = t.upvaas || 0;
+      const a = t.totalAayambil || r.lunch_aayambil || 0;
+      const aD = t.aayambil || r.lunch_aayambil_direct || 0;
+      const aR = t.rasTyaag || r.lunch_ras_tyaag || 0;
+      const e = t.ekasna || 0;
+      const b = t.biyasna || 0;
+      const l = t.onlyLiquid || 0;
+      const reg = t.regular || r.lunch_regular || 0;
+
+      tU += u; tA += a; tAD += aD; tRT += aR; tE += e; tB += b; tL += l; tR += reg;
+      rows.push([formatDate(r.date), u, a, aD, aR, e, b, l, reg]);
+    });
+    rows.push(['TOTAL', tU, tA, tAD, tRT, tE, tB, tL, tR]);
+    rows.push([]);
+  }
 
   // Tea / Coffee section
   rows.push(['Tea / Coffee']);
