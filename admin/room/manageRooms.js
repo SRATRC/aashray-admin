@@ -25,9 +25,10 @@ function renderBlocks(blocks) {
   return blocks
     .map((b) => {
       const isPermanent = !b.end_date;
+      const stateLabel = b.isExpired ? ' (expired)' : b.isFuture ? ' (future)' : '';
       const label = isPermanent
-        ? 'Permanent'
-        : `${formatDate(b.start_date)} → ${formatDate(b.end_date)}`;
+        ? `Permanent${stateLabel}`
+        : `${formatDate(b.start_date)} → ${formatDate(b.end_date)}${stateLabel}`;
       const cls = isPermanent ? 'permanent' : 'daterange';
       const reason = b.reason ? ` · ${escapeHtml(b.reason)}` : '';
       return `
@@ -128,6 +129,9 @@ async function submitUpdateRoom() {
   const roomtype = document.getElementById('modalUpdateRoomType').value;
   const gender = document.getElementById('modalUpdateGender').value;
 
+  const confirmBtn = document.querySelector('#updateRoomModal .btn-confirm');
+  if (confirmBtn) confirmBtn.disabled = true;
+
   try {
     const res = await fetch(`${CONFIG.basePath}/stay/update_room/${currentUpdateRoomNo}`, {
       method: 'PUT',
@@ -147,6 +151,8 @@ async function submitUpdateRoom() {
   } catch (e) {
     console.error(e);
     alert('An error occurred. Please try again.');
+  } finally {
+    if (confirmBtn) confirmBtn.disabled = false;
   }
 }
 
@@ -172,6 +178,14 @@ async function submitBlock() {
   if (!start_date) { alert('Please select a start date.'); return; }
   if (!isPermanent && !end_date) { alert('Please select an end date.'); return; }
   if (!isPermanent && end_date <= start_date) { alert('End date must be after start date.'); return; }
+
+  const confirmBtn = document.querySelector('#blockModal .btn-confirm');
+  if (confirmBtn) confirmBtn.disabled = true;
+  // The warning path deliberately leaves the modal open for 4 seconds so the
+  // admin can read it. Re-enabling Confirm in `finally` would make that a
+  // window to click again and create a duplicate block. Both success paths end
+  // in a reload, so the button only needs re-enabling when something failed.
+  let willReload = false;
 
   try {
     const isBulk = Array.isArray(currentRoomNo);
@@ -210,17 +224,21 @@ async function submitBlock() {
       warningEl.innerHTML = `⚠️ <strong>${escapeHtml(data.warnings.message)}</strong><br>Affected: ${bookingList}`;
       warningEl.style.display = 'block';
       // Don't close modal — let admin see the warning, then close manually
+      willReload = true;
       setTimeout(() => {
         closeBlockModal();
         location.reload();
       }, 4000);
     } else {
+      willReload = true;
       closeBlockModal();
       location.reload();
     }
   } catch (e) {
     console.error(e);
     alert('An error occurred. Please try again.');
+  } finally {
+    if (confirmBtn && !willReload) confirmBtn.disabled = false;
   }
 }
 
@@ -306,7 +324,10 @@ async function submitBulkUnblock() {
   }
   
   if (!confirm(`Cancel active blocks for the ${selected.length} selected bed(s)?`)) return;
-  
+
+  const unblockBtn = document.getElementById('bulkUnblockBtn');
+  if (unblockBtn) unblockBtn.disabled = true;
+
   try {
     const res = await fetch(`${CONFIG.basePath}/stay/room_block/bulk_cancel`, {
       method: 'POST',
@@ -327,6 +348,8 @@ async function submitBulkUnblock() {
   } catch (e) {
     console.error(e);
     alert('An error occurred. Please try again.');
+  } finally {
+    if (unblockBtn) unblockBtn.disabled = false;
   }
 }
 
@@ -395,9 +418,10 @@ function renderTable() {
     if (genderVal !== 'all' && group.gender !== genderVal) return null;
 
     const filteredBeds = group.beds.filter((bed) => {
-      const hasBlocks = bed.blocks && bed.blocks.length > 0;
-      const hasPermanent = bed.blocks && bed.blocks.some((b) => !b.end_date);
-      const hasTemp = bed.blocks && bed.blocks.some((b) => b.end_date);
+      const currentBlocks = (bed.blocks || []).filter((b) => b.isCurrent);
+      const hasBlocks = currentBlocks.length > 0;
+      const hasPermanent = currentBlocks.some((b) => !b.end_date);
+      const hasTemp = currentBlocks.some((b) => b.end_date);
 
       if (filterVal === 'available') return !hasBlocks;
       if (filterVal === 'permanent') return hasPermanent;
@@ -407,14 +431,20 @@ function renderTable() {
 
     return {
       ...group,
-      beds: filteredBeds
+      beds: filteredBeds,
+      totalBeds: group.beds.length,
+      blockedBeds: group.beds.filter((bed) =>
+        (bed.blocks || []).some((block) => block.isCurrent)
+      ).length
     };
   }).filter(group => group.beds.length > 0);
 
   filteredGroups.forEach((group, index) => {
     const baseRoomNo = group.baseRoomNo;
-    const totalBeds = group.beds.length;
-    const blockedBeds = group.beds.filter(b => b.blocks && b.blocks.length > 0).length;
+    const totalBeds = group.totalBeds || group.beds.length;
+    const blockedBeds =
+      group.blockedBeds ??
+      group.beds.filter((b) => (b.blocks || []).some((block) => block.isCurrent)).length;
     
     // Status text
     let statusText = 'available';
@@ -476,7 +506,7 @@ function renderTable() {
 
     // Render child rows representing individual beds
     group.beds.forEach((bed, subIndex) => {
-      const isBedBlocked = bed.blocks && bed.blocks.length > 0;
+      const isBedBlocked = (bed.blocks || []).some((b) => b.isCurrent);
       const safeBedNo = escapeHtml(bed.roomno);
       const bedActionHtml = isBedBlocked
         ? `<span style="color:#aaa; cursor:not-allowed;">Block Bed</span>`

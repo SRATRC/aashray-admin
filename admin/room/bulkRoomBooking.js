@@ -149,9 +149,25 @@ document.addEventListener('DOMContentLoaded', function () {
     return { bookings, isValid };
   }
 
+  // Guards the whole handler, not just the POST. Disabling the button further
+  // down happens only after the in-flight-lookup wait below, and on a phone
+  // that wait is long enough to land a second tap — which used to run the
+  // handler twice and book every guest twice.
+  let isSubmitting = false;
+
   async function onSubmit(e) {
     e.preventDefault();
 
+    if (isSubmitting) return;
+    isSubmitting = true;
+    try {
+      await runSubmit();
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  async function runSubmit() {
     // Wait if there are any in-flight lookups
     while (activeLookups > 0) {
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -182,6 +198,9 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
     try {
       const response = await fetch(`${CONFIG.basePath}/stay/bulk_book`, {
         method: 'POST',
@@ -207,6 +226,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (err) {
       console.error('Error submitting bookings:', err);
       alert('An error occurred. Please try again.');
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   }
 });
