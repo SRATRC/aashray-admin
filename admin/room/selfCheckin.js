@@ -140,38 +140,66 @@ async function processCheckin(rawScannedText) {
 
   try {
     // Step 1: Fetch active bookings for scanned cardno
-    const resFetch = await fetch(`${CONFIG.basePath}/stay/fetch_room_bookings/${cardno}`, {
+    const resFetch = await fetch(`${CONFIG.basePath}/stay/fetch_room_bookings/${encodeURIComponent(cardno)}?kiosk=true`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+
+    if (resFetch.status === 401 || resFetch.status === 403) {
+      showResultModal(false, 'Session Expired', 'This kiosk needs to be logged in again. Please ask staff for assistance.');
+      return;
+    }
+    if (!resFetch.ok) {
+      showResultModal(false, 'System Error', 'Something went wrong. Please contact staff.');
+      return;
+    }
+
     const resultFetch = await resFetch.json();
 
-    if (!resFetch.ok || !resultFetch.data) {
+    if (!resultFetch.data) {
       showResultModal(false, 'No Bookings Found', `No active bookings found for Card No: ${cardno}`);
       return;
     }
 
     const { room_booking = [], flat_booking = [], card_details = {} } = resultFetch.data;
     const guestName = card_details.issuedto || cardno;
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
     // Find pending check-in room booking for today
-    const targetRoomBooking = room_booking.find(b => 
-      (b.status === 'pending checkin' || b.status === 'payment pending') && 
-      (b.checkin <= today)
+    const targetRoomBooking = room_booking.find(
+      (b) =>
+        b.status === 'pending checkin' &&
+        b.checkin <= today &&
+        b.checkout >= today
     );
 
     // Find pending check-in flat booking for today
-    const targetFlatBooking = flat_booking.find(b => 
-      (b.status === 'pending checkin' || b.status === 'payment pending') && 
-      (b.checkin <= today)
+    const targetFlatBooking = flat_booking.find(
+      (b) =>
+        b.status === 'pending checkin' &&
+        b.checkin <= today &&
+        b.checkout >= today
     );
 
     if (!targetRoomBooking && !targetFlatBooking) {
-      // Check if already checked in
-      const checkedinRoom = room_booking.find(b => b.status === 'checkedin');
-      const checkedinFlat = flat_booking.find(b => b.status === 'checkedin');
+      // Check if already checked in (any 'checkedin' booking counts, including
+      // overstays past the planned checkout — they are still in-house). The
+      // lookup returns every booking this card has ever had, oldest first and
+      // with no date window, so pick the stay that covers today, and only fall
+      // back to the most recent started stay for the overstay case. Taking the
+      // first match would print a stale booking's room number under a green
+      // "already checked in" screen.
+      const currentCheckedIn = (bookings) => {
+        const checkedIn = bookings.filter((b) => b.status === 'checkedin');
+        const covering = checkedIn.filter((b) => b.checkin <= today && b.checkout >= today);
+        const started = checkedIn.filter((b) => b.checkin <= today);
+        const pool = covering.length ? covering : started;
+        return pool.sort((a, b) => String(b.checkin).localeCompare(String(a.checkin)))[0];
+      };
+
+      const checkedinRoom = currentCheckedIn(room_booking);
+      const checkedinFlat = currentCheckedIn(flat_booking);
       if (checkedinRoom || checkedinFlat) {
-        const roomNum = (checkedinRoom ? checkedinRoom.roomno : checkedinFlat?.flatno) || '--';
+        const roomNum = [checkedinRoom?.roomno, checkedinFlat?.flatno].filter(Boolean).join(' & ') || '--';
         
         // Auto-fetch WiFi code even if already checked in
         const wifiCode = await fetchWifiCode(cardno, token);
@@ -179,14 +207,33 @@ async function processCheckin(rawScannedText) {
         return;
       }
 
+      // A stay that is still awaiting payment is not check-in eligible on the
+      // backend, but "no pending check-in" sends the guest to a staff member
+      // with no idea what is wrong. Name the real reason instead.
+      // The booking status enum stores payment-pending as plain 'pending' — the
+      // 'payment pending' string this file used to test for never matched a row.
+      const coversToday = (b) => b.checkin <= today && b.checkout >= today;
+      const unpaid =
+        room_booking.find((b) => b.status === 'pending' && coversToday(b)) ||
+        flat_booking.find((b) => b.status === 'pending' && coversToday(b));
+      if (unpaid) {
+        showResultModal(
+          false,
+          'Payment Incomplete',
+          `${guestName} has a stay booked for today, but payment is not complete. Please settle the payment before checking in.`
+        );
+        return;
+      }
+
       showResultModal(false, 'No Pending Check-In', `No pending check-in found for ${guestName} today (${today}).`);
       return;
     }
 
-    let successRoomNo = '--';
-    let checkinSuccess = false;
+    const checkedInUnits = [];
+    const failures = [];
 
-    // Step 2: Execute Check-in API call
+    // Step 2: Execute Check-in API call(s) — a guest may hold both a room and
+    // a flat booking; process both so neither is left pending silently.
     if (targetRoomBooking) {
       const resCheckin = await fetch(`${CONFIG.basePath}/stay/checkin/${targetRoomBooking.bookingid}`, {
         method: 'PUT',
@@ -197,13 +244,13 @@ async function processCheckin(rawScannedText) {
       });
       const resultCheckin = await resCheckin.json();
       if (resCheckin.ok) {
-        checkinSuccess = true;
-        successRoomNo = targetRoomBooking.roomno || 'Room';
+        checkedInUnits.push(targetRoomBooking.roomno || 'Room');
       } else {
-        showResultModal(false, 'Check-In Failed', resultCheckin.message || 'Room check-in failed.');
-        return;
+        failures.push(resultCheckin.message || 'Room check-in failed.');
       }
-    } else if (targetFlatBooking) {
+    }
+
+    if (targetFlatBooking) {
       const resFlat = await fetch(`${CONFIG.basePath}/stay/flat_checkin/${targetFlatBooking.bookingid}`, {
         method: 'PUT',
         headers: {
@@ -213,19 +260,23 @@ async function processCheckin(rawScannedText) {
       });
       const resultFlat = await resFlat.json();
       if (resFlat.ok) {
-        checkinSuccess = true;
-        successRoomNo = targetFlatBooking.flatno || 'Flat';
+        checkedInUnits.push(targetFlatBooking.flatno || 'Flat');
       } else {
-        showResultModal(false, 'Check-In Failed', resultFlat.message || 'Flat check-in failed.');
-        return;
+        failures.push(resultFlat.message || 'Flat check-in failed.');
       }
     }
 
-    if (checkinSuccess) {
-      // Step 3: Automatically fetch / generate WiFi code
-      const wifiCode = await fetchWifiCode(cardno, token);
-      showResultModal(true, 'Check-In Successful!', `Welcome to Ashram Stay, ${guestName}!`, guestName, successRoomNo, wifiCode);
+    if (checkedInUnits.length === 0) {
+      showResultModal(false, 'Check-In Failed', failures.join(' '));
+      return;
     }
+
+    // Step 3: Automatically fetch / generate WiFi code
+    const wifiCode = await fetchWifiCode(cardno, token);
+    const message = failures.length
+      ? `Welcome, ${guestName}! Note: ${failures.join(' ')}`
+      : `Welcome to Ashram Stay, ${guestName}!`;
+    showResultModal(true, 'Check-In Successful!', message, guestName, checkedInUnits.join(' & '), wifiCode);
 
   } catch (err) {
     console.error(err);
@@ -236,12 +287,13 @@ async function processCheckin(rawScannedText) {
 async function fetchWifiCode(cardno, token) {
   try {
     // First try generating temp code
-    const genRes = await fetch(`${CONFIG.basePath}/wifi/generate-temp-code`, {
+    const genRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/generate-temp-code`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
-      }
+      },
+      body: JSON.stringify({ cardno })
     });
     const genData = await genRes.json();
     if (genRes.ok && genData.data) {
@@ -249,7 +301,7 @@ async function fetchWifiCode(cardno, token) {
     }
 
     // Fallback: fetch existing temp codes
-    const fetchRes = await fetch(`${CONFIG.basePath}/wifi/fetch-temp-codes`, {
+    const fetchRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/fetch-temp-codes/${encodeURIComponent(cardno)}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const fetchData = await fetchRes.json();

@@ -136,12 +136,22 @@ async function processCheckout(rawScannedText) {
 
   try {
     // Step 1: Fetch active bookings for scanned cardno
-    const resFetch = await fetch(`${CONFIG.basePath}/stay/fetch_room_bookings/${cardno}`, {
+    const resFetch = await fetch(`${CONFIG.basePath}/stay/fetch_room_bookings/${encodeURIComponent(cardno)}?kiosk=true`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+
+    if (resFetch.status === 401 || resFetch.status === 403) {
+      showResultModal(false, 'Session Expired', 'This kiosk needs to be logged in again. Please ask staff for assistance.');
+      return;
+    }
+    if (!resFetch.ok) {
+      showResultModal(false, 'System Error', 'Something went wrong. Please contact staff.');
+      return;
+    }
+
     const resultFetch = await resFetch.json();
 
-    if (!resFetch.ok || !resultFetch.data) {
+    if (!resultFetch.data) {
       showResultModal(false, 'No Bookings Found', `No active bookings found for Card No: ${cardno}`);
       return;
     }
@@ -149,21 +159,37 @@ async function processCheckout(rawScannedText) {
     const { room_booking = [], flat_booking = [], card_details = {} } = resultFetch.data;
     const guestName = card_details.issuedto || cardno;
 
-    // Find checked-in room booking
-    const targetRoomBooking = room_booking.find(b => b.status === 'checkedin');
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-    // Find checked-in flat booking
-    const targetFlatBooking = flat_booking.find(b => b.status === 'checkedin');
+    // Any checked-in booking is checkout-eligible, including overstays past the
+    // planned checkout date — the backend handles both cases. But the lookup
+    // returns every booking this card has ever had, oldest first and with no
+    // date window, so taking the first match would check out a stale stay that
+    // was never closed and leave the guest's real one occupied. Pick the stay
+    // that covers today; failing that (the overstay case) the most recent stay
+    // that has actually started, so a future-dated row checked in by mistake
+    // can never win.
+    const currentCheckedIn = (bookings) => {
+      const checkedIn = bookings.filter((b) => b.status === 'checkedin');
+      const covering = checkedIn.filter((b) => b.checkin <= today && b.checkout >= today);
+      const started = checkedIn.filter((b) => b.checkin <= today);
+      const pool = covering.length ? covering : started;
+      return pool.sort((a, b) => String(b.checkin).localeCompare(String(a.checkin)))[0];
+    };
+
+    const targetRoomBooking = currentCheckedIn(room_booking);
+    const targetFlatBooking = currentCheckedIn(flat_booking);
 
     if (!targetRoomBooking && !targetFlatBooking) {
       showResultModal(false, 'Not Checked In', `Guest ${guestName} currently has no active checked-in room or flat.`);
       return;
     }
 
-    let successRoomNo = '--';
-    let checkoutSuccess = false;
+    const checkedOutUnits = [];
+    const failures = [];
 
-    // Step 2: Execute Check-Out API call
+    // Step 2: Execute Check-Out API call(s) — a guest may hold both a room and
+    // a flat booking; process both so neither is left checked in silently.
     if (targetRoomBooking) {
       const resCheckout = await fetch(`${CONFIG.basePath}/stay/checkout/${targetRoomBooking.bookingid}`, {
         method: 'PUT',
@@ -174,13 +200,13 @@ async function processCheckout(rawScannedText) {
       });
       const resultCheckout = await resCheckout.json();
       if (resCheckout.ok) {
-        checkoutSuccess = true;
-        successRoomNo = targetRoomBooking.roomno || 'Room';
+        checkedOutUnits.push(targetRoomBooking.roomno || 'Room');
       } else {
-        showResultModal(false, 'Check-Out Failed', resultCheckout.message || 'Room check-out failed.');
-        return;
+        failures.push(resultCheckout.message || 'Room check-out failed.');
       }
-    } else if (targetFlatBooking) {
+    }
+
+    if (targetFlatBooking) {
       const resFlat = await fetch(`${CONFIG.basePath}/stay/flat_checkout/${targetFlatBooking.bookingid}`, {
         method: 'PUT',
         headers: {
@@ -190,17 +216,21 @@ async function processCheckout(rawScannedText) {
       });
       const resultFlat = await resFlat.json();
       if (resFlat.ok) {
-        checkoutSuccess = true;
-        successRoomNo = targetFlatBooking.flatno || 'Flat';
+        checkedOutUnits.push(targetFlatBooking.flatno || 'Flat');
       } else {
-        showResultModal(false, 'Check-Out Failed', resultFlat.message || 'Flat check-out failed.');
-        return;
+        failures.push(resultFlat.message || 'Flat check-out failed.');
       }
     }
 
-    if (checkoutSuccess) {
-      showResultModal(true, 'Check-Out Successful!', `Thank you for visiting, ${guestName}! Have a safe journey.`, guestName, successRoomNo);
+    if (checkedOutUnits.length === 0) {
+      showResultModal(false, 'Check-Out Failed', failures.join(' '));
+      return;
     }
+
+    const message = failures.length
+      ? `Checked out of ${checkedOutUnits.join(' & ')}. Note: ${failures.join(' ')}`
+      : `Thank you for visiting, ${guestName}! Have a safe journey.`;
+    showResultModal(true, 'Check-Out Successful!', message, guestName, checkedOutUnits.join(' & '));
 
   } catch (err) {
     console.error(err);
