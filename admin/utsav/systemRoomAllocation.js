@@ -1230,7 +1230,7 @@ function renderUncheckedInTable() {
           <span class="badge" style="background:#fff7ed; color:#c2410c; border:1px solid #ffedd5;">Not Checked-In</span>
         </td>
         <td style="text-align:center; white-space:nowrap;">
-          <button class="btn-sm btn-success-sm" style="padding:4px 8px; font-size:0.78rem; margin-right:4px;" onclick="checkinFromUncheckedIn('${esc(b.cardno)}', '${esc(b.issuedto)}')" title="Mark participant checked in">
+          <button class="btn-sm btn-success-sm" style="padding:4px 8px; font-size:0.78rem; margin-right:4px;" onclick='checkinFromUncheckedIn(${JSON.stringify(b.cardno)}, ${JSON.stringify(b.issuedto).replace(/'/g, "&#39;")})' title="Mark participant checked in">
             <i class="fas fa-check"></i> Check In
           </button>
           <button class="btn-sm btn-primary-sm" style="padding:4px 8px; font-size:0.78rem;" onclick='openReallotModal(${JSON.stringify(b).replace(/'/g, "&#39;")})' title="Re-allot this bed to another participant">

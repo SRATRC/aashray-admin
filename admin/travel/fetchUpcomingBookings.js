@@ -1,3 +1,13 @@
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 let travelReport = [];
 function getWhatsAppUrl(mobno) {
   if (!mobno) return '';
@@ -265,9 +275,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${b.issuedto}</td>
 <td>
   ${b.mobno
-    ? `<a href="${getWhatsAppUrl(b.mobno)}" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline; font-weight:600; display:inline-flex; align-items:center; gap:5px;" title="Chat on WhatsApp with ${b.mobno}">
+    ? `<a href="${esc(getWhatsAppUrl(b.mobno))}" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline; font-weight:600; display:inline-flex; align-items:center; gap:5px;" title="Chat on WhatsApp with ${esc(b.mobno)}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle; flex-shrink:0;"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.184-.555-1.831-.755-3.003-2.612-3.093-2.734-.09-.12-1.074-1.426-1.074-2.719 0-1.292.678-1.928.92-2.19.243-.263.53-.328.706-.328.176 0 .353.002.508.01.165.008.386-.063.604.46.228.547.777 1.896.845 2.034.068.138.113.3.023.48-.09.18-.135.293-.27.45-.136.158-.285.352-.408.472-.136.136-.278.283-.12.553.158.27.7 1.155 1.503 1.871 1.034.922 1.905 1.208 2.176 1.343.27.135.43.113.589-.068.158-.18.678-.788.859-1.058.18-.27.36-.225.604-.135.244.09 1.547.73 1.815.865.268.135.448.203.515.316.068.113.068.654-.076 1.059zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.178L2 22l4.981-1.306C8.441 21.538 10.165 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
-        <span>${b.mobno}</span>
+        <span>${esc(b.mobno)}</span>
       </a>`
     : '-'}
 

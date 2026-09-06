@@ -85,7 +85,7 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
       if (table._columnFilters) {
         for (const [colIdxStr, selectedValues] of Object.entries(table._columnFilters)) {
           const ci = parseInt(colIdxStr, 10);
-          if (Array.isArray(selectedValues) && selectedValues.length > 0) {
+          if (Array.isArray(selectedValues)) {
             const cellText = row.children[ci]?.textContent.trim() || '';
             if (!selectedValues.includes(cellText)) {
               visible = false;
@@ -267,16 +267,24 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
       `;
 
       unique.forEach(val => {
-        const safeVal = val.replace(/"/g, '&quot;');
-        const checked = currentSelected.includes(val) ? 'checked' : '';
-        dropdown.innerHTML += `
-          <div style="margin-bottom:4px;">
-            <label style="cursor:pointer; font-weight:normal; display:flex; align-items:center; gap:6px; margin:0;">
-              <input type="checkbox" value="${safeVal}" ${checked}>
-              <span>${val}</span>
-            </label>
-          </div>
-        `;
+        const itemDiv = document.createElement('div');
+        itemDiv.style.marginBottom = '4px';
+
+        const itemLabel = document.createElement('label');
+        itemLabel.style.cssText = 'cursor:pointer; font-weight:normal; display:flex; align-items:center; gap:6px; margin:0;';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = val;
+        cb.checked = currentSelected.includes(val);
+
+        const span = document.createElement('span');
+        span.textContent = val;
+
+        itemLabel.appendChild(cb);
+        itemLabel.appendChild(span);
+        itemDiv.appendChild(itemLabel);
+        dropdown.appendChild(itemDiv);
       });
 
       const rect = filterBtn.getBoundingClientRect();
