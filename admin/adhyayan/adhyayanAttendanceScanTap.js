@@ -226,6 +226,7 @@ async function markAttendance(cardno, scannedAt) {
   let response;
   try {
     formWrapper.style.display = "none";
+    showAlert(alertBox, "Processing attendance...", "info");
 
     response = await fetch(
       `${CONFIG.basePath}/adhyayan/attendance/${shibirId}/${sessionNo}/${cardno}`,
@@ -247,22 +248,23 @@ async function markAttendance(cardno, scannedAt) {
   const data = await response.json();
   const msg = data.message?.toLowerCase() || "";
 
-  if (response.ok) {
-    showAlert(alertBox, `Attendance marked for ${data.participantName || cardno}`, "success");
-  } else if (msg.includes("already")) {
-    showAlert(alertBox, data.message, "warning");
-  } else {
-    showAlert(alertBox, data.message || "Error marking attendance", "danger");
-    isProcessing = false;
-    throw new Error(data.message || "Error marking attendance");
+  try {
+    if (response.ok) {
+      showAlert(alertBox, `Attendance marked for ${data.participantName || cardno}`, "success");
+    } else if (msg.includes("already")) {
+      showAlert(alertBox, data.message, "warning");
+    } else {
+      showAlert(alertBox, data.message || "Error marking attendance", "danger");
+      throw new Error(data.message || "Error marking attendance");
+    }
+  } finally {
+    setTimeout(() => {
+      cardInput.value = "";
+      resetAlert();
+      cardInput.focus();
+      isProcessing = false;
+    }, 1500);
   }
-
-  setTimeout(() => {
-    cardInput.value = "";
-    resetAlert();
-    cardInput.focus();
-    isProcessing = false;
-  }, 1000);
 }
 
 async function syncPendingScans() {
@@ -331,7 +333,7 @@ async function syncPendingScans() {
     showAlert(alertBox, `Sync Complete: Marked ${successCount} offline attendance records.${failCount > 0 ? ` (${failCount} failed)` : ''}`, "success");
     setTimeout(() => {
       resetAlert();
-    }, 2500);
+    }, 1500);
   }
 }
 

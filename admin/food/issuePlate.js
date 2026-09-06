@@ -175,6 +175,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const formWrapper = document.getElementById('formWrapper');
     const cardnoInput = document.getElementById('cardno');
 
+    formWrapper.style.display = 'none';
+    showAlert(alertBox, 'Issuing plate...', 'info');
+
     let response;
     try {
       response = await fetch(
@@ -194,34 +197,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const data = await response.json();
-    formWrapper.style.display = 'none';
 
-    if (response.ok) {
-      const name = data.issuedto || 'Unknown';
-      showAlert(alertBox, `Plate issued for ${name}`, 'success');
-    } else {
-      playErrorSound();
-      let alertType = 'danger';
+    try {
+      if (response.ok) {
+        const name = data.issuedto || 'Unknown';
+        showAlert(alertBox, `Plate issued for ${name}`, 'success');
+      } else {
+        playErrorSound();
+        let alertType = 'danger';
 
-      if (data.message) {
-        const msg = data.message.toLowerCase();
-        if (msg.includes('already issued')) {
-          alertType = 'warning';
-        } else if (msg.includes('invalid meal time')) {
-          alertType = 'info';
-        } else if (msg.includes('booking not found')) {
-          alertType = 'danger';
+        if (data.message) {
+          const msg = data.message.toLowerCase();
+          if (msg.includes('already issued')) {
+            alertType = 'warning';
+          } else if (msg.includes('invalid meal time')) {
+            alertType = 'info';
+          } else if (msg.includes('booking not found')) {
+            alertType = 'danger';
+          }
         }
+        showAlert(alertBox, data.message || 'Error issuing plate', alertType);
+        throw new Error(data.message || 'Error issuing plate');
       }
-      showAlert(alertBox, data.message || 'Error issuing plate', alertType);
-      throw new Error(data.message || 'Error issuing plate');
+    } finally {
+      if (!isSyncing) {
+        setTimeout(() => {
+          cardnoInput.value = '';
+          resetAlert();
+          cardnoInput.focus();
+        }, 1500);
+      }
     }
-
-    setTimeout(() => {
-      cardnoInput.value = '';
-      resetAlert();
-      cardnoInput.focus();
-    }, 1000);
   }
 
   async function syncPendingScans() {
@@ -272,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
       showAlert(alertBox, `Sync Complete: Issued ${successCount} offline food plates.${failCount > 0 ? ` (${failCount} failed)` : ''}`, 'success');
       setTimeout(() => {
         resetAlert();
-      }, 2500);
+      }, 1500);
     }
   }
 });

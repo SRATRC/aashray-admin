@@ -321,14 +321,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* -------------------- ALERTS -------------------- */
 
+  let alertTimeout = null;
+
   function showMessage(message, type) {
     alertDiv.className = `alert alert-${type}`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
-    if (type === 'success' || type === 'info') {
-      setTimeout(resetAlert, 3000);
-    }
+    if (alertTimeout) clearTimeout(alertTimeout);
+    alertTimeout = setTimeout(resetAlert, 1500);
   }
 
   function resetAlert() {
