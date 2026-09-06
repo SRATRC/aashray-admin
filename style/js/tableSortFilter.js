@@ -175,7 +175,7 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
     if (th.querySelector('.enhanced-header')) return;
 
     const originalText = th.innerText.trim();
-    if (!originalText) return;
+    if (!originalText || th.classList.contains('no-enhance') || th.hasAttribute('data-no-enhance')) return;
 
     th.innerHTML = '';
 

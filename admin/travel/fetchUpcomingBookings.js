@@ -42,6 +42,7 @@ const PICKUP_DROP_POINTS = [
 
 
 document.addEventListener('DOMContentLoaded', async function () {
+  setupBulkSelectionHandlers();
 
   const today = new Date();
   const tomorrow = new Date();
@@ -259,7 +260,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
           row.setAttribute("style", rowStyle);
 
+          const isChecked = selectedBookingIds.has(String(b.bookingid));
           row.innerHTML = `
+    <td class="no-enhance" data-no-enhance="true" style="text-align: center;">
+      <input type="checkbox" class="booking-select-cb" value="${esc(b.bookingid)}" ${isChecked ? 'checked' : ''} style="cursor: pointer;" />
+    </td>
     <td>
   ${index + 1}
   <span
@@ -407,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
         setTimeout(() => {
           enhanceTable('upcomingBookings', 'tableSearch');
+          updateBulkActionBar();
         }, 100);
 
 
@@ -1208,4 +1214,252 @@ function openBusSummaryModal() {
   document.getElementById(
     'busSummaryModal'
   ).style.display = 'block';
+}
+
+// ==========================================
+// Bulk Status Update Functions & State
+// ==========================================
+const selectedBookingIds = new Set();
+
+function getSelectedUserNames() {
+  const names = [];
+  selectedBookingIds.forEach(id => {
+    const booking = travelReport.find(b => String(b.bookingid) === String(id));
+    if (booking && booking.issuedto) {
+      names.push(booking.issuedto);
+    } else {
+      names.push('Booking ID: ' + id);
+    }
+  });
+  return names;
+}
+
+function updateBulkActionBar() {
+  const bar = document.getElementById('bulkActionBar');
+  const countText = document.getElementById('bulkCountText');
+  const selectAllCb = document.getElementById('selectAllBookings');
+  if (!bar || !countText) return;
+
+  const count = selectedBookingIds.size;
+  const names = getSelectedUserNames();
+  const tooltipText = names.length > 0 
+    ? names.map((name, i) => (i + 1) + '. ' + name).join('\n')
+    : '';
+
+  countText.textContent = count + ' booking' + (count === 1 ? '' : 's') + ' selected';
+  countText.title = tooltipText;
+
+  if (count > 0) {
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+  }
+
+  if (selectAllCb) {
+    const visibleRows = Array.from(document.querySelectorAll('#upcomingBookings tbody tr'))
+      .filter(r => r.style.display !== 'none');
+    const visibleCbs = visibleRows
+      .map(r => r.querySelector('.booking-select-cb'))
+      .filter(Boolean);
+
+    if (visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked)) {
+      selectAllCb.checked = true;
+      selectAllCb.indeterminate = false;
+    } else if (visibleCbs.some(cb => cb.checked)) {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = true;
+    } else {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = false;
+    }
+  }
+}
+
+function setupBulkSelectionHandlers() {
+  const table = document.getElementById('upcomingBookings');
+  const selectAllCb = document.getElementById('selectAllBookings');
+  const clearBtn = document.getElementById('clearBulkSelectionBtn');
+  const openModalBtn = document.getElementById('openBulkModalBtn');
+  const closeModalBtn = document.getElementById('closeBulkModal');
+  const cancelBtn = document.getElementById('cancelBulkUpdate');
+  const bulkStatusSelect = document.getElementById('bulkStatus');
+  const bulkForm = document.getElementById('bulkUpdateBookingForm');
+
+  if (table && !table._bulkDelegated) {
+    table._bulkDelegated = true;
+    table.addEventListener('change', function (e) {
+      if (e.target && e.target.classList.contains('booking-select-cb')) {
+        const id = String(e.target.value);
+        if (e.target.checked) {
+          selectedBookingIds.add(id);
+        } else {
+          selectedBookingIds.delete(id);
+        }
+        updateBulkActionBar();
+      }
+    });
+
+    table.addEventListener('tableFilterChanged', function () {
+      updateBulkActionBar();
+    });
+  }
+
+  if (selectAllCb && !selectAllCb._hasBulkListener) {
+    selectAllCb._hasBulkListener = true;
+    selectAllCb.addEventListener('change', function () {
+      const isChecked = this.checked;
+      const visibleRows = Array.from(document.querySelectorAll('#upcomingBookings tbody tr'))
+        .filter(r => r.style.display !== 'none');
+
+      visibleRows.forEach(row => {
+        const cb = row.querySelector('.booking-select-cb');
+        if (cb) {
+          cb.checked = isChecked;
+          const id = String(cb.value);
+          if (isChecked) {
+            selectedBookingIds.add(id);
+          } else {
+            selectedBookingIds.delete(id);
+          }
+        }
+      });
+      updateBulkActionBar();
+    });
+  }
+
+  if (clearBtn && !clearBtn._hasBulkListener) {
+    clearBtn._hasBulkListener = true;
+    clearBtn.addEventListener('click', function () {
+      selectedBookingIds.clear();
+      document.querySelectorAll('.booking-select-cb').forEach(cb => {
+        cb.checked = false;
+      });
+      updateBulkActionBar();
+    });
+  }
+
+  if (openModalBtn && !openModalBtn._hasBulkListener) {
+    openModalBtn._hasBulkListener = true;
+    openModalBtn.addEventListener('click', function () {
+      if (selectedBookingIds.size === 0) {
+        alert('Please select at least one booking to update.');
+        return;
+      }
+      const names = getSelectedUserNames();
+      const tooltipText = names.length > 0 
+        ? names.map((name, i) => (i + 1) + '. ' + name).join('\n')
+        : '';
+      const countEl = document.getElementById('bulkSelectedCount');
+      if (countEl) {
+        countEl.textContent = selectedBookingIds.size;
+        countEl.title = tooltipText;
+      }
+      const tooltipPopup = document.getElementById('bulkUserNamesTooltip');
+      if (tooltipPopup) {
+        tooltipPopup.textContent = tooltipText;
+      }
+      document.getElementById('bulkStatus').value = '';
+      document.getElementById('bulkIssueCreditsField').style.display = 'none';
+      document.getElementById('bulkIssueCredits').value = 'no';
+      document.getElementById('bulkCharges').value = '';
+      document.getElementById('bulkDescription').value = '';
+      document.getElementById('bulkAdminComments').value = '';
+      document.getElementById('bulkStatusMessage').textContent = '';
+      document.getElementById('bulkUpdateModal').style.display = 'block';
+    });
+  }
+
+  if (bulkStatusSelect && !bulkStatusSelect._hasBulkListener) {
+    bulkStatusSelect._hasBulkListener = true;
+    bulkStatusSelect.addEventListener('change', function () {
+      const issueCreditsField = document.getElementById('bulkIssueCreditsField');
+      if (this.value === 'admin cancelled') {
+        issueCreditsField.style.display = 'block';
+      } else {
+        issueCreditsField.style.display = 'none';
+        document.getElementById('bulkIssueCredits').value = 'no';
+      }
+    });
+  }
+
+  if (closeModalBtn && !closeModalBtn._hasBulkListener) {
+    closeModalBtn._hasBulkListener = true;
+    closeModalBtn.addEventListener('click', function () {
+      document.getElementById('bulkUpdateModal').style.display = 'none';
+    });
+  }
+
+  if (cancelBtn && !cancelBtn._hasBulkListener) {
+    cancelBtn._hasBulkListener = true;
+    cancelBtn.addEventListener('click', function () {
+      document.getElementById('bulkUpdateModal').style.display = 'none';
+    });
+  }
+
+  if (bulkForm && !bulkForm._hasBulkListener) {
+    bulkForm._hasBulkListener = true;
+    bulkForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      if (selectedBookingIds.size === 0) {
+        alert('No bookings selected.');
+        return;
+      }
+
+      const statusInput = document.getElementById('bulkStatus').value;
+      const charges = document.getElementById('bulkCharges').value;
+      const description = document.getElementById('bulkDescription').value;
+      const issueCredits = document.getElementById('bulkIssueCredits').value;
+      let adminComments = document.getElementById('bulkAdminComments').value;
+
+      let status = statusInput;
+      if (statusInput === 'wrong form cancel') {
+        status = 'admin cancelled';
+        if (!adminComments) adminComments = 'admin_cancel_wrong_form';
+      } else if (statusInput === 'seats full cancel') {
+        status = 'admin cancelled';
+        if (!adminComments) adminComments = 'admin_cancel_seats_full';
+      }
+
+      const submitBtn = document.getElementById('bulkSubmitBtn');
+      const origText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Updating...';
+
+      try {
+        const response = await fetch(CONFIG.basePath + '/travel/booking/bulk-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + sessionStorage.getItem('token')
+          },
+          body: JSON.stringify({
+            bookingids: Array.from(selectedBookingIds),
+            status,
+            charges,
+            description,
+            adminComments,
+            issueCredits
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || 'Bulk status update completed successfully.');
+          selectedBookingIds.clear();
+          updateBulkActionBar();
+          document.getElementById('bulkUpdateModal').style.display = 'none';
+          document.getElementById('reportForm').dispatchEvent(new Event('submit'));
+        } else {
+          alert('Error: ' + (data.message || 'Failed to update bookings.'));
+        }
+      } catch (error) {
+        alert('Error: ' + (error.message || error));
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
+      }
+    });
+  }
 }
