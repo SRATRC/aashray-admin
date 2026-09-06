@@ -244,6 +244,152 @@ document.addEventListener('DOMContentLoaded', async function () {
       btnTappSummary.style.display = 'none';
     }
 
+    // ── VENDOR FOOD SUMMARY BUTTON & MODAL ──
+    // Show button only during Utsav dates (when vendor registration data exists for the selected date range)
+    const btnVendorFood = document.getElementById('btnVendorFood');
+    const vendorFoodModal = document.getElementById('vendorFoodModal');
+
+    try {
+      const token = sessionStorage.getItem('token');
+      const vendorRes = await fetch(`${CONFIG.basePath}/food/vendor-summary?start_date=${start_date}&end_date=${end_date}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const vendorData = await vendorRes.json();
+
+      if (vendorData.hasData && vendorData.dates && vendorData.dates.length > 0 && btnVendorFood) {
+        btnVendorFood.style.display = 'inline-block';
+
+        const { summary, dates, departments, utsav } = vendorData;
+
+        // Populate summary cards
+        const fmtKitchen = (k) =>
+          `B: <b>${k.breakfast}</b> &nbsp;|&nbsp; L: <b>${k.lunch}</b> &nbsp;|&nbsp; D: <b>${k.dinner}</b> &nbsp;|&nbsp; Total: <b>${k.total}</b>`;
+
+        document.getElementById('vendorMainKitchenStats').innerHTML = fmtKitchen(summary.main);
+        document.getElementById('vendorOtherKitchenStats').innerHTML = fmtKitchen(summary.other);
+        document.getElementById('vendorTotalStats').innerHTML = fmtKitchen(summary.total);
+
+        const utsavName = utsav ? `${utsav.name} • ` : '';
+        document.getElementById('vendorFoodSubtitle').textContent =
+          `${utsavName}${departments?.length || 0} departments registered • ${dates.length} days with vendor meals`;
+
+        // Populate Date-wise Table
+        const vendorDatesTableBody = document.getElementById('vendorDatesTableBody');
+        let dateRows = '';
+        dates.forEach((d) => {
+          dateRows += `
+            <tr>
+              <td style="text-align:center; font-weight:600;">${formatDate(d.date)}</td>
+              <td style="text-align:center; background:#f0fdf4;">${d.main.breakfast || '0'}</td>
+              <td style="text-align:center; background:#f0fdf4;">${d.main.lunch || '0'}</td>
+              <td style="text-align:center; background:#f0fdf4;">${d.main.dinner || '0'}</td>
+              <td style="text-align:center; background:#fffbeb;">${d.other.breakfast || '0'}</td>
+              <td style="text-align:center; background:#fffbeb;">${d.other.lunch || '0'}</td>
+              <td style="text-align:center; background:#fffbeb;">${d.other.dinner || '0'}</td>
+              <td style="text-align:center; background:#eff6ff; font-weight:600;">${d.total.breakfast || '0'}</td>
+              <td style="text-align:center; background:#eff6ff; font-weight:600;">${d.total.lunch || '0'}</td>
+              <td style="text-align:center; background:#eff6ff; font-weight:600;">${d.total.dinner || '0'}</td>
+            </tr>
+          `;
+        });
+        // Date-wise Total Row
+        dateRows += `
+          <tr style="font-weight:700; background:#f1f5f9; border-top:2px solid #cbd5e1;">
+            <td style="text-align:center;">TOTAL</td>
+            <td style="text-align:center; background:#dcfce7; color:#166534;">${summary.main.breakfast}</td>
+            <td style="text-align:center; background:#dcfce7; color:#166534;">${summary.main.lunch}</td>
+            <td style="text-align:center; background:#dcfce7; color:#166534;">${summary.main.dinner}</td>
+            <td style="text-align:center; background:#fef3c7; color:#92400e;">${summary.other.breakfast}</td>
+            <td style="text-align:center; background:#fef3c7; color:#92400e;">${summary.other.lunch}</td>
+            <td style="text-align:center; background:#fef3c7; color:#92400e;">${summary.other.dinner}</td>
+            <td style="text-align:center; background:#dbeafe; color:#1e40af;">${summary.total.breakfast}</td>
+            <td style="text-align:center; background:#dbeafe; color:#1e40af;">${summary.total.lunch}</td>
+            <td style="text-align:center; background:#dbeafe; color:#1e40af;">${summary.total.dinner}</td>
+          </tr>
+        `;
+        if (vendorDatesTableBody) vendorDatesTableBody.innerHTML = dateRows;
+
+        // Populate Department Table
+        const vendorTableBody = document.getElementById('vendorFoodTableBody');
+        let deptRows = '';
+        (departments || []).forEach((v) => {
+          const kitchenLabel = v.kitchen === 'main'
+            ? '<span class="badge" style="background:#dcfce7; color:#166534; font-weight:600; padding:3px 8px; border-radius:4px;">Main Kitchen</span>'
+            : '<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:600; padding:3px 8px; border-radius:4px;">Other (K1)</span>';
+          deptRows += `
+            <tr>
+              <td><b>${escapeHtml(v.dept || '—')}</b></td>
+              <td style="text-align:center;">${kitchenLabel}</td>
+              <td style="text-align:center;">${v.totals.breakfast}</td>
+              <td style="text-align:center;">${v.totals.lunch}</td>
+              <td style="text-align:center;">${v.totals.dinner}</td>
+              <td style="text-align:center; font-weight:600;">${v.totals.total}</td>
+              <td style="font-size:0.85rem; color:#475569;">${escapeHtml(v.remarks || '—')}</td>
+            </tr>
+          `;
+        });
+        // Dept Total Row
+        deptRows += `
+          <tr style="font-weight:700; background:#f1f5f9; border-top:2px solid #cbd5e1;">
+            <td colspan="2" style="text-align:right;">TOTAL</td>
+            <td style="text-align:center;">${summary.total.breakfast}</td>
+            <td style="text-align:center;">${summary.total.lunch}</td>
+            <td style="text-align:center;">${summary.total.dinner}</td>
+            <td style="text-align:center;">${summary.total.total}</td>
+            <td></td>
+          </tr>
+        `;
+        if (vendorTableBody) vendorTableBody.innerHTML = deptRows;
+
+        // Tab Switching Logic
+        const tabVendorDates = document.getElementById('tabVendorDates');
+        const tabVendorDepts = document.getElementById('tabVendorDepts');
+        const vendorDatesView = document.getElementById('vendorDatesView');
+        const vendorDeptsView = document.getElementById('vendorDeptsView');
+
+        if (tabVendorDates && tabVendorDepts) {
+          tabVendorDates.onclick = () => {
+            tabVendorDates.style.background = '#0e7490';
+            tabVendorDates.style.color = '#fff';
+            tabVendorDepts.style.background = '#e2e8f0';
+            tabVendorDepts.style.color = '#334155';
+            vendorDatesView.style.display = 'block';
+            vendorDeptsView.style.display = 'none';
+          };
+          tabVendorDepts.onclick = () => {
+            tabVendorDepts.style.background = '#0e7490';
+            tabVendorDepts.style.color = '#fff';
+            tabVendorDates.style.background = '#e2e8f0';
+            tabVendorDates.style.color = '#334155';
+            vendorDeptsView.style.display = 'block';
+            vendorDatesView.style.display = 'none';
+          };
+        }
+
+        // Button open/close handlers
+        const closeVendorModal = () => { vendorFoodModal.style.display = 'none'; };
+        btnVendorFood.onclick = () => { vendorFoodModal.style.display = 'flex'; };
+        document.getElementById('closeVendorFoodModal').onclick = closeVendorModal;
+        document.getElementById('closeVendorFoodModalBtn').onclick = closeVendorModal;
+
+        const downloadVendorCSVBtn = document.getElementById('downloadVendorCSVBtn');
+        if (downloadVendorCSVBtn) {
+          downloadVendorCSVBtn.onclick = () => {
+            downloadVendorReportCSV(vendorData, start_date, end_date);
+          };
+        }
+
+        window.addEventListener('click', (e) => {
+          if (e.target === vendorFoodModal) closeVendorModal();
+        });
+      } else if (btnVendorFood) {
+        btnVendorFood.style.display = 'none';
+      }
+    } catch (vendorErr) {
+      console.warn('[VENDOR FOOD] Failed to load vendor summary:', vendorErr);
+      if (btnVendorFood) btnVendorFood.style.display = 'none';
+    }
+
   } catch (err) {
     console.error(err);
     showErrorMessage(err.message || err);
@@ -428,6 +574,65 @@ function downloadTappReportCSV(tappData, firstDate, lastDate) {
   const sStr = (firstDate || '').substring(0, 10);
   const eStr = (lastDate || '').substring(0, 10);
   a.download = `tapascharya_report_${sStr}_to_${eStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadVendorReportCSV(vendorData, startDate, endDate) {
+  if (!vendorData || !vendorData.dates || !vendorData.dates.length) return;
+  const rows = [
+    ['Vendor Food Summary'],
+    [`Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`],
+    [],
+    ['=== DATE-WISE BREAKDOWN ==='],
+    ['Date', 'Main Kitchen Breakfast', 'Main Kitchen Lunch', 'Main Kitchen Dinner', 'Main Kitchen Total',
+     'Other Kitchen Breakfast', 'Other Kitchen Lunch', 'Other Kitchen Dinner', 'Other Kitchen Total',
+     'Grand Total Breakfast', 'Grand Total Lunch', 'Grand Total Dinner', 'Grand Total All Meals']
+  ];
+
+  vendorData.dates.forEach((d) => {
+    rows.push([
+      formatDate(d.date),
+      d.main.breakfast, d.main.lunch, d.main.dinner, d.main.total,
+      d.other.breakfast, d.other.lunch, d.other.dinner, d.other.total,
+      d.total.breakfast, d.total.lunch, d.total.dinner, d.total.total
+    ]);
+  });
+
+  const s = vendorData.summary;
+  rows.push([
+    'TOTAL',
+    s.main.breakfast, s.main.lunch, s.main.dinner, s.main.total,
+    s.other.breakfast, s.other.lunch, s.other.dinner, s.other.total,
+    s.total.breakfast, s.total.lunch, s.total.dinner, s.total.total
+  ]);
+
+  rows.push([]);
+  rows.push(['=== DEPARTMENT-WISE BREAKDOWN ===']);
+  rows.push(['Department / Vendor', 'Kitchen', 'Breakfast', 'Lunch', 'Dinner', 'Total Meals', 'Remarks']);
+
+  (vendorData.departments || []).forEach((dept) => {
+    rows.push([
+      dept.dept,
+      dept.kitchenLabel,
+      dept.totals.breakfast,
+      dept.totals.lunch,
+      dept.totals.dinner,
+      dept.totals.total,
+      dept.remarks || ''
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const sStr = (startDate || '').substring(0, 10);
+  const eStr = (endDate || '').substring(0, 10);
+  a.download = `vendor_food_summary_${sStr}_to_${eStr}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

@@ -197,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const data = await response.json();
-    formWrapper.style.display = 'none';
 
     try {
       if (response.ok) {

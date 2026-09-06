@@ -258,14 +258,12 @@ async function markAttendance(cardno, scannedAt) {
       throw new Error(data.message || "Error marking attendance");
     }
   } finally {
-    if (!isSyncing) {
-      setTimeout(() => {
-        cardInput.value = "";
-        resetAlert();
-        cardInput.focus();
-        isProcessing = false;
-      }, 1500);
-    }
+    setTimeout(() => {
+      cardInput.value = "";
+      resetAlert();
+      cardInput.focus();
+      isProcessing = false;
+    }, 1500);
   }
 }
 
