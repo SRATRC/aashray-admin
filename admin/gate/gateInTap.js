@@ -238,14 +238,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  let alertTimeout = null;
+
   function showMessage(message, type) {
     alertDiv.className = `big-alert alert-${type}`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
-    if (type === 'success') {
-      setTimeout(resetAlert, 3000);
-    }
+    if (alertTimeout) clearTimeout(alertTimeout);
+    alertTimeout = setTimeout(resetAlert, 1500);
   }
 
   function showSuccessMessage(message) {
