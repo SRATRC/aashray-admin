@@ -367,6 +367,15 @@
           </select>
         </div>
         <div class="filter-group">
+          <label>Stay / Location</label>
+          <select id="runStayFilter" onchange="renderRunTable()">
+            <option value="all">All Locations</option>
+            <option value="flat">Staying in Flat</option>
+            <option value="rc">Staying in RC Rooms</option>
+            <option value="outside">Staying Outside</option>
+          </select>
+        </div>
+        <div class="filter-group">
           <label>Package</label>
           <select id="runPackageFilter" onchange="renderRunTable()">
             <option value="all">All Packages</option>
@@ -505,6 +514,10 @@
           <div class="kpi-icon" style="background:#fce7f3; color:#db2777;"><i class="fas fa-venus"></i></div>
           <div><div class="kpi-val" id="kpiUncheckedInFemale" style="color:#db2777;">0</div><div class="kpi-label">Female Vacant Beds</div></div>
         </div>
+        <div class="kpi-card" style="border-left:4px solid #ef4444;">
+          <div class="kpi-icon" style="background:#fee2e2; color:#ef4444;"><i class="fas fa-fire"></i></div>
+          <div><div class="kpi-val" id="kpiUncheckedInUpvaas" style="color:#ef4444;">0</div><div class="kpi-label">Doing Upvaas</div></div>
+        </div>
         <div class="kpi-card" style="border-left:4px solid #8b5cf6;">
           <div class="kpi-icon" style="background:#ede9fe; color:#8b5cf6;"><i class="fas fa-users"></i></div>
           <div><div class="kpi-val" id="kpiUnallocatedGuests" style="color:#8b5cf6;">0</div><div class="kpi-label">Confirmed Utsav Participants</div></div>
@@ -531,6 +544,14 @@
             <option value="all">All Buildings</option>
             <option value="OAG">OAG Only</option>
             <option value="NAG">NAG Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Tapascharya / Fasting</label>
+          <select id="uncheckedInTappFilter" onchange="renderUncheckedInTable()">
+            <option value="all">All Participants</option>
+            <option value="upvaas">Doing Upvaas Only</option>
+            <option value="any_tapp">Any Tapascharya</option>
           </select>
         </div>
       </div>

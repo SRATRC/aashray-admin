@@ -152,6 +152,7 @@
                   <th data-key="date">Travel Date</th>
                   <th data-key="bookingDate">Booking Date</th>
                   <th data-key="issuedto">Mumukshu Name</th>
+                  <th data-key="mobno">Mobile No</th>
                   <th data-key="type">Type (Regular/Full Car)</th>
                   <th data-key="pickup_point">Pickup Point</th>
                   <th data-key="drop_point">Drop off Point</th>
@@ -160,11 +161,11 @@
                   <th data-key="coordinator_bookingid">Coordinator?</th>
                   <th data-key="arrival_time">Train/Flight Time</th>
                   <th data-key="leaving_post_adhyayan">Attending Adhyayan</th>
+                  <th data-key="breakfast_booked">Breakfast Booked</th>
                   <th data-key="status">Booking Status</th>
                   <th data-key="action">Action</th>
                   <th data-key="comments">Mumukshu Comments</th>
                   <th data-key="total_people">Total People</th>
-                  <th data-key="mobno">Mobile No</th>
                   <th data-key="amount">Amount</th>
                   <th data-key="paymentStatus">Payment Status</th>
                   <th data-key="paymentDate">Payment Date</th>
@@ -219,6 +220,11 @@
 
       <h2>Update Booking Status</h2>
       <form id="updateBookingForm">
+        <div class="form-group">
+          <label for="statusPersonName">Mumukshu Name:</label>
+          <input type="text" id="statusPersonName" name="statusPersonName" class="form-control" readonly />
+        </div>
+
         <div class="form-group">
           <label for="bookingid">Booking ID:</label>
           <input type="text" id="bookingid" name="bookingid" class="form-control" readonly />
@@ -369,6 +375,11 @@
               Yes
             </option>
           </select>
+        </div>
+
+        <div class="form-group">
+          <label for="txnAdminComments">Admin Comments</label>
+          <input type="text" id="txnAdminComments" class="form-control" placeholder="Enter admin comments" />
         </div>
 
         <div class="form-group form-submit">
