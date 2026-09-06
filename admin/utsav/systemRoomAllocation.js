@@ -459,6 +459,37 @@ function updateRunKpis(s) {
   document.getElementById('kpiRoomsUsed').textContent = s.roomsUsed;
 }
 
+function getGuestStayType(g) {
+  const room = String(g.suggested_roomno || g.bedLabel || g.allottedRoom || g.roomno || g.current_roomno || '').trim();
+  const roomLower = room.toLowerCase();
+  const prop = String(g.allottedProperty || g.allotted_property || '').toUpperCase();
+  const tag = String(g.fastTrackTag || '');
+
+  // 1. Staying in Flat
+  if (
+    ['Flat Owner', 'Flat Guest'].includes(tag) ||
+    prop === 'FLAT' ||
+    roomLower.startsWith('flat') ||
+    roomLower.includes('flat')
+  ) {
+    return 'flat';
+  }
+
+  // 2. Staying in RC Rooms (Inside RC 1-60)
+  const numMatch = room.match(/\b([1-9]|[1-5][0-9]|60)\b/);
+  const isRcNum = numMatch && parseInt(numMatch[1], 10) >= 1 && parseInt(numMatch[1], 10) <= 60;
+  if (
+    ['RC_OAG', 'RC_NAG', 'RC'].includes(prop) ||
+    ['Room Owner', 'Room Guest'].includes(tag) ||
+    (isRcNum && (roomLower.startsWith('room') || /^[0-9]{1,2}/.test(room)) && !roomLower.includes('flat') && !roomLower.includes('hotel') && !roomLower.includes('school'))
+  ) {
+    return 'rc';
+  }
+
+  // 3. Staying Outside (external rooms/hotels, school, or unallocated)
+  return 'outside';
+}
+
 function renderRunTable() {
   const wrap = document.getElementById('runTableWrap');
   if (!allGuests.length) { wrap.innerHTML = ''; return; }
@@ -468,6 +499,7 @@ function renderRunTable() {
   const pkgF = document.getElementById('runPackageFilter') ? document.getElementById('runPackageFilter').value : 'all';
   const prioF = document.getElementById('runPriorityFilter').value;
   const genderF = document.getElementById('runGenderFilter').value;
+  const stayF = document.getElementById('runStayFilter') ? document.getElementById('runStayFilter').value : 'all';
 
   let filtered = allGuests.filter(g => {
     if (q && ![`${g.name}`, `${g.mobno}`, `${g.cardno}`, `${g.suggested_roomno}`, `${g.mumukshu_comments}`].join(' ').toLowerCase().includes(q)) return false;
@@ -481,6 +513,7 @@ function renderRunTable() {
     if (prioF === 'nri' && !g.isNRI) return false;
     if (prioF === 'full_pkg' && !g.isFullPkg) return false;
     if (genderF !== 'all' && g.gender !== genderF) return false;
+    if (stayF !== 'all' && getGuestStayType(g) !== stayF) return false;
     return true;
   });
 
@@ -762,6 +795,7 @@ function downloadDryRunExcel() {
     'Mumukshu Comments': g.mumukshu_comments || '',
     'Current Room': g.current_roomno || '',
     'Suggested Room / Bed': g.suggested_roomno || '',
+    'Stay Location': ((t) => t === 'flat' ? 'Flat' : (t === 'rc' ? 'RC Room' : 'Outside'))(getGuestStayType(g)),
     'Status': g.allocated ? 'Allocated' : (g.reviewFlag ? 'Review Required' : 'Unallocated'),
     'Reason / Notes': g.allocated ? 'Matched' : (g.unallocated_reason || ''),
     'Senior (65+)': g.isSenior ? 'YES' : 'NO',
@@ -1101,6 +1135,8 @@ async function loadUncheckedInReport() {
     document.getElementById('kpiUncheckedInTotal').textContent = sum.total_uncheckedin_beds || 0;
     document.getElementById('kpiUncheckedInMale').textContent = sum.male_beds || 0;
     document.getElementById('kpiUncheckedInFemale').textContent = sum.female_beds || 0;
+    const upvaasEl = document.getElementById('kpiUncheckedInUpvaas');
+    if (upvaasEl) upvaasEl.textContent = sum.upvaas_beds || 0;
     document.getElementById('kpiUnallocatedGuests').textContent = sum.unallocated_guests_count || 0;
 
     renderUncheckedInTable();
@@ -1116,6 +1152,7 @@ function renderUncheckedInTable() {
   const search = (document.getElementById('uncheckedInSearch')?.value || '').toLowerCase().trim();
   const genderFilter = document.getElementById('uncheckedInGenderFilter')?.value || 'all';
   const propFilter = document.getElementById('uncheckedInPropFilter')?.value || 'all';
+  const tappFilter = document.getElementById('uncheckedInTappFilter')?.value || 'all';
 
   let beds = uncheckedInReportData.uncheckedin_beds || [];
 
@@ -1125,13 +1162,19 @@ function renderUncheckedInTable() {
   if (propFilter !== 'all') {
     beds = beds.filter(b => b.property === propFilter);
   }
+  if (tappFilter === 'upvaas') {
+    beds = beds.filter(b => b.is_upvaas);
+  } else if (tappFilter === 'any_tapp') {
+    beds = beds.filter(b => b.has_tapascharya);
+  }
   if (search) {
     beds = beds.filter(b =>
       String(b.roomno).toLowerCase().includes(search) ||
       String(b.issuedto).toLowerCase().includes(search) ||
       String(b.cardno).toLowerCase().includes(search) ||
       String(b.mobno).toLowerCase().includes(search) ||
-      String(b.package_name).toLowerCase().includes(search)
+      String(b.package_name).toLowerCase().includes(search) ||
+      String(b.tapp_summary || '').toLowerCase().includes(search)
     );
   }
 
@@ -1177,6 +1220,7 @@ function renderUncheckedInTable() {
         <td>
           <div style="font-weight:700; color:#1e293b;">${esc(b.issuedto)}</div>
           <div style="font-size:0.78rem; color:#64748b;">Card: ${esc(b.cardno)} ${b.age ? `• Age: ${b.age}` : ''}</div>
+          ${b.is_upvaas ? `<div style="margin-top:4px;"><span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:0.75rem; font-weight:700; padding:2px 6px;"><i class="fas fa-fire"></i> ${esc(b.tapp_summary || 'Upvaas')}</span></div>` : (b.is_aayambil ? `<div style="margin-top:4px;"><span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:0.75rem; font-weight:600; padding:2px 6px;"><i class="fas fa-utensils"></i> ${esc(b.tapp_summary || 'Aayambil')}</span></div>` : '')}
         </td>
         <td>
           ${b.mobno ? `<a href="tel:${esc(b.mobno)}" style="color:#0284c7; text-decoration:none; font-weight:600;"><i class="fas fa-phone-alt" style="font-size:0.75rem;"></i> ${esc(b.mobno)}</a>` : '<span style="color:#94a3b8;">—</span>'}
@@ -1185,8 +1229,11 @@ function renderUncheckedInTable() {
         <td style="text-align:center;">
           <span class="badge" style="background:#fff7ed; color:#c2410c; border:1px solid #ffedd5;">Not Checked-In</span>
         </td>
-        <td style="text-align:center;">
-          <button class="btn-sm btn-primary-sm" style="padding:4px 10px; font-size:0.8rem;" onclick='openReallotModal(${JSON.stringify(b).replace(/'/g, "&#39;")})' title="Re-allot this bed to another participant">
+        <td style="text-align:center; white-space:nowrap;">
+          <button class="btn-sm btn-success-sm" style="padding:4px 8px; font-size:0.78rem; margin-right:4px;" onclick='checkinFromUncheckedIn(${JSON.stringify(b.cardno).replace(/'/g, "&#39;")}, ${JSON.stringify(b.issuedto).replace(/'/g, "&#39;")})' title="Mark participant checked in">
+            <i class="fas fa-check"></i> Check In
+          </button>
+          <button class="btn-sm btn-primary-sm" style="padding:4px 8px; font-size:0.78rem;" onclick='openReallotModal(${JSON.stringify(b).replace(/'/g, "&#39;")})' title="Re-allot this bed to another participant">
             <i class="fas fa-exchange-alt"></i> Re-Allot
           </button>
         </td>
@@ -1335,6 +1382,27 @@ async function submitReallotment() {
   }
 }
 
+async function checkinFromUncheckedIn(cardno, name) {
+  if (!confirm(`Check in participant ${name} (${cardno}) for this Utsav?`)) return;
+  try {
+    const res = await fetch(`${apiBase()}/utsavCheckin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token()}`
+      },
+      body: JSON.stringify({ cardno, utsavid })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.message || 'Failed to check in');
+    showToast(`${name} checked in successfully!`);
+    await loadUncheckedInReport();
+    if (typeof loadAllottedBedsReport === 'function') loadAllottedBedsReport();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
 function downloadUncheckedInExcel() {
   if (!uncheckedInReportData) { showToast('No report data to export', 'error'); return; }
   const wb = XLSX.utils.book_new();
@@ -1348,6 +1416,7 @@ function downloadUncheckedInExcel() {
     'Card No': b.cardno,
     'Mobile Number': b.mobno,
     'Package': b.package_name,
+    'Tapascharya / Fasting': b.tapp_summary || 'Regular Meals',
     'Check-in Status': b.checkin_status
   }));
 

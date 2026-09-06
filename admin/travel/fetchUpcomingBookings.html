@@ -49,6 +49,23 @@
     }
   </style>
 
+
+<style>
+  .bulk-tooltip-wrapper:hover #bulkUserNamesTooltip {
+    display: block !important;
+  }
+  .bulk-tooltip-wrapper #bulkUserNamesTooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+  }
+</style>
+
 </head>
 
 <body>
@@ -148,10 +165,12 @@
             <table id="upcomingBookings" class="table table-striped table-bordered">
               <thead>
                 <tr>
+                  <th class="no-enhance" data-no-enhance="true" style="width: 38px; text-align: center;"><input type="checkbox" id="selectAllBookings" title="Select All (Visible)" style="cursor: pointer;" /></th>
                   <th>#</th>
                   <th data-key="date">Travel Date</th>
                   <th data-key="bookingDate">Booking Date</th>
                   <th data-key="issuedto">Mumukshu Name</th>
+                  <th data-key="mobno">Mobile No</th>
                   <th data-key="type">Type (Regular/Full Car)</th>
                   <th data-key="pickup_point">Pickup Point</th>
                   <th data-key="drop_point">Drop off Point</th>
@@ -160,11 +179,11 @@
                   <th data-key="coordinator_bookingid">Coordinator?</th>
                   <th data-key="arrival_time">Train/Flight Time</th>
                   <th data-key="leaving_post_adhyayan">Attending Adhyayan</th>
+                  <th data-key="breakfast_booked">Breakfast Booked</th>
                   <th data-key="status">Booking Status</th>
                   <th data-key="action">Action</th>
                   <th data-key="comments">Mumukshu Comments</th>
                   <th data-key="total_people">Total People</th>
-                  <th data-key="mobno">Mobile No</th>
                   <th data-key="amount">Amount</th>
                   <th data-key="paymentStatus">Payment Status</th>
                   <th data-key="paymentDate">Payment Date</th>
@@ -186,6 +205,115 @@
       </div>
     </div>
   </div>
+  </div>
+
+
+  <!-- Floating Bulk Action Bar -->
+  <div id="bulkActionBar" style="
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #ffffff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    z-index: 9990;
+    align-items: center;
+    gap: 16px;
+    font-family: inherit;
+  ">
+    <span id="bulkCountText" style="font-weight: 600; font-size: 0.95rem;">0 bookings selected</span>
+    <button type="button" id="openBulkModalBtn" class="btn btn-primary btn-sm" style="border-radius: 20px; font-weight: 600; padding: 6px 16px; margin: 0;">Bulk Update Status</button>
+    <button type="button" id="clearBulkSelectionBtn" class="btn btn-secondary btn-sm" style="border-radius: 20px; padding: 6px 14px; background: transparent; border: 1px solid #64748b; color: #cbd5e1; margin: 0;">Clear</button>
+  </div>
+
+  <!-- Modal for Bulk Updating Booking Status -->
+  <div id="bulkUpdateModal" class="modal" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
+    overflow: auto;
+  ">
+    <div class="modal-content" style="
+      background: white;
+      padding: 2rem;
+      margin: 5% auto;
+      width: 90%;
+      max-width: 600px;
+      position: relative;
+      border-radius: 10px;
+    ">
+      <span id="closeBulkModal" style="
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 24px;
+        cursor: pointer;
+      ">&times;</span>
+
+      <h2>Bulk Update Booking Status</h2>
+      <p id="bulkSelectedInfo" style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.25rem;">
+        Updating status for 
+        <span class="bulk-tooltip-wrapper" style="position: relative; display: inline-block;">
+          <strong id="bulkSelectedCount" style="cursor: pointer; text-decoration: underline dotted; color: #0284c7; padding: 0 4px;" title="">0</strong>
+          <span id="bulkUserNamesTooltip" style="display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #1e293b; color: #ffffff; padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; white-space: pre; z-index: 10001; box-shadow: 0 4px 14px rgba(0,0,0,0.3); pointer-events: none; max-height: 220px; overflow-y: auto; text-align: left; font-weight: normal; line-height: 1.4;"></span>
+        </span>
+        selected bookings.
+      </p>
+
+      <form id="bulkUpdateBookingForm">
+        <div class="form-group">
+          <label for="bulkStatus">New Status:</label>
+          <select id="bulkStatus" name="status" class="form-control" required>
+            <option value="">Select Status</option>
+            <option value="proceed for payment">Proceed for Payment</option>
+            <option value="admin cancelled">Admin Cancelled</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="awaiting confirmation">Awaiting Confirmation for Payment</option>
+            <option value="wrong form cancel">Cancelled as wrong form filled</option>
+            <option value="seats full cancel">Cancelled as all seats are booked</option>
+          </select>
+        </div>
+
+        <div id="bulkIssueCreditsField" class="form-group" style="display: none;">
+          <label for="bulkIssueCredits">Credits to be issued?</label>
+          <select id="bulkIssueCredits" name="issueCredits" class="form-control">
+            <option value="yes">Yes</option>
+            <option value="no" selected>No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="bulkCharges">Charges:</label>
+          <input type="number" id="bulkCharges" name="charges" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="bulkDescription">Transaction Description:</label>
+          <input type="text" id="bulkDescription" name="description" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="bulkAdminComments">Admin Comments:</label>
+          <input type="text" id="bulkAdminComments" name="adminComments" class="form-control" />
+        </div>
+
+        <div class="form-group form-submit">
+          <button type="submit" id="bulkSubmitBtn" class="btn btn-primary">Update Status</button>
+          <button type="button" id="cancelBulkUpdate" class="btn btn-secondary">Cancel</button>
+        </div>
+
+        <p id="bulkStatusMessage" style="margin-top:10px;"></p>
+      </form>
+    </div>
   </div>
 
   <!-- Scrollable Modal for Updating Booking Status -->
@@ -219,6 +347,11 @@
 
       <h2>Update Booking Status</h2>
       <form id="updateBookingForm">
+        <div class="form-group">
+          <label for="statusPersonName">Mumukshu Name:</label>
+          <input type="text" id="statusPersonName" name="statusPersonName" class="form-control" readonly />
+        </div>
+
         <div class="form-group">
           <label for="bookingid">Booking ID:</label>
           <input type="text" id="bookingid" name="bookingid" class="form-control" readonly />
@@ -369,6 +502,11 @@
               Yes
             </option>
           </select>
+        </div>
+
+        <div class="form-group">
+          <label for="txnAdminComments">Admin Comments</label>
+          <input type="text" id="txnAdminComments" class="form-control" placeholder="Enter admin comments" />
         </div>
 
         <div class="form-group form-submit">

@@ -77,7 +77,10 @@ function renderFilteredTable() {
       ${filteredBookings.map((item, index) => `
         <tr>
           <td>${index + 1}</td>
-          <td>${item.name}</td>
+          <td>
+            <div style="font-weight:600;">${item.name}</div>
+            ${item.is_upvaas ? `<span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:0.75rem; font-weight:700; padding:2px 6px; border-radius:4px; display:inline-block; margin-top:2px;"><i class="fas fa-fire"></i> ${item.tapp_summary || 'Upvaas'}</span>` : (item.is_aayambil ? `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:0.75rem; font-weight:600; padding:2px 6px; border-radius:4px; display:inline-block; margin-top:2px;"><i class="fas fa-utensils"></i> ${item.tapp_summary || 'Aayambil'}</span>` : '')}
+          </td>
           <td>${item.center}</td>
           <td>${item.checkin_status}</td>
           <td>${formatDateTime(item.updatedAt)}</td>

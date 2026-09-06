@@ -32,6 +32,10 @@ Airport Terminal 1
 Airport Terminal 2
 </option>
 
+<option value="Navi Mumbai Airport">
+Navi Mumbai Airport
+</option>
+
 <option value="Railway Station (Bandra Terminus)">
 Railway Station (Bandra Terminus)
 </option>
