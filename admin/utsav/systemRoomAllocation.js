@@ -476,8 +476,8 @@ function getGuestStayType(g) {
   }
 
   // 2. Staying in RC Rooms (Inside RC 1-60)
-  const numMatch = room.match(/\b([1-9]|[1-5][0-9]|60)\b/);
-  const isRcNum = numMatch && parseInt(numMatch[1], 10) >= 1 && parseInt(numMatch[1], 10) <= 60;
+  const digitMatch = room.match(/^([0-9]+)/) || room.match(/(?:^|room\s*)([0-9]{1,2})/i);
+  const isRcNum = digitMatch && digitMatch[1].length <= 2 && parseInt(digitMatch[1], 10) >= 1 && parseInt(digitMatch[1], 10) <= 60;
   if (
     ['RC_OAG', 'RC_NAG', 'RC'].includes(prop) ||
     ['Room Owner', 'Room Guest'].includes(tag) ||

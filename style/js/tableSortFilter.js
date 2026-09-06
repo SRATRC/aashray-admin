@@ -137,6 +137,7 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
 
     updateRowNumbers();
     updateFilterButtonStyles();
+    table.dispatchEvent(new CustomEvent('tableFilterChanged'));
   }
 
   function updateFilterButtonStyles() {
@@ -250,6 +251,7 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
       dropdown.style.minWidth = '140px';
 
       const allValues = Array.from(tbody.querySelectorAll('tr'))
+        .filter(row => !row.classList.contains('detail-row') && !row.classList.contains('expand-row'))
         .map(row => row.children[colIndex]?.textContent.trim())
         .filter(val => val !== undefined && val !== null && val !== '');
       const unique = [...new Set(allValues)].sort();
