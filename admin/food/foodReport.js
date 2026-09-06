@@ -616,7 +616,7 @@ function downloadVendorReportCSV(vendorData, startDate, endDate) {
   (vendorData.departments || []).forEach((dept) => {
     rows.push([
       dept.dept,
-      dept.kitchenLabel,
+      dept.kitchenLabel || (dept.kitchen === 'main' ? 'Main Kitchen' : 'Other (K1)'),
       dept.totals.breakfast,
       dept.totals.lunch,
       dept.totals.dinner,
