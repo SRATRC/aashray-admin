@@ -1,4 +1,22 @@
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 let travelReport = [];
+function getWhatsAppUrl(mobno) {
+  if (!mobno) return '';
+  const digits = String(mobno).replace(/\D/g, '');
+  if (!digits) return '';
+  const fullNumber = digits.length === 10 ? `91${digits}` : digits;
+  return `https://wa.me/${fullNumber}`;
+}
+
 let statusDropdown;
 let issueCreditsField;
 let issueCreditsDropdown;
@@ -12,6 +30,7 @@ const PICKUP_DROP_POINTS = [
   'Vile Parle (Sahara Star)',
   'Airport Terminal 1',
   'Airport Terminal 2',
+  'Navi Mumbai Airport',
   'Railway Station (CSMT)',
   'Railway Station (Mumbai Central)',
   'Railway Station (Bandra Terminus)',
@@ -23,6 +42,7 @@ const PICKUP_DROP_POINTS = [
 
 
 document.addEventListener('DOMContentLoaded', async function () {
+  setupBulkSelectionHandlers();
 
   const today = new Date();
   const tomorrow = new Date();
@@ -207,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const mumbaiPoints = new Set([
           'dadar', 'dadar (swami narayan temple)', 'dadar (swaminarayan temple)', 'amar mahal',
-          'airoli', 'borivali', 'vile parle (sahara star)', 'airport terminal 1', 'airport terminal 2',
+          'airoli', 'borivali', 'vile parle (sahara star)', 'airport terminal 1', 'airport terminal 2', 'navi mumbai airport',
           'railway station (bandra terminus)', 'railway station (kurla terminus)', 'railway station (ltt - kurla)',
           'railway station (csmt)', 'railway station (mumbai central)', 'mullund', 'mulund',
           'airport t1', 'airport t2', 'other', 'other (enter location in comments)',
@@ -227,6 +247,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             travellingFrom = "Mumbai to Research Centre";
           }
           b.travellingFrom = travellingFrom;
+          b.breakfast_booked = b.breakfast_booked == 1 ? 'Yes' : 'No';
           b.bookingDate = formatDate(b.createdAt ? b.createdAt.split('T')[0] : '');
 
           const rowStyle = travellingFrom === "Research Centre to Mumbai" ? 'background-color: #ffff99;' : "";
@@ -239,7 +260,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
           row.setAttribute("style", rowStyle);
 
+          const isChecked = selectedBookingIds.has(String(b.bookingid));
           row.innerHTML = `
+    <td class="no-enhance" data-no-enhance="true" style="text-align: center;">
+      <input type="checkbox" class="booking-select-cb" value="${esc(b.bookingid)}" ${isChecked ? 'checked' : ''} style="cursor: pointer;" />
+    </td>
     <td>
   ${index + 1}
   <span
@@ -253,6 +278,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 <td>${formatDate(b.date)}</td>
     <td>${b.bookingDate}</td>
     <td>${b.issuedto}</td>
+<td>
+  ${b.mobno
+    ? `<a href="${esc(getWhatsAppUrl(b.mobno))}" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline; font-weight:600; display:inline-flex; align-items:center; gap:5px;" title="Chat on WhatsApp with ${esc(b.mobno)}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:middle; flex-shrink:0;"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.184-.555-1.831-.755-3.003-2.612-3.093-2.734-.09-.12-1.074-1.426-1.074-2.719 0-1.292.678-1.928.92-2.19.243-.263.53-.328.706-.328.176 0 .353.002.508.01.165.008.386-.063.604.46.228.547.777 1.896.845 2.034.068.138.113.3.023.48-.09.18-.135.293-.27.45-.136.158-.285.352-.408.472-.136.136-.278.283-.12.553.158.27.7 1.155 1.503 1.871 1.034.922 1.905 1.208 2.176 1.343.27.135.43.113.589-.068.158-.18.678-.788.859-1.058.18-.27.36-.225.604-.135.244.09 1.547.73 1.815.865.268.135.448.203.515.316.068.113.068.654-.076 1.059zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.178L2 22l4.981-1.306C8.441 21.538 10.165 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+        <span>${esc(b.mobno)}</span>
+      </a>`
+    : '-'}
+
+</td>
     <td>${b.type}</td>
     <td>${b.pickup_point}</td>
 
@@ -312,6 +346,11 @@ document.addEventListener('DOMContentLoaded', async function () {
               : 'No'}
 </td>
 <td>
+  ${b.breakfast_booked === 'Yes'
+    ? '<span style="color: #15803d; font-weight: 600;">Yes</span>'
+    : '<span style="color: #6b7280;">No</span>'}
+</td>
+<td>
 
   ${b.status === 'admin cancelled' &&
               b.admin_comments ===
@@ -351,8 +390,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 <td>${b.total_people}</td>
 
-<td>${b.mobno}</td>
-
 <td>${b.amount}</td>
 
 <td>${b.paymentStatus}</td>
@@ -375,6 +412,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
         setTimeout(() => {
           enhanceTable('upcomingBookings', 'tableSearch');
+          updateBulkActionBar();
         }, 100);
 
 
@@ -422,11 +460,18 @@ function setupDownloadButton() {
 function openUpdateModal(bookingId) {
   sessionStorage.setItem('scrollPosition', window.scrollY);
 
+  const booking = travelReport.find(b => b.bookingid === bookingId);
+
+  const personNameInput = document.getElementById('statusPersonName');
+  if (personNameInput) {
+    personNameInput.value = booking ? (booking.issuedto || '') : '';
+  }
+
   document.getElementById('bookingid').value = bookingId;
   document.getElementById('status').value = "";
   document.getElementById('charges').value = "";
   document.getElementById('description').value = "";
-  document.getElementById('adminComments').value = "";
+  document.getElementById('adminComments').value = booking ? (booking.admin_comments || '') : "";
   document.getElementById('statusMessage').textContent = "";
 
   // 🚨 Reset Issue Credits state every time modal opens
@@ -442,10 +487,24 @@ async function openTransactionEditModal(bookingId) {
 
   document.getElementById('txnBookingId').value = booking.bookingid;
   document.getElementById('txnIssuedTo').value = booking.issuedto || '';
+  const adminCommentsInput = document.getElementById('txnAdminComments');
+  if (adminCommentsInput) {
+    adminCommentsInput.value = booking.admin_comments || '';
+  }
 
   document.getElementById('txnAmount').value = booking.amount ?? '';
-  document.getElementById('txnPickup').value = booking.pickup_point ?? '';
-  document.getElementById('txnDrop').value = booking.drop_point ?? '';
+  const pickupSelect = document.getElementById('txnPickup');
+  const dropSelect = document.getElementById('txnDrop');
+
+  if (booking.pickup_point && !Array.from(pickupSelect.options).some(opt => opt.value === booking.pickup_point)) {
+    pickupSelect.add(new Option(booking.pickup_point, booking.pickup_point));
+  }
+  if (booking.drop_point && !Array.from(dropSelect.options).some(opt => opt.value === booking.drop_point)) {
+    dropSelect.add(new Option(booking.drop_point, booking.drop_point));
+  }
+
+  pickupSelect.value = booking.pickup_point ?? '';
+  dropSelect.value = booking.drop_point ?? '';
   document.getElementById('txnType').value = booking.type ?? '';
   document.getElementById('txnTravelDate').value = booking.date ? booking.date.split('T')[0] : '';
 
@@ -553,21 +612,41 @@ async function loadAvailableBusRoutes(
 document.getElementById('transactionForm').addEventListener('submit', async (event) => {
   event.preventDefault();
 
+  const bookingid = document.getElementById('txnBookingId').value;
+  const currentBooking = travelReport.find(b => b.bookingid === bookingid);
+
+  const adhyayanVal = document.getElementById('txnLeavingPostAdhyayan').value;
+  if (adhyayanVal === '1' && currentBooking && !currentBooking.has_confirmed_adhyayan) {
+    const proceed = confirm(
+      'Warning: There is no active confirmed adhyayan booking for this user which ends on the travel date. Do you want to proceed?'
+    );
+    if (!proceed) return;
+  }
+
+  const busGroupId = document.getElementById('txnBusGroup').value;
+  const isCoordinator = document.getElementById('txnIsCoordinator').value;
+
+  if (isCoordinator === 'yes' && (!busGroupId || busGroupId === '')) {
+    alert('Please select an Assigned Bus before marking the passenger as a Bus Coordinator.');
+    return;
+  }
+
   const payload = {
-    bookingid: document.getElementById('txnBookingId').value,
+    bookingid: bookingid,
     amount: document.getElementById('txnAmount').value,
     pickup_point: document.getElementById('txnPickup').value,
     drop_point: document.getElementById('txnDrop').value,
     type: document.getElementById('txnType').value,
     date: document.getElementById('txnTravelDate').value,
-    leaving_post_adhyayan: document.getElementById('txnLeavingPostAdhyayan').value,
-    bus_group_id: document.getElementById('txnBusGroup').value,
-    is_coordinator: document.getElementById('txnIsCoordinator').value,
+    leaving_post_adhyayan: adhyayanVal,
+    bus_group_id: busGroupId ? busGroupId : null,
+    is_coordinator: isCoordinator,
+    admin_comments: document.getElementById('txnAdminComments') ? document.getElementById('txnAdminComments').value : '',
   };
 
-  // Remove empty values
+  // Remove empty strings (preserve null so backend can unassign if needed, keep admin_comments)
   Object.keys(payload).forEach(
-    key => (payload[key] === '' || payload[key] == null) && delete payload[key]
+    key => key !== 'admin_comments' && payload[key] === '' && delete payload[key]
   );
 
   try {
@@ -1135,4 +1214,252 @@ function openBusSummaryModal() {
   document.getElementById(
     'busSummaryModal'
   ).style.display = 'block';
+}
+
+// ==========================================
+// Bulk Status Update Functions & State
+// ==========================================
+const selectedBookingIds = new Set();
+
+function getSelectedUserNames() {
+  const names = [];
+  selectedBookingIds.forEach(id => {
+    const booking = travelReport.find(b => String(b.bookingid) === String(id));
+    if (booking && booking.issuedto) {
+      names.push(booking.issuedto);
+    } else {
+      names.push('Booking ID: ' + id);
+    }
+  });
+  return names;
+}
+
+function updateBulkActionBar() {
+  const bar = document.getElementById('bulkActionBar');
+  const countText = document.getElementById('bulkCountText');
+  const selectAllCb = document.getElementById('selectAllBookings');
+  if (!bar || !countText) return;
+
+  const count = selectedBookingIds.size;
+  const names = getSelectedUserNames();
+  const tooltipText = names.length > 0 
+    ? names.map((name, i) => (i + 1) + '. ' + name).join('\n')
+    : '';
+
+  countText.textContent = count + ' booking' + (count === 1 ? '' : 's') + ' selected';
+  countText.title = tooltipText;
+
+  if (count > 0) {
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+  }
+
+  if (selectAllCb) {
+    const visibleRows = Array.from(document.querySelectorAll('#upcomingBookings tbody tr'))
+      .filter(r => r.style.display !== 'none');
+    const visibleCbs = visibleRows
+      .map(r => r.querySelector('.booking-select-cb'))
+      .filter(Boolean);
+
+    if (visibleCbs.length > 0 && visibleCbs.every(cb => cb.checked)) {
+      selectAllCb.checked = true;
+      selectAllCb.indeterminate = false;
+    } else if (visibleCbs.some(cb => cb.checked)) {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = true;
+    } else {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = false;
+    }
+  }
+}
+
+function setupBulkSelectionHandlers() {
+  const table = document.getElementById('upcomingBookings');
+  const selectAllCb = document.getElementById('selectAllBookings');
+  const clearBtn = document.getElementById('clearBulkSelectionBtn');
+  const openModalBtn = document.getElementById('openBulkModalBtn');
+  const closeModalBtn = document.getElementById('closeBulkModal');
+  const cancelBtn = document.getElementById('cancelBulkUpdate');
+  const bulkStatusSelect = document.getElementById('bulkStatus');
+  const bulkForm = document.getElementById('bulkUpdateBookingForm');
+
+  if (table && !table._bulkDelegated) {
+    table._bulkDelegated = true;
+    table.addEventListener('change', function (e) {
+      if (e.target && e.target.classList.contains('booking-select-cb')) {
+        const id = String(e.target.value);
+        if (e.target.checked) {
+          selectedBookingIds.add(id);
+        } else {
+          selectedBookingIds.delete(id);
+        }
+        updateBulkActionBar();
+      }
+    });
+
+    table.addEventListener('tableFilterChanged', function () {
+      updateBulkActionBar();
+    });
+  }
+
+  if (selectAllCb && !selectAllCb._hasBulkListener) {
+    selectAllCb._hasBulkListener = true;
+    selectAllCb.addEventListener('change', function () {
+      const isChecked = this.checked;
+      const visibleRows = Array.from(document.querySelectorAll('#upcomingBookings tbody tr'))
+        .filter(r => r.style.display !== 'none');
+
+      visibleRows.forEach(row => {
+        const cb = row.querySelector('.booking-select-cb');
+        if (cb) {
+          cb.checked = isChecked;
+          const id = String(cb.value);
+          if (isChecked) {
+            selectedBookingIds.add(id);
+          } else {
+            selectedBookingIds.delete(id);
+          }
+        }
+      });
+      updateBulkActionBar();
+    });
+  }
+
+  if (clearBtn && !clearBtn._hasBulkListener) {
+    clearBtn._hasBulkListener = true;
+    clearBtn.addEventListener('click', function () {
+      selectedBookingIds.clear();
+      document.querySelectorAll('.booking-select-cb').forEach(cb => {
+        cb.checked = false;
+      });
+      updateBulkActionBar();
+    });
+  }
+
+  if (openModalBtn && !openModalBtn._hasBulkListener) {
+    openModalBtn._hasBulkListener = true;
+    openModalBtn.addEventListener('click', function () {
+      if (selectedBookingIds.size === 0) {
+        alert('Please select at least one booking to update.');
+        return;
+      }
+      const names = getSelectedUserNames();
+      const tooltipText = names.length > 0 
+        ? names.map((name, i) => (i + 1) + '. ' + name).join('\n')
+        : '';
+      const countEl = document.getElementById('bulkSelectedCount');
+      if (countEl) {
+        countEl.textContent = selectedBookingIds.size;
+        countEl.title = tooltipText;
+      }
+      const tooltipPopup = document.getElementById('bulkUserNamesTooltip');
+      if (tooltipPopup) {
+        tooltipPopup.textContent = tooltipText;
+      }
+      document.getElementById('bulkStatus').value = '';
+      document.getElementById('bulkIssueCreditsField').style.display = 'none';
+      document.getElementById('bulkIssueCredits').value = 'no';
+      document.getElementById('bulkCharges').value = '';
+      document.getElementById('bulkDescription').value = '';
+      document.getElementById('bulkAdminComments').value = '';
+      document.getElementById('bulkStatusMessage').textContent = '';
+      document.getElementById('bulkUpdateModal').style.display = 'block';
+    });
+  }
+
+  if (bulkStatusSelect && !bulkStatusSelect._hasBulkListener) {
+    bulkStatusSelect._hasBulkListener = true;
+    bulkStatusSelect.addEventListener('change', function () {
+      const issueCreditsField = document.getElementById('bulkIssueCreditsField');
+      if (this.value === 'admin cancelled') {
+        issueCreditsField.style.display = 'block';
+      } else {
+        issueCreditsField.style.display = 'none';
+        document.getElementById('bulkIssueCredits').value = 'no';
+      }
+    });
+  }
+
+  if (closeModalBtn && !closeModalBtn._hasBulkListener) {
+    closeModalBtn._hasBulkListener = true;
+    closeModalBtn.addEventListener('click', function () {
+      document.getElementById('bulkUpdateModal').style.display = 'none';
+    });
+  }
+
+  if (cancelBtn && !cancelBtn._hasBulkListener) {
+    cancelBtn._hasBulkListener = true;
+    cancelBtn.addEventListener('click', function () {
+      document.getElementById('bulkUpdateModal').style.display = 'none';
+    });
+  }
+
+  if (bulkForm && !bulkForm._hasBulkListener) {
+    bulkForm._hasBulkListener = true;
+    bulkForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      if (selectedBookingIds.size === 0) {
+        alert('No bookings selected.');
+        return;
+      }
+
+      const statusInput = document.getElementById('bulkStatus').value;
+      const charges = document.getElementById('bulkCharges').value;
+      const description = document.getElementById('bulkDescription').value;
+      const issueCredits = document.getElementById('bulkIssueCredits').value;
+      let adminComments = document.getElementById('bulkAdminComments').value;
+
+      let status = statusInput;
+      if (statusInput === 'wrong form cancel') {
+        status = 'admin cancelled';
+        if (!adminComments) adminComments = 'admin_cancel_wrong_form';
+      } else if (statusInput === 'seats full cancel') {
+        status = 'admin cancelled';
+        if (!adminComments) adminComments = 'admin_cancel_seats_full';
+      }
+
+      const submitBtn = document.getElementById('bulkSubmitBtn');
+      const origText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Updating...';
+
+      try {
+        const response = await fetch(CONFIG.basePath + '/travel/booking/bulk-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + sessionStorage.getItem('token')
+          },
+          body: JSON.stringify({
+            bookingids: Array.from(selectedBookingIds),
+            status,
+            charges,
+            description,
+            adminComments,
+            issueCredits
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || 'Bulk status update completed successfully.');
+          selectedBookingIds.clear();
+          updateBulkActionBar();
+          document.getElementById('bulkUpdateModal').style.display = 'none';
+          document.getElementById('reportForm').dispatchEvent(new Event('submit'));
+        } else {
+          alert('Error: ' + (data.message || 'Failed to update bookings.'));
+        }
+      } catch (error) {
+        alert('Error: ' + (error.message || error));
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
+      }
+    });
+  }
 }
