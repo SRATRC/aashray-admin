@@ -9,11 +9,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const packageFilter = document.getElementById('packageFilter');
   const downloadAllBtn = document.getElementById('downloadAll');
   const downloadPkgBtn = document.getElementById('downloadPackage');
-  const downloadRoomNoBtn = document.getElementById('downloadRoomNoFormat');
   const tableContainer = document.getElementById('tableContainer');
 
-  const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
-  if (uploadRoomNoBtn) uploadRoomNoBtn.addEventListener('click',()=>window.location.href=`uploadRoomNo.html?utsavId=${utsavid}`);
   const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
   if (systemRoomAllocationBtn) {
     systemRoomAllocationBtn.addEventListener('click', () => {
@@ -52,11 +49,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     downloadAllBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(utsavbookings),'utsav_all_packages.xlsx','All Bookings'));
     downloadPkgBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(filteredBookings),'package_filtered.xlsx','Filtered Bookings'));
-
-    if(downloadRoomNoBtn) downloadRoomNoBtn.addEventListener('click',()=>{
-      const minimalData = utsavbookings.map(b=>({bookingid:b.bookingid,cardno:b.cardno,issuedto:b.issuedto,utsavid:b.utsavid,packageid:b.packageid,roomno:b.roomno||''}));
-      triggerExcelDownload(minimalData,'roomno_upload_format.xlsx','RoomNo Upload');
-    });
 
     downloadAllBtn.style.display='inline-block';
     downloadPkgBtn.style.display='none';
@@ -149,7 +141,7 @@ function renderFilteredTable(){
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initRoomNoModal(); initStatusModal(); },50);
+  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); },50);
 }
 
 // RoomNo modal init
