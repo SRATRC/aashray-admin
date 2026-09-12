@@ -2,10 +2,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cardno = sessionStorage.getItem('cardno');
   if (!cardno) return alert('No card number found in session');
 
+  // Load departments dropdown list
+  await loadDepartments();
+
   await fetchPersonDetails(cardno);
 
   // Attach submit listener
-  document.getElementById('updateForm').addEventListener('submit', handleUpdate);
+  document
+    .getElementById('updateForm')
+    .addEventListener('submit', handleUpdate);
 
   // Attach change listeners once
   document.getElementById('country').addEventListener('change', (e) => {
@@ -18,7 +23,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     const state = e.target.value;
     fetchCities(country, state);
   });
+
+  document.getElementById('res_status').addEventListener('change', (e) => {
+    toggleResStatusFields(e.target.value);
+  });
+
+  // Reference phone validation listener
+  const refPhoneInput = document.getElementById('referencePhone');
+  if (refPhoneInput) {
+    refPhoneInput.addEventListener('input', (e) => {
+      checkReferencePhone(e.target.value.trim());
+    });
+  }
 });
+
+// --- Fetch and populate departments ---
+async function loadDepartments() {
+  try {
+    const token = sessionStorage.getItem('token');
+    const res = await fetch(`${CONFIG.basePath}/location/departments`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const result = await res.json();
+    const deptSelect = document.getElementById('department');
+    deptSelect.innerHTML = '<option value="">Select Department</option>';
+    (result.data || []).forEach((d) => {
+      const val = d.value || d;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      deptSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load departments:', err);
+  }
+}
+
+// --- Toggle status fields ---
+function toggleResStatusFields(res_status) {
+  // Toggle guest-only fields
+  const guestElements = document.querySelectorAll('.guest-only');
+  guestElements.forEach((el) => {
+    el.style.display = res_status === 'GUEST' ? 'block' : 'none';
+  });
+
+  // Toggle seva-kutir-only fields
+  const sevaKutirElements = document.querySelectorAll('.seva-kutir-only');
+  sevaKutirElements.forEach((el) => {
+    el.style.display = res_status === 'SEVA KUTIR' ? 'block' : 'none';
+  });
+}
 
 // --- Handle form submit ---
 async function handleUpdate(e) {
@@ -39,15 +96,35 @@ async function handleUpdate(e) {
     pin: document.getElementById('pin').value,
     center: document.getElementById('center').value,
     res_status: document.getElementById('res_status').value,
-    referenceCardno: document.getElementById('referenceCardno')?.value || null,
-    guestType: document.getElementById('guestType')?.value || null
+    referencePhone: document.getElementById('referencePhone')?.value || null,
+    guestType: document.getElementById('guestType')?.value || null,
+    department: document.getElementById('department')?.value || null
   };
+
+  if (updatedData.res_status === 'GUEST') {
+    if (!updatedData.referencePhone || !updatedData.guestType) {
+      alert(
+        'Please enter both Reference Phone Number and Guest Type for GUEST users.'
+      );
+      return;
+    }
+  }
+
+  if (updatedData.res_status === 'SEVA KUTIR') {
+    if (!updatedData.department) {
+      alert('Please select a department for SEVA KUTIR users.');
+      return;
+    }
+  }
 
   try {
     const token = sessionStorage.getItem('token');
     const response = await fetch(`${CONFIG.basePath}/card/update`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
       body: JSON.stringify(updatedData)
     });
     if (!response.ok) throw new Error('Failed to update card');
@@ -64,7 +141,10 @@ async function fetchPersonDetails(cardno) {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/card/search/${cardno}`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
     });
     if (!res.ok) throw new Error('Failed to fetch person details');
     const result = await res.json();
@@ -78,9 +158,34 @@ async function fetchPersonDetails(cardno) {
 
 // --- Populate form ---
 function populateForm(data) {
-  ['cardno','issuedto','gender','dob','mobno','email','idType','idNo','address','pin','res_status'].forEach(field => {
-    document.getElementById(field).value = data[field] || '';
+  [
+    'cardno',
+    'issuedto',
+    'gender',
+    'dob',
+    'mobno',
+    'email',
+    'idType',
+    'idNo',
+    'address',
+    'pin',
+    'res_status',
+    'referencePhone',
+    'guestType',
+    'department'
+  ].forEach((field) => {
+    const element = document.getElementById(field);
+    if (element) {
+      element.value = data[field] || '';
+    }
   });
+
+  // Toggle fields based on populated status
+  toggleResStatusFields(data.res_status);
+
+  if (data.res_status === 'GUEST' && data.referencePhone) {
+    checkReferencePhone(data.referencePhone);
+  }
 
   fetchCountries(data.country, data.state, data.city);
   fetchCenters(data.center); // <-- call this to populate center dropdown correctly
@@ -94,16 +199,27 @@ async function fetchCountries(currentCountry, currentState, currentCity) {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/countries`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
     });
-    const data = (await res.json()).data || ['India','USA','UK','UAE','Canada'];
-    data.forEach(c => {
+    const data = (await res.json()).data || [
+      'India',
+      'USA',
+      'UK',
+      'UAE',
+      'Canada'
+    ];
+    data.forEach((c) => {
       const val = c.value || c;
       const selected = val === currentCountry ? 'selected' : '';
       countryDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
     });
     if (currentCountry) fetchStates(currentCountry, currentState, currentCity);
-  } catch (err) { console.warn(err); }
+  } catch (err) {
+    console.warn(err);
+  }
 }
 
 // --- Fetch states ---
@@ -115,16 +231,21 @@ async function fetchStates(country, currentState, currentCity) {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/states/${country}`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
     });
     const data = (await res.json()).data || [];
-    data.forEach(s => {
+    data.forEach((s) => {
       const val = s.value || s;
       const selected = val === currentState ? 'selected' : '';
       stateDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
     });
     if (currentState) fetchCities(country, currentState, currentCity);
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // --- Fetch cities ---
@@ -135,16 +256,24 @@ async function fetchCities(country, state, currentCity) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/location/cities/${country}/${state}`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
-    });
+    const res = await fetch(
+      `${CONFIG.basePath}/location/cities/${country}/${state}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
     const data = (await res.json()).data || [];
-    data.forEach(c => {
+    data.forEach((c) => {
       const val = c.value || c;
       const selected = val === currentCity ? 'selected' : '';
       cityDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
     });
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 const fetchCenters = async (currentCenter) => {
@@ -154,21 +283,58 @@ const fetchCenters = async (currentCenter) => {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/centres`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
     });
     const centersData = (await res.json()).data || [];
 
-    centersData.forEach(c => {
+    centersData.forEach((c) => {
       const val = c.value || c;
       const selected = val === currentCenter ? 'selected' : '';
       centerDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
     });
 
     // If currentCenter is not in the fetched list, add it
-    if (currentCenter && !centersData.find(c => (c.value || c) === currentCenter)) {
+    if (
+      currentCenter &&
+      !centersData.find((c) => (c.value || c) === currentCenter)
+    ) {
       centerDropdown.innerHTML += `<option value="${currentCenter}" selected>${currentCenter}</option>`;
     }
   } catch (err) {
     console.error('Error fetching centers:', err);
   }
 };
+
+// --- Check and display reference phone Mumukshu name ---
+async function checkReferencePhone(val) {
+  const nameEl = document.getElementById('refPhoneName');
+  if (!nameEl) return;
+  if (!val || val.trim().length !== 10) {
+    nameEl.textContent = '';
+    return;
+  }
+  nameEl.textContent = 'Checking...';
+  nameEl.style.color = '#777';
+  try {
+    const res = await fetch(`${CONFIG.baseUrl}/client/checkMobile/${val}`);
+    const data = await res.json();
+    if (data.exists) {
+      if (data.res_status === 'MUMUKSHU') {
+        nameEl.textContent = `Name: ${data.name} (Mumukshu)`;
+        nameEl.style.color = '#2e7d32';
+      } else {
+        nameEl.textContent = `Name: ${data.name} (${data.res_status}) - Warning: Not a Mumukshu`;
+        nameEl.style.color = '#c62828';
+      }
+    } else {
+      nameEl.textContent = 'Phone number is not registered!';
+      nameEl.style.color = '#c62828';
+    }
+  } catch (err) {
+    nameEl.textContent = 'Error checking phone number';
+    nameEl.style.color = '#c62828';
+  }
+}
