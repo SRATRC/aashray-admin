@@ -1,6 +1,11 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['superAdmin', 'utsavAdmin', 'adhyayanAdmin', 'officeAdmin', 'adhyayanAdminReadOnly', 'utsavAdminReadOnly']);
+  if (sessionStorage.getItem('isShareToken') === 'true') {
+    alert('Temporary share links are not authorized to access WhatsApp Automation.');
+    window.location.href = '/admin/index.html';
+  } else {
+    checkRoleAccess(['superAdmin', 'utsavAdmin', 'adhyayanAdmin', 'officeAdmin', 'adhyayanAdminReadOnly', 'utsavAdminReadOnly']);
+  }
 </script>
 
 <!DOCTYPE html>
