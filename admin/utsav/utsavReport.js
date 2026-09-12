@@ -1,3 +1,14 @@
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
 let utsavfetch = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,7 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const response = await fetch(url, options);
       const result = await response.json();
-      const sortedData = (result.data || []).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      if (!response.ok) {
+        const safeMsg = escapeHtml(result.message || 'Unauthorized: Please check your access link.');
+        utsavTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:#dc2626; font-weight:600; padding:20px;">${safeMsg}</td></tr>`;
+        return;
+      }
+      const dataList = Array.isArray(result.data) ? result.data : [];
+      const sortedData = dataList.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
       utsavfetch = sortedData;
       populateTable(sortedData);
       setupDownloadButton();
@@ -134,8 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </td>
 
   <td style="text-align:center;">
-    ${JSON.parse(sessionStorage.getItem('roles') || '[]')
-          .includes('utsavAdminReadOnly')
+    ${(sessionStorage.getItem('isShareToken') === 'true' || JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
           ? '-'
           : `
           <button
@@ -199,8 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ⭐ View Feedback
 </a>
 
-${JSON.parse(sessionStorage.getItem('roles') || '[]')
-          .includes('utsavAdminReadOnly')
+${(JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly') || sessionStorage.getItem('isShareToken') === 'true')
           ? ''
           : `
       <a
@@ -223,22 +238,22 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
       >
         👤 Register Mumukshu
       </a>
+
+      <a
+        href="roomOccupancy.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-secondary"
+      >
+        🏠 Room Occupancy
+      </a>
+
+      <a
+        href="participantHistoryReport.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-primary"
+      >
+        📊 1-Yr History Dashboard
+      </a>
     `
         }
-
-<a
-  href="roomOccupancy.html?utsav_id=${item.id}"
-  class="btn btn-sm btn-secondary"
->
-  🏠 Room Occupancy
-</a>
-
-<a
-  href="participantHistoryReport.html?utsav_id=${item.id}"
-  class="btn btn-sm btn-primary"
->
-  📊 1-Yr History Dashboard
-</a>
     </div>
 
   </td>

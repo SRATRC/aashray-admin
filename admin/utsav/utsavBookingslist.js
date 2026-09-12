@@ -1,5 +1,8 @@
 let utsavbookings = [];
 let filteredBookings = [];
+const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
+const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
 
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -11,11 +14,22 @@ document.addEventListener('DOMContentLoaded', async function () {
   const downloadPkgBtn = document.getElementById('downloadPackage');
   const tableContainer = document.getElementById('tableContainer');
 
+  if (isShareToken) {
+    const logoutDiv = document.querySelector('.header .logout');
+    if (logoutDiv) {
+      logoutDiv.innerHTML = '<a href="javascript:void(0);" onclick="history.back()" style="color:#fff;">Back</a> &nbsp;|&nbsp; <span style="font-weight:600; color:#fff;">📍 Utsav Coordinator View (Read-Only)</span> &nbsp;|&nbsp; <a href="javascript:void(0);" onclick="logout()" style="color:#fff; text-decoration:underline;">Logout</a>';
+    }
+  }
+
   const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
   if (systemRoomAllocationBtn) {
-    systemRoomAllocationBtn.addEventListener('click', () => {
-      window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
-    });
+    if (isReadOnly) {
+      systemRoomAllocationBtn.style.display = 'none';
+    } else {
+      systemRoomAllocationBtn.addEventListener('click', () => {
+        window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
+      });
+    }
   }
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
@@ -127,7 +141,7 @@ function renderFilteredTable(){
           <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
           <td>${item.center}</td><td>${item.res_status}</td>
           <td>${item.status}</td><td>${item.transaction_status}</td><td>${item.bookedby}</td>
-          <td>${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>`:'-'}</td>
+          <td>${!isReadOnly ? `<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>` : '-'}</td>
         </tr>
       `).join('')}
     </tbody>
