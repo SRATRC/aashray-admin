@@ -1,4 +1,56 @@
+// Helper to decode JWT payload safely in browser
+function parseJwtPayload(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 function checkRoleAccess(allowedRoles) {
+  // Check if token in URL query params
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+      const decoded = parseJwtPayload(urlToken);
+      if (!decoded || (decoded.exp && decoded.exp * 1000 < Date.now())) {
+        alert('This access link is invalid or has expired.');
+        sessionStorage.clear();
+        window.location.href = '/admin/index.html';
+        return;
+      }
+
+      // If a full admin is already logged in this tab, do not downgrade their session
+      const existingToken = sessionStorage.getItem('token');
+      const isExistingShare = sessionStorage.getItem('isShareToken') === 'true';
+      const existingRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+      const isAdminLoggedIn = existingToken && !isExistingShare && existingRoles.length > 0;
+
+      if (!isAdminLoggedIn) {
+        sessionStorage.setItem('token', urlToken);
+        const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
+        sessionStorage.setItem('roles', JSON.stringify(roles));
+        sessionStorage.setItem('username', decoded.notes || 'Coordinator');
+        sessionStorage.setItem('isShareToken', 'true');
+      }
+
+      // Strip token from browser address bar immediately so it doesn't leak to Referer headers or CDN logs
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete('token');
+      window.history.replaceState({}, document.title, cleanUrl.toString());
+    }
+  } catch (e) {}
+
   // First check if user is logged in
   const userToken =
     sessionStorage.getItem('token') || localStorage.getItem('token');
@@ -45,6 +97,12 @@ function checkRoleAccess(allowedRoles) {
     const hasValidRole = roles.some((role) => validRoles.includes(role));
 
     if (hasValidRole && currentPage !== 'adminhome.html') {
+      if (sessionStorage.getItem('isShareToken') === 'true') {
+        if (document.body) document.body.innerHTML = '';
+        alert('You do not have access to this section with your share link.');
+        window.location.href = '/admin/index.html';
+        return;
+      }
       // User has valid roles but not for this specific page
       alert(
         'You are not authorized to access this page.\nRedirecting you to the admin home page...'
