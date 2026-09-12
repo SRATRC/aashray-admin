@@ -9,8 +9,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   const packageFilter = document.getElementById('packageFilter');
   const downloadAllBtn = document.getElementById('downloadAll');
   const downloadPkgBtn = document.getElementById('downloadPackage');
+  const downloadRoomNoBtn = document.getElementById('downloadRoomNoFormat');
   const tableContainer = document.getElementById('tableContainer');
 
+  const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
+  if (uploadRoomNoBtn) uploadRoomNoBtn.addEventListener('click',()=>window.location.href=`uploadRoomNo.html?utsavId=${utsavid}`);
   const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
   if (systemRoomAllocationBtn) {
     systemRoomAllocationBtn.addEventListener('click', () => {
@@ -49,6 +52,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     downloadAllBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(utsavbookings),'utsav_all_packages.xlsx','All Bookings'));
     downloadPkgBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(filteredBookings),'package_filtered.xlsx','Filtered Bookings'));
+
+    if(downloadRoomNoBtn) downloadRoomNoBtn.addEventListener('click',()=>{
+      const minimalData = utsavbookings.map(b=>({bookingid:b.bookingid,cardno:b.cardno,issuedto:b.issuedto,utsavid:b.utsavid,packageid:b.packageid,roomno:b.roomno||''}));
+      triggerExcelDownload(minimalData,'roomno_upload_format.xlsx','RoomNo Upload');
+    });
 
     downloadAllBtn.style.display='inline-block';
     downloadPkgBtn.style.display='none';
@@ -121,7 +129,8 @@ function renderFilteredTable(){
           <td>${item.issuedto}</td>
           <td>${item.age}</td>
           <td>${item.package_name}</td>
-          <td>${item.roomno || '-'}</td>
+          <td>${item.roomno||'-'}
+          ${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<span class="edit-room" data-bookingid="${item.bookingid}" data-cardno="${item.cardno}" data-name="${item.issuedto}" data-roomno="${item.roomno||''}" style="cursor:pointer;color:blue;margin-left:5px;">✎</span>`:''}</td>
           <td>${formatDateTime(item.createdAt)}</td>
           <td>${item.arrival}</td><td>${item.carno}</td><td>${item.volunteer}</td>
           <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
@@ -140,10 +149,39 @@ function renderFilteredTable(){
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); },50);
+  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initRoomNoModal(); initStatusModal(); },50);
 }
 
-
+// RoomNo modal init
+function initRoomNoModal(){
+  const modal=document.getElementById('roomNoModal');
+  if(!modal) return;
+  document.querySelectorAll('.edit-room').forEach(icon=>{
+    icon.onclick=()=>{
+      document.getElementById('modalBookingId').value=icon.dataset.bookingid;
+      document.getElementById('modalCardno').value=icon.dataset.cardno;
+      document.getElementById('modalName').value=icon.dataset.name;
+      document.getElementById('modalRoomno').value=icon.dataset.roomno||'';
+      modal.style.display='block';
+    };
+  });
+  document.getElementById('closeRoomNoModal').onclick=()=>modal.style.display='none';
+  window.onclick=e=>{if(e.target===modal) modal.style.display='none';};
+  document.getElementById('roomNoForm').onsubmit=async e=>{
+    e.preventDefault();
+    const bookingid=document.getElementById('modalBookingId').value;
+    const roomno=document.getElementById('modalRoomno').value;
+    try{
+      const res=await fetch(`${CONFIG.basePath}/utsav/updateRoomNo`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('token')}`},body:JSON.stringify({bookingid,roomno})});
+      if(!res.ok) throw new Error('Failed');
+      alert('Room number updated successfully!');
+      const updated=utsavbookings.find(b=>b.bookingid==bookingid);
+      if(updated) updated.roomno=roomno;
+      modal.style.display='none';
+      renderFilteredTable();
+    }catch(err){console.error(err); alert('Error updating room number');}
+  };
+}
 
 // Booking Status Modal init (with Credits dropdown)
 function initStatusModal(){

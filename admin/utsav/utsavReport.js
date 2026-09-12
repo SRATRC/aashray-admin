@@ -1,13 +1,6 @@
 let utsavfetch = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (sessionStorage.getItem('isShareToken') === 'true') {
-    const logoutDiv = document.querySelector('.header .logout');
-    if (logoutDiv) {
-      logoutDiv.innerHTML = '<span style="font-weight:600; color:#fff;">📍 Utsav Coordinator View (Read-Only)</span> &nbsp;|&nbsp; <a href="javascript:void(0);" onclick="logout()" style="color:#fff; text-decoration:underline;">Logout</a>';
-    }
-  }
-
   const urlParams = new URLSearchParams(window.location.search);
   const location = urlParams.get('location'); // ✅ correctly get location value
 
