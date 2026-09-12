@@ -128,8 +128,9 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
 
       const raw = cell.textContent;
       if (filter && raw.toLowerCase().includes(filter)) {
-        const regex = new RegExp('(' + escapeRegex(filter) + ')', 'gi');
-        cell.innerHTML = raw.replace(regex, '<mark class="search-mark">$1</mark>');
+        const safe = escapeHtml(raw);
+        const regex = new RegExp('(' + escapeRegex(escapeHtml(filter)) + ')', 'gi');
+        cell.innerHTML = safe.replace(regex, '<mark class="search-mark">$1</mark>');
       } else if (cell.querySelector('.search-mark')) {
         cell.textContent = raw;
       }

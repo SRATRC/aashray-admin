@@ -230,6 +230,14 @@
                       <small class="text-muted">Relative path inside /admin/ (e.g. utsav/utsavReport.html)</small>
                     </div>
                     <div class="col-md-6 form-group">
+                      <label for="customRoleSelect"><strong>Access Role:</strong></label>
+                      <select id="customRoleSelect" class="form-control">
+                        <option value="utsavAdminReadOnly" selected>Utsav Read-Only (utsavAdminReadOnly)</option>
+                        <option value="adhyayanAdminReadOnly">Adhyayan Read-Only (adhyayanAdminReadOnly)</option>
+                      </select>
+                      <small class="text-muted">Allowed read-only role granted to this temporary share link.</small>
+                    </div>
+                    <div class="col-md-6 form-group">
                       <label for="customLocation"><strong>Scope Location (Optional):</strong></label>
                       <input
                         type="text"

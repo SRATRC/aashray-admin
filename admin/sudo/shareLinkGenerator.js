@@ -143,6 +143,7 @@ async function handleFormSubmit(e) {
 
     let scope = {};
     let targetPath = '';
+    let customRole;
 
     if (resource === 'utsav_report') {
       const utsavId = parseInt(document.getElementById('utsavSelect').value, 10);
@@ -158,6 +159,8 @@ async function handleFormSubmit(e) {
       targetPath = document.getElementById('customTargetPath').value.trim();
       const location = document.getElementById('customLocation').value.trim();
       if (location) scope.location = location;
+      const roleSelect = document.getElementById('customRoleSelect');
+      customRole = roleSelect ? roleSelect.value : 'utsavAdminReadOnly';
     }
 
     const token = sessionStorage.getItem('token');
@@ -169,6 +172,7 @@ async function handleFormSubmit(e) {
       },
       body: JSON.stringify({
         resource,
+        customRole,
         scope,
         targetPath,
         slug,
@@ -206,6 +210,15 @@ async function handleFormSubmit(e) {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Generate Temporary Share Link';
   }
+}
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 async function loadTemporaryLinks() {
@@ -264,22 +277,28 @@ async function loadTemporaryLinks() {
 
       tr.innerHTML = `
         <td>
-          <strong><a href="${link.shortUrl}" target="_blank">${link.slug}</a></strong>
+          <strong><a href="${encodeURI(link.shortUrl)}" target="_blank" rel="noopener noreferrer">${escHtml(link.slug)}</a></strong>
         </td>
-        <td>${scopeText}</td>
+        <td>${escHtml(scopeText)}</td>
         <td>${link.click_count || 0}</td>
         <td>${createdDate}</td>
         <td>${expiresDate}</td>
         <td>${statusBadge}</td>
         <td>
           <div class="table-actions">
-            <button class="btn btn-default btn-xs" onclick="copyDirectText('${link.shortUrl}')">Copy</button>
-            <button class="btn ${link.active ? 'btn-danger' : 'btn-success'} btn-xs" onclick="toggleLink(${link.id})">
+            <button class="btn btn-default btn-xs copy-btn" data-url="${escHtml(link.shortUrl)}">Copy</button>
+            <button class="btn ${link.active ? 'btn-danger' : 'btn-success'} btn-xs" onclick="toggleLink(${Number(link.id)})">
               ${link.active ? 'Revoke' : 'Activate'}
             </button>
           </div>
         </td>
       `;
+      const copyBtn = tr.querySelector('.copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          copyDirectText(copyBtn.getAttribute('data-url'));
+        });
+      }
       tbody.appendChild(tr);
     });
   } catch (error) {

@@ -22,11 +22,17 @@ function checkRoleAccess(allowedRoles) {
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
     if (urlToken) {
-      sessionStorage.setItem('token', urlToken);
       const decoded = parseJwtPayload(urlToken);
-      const roles = decoded?.roles || (decoded?.role ? [decoded.role] : ['utsavAdminReadOnly']);
+      if (!decoded || (decoded.exp && decoded.exp * 1000 < Date.now())) {
+        alert('This access link is invalid or has expired.');
+        sessionStorage.clear();
+        window.location.href = '/admin/index.html';
+        return;
+      }
+      sessionStorage.setItem('token', urlToken);
+      const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
       sessionStorage.setItem('roles', JSON.stringify(roles));
-      sessionStorage.setItem('username', decoded?.notes || 'Coordinator');
+      sessionStorage.setItem('username', decoded.notes || 'Coordinator');
       sessionStorage.setItem('isShareToken', 'true');
     }
   } catch (e) {}
@@ -78,7 +84,9 @@ function checkRoleAccess(allowedRoles) {
 
     if (hasValidRole && currentPage !== 'adminhome.html') {
       if (sessionStorage.getItem('isShareToken') === 'true') {
+        if (document.body) document.body.innerHTML = '';
         alert('You do not have access to this section with your share link.');
+        window.location.href = '/admin/index.html';
         return;
       }
       // User has valid roles but not for this specific page
