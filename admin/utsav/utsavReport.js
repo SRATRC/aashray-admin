@@ -41,7 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const response = await fetch(url, options);
       const result = await response.json();
-      const sortedData = (result.data || []).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      if (!response.ok) {
+        utsavTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:#dc2626; font-weight:600; padding:20px;">${result.message || 'Unauthorized: Please check your access link.'}</td></tr>`;
+        return;
+      }
+      const dataList = Array.isArray(result.data) ? result.data : [];
+      const sortedData = dataList.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
       utsavfetch = sortedData;
       populateTable(sortedData);
       setupDownloadButton();
@@ -199,8 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ⭐ View Feedback
 </a>
 
-${JSON.parse(sessionStorage.getItem('roles') || '[]')
-          .includes('utsavAdminReadOnly')
+${(JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly') || sessionStorage.getItem('isShareToken') === 'true')
           ? ''
           : `
       <a
@@ -223,22 +227,22 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
       >
         👤 Register Mumukshu
       </a>
+
+      <a
+        href="roomOccupancy.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-secondary"
+      >
+        🏠 Room Occupancy
+      </a>
+
+      <a
+        href="participantHistoryReport.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-primary"
+      >
+        📊 1-Yr History Dashboard
+      </a>
     `
         }
-
-<a
-  href="roomOccupancy.html?utsav_id=${item.id}"
-  class="btn btn-sm btn-secondary"
->
-  🏠 Room Occupancy
-</a>
-
-<a
-  href="participantHistoryReport.html?utsav_id=${item.id}"
-  class="btn btn-sm btn-primary"
->
-  📊 1-Yr History Dashboard
-</a>
     </div>
 
   </td>

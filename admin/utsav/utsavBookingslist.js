@@ -11,11 +11,26 @@ document.addEventListener('DOMContentLoaded', async function () {
   const downloadPkgBtn = document.getElementById('downloadPackage');
   const tableContainer = document.getElementById('tableContainer');
 
+  const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
+  const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
+
+  if (isShareToken) {
+    const logoutDiv = document.querySelector('.header .logout');
+    if (logoutDiv) {
+      logoutDiv.innerHTML = '<a href="javascript:void(0);" onclick="history.back()" style="color:#fff;">Back</a> &nbsp;|&nbsp; <span style="font-weight:600; color:#fff;">📍 Utsav Coordinator View (Read-Only)</span> &nbsp;|&nbsp; <a href="javascript:void(0);" onclick="logout()" style="color:#fff; text-decoration:underline;">Logout</a>';
+    }
+  }
+
   const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
   if (systemRoomAllocationBtn) {
-    systemRoomAllocationBtn.addEventListener('click', () => {
-      window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
-    });
+    if (isReadOnly) {
+      systemRoomAllocationBtn.style.display = 'none';
+    } else {
+      systemRoomAllocationBtn.addEventListener('click', () => {
+        window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
+      });
+    }
   }
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
