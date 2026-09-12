@@ -9,7 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  const location = urlParams.get('location'); // ✅ correctly get location value
+  let location = urlParams.get('location'); // ✅ correctly get location value
+
+  // If accessing via share token, prioritize the location embedded in the token's scope
+  if (sessionStorage.getItem('isShareToken') === 'true') {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      const decoded = parseJwtPayload(token);
+      if (decoded?.location || decoded?.scope?.location) {
+        location = decoded.location || decoded.scope.location;
+      }
+    }
+  }
 
   const utsavTableBody = document.getElementById('utsavTable');
 

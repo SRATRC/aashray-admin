@@ -29,11 +29,25 @@ function checkRoleAccess(allowedRoles) {
         window.location.href = '/admin/index.html';
         return;
       }
-      sessionStorage.setItem('token', urlToken);
-      const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
-      sessionStorage.setItem('roles', JSON.stringify(roles));
-      sessionStorage.setItem('username', decoded.notes || 'Coordinator');
-      sessionStorage.setItem('isShareToken', 'true');
+
+      // If a full admin is already logged in this tab, do not downgrade their session
+      const existingToken = sessionStorage.getItem('token');
+      const isExistingShare = sessionStorage.getItem('isShareToken') === 'true';
+      const existingRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+      const isAdminLoggedIn = existingToken && !isExistingShare && existingRoles.length > 0;
+
+      if (!isAdminLoggedIn) {
+        sessionStorage.setItem('token', urlToken);
+        const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
+        sessionStorage.setItem('roles', JSON.stringify(roles));
+        sessionStorage.setItem('username', decoded.notes || 'Coordinator');
+        sessionStorage.setItem('isShareToken', 'true');
+      }
+
+      // Strip token from browser address bar immediately so it doesn't leak to Referer headers or CDN logs
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete('token');
+      window.history.replaceState({}, document.title, cleanUrl.toString());
     }
   } catch (e) {}
 
