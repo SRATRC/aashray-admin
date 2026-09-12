@@ -1,3 +1,14 @@
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
 let utsavfetch = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(url, options);
       const result = await response.json();
       if (!response.ok) {
-        utsavTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:#dc2626; font-weight:600; padding:20px;">${result.message || 'Unauthorized: Please check your access link.'}</td></tr>`;
+        const safeMsg = escapeHtml(result.message || 'Unauthorized: Please check your access link.');
+        utsavTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:#dc2626; font-weight:600; padding:20px;">${safeMsg}</td></tr>`;
         return;
       }
       const dataList = Array.isArray(result.data) ? result.data : [];
@@ -139,8 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </td>
 
   <td style="text-align:center;">
-    ${JSON.parse(sessionStorage.getItem('roles') || '[]')
-          .includes('utsavAdminReadOnly')
+    ${(sessionStorage.getItem('isShareToken') === 'true' || JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
           ? '-'
           : `
           <button

@@ -1,5 +1,8 @@
 let utsavbookings = [];
 let filteredBookings = [];
+const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
+const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
 
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -10,10 +13,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   const downloadAllBtn = document.getElementById('downloadAll');
   const downloadPkgBtn = document.getElementById('downloadPackage');
   const tableContainer = document.getElementById('tableContainer');
-
-  const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
-  const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-  const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
 
   if (isShareToken) {
     const logoutDiv = document.querySelector('.header .logout');
@@ -142,7 +141,7 @@ function renderFilteredTable(){
           <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
           <td>${item.center}</td><td>${item.res_status}</td>
           <td>${item.status}</td><td>${item.transaction_status}</td><td>${item.bookedby}</td>
-          <td>${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>`:'-'}</td>
+          <td>${!isReadOnly ? `<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>` : '-'}</td>
         </tr>
       `).join('')}
     </tbody>
