@@ -1,0 +1,68 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['officeAdmin', 'cardAdmin', 'superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Person History</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+  <script src="personHistory.js"></script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+
+          <div class="frm-head">
+  <h1>Person Booking History</h1>
+</div>
+
+<div id="summaryBox" style="margin-bottom:20px;"></div>
+
+<div class="history-section">
+  <h3>Upcoming</h3>
+  <div id="upcoming"></div>
+</div>
+
+<div class="history-section">
+  <h3>Past 30 Days</h3>
+  <div id="past"></div>
+</div>
+
+<div class="history-section">
+  <h3>Open Maintenance</h3>
+  <div id="maintenance"></div>
+</div>
+
+<div class="history-section">
+  <h3>WiFi Codes</h3>
+  <div id="wifi"></div>
+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
