@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gate Check-in System</title>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../style/js/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"><\/script>')</script>
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/bootstrap-datepicker.min.js"></script>
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
     <script src="../../sessionstorage.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="../../style/js/html5-qrcode.min.js"></script>
+    <script>window.Html5Qrcode || document.write('<script src="https://unpkg.com/html5-qrcode"><\/script>')</script>
     <script src="gateIn.js"></script>
   
     <link rel="stylesheet" href="../../style/css/styles.css">
@@ -27,6 +29,67 @@
             margin: 10px 0;
             font-weight: bold;
             min-height: 25px;
+        }
+
+        .network-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 8px 14px;
+            margin-bottom: 15px;
+        }
+
+        .network-badge {
+            font-weight: 600;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .network-badge.online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .network-badge.offline {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .sync-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .queue-count {
+            font-size: 13px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .sync-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .sync-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .sync-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.65;
         }
         
         .success-status {
@@ -68,6 +131,14 @@
                     </div>
                     
                     <div class="form">
+                        <div class="network-status-bar">
+                            <span id="network-badge" class="network-badge online">🟢 Online</span>
+                            <div class="sync-container">
+                                <span id="queue-count" class="queue-count">0 Pending Scans</span>
+                                <button id="sync-now-btn" class="sync-btn" style="display: none;">Sync Now</button>
+                            </div>
+                        </div>
+
                         <div id="alert" class="alert" role="alert" style="display: none;"></div>
                         
                         <div id="qr-scanner-section">
