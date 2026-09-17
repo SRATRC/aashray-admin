@@ -148,10 +148,34 @@ function formatDuration(secs) {
 function extractYouTubeId(url) {
   if (!url) return null;
   const t = url.trim();
+
+  // Bare video ID
   if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return t;
-  const m = t.match(
-    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i
-  );
+
+  try {
+    const parsed = new URL(t);
+    const host = parsed.hostname.replace(/^www\./, '');
+
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.slice(1).split('/')[0];
+      if (/^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
+    }
+
+    if (host === 'youtube.com') {
+      // watch?v=<ID> — handles any extra query params safely
+      const v = parsed.searchParams.get('v');
+      if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+
+      // /embed/<ID>, /shorts/<ID>, /live/<ID>, /v/<ID>
+      const pm = parsed.pathname.match(/\/(?:embed|v|live|shorts|e)\/([a-zA-Z0-9_-]{11})/i);
+      if (pm) return pm[1];
+    }
+  } catch {
+    // Not a valid URL — regex fallback below
+  }
+
+  // Regex fallback for partial / malformed URLs
+  const m = t.match(/(?:youtube\.com\/(?:embed|v|live|shorts|e)\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
   return m ? m[1] : null;
 }
 
@@ -1046,24 +1070,24 @@ function normalizeDateStr(dateStr) {
   const trimmed = String(dateStr).trim();
 
   // Match YYYY-MM-DD or YYYY/MM/DD
-  const isoMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  const isoMatch = trimmed.match(/^(\d{4})([-/])(\d{1,2})\2(\d{1,2})$/);
   if (isoMatch) {
     const y = isoMatch[1];
-    const m = isoMatch[2].padStart(2, '0');
-    const d = isoMatch[3].padStart(2, '0');
+    const m = isoMatch[3].padStart(2, '0');
+    const d = isoMatch[4].padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
 
   // Match DD-MM-YYYY or DD/MM/YYYY
-  const dmyMatch = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  const dmyMatch = trimmed.match(/^(\d{1,2})([-/])(\d{1,2})\2(\d{4})$/);
   if (dmyMatch) {
     const d = dmyMatch[1].padStart(2, '0');
-    const m = dmyMatch[2].padStart(2, '0');
-    const y = dmyMatch[3];
+    const m = dmyMatch[3].padStart(2, '0');
+    const y = dmyMatch[4];
     return `${y}-${m}-${d}`;
   }
 
-  return trimmed;
+  return '';
 }
 
 function normalizeTimestamp(timeStr) {
@@ -1110,7 +1134,7 @@ function isNoSessionDayStr(dateStr) {
 }
 
 function isValidTimestamp(hms) {
-  return /^\d{1,2}:\d{2}(:\d{2})?$/.test(hms);
+  return /^\d{2}:\d{2}:\d{2}$/.test(hms);
 }
 
 document.getElementById('csvFile').addEventListener('change', function () {
