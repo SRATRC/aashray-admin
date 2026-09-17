@@ -193,7 +193,7 @@ function extractYouTubeId(url) {
   }
 
   // Regex fallback for partial / malformed / scheme-less URLs
-  const m = t.match(/(?:youtube\.com\/(?:embed|v|live|shorts|e)\/|youtu\.be\/|youtube\.com\/.*[?&]v=|[?&]v=)([a-zA-Z0-9_-]{11})/i);
+  const m = t.match(/(?:youtube\.com\/(?:embed|v|live|shorts|e)\/|youtu\.be\/|youtube\.com\/.*[?&]v=)([a-zA-Z0-9_-]{11})/i);
   return m ? m[1] : null;
 }
 
@@ -337,7 +337,7 @@ function renderCalendar() {
 
     if (hasValidVideo) {
       cls += ' has-session clickable';
-      const durMin = session.duration_minutes || Math.round((session.video_duration_seconds || 0) / 60) || 0;
+      const durMin = session.effective_duration_minutes || session.duration_minutes || Math.round((session.video_duration_seconds || 0) / 60) || 0;
       const speed = session.playback_speed ? Number(session.playback_speed) : 1;
       const speedBadge = (speed && speed !== 1) ? ` <span style="background:#e67e22;color:#fff;font-size:0.68rem;padding:1px 4px;border-radius:3px;font-weight:bold;">${speed}x</span>` : '';
 
@@ -1252,17 +1252,22 @@ function parseRowsToSessions(rows) {
     const parsedSpeed = parseFloat(rawSpeed);
     const speed = VALID_SPEEDS.includes(parsedSpeed) ? parsedSpeed : 1.0;
 
+    const rawSpeed2 = getVal('speed2');
+    const parsedSpeed2 = parseFloat(rawSpeed2);
+    const speed2 = (!isNaN(parsedSpeed2) && VALID_SPEEDS.includes(parsedSpeed2)) ? parsedSpeed2 : null;
+
     return {
-      session_date:   normalizeDateStr(getVal('date', 0)),
-      youtube_url:    getVal('youtube_url', 1),
-      start_time:     normalizeTimestamp(getVal('start_time', 2)),
-      end_time:       normalizeTimestamp(getVal('end_time', 3)),
-      playback_speed: speed,
-      notes:          getVal('notes', notesFallbackIdx) || null,
-      youtube2_url:   getVal('youtube2_url', notesFallbackIdx === 5 ? 6 : 5) || null,
-      start2_time:    normalizeTimestamp(getVal('start2_time', notesFallbackIdx === 5 ? 7 : 6)) || null,
-      end2_time:      normalizeTimestamp(getVal('end2_time', notesFallbackIdx === 5 ? 8 : 7)) || null,
-      notes2:         getVal('notes2', notesFallbackIdx === 5 ? 9 : 8) || null
+      session_date:          normalizeDateStr(getVal('date', 0)),
+      youtube_url:           getVal('youtube_url', 1),
+      start_time:            normalizeTimestamp(getVal('start_time', 2)),
+      end_time:              normalizeTimestamp(getVal('end_time', 3)),
+      playback_speed:        speed,
+      notes:                 getVal('notes', notesFallbackIdx) || null,
+      youtube2_url:          getVal('youtube2_url', notesFallbackIdx === 5 ? 6 : 5) || null,
+      start2_time:           normalizeTimestamp(getVal('start2_time', notesFallbackIdx === 5 ? 7 : 6)) || null,
+      end2_time:             normalizeTimestamp(getVal('end2_time', notesFallbackIdx === 5 ? 8 : 7)) || null,
+      notes2:                getVal('notes2', notesFallbackIdx === 5 ? 9 : 8) || null,
+      video2_playback_speed: speed2
     };
   });
 }

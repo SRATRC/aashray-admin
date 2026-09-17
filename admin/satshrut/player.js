@@ -306,7 +306,7 @@ function populateBhaktiInfo() {
 function populateSessionInfo() {
   const s = sessionData;
   const speed1 = Number(s.playback_speed || 1.0);
-  const speed2 = Number(s.video2_playback_speed || s.playback_speed || 1.0);
+  const speed2 = Number(s.video2_playback_speed || 1.0);
   const v1Dur = s.video1_duration_seconds !== undefined ? s.video1_duration_seconds : Math.max(0, (s.video_end_seconds || 0) - (s.video_start_seconds || 0));
   const v2Dur = s.video2_duration_seconds !== undefined ? s.video2_duration_seconds : 0;
   const effVideoDur = s.effective_duration_seconds || (Math.round(v1Dur / speed1) + (v2Dur > 0 ? Math.round(v2Dur / speed2) : 0));
@@ -589,7 +589,7 @@ function applyCurrentPlaybackSpeed() {
     const s = sessionData || {};
     const speed = (currentSubPhase === 0)
       ? Number(s.playback_speed || 1.0)
-      : Number(s.video2_playback_speed || s.playback_speed || 1.0);
+      : Number(s.video2_playback_speed || 1.0);
     if (speed && speed > 0) {
       player.setPlaybackRate(speed);
     } else {
@@ -1042,7 +1042,7 @@ function startTimerTick() {
 
     if (isVideoPhase) {
       const speed1 = Number(s.playback_speed || 1.0);
-      const speed2 = Number(s.video2_playback_speed || s.playback_speed || 1.0);
+      const speed2 = Number(s.video2_playback_speed || 1.0);
       const v1Dur = s.video1_duration_seconds || (s.video_end_seconds > s.video_start_seconds ? (s.video_end_seconds - s.video_start_seconds) : 0);
       const v2Dur = s.video2_duration_seconds || 0;
       const curDur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
