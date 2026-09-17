@@ -599,6 +599,18 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    const url2 = document.getElementById('createYoutube2Url').value.trim();
+    if (url2) {
+      const s2 = document.getElementById('createStart2Time').value.trim();
+      const e2 = document.getElementById('createEnd2Time').value.trim();
+      if (!isValidTimestamp(s2) || !isValidTimestamp(e2)) {
+        return showModalAlert(alertEl, 'Use HH:MM:SS format for Video 2 timestamps');
+      }
+      if (toSeconds(e2) <= toSeconds(s2)) {
+        return showModalAlert(alertEl, 'Video 2 End Time must be after Start Time');
+      }
+    }
+
     const payload = {
       session_date:       document.getElementById('createDate').value,
       youtube_url:        document.getElementById('createYoutubeUrl').value.trim(),
@@ -666,6 +678,18 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (toSeconds(endVal) > edur) {
         return showModalAlert(alertEl, 'End time ' + endVal + ' exceeds video length (' + secondsToHMS(edur) + ')');
+      }
+    }
+
+    const url2 = document.getElementById('editYoutube2Url').value.trim();
+    if (url2) {
+      const s2 = document.getElementById('editStart2Time').value.trim();
+      const e2 = document.getElementById('editEnd2Time').value.trim();
+      if (!isValidTimestamp(s2) || !isValidTimestamp(e2)) {
+        return showModalAlert(alertEl, 'Use HH:MM:SS format for Video 2 timestamps');
+      }
+      if (toSeconds(e2) <= toSeconds(s2)) {
+        return showModalAlert(alertEl, 'Video 2 End Time must be after Start Time');
       }
     }
 
@@ -1365,8 +1389,6 @@ if (importZoneEl) {
   importZoneEl.addEventListener('drop', (e) => {
     const files = e.dataTransfer?.files;
     if (files && files[0]) {
-      const fileInput = document.getElementById('csvFile');
-      fileInput.files = files;
       handleImportFile(files[0]);
     }
   });

@@ -918,6 +918,7 @@ function startPhase(phaseIndex) {
       videoLoadOpts.endSeconds = s.video_end_seconds;
     }
     player.loadVideoById(videoLoadOpts);
+    applyCurrentPlaybackSpeed();
   } else if (phaseIndex === 1) {
     player.loadVideoById({
       videoId: s.audio1_youtube_id || s.audio2_youtube_id
