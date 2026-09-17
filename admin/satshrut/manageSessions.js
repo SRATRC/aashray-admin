@@ -153,7 +153,8 @@ function extractYouTubeId(url) {
   if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return t;
 
   try {
-    const parsed = new URL(t);
+    const urlStr = /^https?:\/\//i.test(t) ? t : `https://${t.replace(/^\/\//, '')}`;
+    const parsed = new URL(urlStr);
     const host = parsed.hostname.replace(/^www\./, '');
 
     if (host === 'youtu.be') {
@@ -161,7 +162,7 @@ function extractYouTubeId(url) {
       if (/^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
     }
 
-    if (host === 'youtube.com') {
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
       // watch?v=<ID> — handles any extra query params safely
       const v = parsed.searchParams.get('v');
       if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
@@ -174,8 +175,8 @@ function extractYouTubeId(url) {
     // Not a valid URL — regex fallback below
   }
 
-  // Regex fallback for partial / malformed URLs
-  const m = t.match(/(?:youtube\.com\/(?:embed|v|live|shorts|e)\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  // Regex fallback for partial / malformed / scheme-less URLs
+  const m = t.match(/(?:youtube\.com\/(?:embed|v|live|shorts|e)\/|youtu\.be\/|youtube\.com\/.*[?&]v=|[?&]v=)([a-zA-Z0-9_-]{11})/i);
   return m ? m[1] : null;
 }
 
@@ -1103,7 +1104,7 @@ function normalizeTimestamp(timeStr) {
   if (match2) {
     return `00:${match2[1].padStart(2, '0')}:${match2[2]}`;
   }
-  return trimmed;
+  return '';
 }
 
 function parseCSV(text) {
