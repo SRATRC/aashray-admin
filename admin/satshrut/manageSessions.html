@@ -14,6 +14,7 @@
     <script src="../../style/js/plugin.js"></script>
     <script src="../../style/js/config.js"></script>
     <script src="../../sessionstorage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="manageSessions.js" defer></script>
 
     <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -55,7 +56,7 @@
 
       .cal-grid {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 6px;
       }
 
@@ -69,19 +70,31 @@
         padding: 6px 2px;
         border-radius: 4px;
         letter-spacing: 0.04em;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .cal-dh.no-session-col { background: #8a9ab0; }
 
       /* Day cells */
       .cal-day {
-        min-height: 78px;
+        min-height: 82px;
+        height: 82px;
+        min-width: 0;
+        overflow: hidden;
         border-radius: 8px;
         position: relative;
         padding: 6px 7px;
         transition: transform 0.12s, box-shadow 0.12s;
         box-sizing: border-box;
       }
-      .cal-day-blank { /* empty grid spacer */ min-height: 78px; }
+      .cal-day-blank {
+        /* empty grid spacer */
+        min-height: 82px;
+        height: 82px;
+        min-width: 0;
+      }
 
       .cal-day.clickable { cursor: pointer; }
       .cal-day.clickable:hover {
@@ -137,6 +150,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 100%;
         cursor: pointer;
         transition: background 0.15s, transform 0.1s;
       }
@@ -154,6 +168,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 100%;
       }
       .inactive-session .session-time-tag { color: #777; }
 
@@ -163,8 +178,11 @@
         text-align: center;
         position: absolute;
         bottom: 8px;
-        left: 0;
-        right: 0;
+        left: 4px;
+        right: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .add-hint {
@@ -197,6 +215,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 100%;
         cursor: pointer;
         transition: background 0.15s, transform 0.1s;
       }
@@ -519,13 +538,13 @@
             </div>
 
             <div class="import-zone">
-              <p><strong>CSV Format:</strong> <code>date,youtube_url,start_time,end_time,notes</code></p>
-              <p>Example: <code>2026-08-14,https://youtu.be/abc123,00:05:00,00:27:30,Morning satsang</code></p>
-              <p style="color:#888;">Mondays &amp; Thursdays are auto-skipped. Duplicate dates are skipped.</p>
+              <p><strong>Accepted formats:</strong> Excel (<code>.xlsx</code>, <code>.xls</code>) or CSV (<code>.csv</code>)</p>
+              <p>Example: <code>2026-08-14,https://youtu.be/abc123,00:05:00,00:27:30,1.25,Morning satsang</code></p>
+              <p style="color:#888;">Column headers can be in any order: <code>date</code>, <code>youtube_url</code>, <code>start_time</code>, <code>end_time</code>, <code>speed</code> (optional), <code>notes</code> (optional). Accepted date formats: <code>YYYY-MM-DD</code>, <code>DD-MM-YYYY</code>, or either with <code>/</code> separators. Mondays &amp; Thursdays are auto-skipped. Duplicate dates are skipped.</p>
               <br/>
-              <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none;" />
+              <input type="file" id="csvFile" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" />
               <button class="btn btn-primary" onclick="document.getElementById('csvFile').click()">
-                📁 Choose CSV File
+                📁 Choose CSV or Excel File
               </button>
               <button class="btn btn-secondary" onclick="downloadSampleCSV()" style="margin-left:0.5rem;">
                 ⬇ Sample CSV
@@ -591,6 +610,7 @@
               <label for="createYoutubeUrl">YouTube Video 1 URL</label>
               <input type="url" id="createYoutubeUrl" class="form-control" placeholder="https://youtu.be/..." required />
               <div id="createVideoDuration" style="display:none;font-size:0.78rem;font-weight:600;margin-top:4px;"></div>
+              <div id="createVideoPreview" style="display:none;margin-top:6px;align-items:center;gap:8px;background:#f7f9fa;padding:6px;border-radius:6px;border:1px solid #e2e8f0;"></div>
             </div>
             <div class="form-row">
               <div class="form-group half">
@@ -604,9 +624,23 @@
                 <div class="dur-display" id="createDurDisplay"></div>
               </div>
             </div>
-            <div class="form-group" style="margin-top:0.4rem;">
-              <label for="createNotes">Video 1 Notes / Title <small style="color:#888;">(optional)</small></label>
-              <input type="text" id="createNotes" class="form-control" placeholder="e.g. Kshamapna Part 16 of 16" />
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="createPlaybackSpeed">Playback Speed</label>
+                <select id="createPlaybackSpeed" class="form-control">
+                  <option value="0.5">0.5x</option>
+                  <option value="0.75">0.75x</option>
+                  <option value="1" selected>1.0x (Normal)</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="1.75">1.75x</option>
+                  <option value="2">2.0x</option>
+                </select>
+              </div>
+              <div class="form-group half">
+                <label for="createNotes">Video 1 Notes / Title <small style="color:#888;">(optional)</small></label>
+                <input type="text" id="createNotes" class="form-control" placeholder="e.g. Kshamapna Part 16 of 16" />
+              </div>
             </div>
           </div>
 
@@ -686,6 +720,7 @@
               <label for="editYoutubeUrl">YouTube Video 1 URL</label>
               <input type="url" id="editYoutubeUrl" class="form-control" />
               <div id="editVideoDuration" style="display:none;font-size:0.78rem;font-weight:600;margin-top:4px;"></div>
+              <div id="editVideoPreview" style="display:none;margin-top:6px;align-items:center;gap:8px;background:#f7f9fa;padding:6px;border-radius:6px;border:1px solid #e2e8f0;"></div>
             </div>
             <div class="form-row">
               <div class="form-group half">
@@ -698,9 +733,23 @@
                 <div class="dur-display" id="editDurDisplay"></div>
               </div>
             </div>
-            <div class="form-group" style="margin-top:0.4rem;">
-              <label for="editNotes">Video 1 Notes / Title <small style="color:#888;">(optional)</small></label>
-              <input type="text" id="editNotes" class="form-control" />
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="editPlaybackSpeed">Playback Speed</label>
+                <select id="editPlaybackSpeed" class="form-control">
+                  <option value="0.5">0.5x</option>
+                  <option value="0.75">0.75x</option>
+                  <option value="1" selected>1.0x (Normal)</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="1.75">1.75x</option>
+                  <option value="2">2.0x</option>
+                </select>
+              </div>
+              <div class="form-group half">
+                <label for="editNotes">Video 1 Notes / Title <small style="color:#888;">(optional)</small></label>
+                <input type="text" id="editNotes" class="form-control" />
+              </div>
             </div>
           </div>
 
