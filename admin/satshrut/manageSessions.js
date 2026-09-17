@@ -1041,6 +1041,47 @@ function parseCSVLine(line) {
   return result.map(s => s.replace(/^["']|["']$/g, ''));
 }
 
+function normalizeDateStr(dateStr) {
+  if (!dateStr) return '';
+  const trimmed = String(dateStr).trim();
+
+  // Match YYYY-MM-DD or YYYY/MM/DD
+  const isoMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (isoMatch) {
+    const y = isoMatch[1];
+    const m = isoMatch[2].padStart(2, '0');
+    const d = isoMatch[3].padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // Match DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const d = dmyMatch[1].padStart(2, '0');
+    const m = dmyMatch[2].padStart(2, '0');
+    const y = dmyMatch[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  return trimmed;
+}
+
+function normalizeTimestamp(timeStr) {
+  if (!timeStr) return '';
+  const trimmed = String(timeStr).trim();
+  // If H:MM:SS or HH:MM:SS
+  const match3 = trimmed.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+  if (match3) {
+    return `${match3[1].padStart(2, '0')}:${match3[2]}:${match3[3]}`;
+  }
+  // If MM:SS
+  const match2 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (match2) {
+    return `00:${match2[1].padStart(2, '0')}:${match2[2]}`;
+  }
+  return trimmed;
+}
+
 function parseCSV(text) {
   const lines = text.split('\n').map((l) => l.trim()).filter((l) => l);
   if (lines.length < 2) return [];
@@ -1051,14 +1092,14 @@ function parseCSV(text) {
   return dataLines.map((line) => {
     const cols = parseCSVLine(line);
     return {
-      session_date: (cols[0] || '').trim(),
+      session_date: normalizeDateStr((cols[0] || '').trim()),
       youtube_url:  (cols[1] || '').trim(),
-      start_time:   (cols[2] || '').trim(),
-      end_time:     (cols[3] || '').trim(),
+      start_time:   normalizeTimestamp((cols[2] || '').trim()),
+      end_time:     normalizeTimestamp((cols[3] || '').trim()),
       notes:        (cols[4] || '').trim() || null,
       youtube2_url: (cols[5] || '').trim() || null,
-      start2_time:  (cols[6] || '').trim() || null,
-      end2_time:    (cols[7] || '').trim() || null,
+      start2_time:  normalizeTimestamp((cols[6] || '').trim()) || null,
+      end2_time:    normalizeTimestamp((cols[7] || '').trim()) || null,
       notes2:       (cols[8] || '').trim() || null
     };
   });
@@ -1069,7 +1110,7 @@ function isNoSessionDayStr(dateStr) {
 }
 
 function isValidTimestamp(hms) {
-  return /^\d{2}:\d{2}:\d{2}$/.test(hms);
+  return /^\d{1,2}:\d{2}(:\d{2})?$/.test(hms);
 }
 
 document.getElementById('csvFile').addEventListener('change', function () {

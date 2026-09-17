@@ -521,7 +521,7 @@
             <div class="import-zone">
               <p><strong>CSV Format:</strong> <code>date,youtube_url,start_time,end_time,notes</code></p>
               <p>Example: <code>2026-08-14,https://youtu.be/abc123,00:05:00,00:27:30,Morning satsang</code></p>
-              <p style="color:#888;">Mondays &amp; Thursdays are auto-skipped. Duplicate dates are skipped.</p>
+              <p style="color:#888;">Accepted date formats: <code>YYYY-MM-DD</code> or <code>DD-MM-YYYY</code>. Mondays &amp; Thursdays are auto-skipped. Duplicate dates are skipped.</p>
               <br/>
               <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none;" />
               <button class="btn btn-primary" onclick="document.getElementById('csvFile').click()">
