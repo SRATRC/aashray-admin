@@ -94,8 +94,25 @@ function loadPreviewVideo(videoId, target) {
   const poll = setInterval(() => {
     attempts++;
     const dur = previewPlayer.getDuration();
-    if (dur > 0) { clearInterval(poll); previewDuration[target] = dur; _showDurationEl(target, dur); }
-    else if (attempts > 20) { clearInterval(poll); _setDurationEl(target, '\u26A0\uFE0F Could not fetch video length — timestamps won\'t be range-checked.', '#c0392b'); }
+    if (dur > 0) {
+      clearInterval(poll);
+      previewDuration[target] = dur;
+      _showDurationEl(target, dur);
+
+      // If "Continue from last day" was checked and video was already completed
+      if (target === 'create' && document.getElementById('continueFromLast')?.checked) {
+        const curStart = toSeconds(document.getElementById('createStartTime')?.value);
+        if (curStart >= dur - 2) {
+          const alertEl = document.getElementById('createAlert');
+          if (alertEl) {
+            showModalAlert(alertEl, `Note: Previous session already finished this video at ${secondsToHMS(curStart)} (video length: ${secondsToHMS(dur)}). Please enter the next video URL.`);
+          }
+        }
+      }
+    } else if (attempts > 20) {
+      clearInterval(poll);
+      _setDurationEl(target, '\u26A0\uFE0F Could not fetch video length — timestamps won\'t be range-checked.', '#c0392b');
+    }
   }, 500);
 }
 
@@ -178,6 +195,54 @@ function extractYouTubeId(url) {
   // Regex fallback for partial / malformed / scheme-less URLs
   const m = t.match(/(?:youtube\.com\/(?:embed|v|live|shorts|e)\/|youtu\.be\/|youtube\.com\/.*[?&]v=|[?&]v=)([a-zA-Z0-9_-]{11})/i);
   return m ? m[1] : null;
+}
+
+/**
+ * Auto-fetches YouTube title and thumbnail via public oEmbed API.
+ */
+async function fetchYouTubeMetadata(url, targetPrefix) {
+  if (!url) {
+    const prev = document.getElementById(`${targetPrefix}VideoPreview`);
+    if (prev) { prev.innerHTML = ''; prev.style.display = 'none'; }
+    return;
+  }
+  const vidId = extractYouTubeId(url);
+  const previewEl = document.getElementById(`${targetPrefix}VideoPreview`);
+  const notesEl = document.getElementById(`${targetPrefix}Notes`);
+  if (!vidId) {
+    if (previewEl) { previewEl.innerHTML = ''; previewEl.style.display = 'none'; }
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${vidId}&format=json`);
+    if (res.ok) {
+      const data = await res.json();
+      if (previewEl) {
+        const safeThumb = (data.thumbnail_url && /^https?:\/\//i.test(data.thumbnail_url))
+          ? escapeHtml(data.thumbnail_url)
+          : `https://img.youtube.com/vi/${vidId}/default.jpg`;
+        previewEl.innerHTML = `
+          <img src="${safeThumb}" style="width:48px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0;" />
+          <div style="font-size:0.78rem;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;" title="${escapeHtml(data.title || '')}">
+            <strong>${escapeHtml(data.title || '')}</strong><br/><span style="color:#777;">${escapeHtml(data.author_name || '')}</span>
+          </div>
+        `;
+        previewEl.style.display = 'flex';
+      }
+      if (notesEl && !notesEl.value.trim()) {
+        notesEl.value = data.title || '';
+      }
+    }
+  } catch {
+    if (previewEl) {
+      previewEl.innerHTML = `
+        <img src="https://img.youtube.com/vi/${vidId}/default.jpg" style="width:48px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0;" />
+        <span style="font-size:0.78rem;color:#555;">ID: ${vidId}</span>
+      `;
+      previewEl.style.display = 'flex';
+    }
+  }
 }
 
 function getDayOfWeekMonBased(dateStr) {
@@ -273,10 +338,12 @@ function renderCalendar() {
     if (hasValidVideo) {
       cls += ' has-session clickable';
       const durMin = session.duration_minutes || Math.round((session.video_duration_seconds || 0) / 60) || 0;
+      const speed = session.playback_speed ? Number(session.playback_speed) : 1;
+      const speedBadge = (speed && speed !== 1) ? ` <span style="background:#e67e22;color:#fff;font-size:0.68rem;padding:1px 4px;border-radius:3px;font-weight:bold;">${speed}x</span>` : '';
 
-      inner += `<span class="session-badge" onclick="playSessionDate(event, '${dateStr}')" title="Play 4-phase session for ${dateStr}">▶ ${durMin} min</span>`;
+      inner += `<span class="session-badge" onclick="playSessionDate(event, '${dateStr}')" title="Play 4-phase session for ${dateStr}">▶ ${durMin} min${speedBadge}</span>`;
       if (session.notes) {
-        inner += `<span class="session-time-tag" style="font-style:italic;">${escapeHtml(session.notes)}</span>`;
+        inner += `<span class="session-time-tag" style="font-style:italic;" title="${escapeHtml(session.notes)}">${escapeHtml(session.notes)}</span>`;
       }
     } else if (activeUtsav) {
       cls += ' no-session-day clickable';
@@ -386,6 +453,10 @@ function openCreateModal(dateStr, isNoSessionDay = false) {
   document.getElementById('autoFillHint').style.display = 'none';
   document.getElementById('continueFromLast').checked = false;
   document.getElementById('continueHint').style.display = 'none';
+  const createSpeed = document.getElementById('createPlaybackSpeed');
+  if (createSpeed) createSpeed.value = '1';
+  const createPrev = document.getElementById('createVideoPreview');
+  if (createPrev) { createPrev.innerHTML = ''; createPrev.style.display = 'none'; }
   _hideDurationEl('create');
   previewDuration.create = 0;
   document.getElementById('createAlert').style.display = 'none';
@@ -432,11 +503,14 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('createYoutubeUrl').value = `https://youtu.be/${last.youtube_video_id}`;
     document.getElementById('createStartTime').value  = last.end_time_display;
     document.getElementById('createNotes').value      = last.notes || '';
+    const createSpeed = document.getElementById('createPlaybackSpeed');
+    if (createSpeed) createSpeed.value = String(Number(last.playback_speed) || 1);
 
     document.getElementById('continueHint').textContent = `from ${last.session_date}`;
     document.getElementById('continueHint').style.display = 'inline';
     document.getElementById('autoFillHint').style.display = 'block';
     loadPreviewVideo(last.youtube_video_id, 'create');
+    fetchYouTubeMetadata(document.getElementById('createYoutubeUrl').value, 'create');
     updateCreateDuration();
   });
 
@@ -444,6 +518,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const videoId = extractYouTubeId(urlInput.value);
     if (!videoId) { hint.style.display = 'none'; _hideDurationEl('create'); return; }
     loadPreviewVideo(videoId, 'create');
+    fetchYouTubeMetadata(urlInput.value, 'create');
 
     // Find the most recent session with the SAME video ID (sorted by date DESC already)
     const match = allSessions.find((s) => s.youtube_video_id === videoId);
@@ -458,6 +533,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   urlInput.addEventListener('blur', tryAutoFill);
   urlInput.addEventListener('change', tryAutoFill);
+
+  const editUrlInput = document.getElementById('editYoutubeUrl');
+  if (editUrlInput) {
+    editUrlInput.addEventListener('blur', () => fetchYouTubeMetadata(editUrlInput.value, 'edit'));
+    editUrlInput.addEventListener('change', () => fetchYouTubeMetadata(editUrlInput.value, 'edit'));
+  }
 
   function updateCreateDuration() {
     const start = toSeconds(startInput.value);
@@ -524,6 +605,7 @@ document.addEventListener('DOMContentLoaded', function () {
       start_time:         startVal,
       end_time:           endVal,
       notes:              document.getElementById('createNotes').value.trim() || null,
+      playback_speed:     parseFloat(document.getElementById('createPlaybackSpeed')?.value) || 1.0,
       youtube2_url:       document.getElementById('createYoutube2Url').value.trim() || null,
       start2_time:        document.getElementById('createStart2Time').value.trim() || null,
       end2_time:          document.getElementById('createEnd2Time').value.trim() || null,
@@ -592,6 +674,7 @@ document.addEventListener('DOMContentLoaded', function () {
       start_time:         startVal,
       end_time:           endVal,
       notes:              document.getElementById('editNotes').value.trim() || null,
+      playback_speed:     parseFloat(document.getElementById('editPlaybackSpeed')?.value) || 1.0,
       youtube2_url:       document.getElementById('editYoutube2Url').value.trim() || null,
       start2_time:        document.getElementById('editStart2Time').value.trim() || null,
       end2_time:          document.getElementById('editEnd2Time').value.trim() || null,
@@ -634,6 +717,7 @@ function showModalAlert(el, msg) {
   el.className = 'alert alert-danger';
   el.textContent = msg;
   el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ── EDIT modal ────────────────────────────────────────────────────────────
@@ -695,6 +779,10 @@ function openEditModal(session) {
   const dur = session.video_end_seconds - session.video_start_seconds;
   document.getElementById('editDurDisplay').textContent =
     dur > 0 ? `▶ Duration: ${formatDuration(dur)}` : '';
+
+  const editSpeed = document.getElementById('editPlaybackSpeed');
+  if (editSpeed) editSpeed.value = String(Number(session.playback_speed) || 1);
+  fetchYouTubeMetadata(url1, 'edit');
 
   // Fetch actual video length for validation
   previewDuration.edit = 0;
@@ -1107,27 +1195,83 @@ function normalizeTimestamp(timeStr) {
   return '';
 }
 
-function parseCSV(text) {
-  const lines = text.split('\n').map((l) => l.trim()).filter((l) => l);
-  if (lines.length < 2) return [];
-  const headerLine = lines[0].toLowerCase();
-  const hasHeader = headerLine.includes('date') || headerLine.includes('youtube');
-  const dataLines = hasHeader ? lines.slice(1) : lines;
+function parseRowsToSessions(rows) {
+  if (!rows || rows.length === 0) return [];
 
-  return dataLines.map((line) => {
-    const cols = parseCSVLine(line);
+  // Filter empty rows
+  const cleanRows = rows.filter(r => Array.isArray(r) && r.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== ''));
+  if (cleanRows.length === 0) return [];
+
+  const firstRow = cleanRows[0].map(c => String(c || '').trim().toLowerCase());
+  const hasHeader = firstRow.some(h =>
+    h.includes('date') || h.includes('youtube') || h.includes('url') || h.includes('start')
+  );
+
+  let dataRows = cleanRows;
+  let colIndexMap = null;
+
+  if (hasHeader) {
+    dataRows = cleanRows.slice(1);
+    colIndexMap = {};
+    firstRow.forEach((h, idx) => {
+      if (/^(session_date|date)$/i.test(h)) colIndexMap.date = idx;
+      else if (/^(youtube_url|video_url|youtube|url|video1_url)$/i.test(h)) colIndexMap.youtube_url = idx;
+      else if (/^(start_time|start|start1)$/i.test(h)) colIndexMap.start_time = idx;
+      else if (/^(end_time|end|end1)$/i.test(h)) colIndexMap.end_time = idx;
+      else if (/^(speed|playback_speed|rate)$/i.test(h)) colIndexMap.speed = idx;
+      else if (/^(notes|title|notes1|title1)$/i.test(h)) colIndexMap.notes = idx;
+      else if (/^(youtube2_url|video2_url|youtube2)$/i.test(h)) colIndexMap.youtube2_url = idx;
+      else if (/^(start2_time|start2)$/i.test(h)) colIndexMap.start2_time = idx;
+      else if (/^(end2_time|end2)$/i.test(h)) colIndexMap.end2_time = idx;
+      else if (/^(notes2|title2)$/i.test(h)) colIndexMap.notes2 = idx;
+      else if (/^(speed2|playback_speed2|rate2)$/i.test(h)) colIndexMap.speed2 = idx;
+    });
+  }
+
+  const VALID_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+  return dataRows.map((cols) => {
+    const getVal = (namedKey, fallbackPos) => {
+      if (colIndexMap && colIndexMap[namedKey] !== undefined) {
+        return String(cols[colIndexMap[namedKey]] ?? '').trim();
+      }
+      return fallbackPos !== undefined ? String(cols[fallbackPos] ?? '').trim() : '';
+    };
+
+    let rawSpeed = getVal('speed');
+    let notesFallbackIdx = 4;
+    // Positional fallback for 6-column CSV: date,url,start,end,speed,notes
+    if (!rawSpeed && !colIndexMap && cols.length >= 6) {
+      const candidate = parseFloat(cols[4]);
+      if (!isNaN(candidate) && VALID_SPEEDS.includes(candidate)) {
+        rawSpeed = String(candidate);
+        notesFallbackIdx = 5;
+      }
+    }
+
+    const parsedSpeed = parseFloat(rawSpeed);
+    const speed = VALID_SPEEDS.includes(parsedSpeed) ? parsedSpeed : 1.0;
+
     return {
-      session_date: normalizeDateStr((cols[0] || '').trim()),
-      youtube_url:  (cols[1] || '').trim(),
-      start_time:   normalizeTimestamp((cols[2] || '').trim()),
-      end_time:     normalizeTimestamp((cols[3] || '').trim()),
-      notes:        (cols[4] || '').trim() || null,
-      youtube2_url: (cols[5] || '').trim() || null,
-      start2_time:  normalizeTimestamp((cols[6] || '').trim()) || null,
-      end2_time:    normalizeTimestamp((cols[7] || '').trim()) || null,
-      notes2:       (cols[8] || '').trim() || null
+      session_date:   normalizeDateStr(getVal('date', 0)),
+      youtube_url:    getVal('youtube_url', 1),
+      start_time:     normalizeTimestamp(getVal('start_time', 2)),
+      end_time:       normalizeTimestamp(getVal('end_time', 3)),
+      playback_speed: speed,
+      notes:          getVal('notes', notesFallbackIdx) || null,
+      youtube2_url:   getVal('youtube2_url', notesFallbackIdx === 5 ? 6 : 5) || null,
+      start2_time:    normalizeTimestamp(getVal('start2_time', notesFallbackIdx === 5 ? 7 : 6)) || null,
+      end2_time:      normalizeTimestamp(getVal('end2_time', notesFallbackIdx === 5 ? 8 : 7)) || null,
+      notes2:         getVal('notes2', notesFallbackIdx === 5 ? 9 : 8) || null
     };
   });
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n').map((l) => l.trim()).filter((l) => l);
+  if (lines.length === 0) return [];
+  const rows = lines.map((line) => parseCSVLine(line));
+  return parseRowsToSessions(rows);
 }
 
 function isNoSessionDayStr(dateStr) {
@@ -1138,17 +1282,90 @@ function isValidTimestamp(hms) {
   return /^\d{2}:\d{2}:\d{2}$/.test(hms);
 }
 
-document.getElementById('csvFile').addEventListener('change', function () {
-  const file = this.files[0];
+function handleImportFile(file) {
   if (!file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    alert('File is too large. Please upload a file smaller than 10MB.');
+    return;
+  }
   document.getElementById('csvFileName').textContent = file.name;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    parsedCSVRows = parseCSV(e.target.result);
-    renderCSVPreview(parsedCSVRows);
-  };
-  reader.readAsText(file);
+
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+
+  if (isExcel) {
+    if (typeof XLSX === 'undefined') {
+      alert('Excel reader library is still loading. Please try again in a moment.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+        let parsed = parseRowsToSessions(rows);
+        if (parsed.length > 500) {
+          alert(`Notice: File contains ${parsed.length} rows. Capping import to the first 500 rows for performance.`);
+          parsed = parsed.slice(0, 500);
+        }
+        parsedCSVRows = parsed;
+        renderCSVPreview(parsedCSVRows);
+      } catch (err) {
+        console.error('Failed to parse Excel:', err);
+        alert('Error parsing Excel file: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    // CSV file
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let parsed = parseCSV(e.target.result);
+      if (parsed.length > 500) {
+        alert(`Notice: File contains ${parsed.length} rows. Capping import to the first 500 rows for performance.`);
+        parsed = parsed.slice(0, 500);
+      }
+      parsedCSVRows = parsed;
+      renderCSVPreview(parsedCSVRows);
+    };
+    reader.readAsText(file);
+  }
+}
+
+document.getElementById('csvFile').addEventListener('change', function () {
+  if (this.files && this.files[0]) {
+    handleImportFile(this.files[0]);
+  }
 });
+
+// Drag and drop support on import zone
+const importZoneEl = document.querySelector('.import-zone');
+if (importZoneEl) {
+  ['dragenter', 'dragover'].forEach((ev) => {
+    importZoneEl.addEventListener(ev, (e) => {
+      e.preventDefault();
+      importZoneEl.style.borderColor = '#204060';
+      importZoneEl.style.background = '#eef5fc';
+    });
+  });
+  ['dragleave', 'drop'].forEach((ev) => {
+    importZoneEl.addEventListener(ev, (e) => {
+      e.preventDefault();
+      importZoneEl.style.borderColor = '';
+      importZoneEl.style.background = '';
+    });
+  });
+  importZoneEl.addEventListener('drop', (e) => {
+    const files = e.dataTransfer?.files;
+    if (files && files[0]) {
+      const fileInput = document.getElementById('csvFile');
+      fileInput.files = files;
+      handleImportFile(files[0]);
+    }
+  });
+}
 
 function renderCSVPreview(rows) {
   const section    = document.getElementById('csvPreviewSection');
@@ -1164,7 +1381,7 @@ function renderCSVPreview(rows) {
   const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   let html = `<table class="preview-table"><thead><tr>
     <th>#</th><th>Date</th><th>Day</th>
-    <th>Video 1 URL</th><th>Start 1</th><th>End 1</th><th>Notes 1</th>
+    <th>Video 1 URL</th><th>Start 1</th><th>End 1</th><th>Speed</th><th>Notes 1</th>
     <th>Video 2 URL</th><th>Start 2</th><th>End 2</th><th>Notes 2</th>
     <th>Status</th>
   </tr></thead><tbody>`;
@@ -1194,6 +1411,7 @@ function renderCSVPreview(rows) {
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(row.youtube_url || '—')}</td>
       <td>${escapeHtml(row.start_time || '—')}</td>
       <td>${escapeHtml(row.end_time || '—')}</td>
+      <td><strong>${row.playback_speed ? `${row.playback_speed}x` : '1.0x'}</strong></td>
       <td>${escapeHtml(row.notes || '—')}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(row.youtube2_url || '—')}</td>
       <td>${escapeHtml(row.start2_time || '—')}</td>
@@ -1248,8 +1466,8 @@ async function confirmImport() {
 }
 
 function downloadSampleCSV() {
-  // Generate sample rows with 2 video segments supported
-  const rows = ['date,youtube_url,start_time,end_time,notes,youtube2_url,start2_time,end2_time,notes2'];
+  // Generate sample rows with 2 video segments and playback speed supported
+  const rows = ['date,youtube_url,start_time,end_time,speed,notes,youtube2_url,start2_time,end2_time,notes2'];
   const d = new Date();
   let count = 0;
 
@@ -1262,6 +1480,7 @@ function downloadSampleCSV() {
     const video1Url = 'https://youtu.be/GioGmSUdAIQ';
     const start1 = `00:${String(count * 5).padStart(2,'0')}:00`;
     const end1   = `00:${String(count * 5 + 15).padStart(2,'0')}:00`;
+    const speed  = count === 1 ? '1.25' : '1.0';
     const notes1 = `Part ${count + 1} Segment 1`;
 
     // Demonstrate optional second video in sample CSV
@@ -1271,7 +1490,7 @@ function downloadSampleCSV() {
     const end2   = hasV2 ? '00:10:30' : '';
     const notes2 = hasV2 ? `Part ${count + 1} Segment 2` : '';
 
-    rows.push(`${dateStr},${video1Url},${start1},${end1},${notes1},${video2Url},${start2},${end2},${notes2}`);
+    rows.push(`${dateStr},${video1Url},${start1},${end1},${speed},${notes1},${video2Url},${start2},${end2},${notes2}`);
     count++;
   }
 

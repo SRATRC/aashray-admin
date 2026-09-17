@@ -261,14 +261,22 @@ function update17thTotalDuration() {
 function populateBhaktiInfo() {
   const s = sessionData;
   const vidDur = s.video_duration_seconds || 0;
+  const speed = Number(s.playback_speed || 1.0);
+  const effDur = Math.round(vidDur / (speed || 1.0));
 
   updateTitleForSegment();
   document.getElementById('chipDate').textContent = s.session_date;
+
+  let timingText = '';
   if (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0)) {
-    document.getElementById('chipVideoDur').textContent = `${formatHMS(s.video_start_seconds || 0)} – ${formatHMS(s.video_end_seconds)}`;
+    timingText = `${formatHMS(s.video_start_seconds || 0)} – ${formatHMS(s.video_end_seconds)}`;
   } else {
-    document.getElementById('chipVideoDur').textContent = 'Full video';
+    timingText = 'Full video';
   }
+  if (speed !== 1.0) {
+    timingText += ` (${speed}x)`;
+  }
+  document.getElementById('chipVideoDur').textContent = timingText;
 
   // Hide audio + total chips — not relevant for single-video bhakti
   const audioChipEl = document.getElementById('chipAudioDur')?.closest('.info-chip');
@@ -276,12 +284,13 @@ function populateBhaktiInfo() {
   if (audioChipEl) audioChipEl.style.display = 'none';
   if (totalChipEl) totalChipEl.style.display = 'none';
 
-  // Phase durations — only phase 0 matters
-  phaseDurations = [vidDur, 0, 0, 0];
-  totalSessionDuration = vidDur;
+  // Phase durations — only phase 0 matters (in wall-clock time)
+  phaseDurations = [effDur, 0, 0, 0];
+  totalSessionDuration = effDur;
 
   // Phase timeline chip
-  document.getElementById('ph-dur-0').textContent = vidDur ? formatMinSec(vidDur) : '';
+  let badge = speed !== 1.0 ? ` <span style="font-size:0.65rem;opacity:0.85;">⚡${speed}x</span>` : '';
+  document.getElementById('ph-dur-0').innerHTML = `${effDur ? formatMinSec(effDur) : ''}${badge}`;
 
   // Hide phases 1–3 and their separator arrows from the timeline
   const timeline = document.getElementById('phaseTimeline');
@@ -296,8 +305,11 @@ function populateBhaktiInfo() {
 
 function populateSessionInfo() {
   const s = sessionData;
-  const videoDur = s.video_duration_seconds;
-  // Don't pre-fill audio with a placeholder — show '...' until fetchAudioDurations() resolves
+  const speed1 = Number(s.playback_speed || 1.0);
+  const speed2 = Number(s.video2_playback_speed || s.playback_speed || 1.0);
+  const v1Dur = s.video1_duration_seconds !== undefined ? s.video1_duration_seconds : Math.max(0, (s.video_end_seconds || 0) - (s.video_start_seconds || 0));
+  const v2Dur = s.video2_duration_seconds !== undefined ? s.video2_duration_seconds : 0;
+  const effVideoDur = s.effective_duration_seconds || (Math.round(v1Dur / speed1) + (v2Dur > 0 ? Math.round(v2Dur / speed2) : 0));
   const audioDur = 300;
 
   updateTitleForSegment();
@@ -312,19 +324,29 @@ function populateSessionInfo() {
     const end2 = s.end2_time_display || formatHMS(s.video2_end_seconds || 0);
     rangeStr = `${start1}–${end1} + ${start2}–${end2}`;
   }
+
+  if (speed1 !== 1.0 || (s.youtube2_video_id && speed2 !== 1.0)) {
+    const spdTag = (s.youtube2_video_id && speed1 !== speed2) ? `${speed1}x / ${speed2}x` : `${speed1}x`;
+    rangeStr += ` (${spdTag})`;
+  }
   document.getElementById('chipVideoDur').textContent = rangeStr;
 
   document.getElementById('chipAudioDur').textContent = '...';
   document.getElementById('chipTotal').textContent = '...';
 
-  // Phase durations (audio will be overwritten by updateSessionDurations())
-  phaseDurations = [videoDur, audioDur, videoDur, audioDur];
-  totalSessionDuration = videoDur * 2 + audioDur * 2;
+  // Phase durations in wall-clock seconds (audio will be overwritten by updateSessionDurations())
+  phaseDurations = [effVideoDur, audioDur, effVideoDur, audioDur];
+  totalSessionDuration = effVideoDur * 2 + audioDur * 2;
 
   // Phase timeline chips
-  document.getElementById('ph-dur-0').textContent = formatMinSec(videoDur);
+  let speedBadgeHtml = '';
+  if (speed1 !== 1.0 || (s.youtube2_video_id && speed2 !== 1.0)) {
+    const spdStr = (s.youtube2_video_id && speed1 !== speed2) ? `${speed1}/${speed2}x` : `${speed1}x`;
+    speedBadgeHtml = ` <span style="font-size:0.65rem;opacity:0.85;">⚡${spdStr}</span>`;
+  }
+  document.getElementById('ph-dur-0').innerHTML = `${formatMinSec(effVideoDur)}${speedBadgeHtml}`;
   document.getElementById('ph-dur-1').textContent = '...';
-  document.getElementById('ph-dur-2').textContent = formatMinSec(videoDur);
+  document.getElementById('ph-dur-2').innerHTML = `${formatMinSec(effVideoDur)}${speedBadgeHtml}`;
   document.getElementById('ph-dur-3').textContent = '...';
 
   document.getElementById('player-panel').style.display = 'block';
@@ -395,7 +417,8 @@ function updateSessionDurations() {
   phaseDurations[1] = d1;
   phaseDurations[3] = d2;
 
-  totalSessionDuration = sessionData.video_duration_seconds * 2 + d1 + d2;
+  const effVideoDur = phaseDurations[0] || (sessionData.effective_duration_seconds || sessionData.video_duration_seconds);
+  totalSessionDuration = effVideoDur * 2 + d1 + d2;
 
   // Update UI chips immediately on page load
   document.getElementById('chipAudioDur').textContent = d1 === d2 ? formatMinSec(d1) : `${formatMinSec(d1)} / ${formatMinSec(d2)}`;
@@ -445,10 +468,11 @@ function updateAudioDurationFromPlayer() {
 
       const dur1 = phaseDurations[1] || 300;
       const dur2 = phaseDurations[3] || 300;
-      totalSessionDuration = sessionData.video_duration_seconds * 2 + dur1 + dur2;
+      const effVideoDur = phaseDurations[0] || (sessionData.effective_duration_seconds || sessionData.video_duration_seconds);
+      totalSessionDuration = effVideoDur * 2 + dur1 + dur2;
 
       // Update UI chips
-      document.getElementById('chipAudioDur').textContent = formatMinSec(dur1 === dur2 ? dur1 : (dur1 + dur2) / 2);
+      document.getElementById('chipAudioDur').textContent = dur1 === dur2 ? formatMinSec(dur1) : `${formatMinSec(dur1)} / ${formatMinSec(dur2)}`;
       document.getElementById('chipTotal').textContent = formatMinSec(totalSessionDuration);
       const ph1 = document.getElementById('ph-dur-1');
       if (ph1) ph1.textContent = formatMinSec(dur1);
@@ -475,10 +499,13 @@ function updateBhaktiDurationFromPlayer() {
       s.video_end_seconds = Math.round(d);
       s.video_duration_seconds = Math.max(0, s.video_end_seconds - (s.video_start_seconds || 0));
       s.video1_duration_seconds = s.video_duration_seconds;
-      phaseDurations[0] = s.video_duration_seconds;
-      totalSessionDuration = s.video_duration_seconds;
-      document.getElementById('chipVideoDur').textContent = formatMinSec(s.video_duration_seconds);
-      document.getElementById('ph-dur-0').textContent = formatMinSec(s.video_duration_seconds);
+      const speed = Number(s.playback_speed || 1.0);
+      const effDur = Math.round(s.video_duration_seconds / (speed || 1.0));
+      phaseDurations[0] = effDur;
+      totalSessionDuration = effDur;
+      document.getElementById('chipVideoDur').textContent = `${formatMinSec(effDur)}${speed !== 1.0 ? ` (${speed}x)` : ''}`;
+      let badge = speed !== 1.0 ? ` <span style="font-size:0.65rem;opacity:0.85;">⚡${speed}x</span>` : '';
+      document.getElementById('ph-dur-0').innerHTML = `${formatMinSec(effDur)}${badge}`;
     }
   }
 }
@@ -540,6 +567,7 @@ function handleVideoSegmentEnd() {
       startSeconds: s.video2_start_seconds,
       endSeconds: s.video2_end_seconds
     });
+    applyCurrentPlaybackSpeed();
     startTimerTick();
     return;
   }
@@ -550,13 +578,114 @@ function handleVideoSegmentEnd() {
   nextPhase();
 }
 
+function applyCurrentPlaybackSpeed() {
+  if (!player || typeof player.setPlaybackRate !== 'function') return;
+  if (is17thMorningMode) {
+    player.setPlaybackRate(1.0);
+    return;
+  }
+  const isVideoPhase = isBhaktiMode || currentPhase === 0 || currentPhase === 2;
+  if (isVideoPhase) {
+    const s = sessionData || {};
+    const speed = (currentSubPhase === 0)
+      ? Number(s.playback_speed || 1.0)
+      : Number(s.video2_playback_speed || s.playback_speed || 1.0);
+    if (speed && speed > 0) {
+      player.setPlaybackRate(speed);
+    } else {
+      player.setPlaybackRate(1.0);
+    }
+  } else {
+    // Meditation audio phases are always standard 1.0x speed
+    player.setPlaybackRate(1.0);
+  }
+}
+
+let bufferingStallTimeout = null;
+
+function clearBufferingStallTimer() {
+  if (bufferingStallTimeout) {
+    clearTimeout(bufferingStallTimeout);
+    bufferingStallTimeout = null;
+  }
+}
+
+function recoverBufferingStall() {
+  if (!player || !sessionStarted || isPaused) return;
+  console.warn('Player buffering stall detected (>12s). Attempting seamless auto-recovery...');
+
+  try {
+    const s = sessionData;
+    const curTime = typeof player.getCurrentTime === 'function' ? player.getCurrentTime() : 0;
+    const resumeAt = Math.max(0, curTime - 2);
+
+    if (is17thMorningMode) {
+      const step = seventeenthSteps[currentPhase];
+      if (step?.youtube_id) {
+        player.loadVideoById({ videoId: step.youtube_id, startSeconds: resumeAt });
+      }
+      return;
+    }
+
+    if (isBhaktiMode) {
+      const opts = { videoId: s.youtube_video_id, startSeconds: resumeAt };
+      if (s.video_end_seconds && s.video_end_seconds > (s.video_start_seconds || 0)) {
+        opts.endSeconds = s.video_end_seconds;
+      }
+      player.loadVideoById(opts);
+      applyCurrentPlaybackSpeed();
+      return;
+    }
+
+    const isVideoPhase = currentPhase === 0 || currentPhase === 2;
+    if (isVideoPhase) {
+      if (currentSubPhase === 0) {
+        const startSec = s.video_start_seconds || 0;
+        const v1Resume = Math.max(startSec, resumeAt);
+        const opts = { videoId: s.youtube_video_id, startSeconds: v1Resume };
+        if (s.video_end_seconds && s.video_end_seconds > startSec) {
+          opts.endSeconds = s.video_end_seconds;
+        }
+        player.loadVideoById(opts);
+      } else {
+        const startSec = s.video2_start_seconds || 0;
+        const v2Resume = Math.max(startSec, resumeAt);
+        const opts = { videoId: s.youtube2_video_id, startSeconds: v2Resume };
+        if (s.video2_end_seconds && s.video2_end_seconds > startSec) {
+          opts.endSeconds = s.video2_end_seconds;
+        }
+        player.loadVideoById(opts);
+      }
+      applyCurrentPlaybackSpeed();
+    } else {
+      const audioId = currentPhase === 1 ? (s.audio1_youtube_id || s.audio2_youtube_id) : (s.audio2_youtube_id || s.audio1_youtube_id);
+      player.loadVideoById({ videoId: audioId, startSeconds: resumeAt });
+      player.setPlaybackRate(1.0);
+    }
+  } catch (err) {
+    console.error('Failed auto-recovering from buffering stall:', err);
+  }
+}
+
 function onPlayerStateChange(event) {
   if (!sessionStarted) return;
+
+  if (event.data === YT.PlayerState.BUFFERING) {
+    if (!bufferingStallTimeout) {
+      bufferingStallTimeout = setTimeout(() => {
+        bufferingStallTimeout = null;
+        recoverBufferingStall();
+      }, 12000);
+    }
+  } else {
+    clearBufferingStallTimer();
+  }
 
   if (event.data === YT.PlayerState.PAUSED)  { pauseSession(); }
   if (event.data === YT.PlayerState.PLAYING) {
     phaseLoading = false; // Video is now actively playing
     disableCaptions();
+    applyCurrentPlaybackSpeed();
     if (isBhaktiMode) {
       updateBhaktiDurationFromPlayer();
     } else if (!is17thMorningMode && (currentPhase === 1 || currentPhase === 3)) {
@@ -675,6 +804,12 @@ function requestFullScreen() {
 }
 
 function exitFullScreen() {
+  if (mouseInactivityTimer) {
+    clearTimeout(mouseInactivityTimer);
+    mouseInactivityTimer = null;
+  }
+  document.getElementById('video-container')?.classList.remove('hide-cursor');
+
   if (document.exitFullscreen) {
     document.exitFullscreen().catch(() => {});
   } else if (document.webkitExitFullscreen) {
@@ -731,7 +866,7 @@ function startPhase(phaseIndex) {
   document.getElementById('pauseBadge').style.display = 'none';
   document.getElementById('countdown').style.opacity = '1';
 
-  // ── 17th Morning Phase Execution ──────────────────────────────────────────
+  // ── 17th Monthly Morning Phase Execution ──────────────────────────────────
   if (is17thMorningMode) {
     const step = seventeenthSteps[phaseIndex];
     for (let i = 0; i < seventeenthSteps.length; i++) {
@@ -749,6 +884,7 @@ function startPhase(phaseIndex) {
     countdownEl.classList.toggle('audio-phase', !!(step && step.type && step.type.startsWith('pause')));
 
     player.loadVideoById({ videoId: step.youtube_id });
+    applyCurrentPlaybackSpeed();
     startTimerTick();
     return;
   }
@@ -818,6 +954,13 @@ function nextPhase() {
 }
 
 function completeSession() {
+  clearBufferingStallTimer();
+  if (mouseInactivityTimer) {
+    clearTimeout(mouseInactivityTimer);
+    mouseInactivityTimer = null;
+  }
+  document.getElementById('video-container')?.classList.remove('hide-cursor');
+
   clearInterval(timerInterval);
   sessionStarted = false;
 
@@ -898,6 +1041,8 @@ function startTimerTick() {
     }
 
     if (isVideoPhase) {
+      const speed1 = Number(s.playback_speed || 1.0);
+      const speed2 = Number(s.video2_playback_speed || s.playback_speed || 1.0);
       const v1Dur = s.video1_duration_seconds || (s.video_end_seconds > s.video_start_seconds ? (s.video_end_seconds - s.video_start_seconds) : 0);
       const v2Dur = s.video2_duration_seconds || 0;
       const curDur = typeof player.getDuration === 'function' ? player.getDuration() : 0;
@@ -909,13 +1054,15 @@ function startTimerTick() {
           ? s.video_end_seconds
           : curDur;
         currentSegmentRemaining = Math.max(0, endSecs - currentTime);
-        phaseRemaining = currentSegmentRemaining + v2Dur;
+        const wallV1Remaining = currentSegmentRemaining / (speed1 || 1.0);
+        const wallV2Remaining = v2Dur / (speed2 || 1.0);
+        phaseRemaining = wallV1Remaining + wallV2Remaining;
       } else {
         endSecs = (s.video2_end_seconds && s.video2_end_seconds > (s.video2_start_seconds || 0))
           ? s.video2_end_seconds
           : curDur;
         currentSegmentRemaining = Math.max(0, endSecs - currentTime);
-        phaseRemaining = currentSegmentRemaining;
+        phaseRemaining = currentSegmentRemaining / (speed2 || 1.0);
       }
     } else {
       endSecs = (typeof player.getDuration === 'function' ? player.getDuration() : 0);
@@ -952,6 +1099,43 @@ function startTimerTick() {
     }
   }, 500);
 }
+
+// ── Fullscreen mouse auto-hide ───────────────────────────────────────────────
+let mouseInactivityTimer = null;
+
+function resetMouseInactivityTimer() {
+  const vc = document.getElementById('video-container');
+  if (!vc) return;
+
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+  if (!isFs) {
+    vc.classList.remove('hide-cursor');
+    if (mouseInactivityTimer) {
+      clearTimeout(mouseInactivityTimer);
+      mouseInactivityTimer = null;
+    }
+    return;
+  }
+
+  vc.classList.remove('hide-cursor');
+  if (mouseInactivityTimer) clearTimeout(mouseInactivityTimer);
+
+  mouseInactivityTimer = setTimeout(() => {
+    const stillFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    if (stillFs) {
+      vc.classList.add('hide-cursor');
+    }
+  }, 3000);
+}
+
+document.addEventListener('mousemove', resetMouseInactivityTimer);
+document.addEventListener('fullscreenchange', () => {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+  if (!isFs) {
+    if (mouseInactivityTimer) clearTimeout(mouseInactivityTimer);
+    document.getElementById('video-container')?.classList.remove('hide-cursor');
+  }
+});
 
 // ── Keyboard Shortcuts ────────────────────────────────────────────────────────
 
