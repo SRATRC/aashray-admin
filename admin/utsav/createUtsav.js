@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
       whatsapp_link: formData.get('whatsapp_link') || null,
       registration_deadline: formatDateForDB(formData.get('registration_deadline')),
       starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null,
-      whatsapp_link: formData.get('whatsapp_link')
+      ending_meal: endingMeal.length ? endingMeal : null
     };
 
     try {

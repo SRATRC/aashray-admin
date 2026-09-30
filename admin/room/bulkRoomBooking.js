@@ -90,13 +90,17 @@ document.addEventListener('DOMContentLoaded', function () {
       resStatusInput.value = '';
     };
 
-    mobInput.addEventListener('blur', async () => {
-      const mob = mobInput.value.trim();
-      if (!mob || mob.length < 10) {
-        clearFields();
-        return;
-      }
+    // Every lookup gets a number; only the newest one for this row may fill
+    // the fields, so a slow reply for an old number is dropped.
+    let seq = 0;
+    let lookedFor = null;   // number the fields currently belong to (or are loading for)
+    let failMsg = null;     // set when the last lookup failed, until shown to the admin
+    let timer = null;
 
+    const lookup = async (mob, alertOnFail) => {
+      const mySeq = ++seq;
+      lookedFor = mob;
+      failMsg = null;
       activeLookups++;
       try {
         const res = await fetch(`${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(mob)}`, {
@@ -106,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         });
         const json = await res.json();
+        if (mySeq !== seq) return;
         if (res.ok && json?.data) {
           const c = json.data;
           cardInput.value = c.cardno || '';
@@ -114,15 +119,51 @@ document.addEventListener('DOMContentLoaded', function () {
           centerInput.value = c.center || '';
           resStatusInput.value = c.res_status || '';
         } else {
-          alert(`Mobile No lookup failed: ${json.message || 'Card not found'}`);
           clearFields();
+          failMsg = `Mobile No lookup failed: ${json.message || 'Card not found'}`;
+          if (alertOnFail) { alert(failMsg); failMsg = null; }
         }
       } catch (e) {
         console.error('Lookup failed for mobile', mob, e);
-        clearFields();
+        if (mySeq === seq) clearFields();
       } finally {
         activeLookups--;
       }
+    };
+
+    // Typing: drop the old card at once, look up again shortly after the
+    // admin stops typing (no need to leave the field first).
+    mobInput.addEventListener('input', () => {
+      seq++;
+      clearTimeout(timer);
+      lookedFor = null;
+      failMsg = null;
+      clearFields();
+      const mob = mobInput.value.trim();
+      if (mob.length >= 10) {
+        timer = setTimeout(() => lookup(mob, false), 350);
+      }
+    });
+
+    // Leaving the field (or pressing Enter to submit) must not wait for the
+    // timer: start the lookup now if this number has not been looked up yet.
+    const syncLookup = () => {
+      clearTimeout(timer);
+      const mob = mobInput.value.trim();
+      if (mob.length >= 10 && lookedFor !== mob) return lookup(mob, false);
+    };
+    tr._syncLookup = syncLookup;
+
+    mobInput.addEventListener('blur', async () => {
+      const mob = mobInput.value.trim();
+      if (!mob || mob.length < 10) {
+        seq++;
+        lookedFor = null;
+        clearFields();
+        return;
+      }
+      await syncLookup();
+      if (failMsg) { alert(failMsg); failMsg = null; }
     });
   }
 
@@ -160,15 +201,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (isSubmitting) return;
     isSubmitting = true;
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
     try {
       await runSubmit();
     } finally {
       isSubmitting = false;
+      if (btn) btn.disabled = false;
     }
   }
 
   async function runSubmit() {
-    // Wait if there are any in-flight lookups
+    // Start any lookup that is still waiting on its typing pause, then wait
+    // for all lookups to finish — so Enter never submits a stale card.
+    tableBody.querySelectorAll('tr').forEach(tr => tr._syncLookup && tr._syncLookup());
     while (activeLookups > 0) {
       await new Promise(resolve => setTimeout(resolve, 50));
     }
@@ -231,3 +277,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 });
+
+// Header links (Back / Home / Logout) — listeners instead of inline onclick.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('[data-nav]');
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.nav === 'back') history.back();
+  else if (a.dataset.nav === 'home') goToHome();
+  else if (a.dataset.nav === 'logout') logout();
+});
+

@@ -68,6 +68,17 @@
         justify-content: center;
       }
       #updateRoomModal.open { display: flex; }
+      #cancelBlockModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      #cancelBlockModal.open { display: flex; }
+      #cancelBlockModal .modal-actions { flex-direction: column; align-items: stretch; }
       .modal-box {
         background: #fff;
         border-radius: 8px;
@@ -108,9 +119,9 @@
     <div class="header">
       <div class="container">
         <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="logout()">Logout</a>
+          <a href="#" data-nav="back">Back</a>
+          &nbsp; | &nbsp; <a href="#" data-nav="home">Home</a>
+          &nbsp; | &nbsp; <a href="#" data-nav="logout">Logout</a>
         </div>
       </div>
     </div>
@@ -162,8 +173,8 @@
               <div id="bulkActionsBar" style="display: none; background: #e3f2fd; border: 1px solid #bbdefb; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                 <span id="bulkSelectedCount" style="font-weight: bold; color: #0d47a1;">0 beds selected</span>
                 <div style="display: flex; gap: 10px;">
-                  <button class="btn btn-secondary" onclick="openBulkBlockModal()" style="margin-bottom: 0; background: #c0392b; border-color: #c0392b; color: #fff; padding: 6px 15px; font-size: 0.9em; border-radius: 4px;">Bulk Block</button>
-                  <button id="bulkUnblockBtn" class="btn btn-secondary" onclick="submitBulkUnblock()" style="margin-bottom: 0; background: #27ae60; border-color: #27ae60; color: #fff; padding: 6px 15px; font-size: 0.9em; border-radius: 4px;">Bulk Unblock</button>
+                  <button id="bulkBlockBtn" class="btn btn-secondary" style="margin-bottom: 0; background: #c0392b; border-color: #c0392b; color: #fff; padding: 6px 15px; font-size: 0.9em; border-radius: 4px;">Bulk Block</button>
+                  <button id="bulkUnblockBtn" class="btn btn-secondary" style="margin-bottom: 0; background: #27ae60; border-color: #27ae60; color: #fff; padding: 6px 15px; font-size: 0.9em; border-radius: 4px;">Bulk Unblock</button>
                 </div>
               </div>
 
@@ -171,7 +182,7 @@
                 <table id="reportTable" class="table table-striped table-bordered">
                   <thead>
                     <tr>
-                      <th style="width: 40px; text-align: center; vertical-align: middle;"><input type="checkbox" id="selectAllCheckbox" style="margin:0; width:auto; cursor:pointer;" onclick="toggleSelectAll()" /></th>
+                      <th style="width: 40px; text-align: center; vertical-align: middle;"><input type="checkbox" id="selectAllCheckbox" style="margin:0; width:auto; cursor:pointer;" /></th>
                       <th>#</th>
                       <th>Room No</th>
                       <th>Room Type</th>
@@ -208,8 +219,9 @@
         <input type="date" id="modalStartDate" />
 
         <div id="endDateRow">
-          <label for="modalEndDate">End Date</label>
+          <label for="modalEndDate">Last blocked day</label>
           <input type="date" id="modalEndDate" />
+          <div style="font-size:0.8em; color:#666; margin-top:4px;">This day is also blocked. For a one-day block, pick the same day as Start Date.</div>
         </div>
 
         <label for="modalReason">Reason (optional)</label>
@@ -223,8 +235,21 @@
         <div id="modalWarning"></div>
 
         <div class="modal-actions">
-          <button class="btn-cancel-modal" onclick="closeBlockModal()">Cancel</button>
-          <button class="btn-confirm" onclick="submitBlock()">Confirm Block</button>
+          <button id="blockCancelBtn" class="btn-cancel-modal">Cancel</button>
+          <button id="blockConfirmBtn" class="btn-confirm">Confirm Block</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel Block Modal (three choices: all beds, this bed, keep) -->
+    <div id="cancelBlockModal">
+      <div class="modal-box">
+        <h3>Cancel this room block?</h3>
+        <p id="cancelBlockText" style="font-size:0.9em; color:#444;"></p>
+        <div class="modal-actions">
+          <button id="cancelBlockAllBtn" class="btn-confirm">Cancel block for all beds of this room</button>
+          <button id="cancelBlockOneBtn" class="btn-confirm">Cancel block for this bed only</button>
+          <button id="cancelBlockKeepBtn" class="btn-cancel-modal">Keep the block</button>
         </div>
       </div>
     </div>
@@ -250,8 +275,8 @@
         </select>
 
         <div class="modal-actions" style="margin-top:20px;">
-          <button class="btn-cancel-modal" onclick="closeUpdateRoomModal()">Cancel</button>
-          <button class="btn-confirm" onclick="submitUpdateRoom()" style="background:#2980b9; color:#fff;">Update</button>
+          <button id="updateCancelBtn" class="btn-cancel-modal">Cancel</button>
+          <button id="updateConfirmBtn" class="btn-confirm" style="background:#2980b9; color:#fff;">Update</button>
         </div>
       </div>
     </div>

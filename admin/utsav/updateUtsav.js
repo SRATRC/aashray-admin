@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('comments').value = data.comments;
     document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
     document.getElementById('location').value = data.location;
-    document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
 
     const shortlinkGroup = document.getElementById('shortlink_group');
     const shortlinkInput = document.getElementById('shortlink');
@@ -91,8 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       whatsapp_link: utsavForm.get('whatsapp_link') || null,
       registration_deadline: utsavForm.get('registration_deadline'),
       starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null,
-      whatsapp_link: utsavForm.get('whatsapp_link')
+      ending_meal: endingMeal.length ? endingMeal : null
     };
 
     try {

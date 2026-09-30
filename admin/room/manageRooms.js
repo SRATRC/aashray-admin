@@ -1,5 +1,9 @@
 let currentRoomNo = null;
 let allRooms = [];
+let pendingCancelId = null;
+// Base room numbers the admin has expanded; kept across re-renders so a block
+// action changes the row in place without collapsing the table.
+const expandedRooms = new Set();
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -9,14 +13,24 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const getBaseRoomNo = (roomno) => {
-  if (!roomno) return '';
-  const str = String(roomno).trim();
-  if (/[a-zA-Z]$/.test(str)) {
-    return str.slice(0, -1);
-  }
-  return str;
-};
+function todayIST() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+
+// Same rules as the room list API: end_date is the LAST blocked day.
+function decorateBlock(b) {
+  const today = todayIST();
+  return {
+    ...b,
+    isExpired: Boolean(b.end_date && b.end_date < today),
+    isCurrent: b.start_date <= today && (!b.end_date || b.end_date >= today),
+    isFuture: Boolean(b.start_date > today)
+  };
+}
+
+function bedsOfRoom(baseRoomNo) {
+  return allRooms.filter((r) => getBaseRoomNo(r.roomno) === baseRoomNo);
+}
 
 function renderBlocks(blocks) {
   if (!blocks || blocks.length === 0) {
@@ -28,28 +42,62 @@ function renderBlocks(blocks) {
       const stateLabel = b.isExpired ? ' (expired)' : b.isFuture ? ' (future)' : '';
       const label = isPermanent
         ? `Permanent${stateLabel}`
-        : `${formatDate(b.start_date)} → ${formatDate(b.end_date)}${stateLabel}`;
+        : b.end_date === b.start_date
+          ? `${formatDate(b.start_date)} (1 day)${stateLabel}`
+          : `${formatDate(b.start_date)} → ${formatDate(b.end_date)}${stateLabel}`;
       const cls = isPermanent ? 'permanent' : 'daterange';
       const reason = b.reason ? ` · ${escapeHtml(b.reason)}` : '';
       return `
         <div style="margin-bottom: 2px;">
           <span class="block-badge ${cls}">${label}${reason}</span>
-          <span class="cancel-block-link" onclick="cancelBlock(${b.id})">✕</span>
+          <span class="cancel-block-link" data-action="cancel-block" data-block-id="${escapeHtml(b.id)}">✕</span>
         </div>`;
     })
     .join('');
 }
 
-// ── Cancel a block ──────────────────────────────────────────────────────────
+// ── Cancel a block (keep / this bed / all beds) ─────────────────────────────
 
-async function cancelBlock(id) {
-  if (!confirm('Cancel this room block?')) return;
+function openCancelBlockModal(id) {
+  pendingCancelId = id;
+  document.getElementById('cancelBlockText').textContent =
+    'Choose how far to cancel it, or keep the block.';
+  document.getElementById('cancelBlockModal').classList.add('open');
+}
 
-  // Ask if they want to unblock all beds or just this one
-  const allBeds = confirm('Do you want to cancel the block for all beds of this room? (Click OK to cancel all beds, Cancel to cancel this bed only)');
+function closeCancelBlockModal() {
+  pendingCancelId = null;
+  document.getElementById('cancelBlockModal').classList.remove('open');
+}
 
+function removeBlocksLocally(id, allBeds) {
+  let target = null;
+  let owner = null;
+  for (const room of allRooms) {
+    const hit = (room.blocks || []).find((b) => String(b.id) === String(id));
+    if (hit) { target = hit; owner = room; break; }
+  }
+  if (!target) return;
+  if (!allBeds) {
+    owner.blocks = owner.blocks.filter((b) => b !== target);
+    return;
+  }
+  // Mirrors the server: same dates, every bed of the same room.
+  const base = getBaseRoomNo(owner.roomno);
+  bedsOfRoom(base).forEach((room) => {
+    room.blocks = (room.blocks || []).filter(
+      (b) => !(b.start_date === target.start_date && (b.end_date || null) === (target.end_date || null))
+    );
+  });
+}
+
+async function runCancelBlock(allBeds) {
+  const id = pendingCancelId;
+  if (id === null) return;
+  const btns = document.querySelectorAll('#cancelBlockModal button');
+  btns.forEach((b) => (b.disabled = true));
   try {
-    const res = await fetch(`${CONFIG.basePath}/stay/room_block/${id}?allBeds=${allBeds}`, {
+    const res = await fetch(`${CONFIG.basePath}/stay/room_block/${encodeURIComponent(id)}?allBeds=${allBeds}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -58,14 +106,18 @@ async function cancelBlock(id) {
     });
     const data = await res.json();
     if (res.ok) {
+      removeBlocksLocally(id, allBeds);
+      closeCancelBlockModal();
+      renderTable();
       alert(data.message);
-      location.reload();
     } else {
       alert(`Error: ${data.message}`);
     }
   } catch (e) {
     console.error(e);
     alert('An error occurred. Please try again.');
+  } finally {
+    btns.forEach((b) => (b.disabled = false));
   }
 }
 
@@ -85,6 +137,7 @@ function openBlockModal(roomno, forceAllBeds = false, isBulk = false) {
 
   document.getElementById('modalStartDate').value = '';
   document.getElementById('modalEndDate').value = '';
+  document.getElementById('modalEndDate').min = '';
   document.getElementById('modalReason').value = '';
   document.getElementById('modalWarning').style.display = 'none';
   document.getElementById('typeDateRange').checked = true;
@@ -100,6 +153,10 @@ function openBlockModal(roomno, forceAllBeds = false, isBulk = false) {
     checkboxContainer.style.display = 'flex';
   }
 
+  const confirmBtn = document.getElementById('blockConfirmBtn');
+  confirmBtn.disabled = false;
+  confirmBtn.style.display = '';
+  document.getElementById('blockCancelBtn').textContent = 'Cancel';
   document.getElementById('blockModal').classList.add('open');
 }
 
@@ -129,7 +186,7 @@ async function submitUpdateRoom() {
   const roomtype = document.getElementById('modalUpdateRoomType').value;
   const gender = document.getElementById('modalUpdateGender').value;
 
-  const confirmBtn = document.querySelector('#updateRoomModal .btn-confirm');
+  const confirmBtn = document.getElementById('updateConfirmBtn');
   if (confirmBtn) confirmBtn.disabled = true;
 
   try {
@@ -143,8 +200,14 @@ async function submitUpdateRoom() {
     });
     const data = await res.json();
     if (res.ok) {
+      const base = getBaseRoomNo(currentUpdateRoomNo);
+      bedsOfRoom(base).forEach((room) => {
+        room.roomtype = roomtype;
+        room.gender = gender;
+      });
+      closeUpdateRoomModal();
+      renderTable();
       alert(data.message);
-      location.reload();
     } else {
       alert(`Error: ${data.message}`);
     }
@@ -176,16 +239,13 @@ async function submitBlock() {
   const blockAllBeds = document.getElementById('blockAllBedsCheckbox').checked;
 
   if (!start_date) { alert('Please select a start date.'); return; }
-  if (!isPermanent && !end_date) { alert('Please select an end date.'); return; }
-  if (!isPermanent && end_date <= start_date) { alert('End date must be after start date.'); return; }
+  if (!isPermanent && !end_date) { alert('Please select the last blocked day.'); return; }
+  // The last blocked day is itself blocked, so a one-day block has end == start.
+  if (!isPermanent && end_date < start_date) { alert('The last blocked day cannot be before the start date.'); return; }
 
-  const confirmBtn = document.querySelector('#blockModal .btn-confirm');
+  const confirmBtn = document.getElementById('blockConfirmBtn');
   if (confirmBtn) confirmBtn.disabled = true;
-  // The warning path deliberately leaves the modal open for 4 seconds so the
-  // admin can read it. Re-enabling Confirm in `finally` would make that a
-  // window to click again and create a duplicate block. Both success paths end
-  // in a reload, so the button only needs re-enabling when something failed.
-  let willReload = false;
+  let keepDisabled = false;
 
   try {
     const isBulk = Array.isArray(currentRoomNo);
@@ -215,6 +275,17 @@ async function submitBlock() {
       return;
     }
 
+    // Show the new blocks in the table right away (no list reload).
+    (data.data || []).forEach((blk) => {
+      const room = allRooms.find((r) => r.roomno === blk.roomno);
+      if (!room) return;
+      room.blocks = room.blocks || [];
+      room.blocks.push(decorateBlock({
+        id: blk.id, start_date: blk.start_date, end_date: blk.end_date || null, reason: blk.reason || null
+      }));
+    });
+    renderTable();
+
     // Show warning if there are conflicting bookings
     if (data.warnings) {
       const warningEl = document.getElementById('modalWarning');
@@ -223,37 +294,43 @@ async function submitBlock() {
         .join(', ');
       warningEl.innerHTML = `⚠️ <strong>${escapeHtml(data.warnings.message)}</strong><br>Affected: ${bookingList}`;
       warningEl.style.display = 'block';
-      // Don't close modal — let admin see the warning, then close manually
-      willReload = true;
-      setTimeout(() => {
-        closeBlockModal();
-        location.reload();
-      }, 4000);
+      // The block is saved. Keep the modal open so the admin can read who is
+      // affected; Confirm is hidden so it cannot be pressed twice.
+      keepDisabled = true;
+      confirmBtn.style.display = 'none';
+      document.getElementById('blockCancelBtn').textContent = 'Close';
     } else {
-      willReload = true;
       closeBlockModal();
-      location.reload();
     }
   } catch (e) {
     console.error(e);
     alert('An error occurred. Please try again.');
   } finally {
-    if (confirmBtn && !willReload) confirmBtn.disabled = false;
+    if (confirmBtn && !keepDisabled) confirmBtn.disabled = false;
   }
 }
 
 // ── Bulk Actions ────────────────────────────────────────────────────────────
 
+function isRoomVisible(baseRoomNo) {
+  const row = document.querySelector(`tr.parent-row[data-room="${CSS.escape(baseRoomNo)}"]`);
+  return !!row && row.style.display !== 'none';
+}
+
+// Only beds of rooms that are currently shown (search may hide the rest).
+function visibleBedCheckboxes() {
+  return Array.from(document.querySelectorAll('.bed-checkbox')).filter((cb) => isRoomVisible(cb.dataset.room));
+}
+
 function getSelectedBeds() {
-  const checkboxes = document.querySelectorAll('.bed-checkbox:checked');
-  return Array.from(checkboxes).map(cb => cb.dataset.bed);
+  return visibleBedCheckboxes().filter((cb) => cb.checked).map((cb) => cb.dataset.bed);
 }
 
 function updateBulkActionsBar() {
   const selected = getSelectedBeds();
   const bar = document.getElementById('bulkActionsBar');
   const countSpan = document.getElementById('bulkSelectedCount');
-  
+
   if (selected.length > 0) {
     countSpan.textContent = `${selected.length} bed(s) selected`;
     bar.style.display = 'flex';
@@ -264,47 +341,46 @@ function updateBulkActionsBar() {
 
 function toggleSelectAll() {
   const masterChecked = document.getElementById('selectAllCheckbox').checked;
-  
-  // Set all room and bed checkboxes to match master
-  document.querySelectorAll('.room-checkbox, .bed-checkbox').forEach(cb => {
+
+  // Tick only the rooms and beds that are shown; rows hidden by search stay as they are.
+  document.querySelectorAll('.room-checkbox').forEach((cb) => {
+    if (isRoomVisible(cb.dataset.room)) cb.checked = masterChecked;
+  });
+  visibleBedCheckboxes().forEach((cb) => {
     cb.checked = masterChecked;
   });
-  
+
   updateBulkActionsBar();
 }
 
 function toggleRoomCheckbox(baseRoomNo) {
-  const roomCheckbox = document.querySelector(`.room-checkbox[data-room="${baseRoomNo}"]`);
+  const roomCheckbox = document.querySelector(`.room-checkbox[data-room="${CSS.escape(baseRoomNo)}"]`);
   const isChecked = roomCheckbox.checked;
-  
-  // Toggle all bed checkboxes under this room group
-  document.querySelectorAll(`.bed-of-${baseRoomNo}`).forEach(cb => {
+
+  document.querySelectorAll(`.bed-checkbox[data-room="${CSS.escape(baseRoomNo)}"]`).forEach((cb) => {
     cb.checked = isChecked;
   });
-  
-  // Update master select-all state
+
   updateSelectAllCheckboxState();
   updateBulkActionsBar();
 }
 
 function onBedCheckboxChange(baseRoomNo) {
-  // Update parent room checkbox state
-  const roomCheckbox = document.querySelector(`.room-checkbox[data-room="${baseRoomNo}"]`);
+  const roomCheckbox = document.querySelector(`.room-checkbox[data-room="${CSS.escape(baseRoomNo)}"]`);
   if (roomCheckbox) {
-    const beds = document.querySelectorAll(`.bed-of-${baseRoomNo}`);
-    const checkedBeds = document.querySelectorAll(`.bed-of-${baseRoomNo}:checked`);
-    roomCheckbox.checked = (beds.length === checkedBeds.length);
+    const beds = document.querySelectorAll(`.bed-checkbox[data-room="${CSS.escape(baseRoomNo)}"]`);
+    const checkedBeds = document.querySelectorAll(`.bed-checkbox[data-room="${CSS.escape(baseRoomNo)}"]:checked`);
+    roomCheckbox.checked = beds.length === checkedBeds.length;
   }
-  
-  // Update master select-all state
+
   updateSelectAllCheckboxState();
   updateBulkActionsBar();
 }
 
 function updateSelectAllCheckboxState() {
-  const allBeds = document.querySelectorAll('.bed-checkbox');
-  const checkedBeds = document.querySelectorAll('.bed-checkbox:checked');
-  document.getElementById('selectAllCheckbox').checked = (allBeds.length > 0 && allBeds.length === checkedBeds.length);
+  const shown = visibleBedCheckboxes();
+  document.getElementById('selectAllCheckbox').checked =
+    shown.length > 0 && shown.every((cb) => cb.checked);
 }
 
 function openBulkBlockModal() {
@@ -323,7 +399,7 @@ async function submitBulkUnblock() {
     return;
   }
   
-  if (!confirm(`Cancel active blocks for the ${selected.length} selected bed(s)?`)) return;
+  if (!confirm(`Cancel ALL blocks (current, future and permanent) on the ${selected.length} selected bed(s)? This cannot be undone.`)) return;
 
   const unblockBtn = document.getElementById('bulkUnblockBtn');
   if (unblockBtn) unblockBtn.disabled = true;
@@ -340,8 +416,13 @@ async function submitBulkUnblock() {
     
     const data = await res.json();
     if (res.ok) {
+      // The server cancels every active block on these beds; mirror that here.
+      const chosen = new Set(selected);
+      allRooms.forEach((room) => {
+        if (chosen.has(room.roomno)) room.blocks = [];
+      });
+      renderTable();
       alert(data.message);
-      location.reload();
     } else {
       alert(`Error: ${data.message}`);
     }
@@ -358,27 +439,32 @@ async function submitBulkUnblock() {
 function filterTable() {
   const query = document.getElementById('tableSearch').value.toLowerCase().trim();
   const parentRows = document.querySelectorAll('.parent-row');
-  
-  parentRows.forEach(parentRow => {
+
+  parentRows.forEach((parentRow) => {
     const baseRoomNo = parentRow.dataset.room;
-    const childRows = document.querySelectorAll(`.child-${baseRoomNo}`);
-    
-    // Check if parent matches query
+    const childRows = document.querySelectorAll(`.child-row[data-room="${CSS.escape(baseRoomNo)}"]`);
+
     const matches = baseRoomNo.toLowerCase().includes(query) || parentRow.textContent.toLowerCase().includes(query);
-    
+
     if (matches) {
       parentRow.style.display = 'table-row';
       const isExpanded = parentRow.classList.contains('expanded');
-      childRows.forEach(child => {
+      childRows.forEach((child) => {
         child.style.display = isExpanded ? 'table-row' : 'none';
       });
     } else {
       parentRow.style.display = 'none';
-      childRows.forEach(child => {
+      childRows.forEach((child) => {
         child.style.display = 'none';
       });
+      // A hidden room must not stay selected: bulk actions only touch what is shown.
+      parentRow.querySelectorAll('.room-checkbox').forEach((cb) => (cb.checked = false));
+      childRows.forEach((child) => child.querySelectorAll('.bed-checkbox').forEach((cb) => (cb.checked = false)));
     }
   });
+
+  updateSelectAllCheckboxState();
+  updateBulkActionsBar();
 }
 
 // ── Load & render rooms table ───────────────────────────────────────────────
@@ -461,23 +547,23 @@ function renderTable() {
     const safeGender = escapeHtml(group.gender);
     const actionHtml = allBlocked
       ? `<span style="color:#aaa; cursor:not-allowed;">Block Room</span>`
-      : `<a href="#" onclick="event.stopPropagation(); openBlockModal('${safeBaseRoomNo}A', true)">Block Room</a>`;
+      : `<a href="#" data-action="block-room" data-room="${safeBaseRoomNo}">Block Room</a>`;
 
     const parentRow = document.createElement('tr');
     parentRow.style.cursor = 'pointer';
-    parentRow.className = 'parent-row';
+    parentRow.className = expandedRooms.has(baseRoomNo) ? 'parent-row expanded' : 'parent-row';
     parentRow.dataset.room = baseRoomNo;
     parentRow.dataset.type = group.roomtype;
     parentRow.dataset.gender = group.gender;
     parentRow.innerHTML = `
-      <td style="text-align: center;"><input type="checkbox" class="room-checkbox" data-room="${safeBaseRoomNo}" onclick="event.stopPropagation(); toggleRoomCheckbox('${safeBaseRoomNo}')" /></td>
+      <td style="text-align: center;"><input type="checkbox" class="room-checkbox" data-room="${safeBaseRoomNo}" /></td>
       <td>
-        <span class="toggle-icon" style="margin-right: 6px; font-size: 0.85em; color: #34495e; display: inline-block; width: 12px;">▶</span>
+        <span class="toggle-icon" style="margin-right: 6px; font-size: 0.85em; color: #34495e; display: inline-block; width: 12px;">${expandedRooms.has(baseRoomNo) ? '▼' : '▶'}</span>
         ${index + 1}
       </td>
       <td style="font-weight:bold;">
         Room ${safeBaseRoomNo}
-        <a href="#" onclick="event.stopPropagation(); openUpdateRoomModal('${safeBaseRoomNo}', '${safeRoomType}', '${safeGender}')" style="margin-left: 8px; font-size: 0.85em; text-decoration: none;" title="Update Room Details">✎</a>
+        <a href="#" data-action="edit-room" data-room="${safeBaseRoomNo}" data-type="${safeRoomType}" data-gender="${safeGender}" style="margin-left: 8px; font-size: 0.85em; text-decoration: none;" title="Update Room Details">✎</a>
       </td>
       <td>${safeRoomType}</td>
       <td>${safeGender}</td>
@@ -485,23 +571,6 @@ function renderTable() {
       <td>${actionHtml}</td>
     `;
     
-    // Toggle child rows on click
-    parentRow.addEventListener('click', () => {
-      const isExpanded = parentRow.classList.contains('expanded');
-      const toggleIcon = parentRow.querySelector('.toggle-icon');
-      const childRows = tableBody.querySelectorAll(`.child-${baseRoomNo}`);
-      
-      if (isExpanded) {
-        parentRow.classList.remove('expanded');
-        toggleIcon.textContent = '▶';
-        childRows.forEach(row => row.style.display = 'none');
-      } else {
-        parentRow.classList.add('expanded');
-        toggleIcon.textContent = '▼';
-        childRows.forEach(row => row.style.display = 'table-row');
-      }
-    });
-
     tableBody.appendChild(parentRow);
 
     // Render child rows representing individual beds
@@ -510,14 +579,15 @@ function renderTable() {
       const safeBedNo = escapeHtml(bed.roomno);
       const bedActionHtml = isBedBlocked
         ? `<span style="color:#aaa; cursor:not-allowed;">Block Bed</span>`
-        : `<a href="#" onclick="event.stopPropagation(); openBlockModal('${safeBedNo}', false)">Block Bed</a>`;
+        : `<a href="#" data-action="block-bed" data-bed="${safeBedNo}">Block Bed</a>`;
 
       const childRow = document.createElement('tr');
-      childRow.className = `child-row child-${baseRoomNo}`;
-      childRow.style.display = 'none'; // Hidden by default
+      childRow.className = 'child-row';
+      childRow.dataset.room = baseRoomNo;
+      childRow.style.display = expandedRooms.has(baseRoomNo) ? 'table-row' : 'none';
       childRow.style.backgroundColor = '#fcfcfc';
       childRow.innerHTML = `
-        <td style="text-align: center;"><input type="checkbox" class="bed-checkbox bed-of-${safeBaseRoomNo}" data-bed="${safeBedNo}" onclick="event.stopPropagation(); onBedCheckboxChange('${safeBaseRoomNo}')" /></td>
+        <td style="text-align: center;"><input type="checkbox" class="bed-checkbox" data-room="${safeBaseRoomNo}" data-bed="${safeBedNo}" /></td>
         <td style="color:#777; font-size:0.85em; text-align:right; padding-right: 15px;">${index + 1}.${subIndex + 1}</td>
         <td style="padding-left: 20px; color: #555;">↳ Bed ${safeBedNo}</td>
         <td></td>
@@ -533,7 +603,68 @@ function renderTable() {
   filterTable();
 }
 
+// One listener for the table body: row toggle, action links, checkboxes.
+function onTableClick(e) {
+  const tableBody = e.currentTarget;
+  const actionEl = e.target.closest('[data-action]');
+  if (actionEl && tableBody.contains(actionEl)) {
+    e.preventDefault();
+    const { action } = actionEl.dataset;
+    if (action === 'block-room') openBlockModal(`${actionEl.dataset.room}A`, true);
+    else if (action === 'block-bed') openBlockModal(actionEl.dataset.bed, false);
+    else if (action === 'edit-room') openUpdateRoomModal(actionEl.dataset.room, actionEl.dataset.type, actionEl.dataset.gender);
+    else if (action === 'cancel-block') openCancelBlockModal(actionEl.dataset.blockId);
+    return;
+  }
+  const checkbox = e.target.closest('input[type="checkbox"]');
+  if (checkbox) {
+    if (checkbox.classList.contains('room-checkbox')) toggleRoomCheckbox(checkbox.dataset.room);
+    else if (checkbox.classList.contains('bed-checkbox')) onBedCheckboxChange(checkbox.dataset.room);
+    return;
+  }
+  const parentRow = e.target.closest('tr.parent-row');
+  if (!parentRow) return;
+  const baseRoomNo = parentRow.dataset.room;
+  const childRows = tableBody.querySelectorAll(`.child-row[data-room="${CSS.escape(baseRoomNo)}"]`);
+  const toggleIcon = parentRow.querySelector('.toggle-icon');
+  if (parentRow.classList.contains('expanded')) {
+    parentRow.classList.remove('expanded');
+    expandedRooms.delete(baseRoomNo);
+    toggleIcon.textContent = '▶';
+    childRows.forEach((row) => (row.style.display = 'none'));
+  } else {
+    parentRow.classList.add('expanded');
+    expandedRooms.add(baseRoomNo);
+    toggleIcon.textContent = '▼';
+    childRows.forEach((row) => (row.style.display = 'table-row'));
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('[data-nav]');
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.nav === 'back') history.back();
+  else if (a.dataset.nav === 'home') goToHome();
+  else if (a.dataset.nav === 'logout') logout();
+});
+
 document.addEventListener('DOMContentLoaded', async function () {
+  document.getElementById('reportTableBody').addEventListener('click', onTableClick);
+  document.getElementById('selectAllCheckbox').addEventListener('click', toggleSelectAll);
+  document.getElementById('bulkBlockBtn').addEventListener('click', openBulkBlockModal);
+  document.getElementById('bulkUnblockBtn').addEventListener('click', submitBulkUnblock);
+  document.getElementById('blockCancelBtn').addEventListener('click', closeBlockModal);
+  document.getElementById('blockConfirmBtn').addEventListener('click', submitBlock);
+  document.getElementById('updateCancelBtn').addEventListener('click', closeUpdateRoomModal);
+  document.getElementById('updateConfirmBtn').addEventListener('click', submitUpdateRoom);
+  document.getElementById('cancelBlockAllBtn').addEventListener('click', () => runCancelBlock(true));
+  document.getElementById('cancelBlockOneBtn').addEventListener('click', () => runCancelBlock(false));
+  document.getElementById('cancelBlockKeepBtn').addEventListener('click', closeCancelBlockModal);
+  document.getElementById('modalStartDate').addEventListener('change', (e) => {
+    document.getElementById('modalEndDate').min = e.target.value;
+  });
+
   const blockFilter = document.getElementById('blockFilter');
   blockFilter.addEventListener('change', renderTable);
 

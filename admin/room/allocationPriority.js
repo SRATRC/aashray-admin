@@ -14,11 +14,12 @@ const MONTH_NAMES = {
 let currentOrder = ['OAG_1st', 'OAG_2nd', 'NAG_1st', 'NAG_2nd'];
 let configuredRules = [];
 let isEditMode = false;
+let dragIndex = null; // index of the item being dragged
 
 document.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('token');
   if (!token) {
-    window.location.href = '../../login.html';
+    window.location.href = '/admin/index.html';
     return;
   }
 
@@ -48,7 +49,24 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPriorityList();
   });
 
-  document.getElementById('savePriorityBtn').addEventListener('click', savePriorityOrder);
+  const saveBtn = document.getElementById('savePriorityBtn');
+  saveBtn.addEventListener('click', guarded(savePriorityOrder, saveBtn));
+
+  // Edit / Delete buttons in the rules table (re-rendered, so listen on the body).
+  document.getElementById('rulesBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const month = btn.dataset.month === '' ? null : Number(btn.dataset.month);
+    if (btn.dataset.action === 'edit') selectRuleForEdit(month);
+    else if (btn.dataset.action === 'delete') deleteRule(month);
+  });
+
+  // Rank dropdown inside each list item.
+  document.getElementById('priorityList').addEventListener('change', (e) => {
+    const sel = e.target.closest('select.rank-select');
+    if (!sel) return;
+    changeRank(Number(sel.closest('li').dataset.index), Number(sel.value));
+  });
 });
 
 function openModal() {
@@ -82,35 +100,42 @@ function renderPriorityList() {
         </div>
       </div>
       <div>
-        <select class="rank-select" onchange="changeRank(${index}, Number(this.value))">
+        <select class="rank-select">
           ${[1, 2, 3, 4].map(rank => `<option value="${rank - 1}" ${rank - 1 === index ? 'selected' : ''}>Priority ${rank}</option>`).join('')}
         </select>
       </div>
     `;
 
     li.addEventListener('dragstart', (e) => {
+      dragIndex = index;
       e.dataTransfer.setData('text/plain', index);
+      e.dataTransfer.effectAllowed = 'move';
       li.classList.add('dragging');
     });
 
     li.addEventListener('dragend', () => {
+      dragIndex = null;
       li.classList.remove('dragging');
+      ul.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
     });
 
+    // While dragging only mark the target; the list is re-ordered once, on
+    // drop. (Re-rendering during dragover replaced the dragged element and
+    // ended the drag after a single step.)
     li.addEventListener('dragover', (e) => {
       e.preventDefault();
-      const draggingItem = ul.querySelector('.dragging');
-      if (!draggingItem || draggingItem === li) return;
+      if (dragIndex === null || dragIndex === index) return;
+      li.classList.add('drag-over');
+    });
 
-      const items = [...ul.querySelectorAll('.priority-item')];
-      const draggingIndex = items.indexOf(draggingItem);
-      const targetIndex = items.indexOf(li);
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
 
-      if (draggingIndex !== -1 && targetIndex !== -1 && draggingIndex !== targetIndex) {
-        const item = currentOrder.splice(draggingIndex, 1)[0];
-        currentOrder.splice(targetIndex, 0, item);
-        renderPriorityList();
-      }
+    li.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const from = dragIndex;
+      dragIndex = null;
+      if (from === null || from === index) return;
+      changeRank(from, index);
     });
 
     ul.appendChild(li);
@@ -181,8 +206,8 @@ async function loadConfiguredRules() {
               <td>${getGroupLabel(orderArr[3])}</td>
               <td>${escapeHtml(r.updatedBy || 'ADMIN')}</td>
               <td>
-                <button class="btn-edit-sm" onclick="selectRuleForEdit(${r.month})">Edit</button>
-                ${!isGlobal ? `<button class="btn-danger-sm" onclick="deleteRule(${r.month})">Delete</button>` : ''}
+                <button class="btn-edit-sm" data-action="edit" data-month="${r.month === null ? '' : escapeHtml(r.month)}">Edit</button>
+                ${!isGlobal ? `<button class="btn-danger-sm" data-action="delete" data-month="${escapeHtml(r.month)}">Delete</button>` : ''}
               </td>
             </tr>
           `;
@@ -213,7 +238,7 @@ function selectRuleForEdit(monthVal) {
   openModal();
 }
 
-async function deleteRule(monthVal) {
+const deleteRule = guarded(async function (monthVal) {
   const monthName = monthVal === null ? 'Global Default' : MONTH_NAMES[monthVal];
   if (!confirm(`Are you sure you want to remove the priority override for ${monthName}? It will revert to Global Default.`)) {
     return;
@@ -238,4 +263,31 @@ async function deleteRule(monthVal) {
     console.error(err);
     alert('Error connecting to server.');
   }
+});
+
+// Header links (Back / Home / Logout) — listeners instead of inline onclick.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('[data-nav]');
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.nav === 'back') history.back();
+  else if (a.dataset.nav === 'home') goToHome();
+  else if (a.dataset.nav === 'logout') logout();
+});
+
+// Runs fn once at a time: a second call while the first is still running is
+// dropped. Buttons passed in are disabled meanwhile.
+function guarded(fn, ...buttons) {
+  let busy = false;
+  return async function (...args) {
+    if (busy) return;
+    busy = true;
+    buttons.forEach((b) => b && (b.disabled = true));
+    try {
+      return await fn.apply(this, args);
+    } finally {
+      busy = false;
+      buttons.forEach((b) => b && (b.disabled = false));
+    }
+  };
 }

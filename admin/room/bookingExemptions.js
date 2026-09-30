@@ -24,7 +24,7 @@ function showDateError(el, message) {
 document.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('token');
   if (!token) {
-    window.location.href = '../../login.html';
+    window.location.href = '/admin/index.html';
     return;
   }
 
@@ -49,19 +49,32 @@ document.addEventListener('DOMContentLoaded', () => {
     editTempGroups.forEach(el => el.style.display = isTemp ? 'block' : 'none');
   });
 
+  // Each lookup gets a number; only the newest one may touch the screen, so a
+  // slow reply for an old number can never overwrite the current one.
+  let lookupSeq = 0;
+  let lookedUpMobno = null; // number the current verifiedCard / in-flight lookup is for
+
+  const clearCard = () => {
+    verifiedCard = null;
+    lookedUpMobno = null;
+    cardDetailsBox.style.display = 'none';
+  };
+
   const fetchCardByMobile = async (mobno) => {
+    const seq = ++lookupSeq;
     if (!mobno || mobno.length < 10) {
-      verifiedCard = null;
-      cardDetailsBox.style.display = 'none';
+      clearCard();
       cardError.style.display = 'none';
       return;
     }
+    lookedUpMobno = mobno;
 
     try {
-      const response = await fetch(`${CONFIG.basePath}/card/by-mobile/${mobno}`, {
+      const response = await fetch(`${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(mobno)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const result = await response.json();
+      if (seq !== lookupSeq) return; // a newer lookup superseded this one
       if (response.ok && result.data) {
         verifiedCard = result.data;
         document.getElementById('infoCardNo').textContent = verifiedCard.cardno || '-';
@@ -78,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error(err);
+      if (seq !== lookupSeq) return;
       verifiedCard = null;
       cardDetailsBox.style.display = 'none';
       cardError.textContent = 'Error verifying card details.';
@@ -87,12 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   mobnoInput.addEventListener('input', (e) => {
     const mobno = e.target.value.trim();
+    // Any edit throws away the previous card straight away and cancels any
+    // lookup still in flight for the old number.
+    lookupSeq++;
+    clearCard();
+    cardError.style.display = 'none';
     if (mobno.length === 10) {
       fetchCardByMobile(mobno);
-    } else {
-      verifiedCard = null;
-      cardDetailsBox.style.display = 'none';
-      cardError.style.display = 'none';
     }
   });
 
@@ -101,17 +116,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobno.length > 0 && mobno.length !== 10) {
       cardError.textContent = 'Please enter a valid 10-digit mobile number.';
       cardError.style.display = 'block';
-    } else if (mobno.length === 10 && !verifiedCard) {
+    } else if (mobno.length === 10 && lookedUpMobno !== mobno) {
       fetchCardByMobile(mobno);
     }
   });
 
   loadExemptions();
 
-  document.getElementById('addExemptionForm').addEventListener('submit', async (e) => {
+  const addForm = document.getElementById('addExemptionForm');
+  addForm.addEventListener('submit', guarded(async (e) => {
     e.preventDefault();
 
-    if (!verifiedCard) {
+    if (!verifiedCard || lookedUpMobno !== mobnoInput.value.trim()) {
       alert('Please enter a valid 10-digit mobile number with an associated card before submitting.');
       return;
     }
@@ -153,9 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       alert('Error connecting to server.');
     }
-  });
+  }, addForm.querySelector('button[type="submit"]')));
 
-  document.getElementById('editExemptionForm').addEventListener('submit', async (e) => {
+  const editForm = document.getElementById('editExemptionForm');
+  editForm.addEventListener('submit', guarded(async (e) => {
     e.preventDefault();
     const id = document.getElementById('edit_id').value;
     const is_permanent = document.getElementById('edit_is_permanent').value === 'true';
@@ -190,6 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       alert('Error connecting to server.');
     }
+  }, editForm.querySelector('button[type="submit"]')));
+
+  document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+
+  // Edit / Delete buttons in the table (rows are re-rendered, so listen on the body).
+  document.getElementById('exemptionsBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.action === 'edit') editExemption(id);
+    else if (btn.dataset.action === 'delete') deleteExemption(id);
   });
 });
 
@@ -219,8 +247,8 @@ async function loadExemptions() {
           <td>${escapeHtml(item.reason || '-')}</td>
           <td>${escapeHtml(item.updatedBy || 'ADMIN')}</td>
           <td>
-            <button class="btn-edit-sm" onclick="editExemption(${item.id})">Edit</button>
-            <button class="btn-danger-sm" onclick="deleteExemption(${item.id})">Delete</button>
+            <button class="btn-edit-sm" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
+            <button class="btn-danger-sm" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
           </td>
         </tr>
       `).join('');
@@ -255,7 +283,7 @@ function closeEditModal() {
   document.getElementById('editExemptionForm').reset();
 }
 
-async function deleteExemption(id) {
+const deleteExemption = guarded(async function (id) {
   if (!confirm('Are you sure you want to delete this exemption?')) return;
   const token = sessionStorage.getItem('token');
   try {
@@ -274,8 +302,35 @@ async function deleteExemption(id) {
     console.error(err);
     alert('Error connecting to server.');
   }
-}
+});
 
 window.editExemption = editExemption;
 window.closeEditModal = closeEditModal;
 window.deleteExemption = deleteExemption;
+
+// Header links (Back / Home / Logout) — listeners instead of inline onclick.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('[data-nav]');
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.nav === 'back') history.back();
+  else if (a.dataset.nav === 'home') goToHome();
+  else if (a.dataset.nav === 'logout') logout();
+});
+
+// Runs fn once at a time: a second call while the first is still running is
+// dropped. Buttons passed in are disabled meanwhile.
+function guarded(fn, ...buttons) {
+  let busy = false;
+  return async function (...args) {
+    if (busy) return;
+    busy = true;
+    buttons.forEach((b) => b && (b.disabled = true));
+    try {
+      return await fn.apply(this, args);
+    } finally {
+      busy = false;
+      buttons.forEach((b) => b && (b.disabled = false));
+    }
+  };
+}

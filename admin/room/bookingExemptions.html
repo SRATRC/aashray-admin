@@ -168,9 +168,9 @@
   <div class="header">
     <div class="container">
       <div class="logout">
-        <a href="javascript:void(0);" onclick="history.back()">Back</a> |
-        <a href="javascript:void(0);" onclick="goToHome()">Home</a> |
-        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        <a href="#" data-nav="back">Back</a> |
+        <a href="#" data-nav="home">Home</a> |
+        <a href="#" data-nav="logout">Logout</a>
       </div>
     </div>
   </div>
@@ -301,7 +301,7 @@
         </div>
 
         <div style="display: flex; gap: 12px; justify-content: flex-end;">
-          <button type="button" class="btn-danger-sm" style="background: #64748b; padding: 10px 16px; font-size: 0.9rem;" onclick="closeEditModal()">Cancel</button>
+          <button type="button" class="btn-danger-sm" style="background: #64748b; padding: 10px 16px; font-size: 0.9rem;" id="editCancelBtn">Cancel</button>
           <button type="submit" class="btn-submit" style="width: auto; padding: 10px 20px;">Save Changes</button>
         </div>
       </form>

@@ -1,378 +1,91 @@
-let html5QrcodeScanner = null;
-let currentCameraId = null;
-let camerasList = [];
-let cameraIndex = 0;
-let isProcessing = false;
-let autoResetTimer = null;
-let buffer = '';
-let lastKeyTime = Date.now();
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const token = sessionStorage.getItem('token');
-  if (!token) {
-    window.location.href = '../../login.html';
+// Self check-in kiosk. Shared scanner/modal code lives in kioskCommon.js.
+async function handleCheckin(cardno) {
+  const { data, error } = await Kiosk.fetchBookings(cardno);
+  if (error) {
+    Kiosk.showResult(false, error.title, error.message);
     return;
   }
 
-  initCameraScanner();
+  const { room_booking = [], flat_booking = [], card_details = {} } = data;
+  const guestName = card_details.issuedto || cardno;
+  const today = Kiosk.todayIST();
+  const coversToday = (b) => b.checkin <= today && b.checkout >= today;
 
-  document.getElementById('switchCamBtn').addEventListener('click', switchCamera);
+  const targetRoomBooking = room_booking.find((b) => b.status === 'pending checkin' && coversToday(b));
+  const targetFlatBooking = flat_booking.find((b) => b.status === 'pending checkin' && coversToday(b));
 
-  document.getElementById('submitManualBtn').addEventListener('click', () => {
-    const cardno = document.getElementById('manualCardNo').value.trim();
-    if (cardno) {
-      processCheckin(cardno);
-    }
-  });
-
-  document.getElementById('manualCardNo').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      const cardno = e.target.value.trim();
-      if (cardno) {
-        processCheckin(cardno);
-      }
-    }
-  });
-
-  // USB Barcode Scanner listener
-  document.addEventListener('keydown', (e) => {
-    // Ignore keypresses inside manual input field
-    if (document.activeElement && document.activeElement.id === 'manualCardNo') return;
-
-    const currentTime = Date.now();
-    if (currentTime - lastKeyTime > 100) {
-      buffer = '';
-    }
-    lastKeyTime = currentTime;
-
-    if (e.key === 'Enter') {
-      if (buffer.length > 2) {
-        processCheckin(buffer.trim());
-      }
-      buffer = '';
-    } else if (e.key.length === 1) {
-      buffer += e.key;
-    }
-  });
-});
-
-async function initCameraScanner() {
-  try {
-    const devices = await Html5Qrcode.getCameras();
-    if (devices && devices.length > 0) {
-      camerasList = devices;
-      // Default to back/environment camera if available
-      const backCamIndex = devices.findIndex(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
-      cameraIndex = backCamIndex !== -1 ? backCamIndex : 0;
-      startCamera(camerasList[cameraIndex].id);
-    } else {
-      console.warn('No camera devices found.');
-    }
-  } catch (err) {
-    console.error('Camera initialization error:', err);
-  }
-}
-
-function startCamera(cameraId) {
-  if (html5QrcodeScanner) {
-    html5QrcodeScanner.stop().then(() => {
-      runCameraInstance(cameraId);
-    }).catch(() => {
-      runCameraInstance(cameraId);
-    });
-  } else {
-    runCameraInstance(cameraId);
-  }
-}
-
-function runCameraInstance(cameraId) {
-  currentCameraId = cameraId;
-  html5QrcodeScanner = new Html5Qrcode("reader");
-  html5QrcodeScanner.start(
-    cameraId,
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    (decodedText) => {
-      if (!isProcessing) {
-        processCheckin(decodedText);
-      }
-    },
-    (errorMessage) => {
-      // Ignore routine scanning frame errors
-    }
-  ).catch(err => {
-    console.error('Unable to start camera:', err);
-  });
-}
-
-function switchCamera() {
-  if (camerasList.length <= 1) return;
-  cameraIndex = (cameraIndex + 1) % camerasList.length;
-  startCamera(camerasList[cameraIndex].id);
-}
-
-function extractCardNo(rawText) {
-  if (!rawText) return '';
-  let str = rawText.trim();
-  // If text is JSON object e.g. {"cardno":"000123"}
-  if (str.startsWith('{') && str.endsWith('}')) {
-    try {
-      const obj = JSON.parse(str);
-      if (obj.cardno) return String(obj.cardno).trim();
-    } catch (e) {}
-  }
-  // If URL e.g. https://domain.com/card?cardno=000123
-  if (str.includes('cardno=')) {
-    const match = str.match(/cardno=([A-Za-z0-9]+)/);
-    if (match) return match[1];
-  }
-  return str;
-}
-
-async function processCheckin(rawScannedText) {
-  if (isProcessing) return;
-  const cardno = extractCardNo(rawScannedText);
-  if (!cardno) return;
-
-  isProcessing = true;
-  playBeep();
-
-  const token = sessionStorage.getItem('token');
-
-  try {
-    // Step 1: Fetch active bookings for scanned cardno
-    const resFetch = await fetch(`${CONFIG.basePath}/stay/fetch_room_bookings/${encodeURIComponent(cardno)}?kiosk=true`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (resFetch.status === 401 || resFetch.status === 403) {
-      showResultModal(false, 'Session Expired', 'This kiosk needs to be logged in again. Please ask staff for assistance.');
-      return;
-    }
-    if (!resFetch.ok) {
-      showResultModal(false, 'System Error', 'Something went wrong. Please contact staff.');
-      return;
-    }
-
-    const resultFetch = await resFetch.json();
-
-    if (!resultFetch.data) {
-      showResultModal(false, 'No Bookings Found', `No active bookings found for Card No: ${cardno}`);
-      return;
-    }
-
-    const { room_booking = [], flat_booking = [], card_details = {} } = resultFetch.data;
-    const guestName = card_details.issuedto || cardno;
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-
-    // Find pending check-in room booking for today
-    const targetRoomBooking = room_booking.find(
-      (b) =>
-        b.status === 'pending checkin' &&
-        b.checkin <= today &&
-        b.checkout >= today
-    );
-
-    // Find pending check-in flat booking for today
-    const targetFlatBooking = flat_booking.find(
-      (b) =>
-        b.status === 'pending checkin' &&
-        b.checkin <= today &&
-        b.checkout >= today
-    );
-
-    if (!targetRoomBooking && !targetFlatBooking) {
-      // Check if already checked in (any 'checkedin' booking counts, including
-      // overstays past the planned checkout — they are still in-house). The
-      // lookup returns every booking this card has ever had, oldest first and
-      // with no date window, so pick the stay that covers today, and only fall
-      // back to the most recent started stay for the overstay case. Taking the
-      // first match would print a stale booking's room number under a green
-      // "already checked in" screen.
-      const currentCheckedIn = (bookings) => {
-        const checkedIn = bookings.filter((b) => b.status === 'checkedin');
-        const covering = checkedIn.filter((b) => b.checkin <= today && b.checkout >= today);
-        const started = checkedIn.filter((b) => b.checkin <= today);
-        const pool = covering.length ? covering : started;
-        return pool.sort((a, b) => String(b.checkin).localeCompare(String(a.checkin)))[0];
-      };
-
-      const checkedinRoom = currentCheckedIn(room_booking);
-      const checkedinFlat = currentCheckedIn(flat_booking);
-      if (checkedinRoom || checkedinFlat) {
-        const roomNum = [checkedinRoom?.roomno, checkedinFlat?.flatno].filter(Boolean).join(' & ') || '--';
-        
-        // Auto-fetch WiFi code even if already checked in
-        const wifiCode = await fetchWifiCode(cardno, token);
-        showResultModal(true, 'Already Checked In', `Guest ${guestName} is already checked into Room/Flat ${roomNum}.`, guestName, roomNum, wifiCode);
-        return;
-      }
-
-      // A stay that is still awaiting payment is not check-in eligible on the
-      // backend, but "no pending check-in" sends the guest to a staff member
-      // with no idea what is wrong. Name the real reason instead.
-      // The booking status enum stores payment-pending as plain 'pending' — the
-      // 'payment pending' string this file used to test for never matched a row.
-      const coversToday = (b) => b.checkin <= today && b.checkout >= today;
-      const unpaid =
-        room_booking.find((b) => b.status === 'pending' && coversToday(b)) ||
-        flat_booking.find((b) => b.status === 'pending' && coversToday(b));
-      if (unpaid) {
-        showResultModal(
-          false,
-          'Payment Incomplete',
-          `${guestName} has a stay booked for today, but payment is not complete. Please settle the payment before checking in.`
-        );
-        return;
-      }
-
-      showResultModal(false, 'No Pending Check-In', `No pending check-in found for ${guestName} today (${today}).`);
-      return;
-    }
-
-    const checkedInUnits = [];
-    const failures = [];
-
-    // Step 2: Execute Check-in API call(s) — a guest may hold both a room and
-    // a flat booking; process both so neither is left pending silently.
-    if (targetRoomBooking) {
-      const resCheckin = await fetch(`${CONFIG.basePath}/stay/checkin/${targetRoomBooking.bookingid}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+  if (!targetRoomBooking && !targetFlatBooking) {
+    // Already checked in (overstays count — they are still in-house).
+    const checkedinRoom = Kiosk.currentCheckedIn(room_booking, today);
+    const checkedinFlat = Kiosk.currentCheckedIn(flat_booking, today);
+    if (checkedinRoom || checkedinFlat) {
+      const roomNum = [checkedinRoom?.roomno, checkedinFlat?.flatno].filter(Boolean).join(' & ') || '--';
+      // Room number and WiFi code belong to the guest: show them only after
+      // the person at the kiosk confirms the name is theirs.
+      const ok = await Kiosk.confirm({
+        question: 'Already checked in. Is this you?',
+        guestName,
+        confirmLabel: 'Yes, show my room'
       });
-      const resultCheckin = await resCheckin.json();
-      if (resCheckin.ok) {
-        checkedInUnits.push(targetRoomBooking.roomno || 'Room');
-      } else {
-        failures.push(resultCheckin.message || 'Room check-in failed.');
-      }
-    }
-
-    if (targetFlatBooking) {
-      const resFlat = await fetch(`${CONFIG.basePath}/stay/flat_checkin/${targetFlatBooking.bookingid}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const resultFlat = await resFlat.json();
-      if (resFlat.ok) {
-        checkedInUnits.push(targetFlatBooking.flatno || 'Flat');
-      } else {
-        failures.push(resultFlat.message || 'Flat check-in failed.');
-      }
-    }
-
-    if (checkedInUnits.length === 0) {
-      showResultModal(false, 'Check-In Failed', failures.join(' '));
+      if (!ok) return;
+      const wifiCode = await Kiosk.fetchWifiCode(cardno);
+      Kiosk.showResult(true, 'Already Checked In', `Guest ${guestName} is already checked into Room/Flat ${roomNum}.`, guestName, roomNum, wifiCode);
       return;
     }
 
-    // Step 3: Automatically fetch / generate WiFi code
-    const wifiCode = await fetchWifiCode(cardno, token);
-    const message = failures.length
-      ? `Welcome, ${guestName}! Note: ${failures.join(' ')}`
-      : `Welcome to Ashram Stay, ${guestName}!`;
-    showResultModal(true, 'Check-In Successful!', message, guestName, checkedInUnits.join(' & '), wifiCode);
-
-  } catch (err) {
-    console.error(err);
-    showResultModal(false, 'System Error', 'Unable to connect to server.');
-  }
-}
-
-async function fetchWifiCode(cardno, token) {
-  try {
-    // First try generating temp code
-    const genRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/generate-temp-code`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ cardno })
-    });
-    const genData = await genRes.json();
-    if (genRes.ok && genData.data) {
-      return genData.data;
+    // A stay still awaiting payment is stored as plain 'pending'.
+    const unpaid =
+      room_booking.find((b) => b.status === 'pending' && coversToday(b)) ||
+      flat_booking.find((b) => b.status === 'pending' && coversToday(b));
+    if (unpaid) {
+      Kiosk.showResult(
+        false,
+        'Payment Incomplete',
+        `${guestName} has a stay booked for today, but payment is not complete. Please settle the payment before checking in.`
+      );
+      return;
     }
 
-    // Fallback: fetch existing temp codes
-    const fetchRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/fetch-temp-codes/${encodeURIComponent(cardno)}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const fetchData = await fetchRes.json();
-    if (fetchRes.ok && fetchData.data && fetchData.data.length > 0) {
-      return fetchData.data[fetchData.data.length - 1].password;
-    }
-  } catch (e) {
-    console.error('Error fetching WiFi code:', e);
-  }
-  return null;
-}
-
-function showResultModal(isSuccess, title, message, guestName = '', roomNo = '', wifiCode = null) {
-  const overlay = document.getElementById('resultOverlay');
-  const icon = document.getElementById('resultIcon');
-  const titleEl = document.getElementById('resultTitle');
-  const guestEl = document.getElementById('resultGuestName');
-  const roomEl = document.getElementById('resultRoomNo');
-  const msgEl = document.getElementById('resultMessage');
-  const wifiBox = document.getElementById('wifiBox');
-  const wifiCodeEl = document.getElementById('resultWifiCode');
-  const progressFill = document.getElementById('progressFill');
-
-  icon.className = `status-icon ${isSuccess ? 'icon-success' : 'icon-error'}`;
-  icon.innerHTML = isSuccess ? '✓' : '✕';
-  titleEl.style.color = isSuccess ? '#28a745' : '#dc3545';
-  titleEl.innerText = title;
-  guestEl.innerText = guestName || '';
-  roomEl.innerText = roomNo || '--';
-  msgEl.innerText = message || '';
-
-  if (isSuccess && wifiCode) {
-    wifiBox.style.display = 'block';
-    wifiCodeEl.innerText = wifiCode;
-  } else {
-    wifiBox.style.display = 'none';
+    Kiosk.showResult(false, 'No Pending Check-In', `No pending check-in found for ${guestName} today (${today}).`);
+    return;
   }
 
-  overlay.style.display = 'flex';
+  const units = [targetRoomBooking?.roomno || (targetRoomBooking && 'Room'), targetFlatBooking?.flatno || (targetFlatBooking && 'Flat')]
+    .filter(Boolean)
+    .join(' & ');
+  const ok = await Kiosk.confirm({
+    question: 'Check in?',
+    guestName,
+    roomNo: units,
+    confirmLabel: 'Confirm Check-In'
+  });
+  if (!ok) return;
 
-  // Animation for progress fill
-  progressFill.style.width = '100%';
-  setTimeout(() => { progressFill.style.width = '0%'; }, 50);
+  const checkedInUnits = [];
+  const failures = [];
 
-  let seconds = 5;
-  document.getElementById('countdown').innerText = seconds;
-  if (autoResetTimer) clearInterval(autoResetTimer);
+  // A guest may hold both a room and a flat booking; process both.
+  if (targetRoomBooking) {
+    const r = await Kiosk.put(`/stay/checkin/${targetRoomBooking.bookingid}`);
+    if (r.ok) checkedInUnits.push(targetRoomBooking.roomno || 'Room');
+    else failures.push(r.message || 'Room check-in failed.');
+  }
+  if (targetFlatBooking) {
+    const r = await Kiosk.put(`/stay/flat_checkin/${targetFlatBooking.bookingid}`);
+    if (r.ok) checkedInUnits.push(targetFlatBooking.flatno || 'Flat');
+    else failures.push(r.message || 'Flat check-in failed.');
+  }
 
-  autoResetTimer = setInterval(() => {
-    seconds--;
-    document.getElementById('countdown').innerText = seconds;
-    if (seconds <= 0) {
-      clearInterval(autoResetTimer);
-      overlay.style.display = 'none';
-      document.getElementById('manualCardNo').value = '';
-      isProcessing = false;
-    }
-  }, 1000);
+  if (checkedInUnits.length === 0) {
+    Kiosk.showResult(false, 'Check-In Failed', failures.join(' '));
+    return;
+  }
+
+  const wifiCode = await Kiosk.fetchWifiCode(cardno);
+  const message = failures.length
+    ? `Welcome, ${guestName}! Note: ${failures.join(' ')}`
+    : `Welcome to Ashram Stay, ${guestName}!`;
+  Kiosk.showResult(true, 'Check-In Successful!', message, guestName, checkedInUnits.join(' & '), wifiCode);
 }
 
-function playBeep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.value = 880; // A5 pitch
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
-  } catch (e) {}
-}
+Kiosk.start({ handleCard: handleCheckin, beepHz: 880, beepSeconds: 0.15 });

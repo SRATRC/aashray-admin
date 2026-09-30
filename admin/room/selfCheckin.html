@@ -36,18 +36,6 @@
       font-size: 0.9rem;
       opacity: 0.9;
     }
-    .nav-back {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #fff;
-      text-decoration: none;
-      font-size: 0.9rem;
-      background: rgba(255,255,255,0.2);
-      padding: 6px 12px;
-      border-radius: 4px;
-    }
     .kiosk-container {
       max-width: 600px;
       margin: 20px auto;
@@ -200,7 +188,6 @@
 <body>
 
   <div class="kiosk-header">
-    <a href="index.html" class="nav-back">← Back</a>
     <h1>Self Check-In Kiosk</h1>
     <p>Scan your QR code or Card to Check In</p>
   </div>
@@ -246,6 +233,7 @@
 
   <script src="../../style/js/config.js"></script>
   <script src="../../style/js/common.js"></script>
+  <script src="kioskCommon.js"></script>
   <script src="selfCheckin.js"></script>
 </body>
 </html>

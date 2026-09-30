@@ -27,15 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-const getBaseRoomNo = (roomno) => {
-  if (!roomno) return '';
-  const str = String(roomno).trim();
-  if (/[a-zA-Z]$/.test(str)) {
-    return str.slice(0, -1);
-  }
-  return str;
-};
-
 // Backend is expected to return checkin/checkout as plain 'YYYY-MM-DD' strings.
 // Normalize defensively (e.g. an ISO datetime like '2026-07-24T00:00:00.000Z',
 // or a Date instance) so the plain string-equality/comparison logic below

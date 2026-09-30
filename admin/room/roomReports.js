@@ -28,14 +28,14 @@ function isRollingWindowHold(booking) {
 function getAction(booking) {
   if (booking.status === "waiting" || booking.status === "pending") {
     const label = isRollingWindowHold(booking) ? "Approve" : "Update Status";
-    return `<a href='javascript:void(0);' onclick="openRoomUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${label}</a>`;
+    return `<a href='#' data-action="openRoomUpdateModal" data-id="${escapeHtml(booking.bookingid)}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${label}</a>`;
   }
 
   switch (booking.status) {
     case "pending checkin":
-      return `<a href='#' onclick="return checkin('${booking.bookingid}')">Check-in</a>`;
+      return `<a href='#' data-action="checkin" data-id="${escapeHtml(booking.bookingid)}">Check-in</a>`;
     case "checkedin":
-      return `<a href='#' onclick="return checkout('${booking.bookingid}')">Check-out</a>`;
+      return `<a href='#' data-action="checkout" data-id="${escapeHtml(booking.bookingid)}">Check-out</a>`;
     default:
       return "";
   }
@@ -49,7 +49,7 @@ function getCancelAction(booking) {
     case "admin cancelled":
       return "";
     default:
-      return `<a href='#' onclick="return cancel('${booking.bookingid}')">Cancel</a>`;
+      return `<a href='#' data-action="cancel" data-id="${escapeHtml(booking.bookingid)}">Cancel</a>`;
   }
 }
 
@@ -61,7 +61,9 @@ function getEditAction(booking) {
     case "admin cancelled":
       break;
     default:
-      editUrl = `<a href='javascript:void(0);' onclick="openUpdateRoomBookingModal('${booking.bookingid}')" style="margin-right: 6px; text-decoration: none;"><span>✎</span></a>`;
+      // Day visits (0 nights) cannot be edited
+      if (Number(booking.nights) === 0) break;
+      editUrl = `<a href='#' data-action="openUpdateRoomBookingModal" data-id="${escapeHtml(booking.bookingid)}" style="margin-right: 6px; text-decoration: none;"><span>✎</span></a>`;
   }
   editUrl += escapeHtml(booking.roomno || "Not Assigned");
   return editUrl;
@@ -70,14 +72,14 @@ function getEditAction(booking) {
 function getFlatAction(booking) {
   if (booking.status === "waiting" || booking.status === "pending") {
     const label = isRollingWindowHold(booking) ? "Approve" : "Update Status";
-    return `<a href='javascript:void(0);' onclick="openFlatUpdateModal('${booking.bookingid}')" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${label}</a>`;
+    return `<a href='#' data-action="openFlatUpdateModal" data-id="${escapeHtml(booking.bookingid)}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">${label}</a>`;
   }
 
   switch (booking.status) {
     case "pending checkin":
-      return `<a href='#' onclick="return flat_checkin('${booking.bookingid}')">Check-in</a>`;
+      return `<a href='#' data-action="flat_checkin" data-id="${escapeHtml(booking.bookingid)}">Check-in</a>`;
     case "checkedin":
-      return `<a href='#' onclick="return flat_checkout('${booking.bookingid}')">Check-out</a>`;
+      return `<a href='#' data-action="flat_checkout" data-id="${escapeHtml(booking.bookingid)}">Check-out</a>`;
     default:
       return "";
   }
@@ -91,11 +93,23 @@ function getFlatCancelAction(booking) {
     case "admin cancelled":
       return "";
     default:
-      return `<a href='#' onclick="return flat_cancel('${booking.bookingid}')">Cancel</a>`;
+      return `<a href='#' data-action="flat_cancel" data-id="${escapeHtml(booking.bookingid)}">Cancel</a>`;
   }
 }
 
+let statusRequestBusy = false; // one status change at a time (double-click guard)
+
 async function fetchUrl(url) {
+  if (statusRequestBusy) return;
+  statusRequestBusy = true;
+  try {
+    await fetchUrlOnce(url);
+  } finally {
+    statusRequestBusy = false;
+  }
+}
+
+async function fetchUrlOnce(url) {
   resetAlert();
   try {
     const response = await fetch(url, {
@@ -370,7 +384,20 @@ function showErrorMessage(message) {
   alert(message);
 }
 
-async function updateBookingStatus({ bookingid, isFlat, status, description, successMessage, onSuccess }) {
+async function updateBookingStatus(opts) {
+  if (statusRequestBusy) return;
+  statusRequestBusy = true;
+  const buttons = [...document.querySelectorAll('#roomStatusForm button[type="submit"], #approvalModal button')];
+  buttons.forEach((b) => (b.disabled = true));
+  try {
+    await updateBookingStatusOnce(opts);
+  } finally {
+    statusRequestBusy = false;
+    buttons.forEach((b) => (b.disabled = false));
+  }
+}
+
+async function updateBookingStatusOnce({ bookingid, isFlat, status, description, successMessage, onSuccess }) {
   const endpoint = isFlat
     ? `${CONFIG.basePath}/stay/update_flat_booking_status`
     : `${CONFIG.basePath}/stay/update_booking_status`;
@@ -384,7 +411,11 @@ async function updateBookingStatus({ bookingid, isFlat, status, description, suc
     const result = await response.json();
     if (response.ok) {
       if (onSuccess) onSuccess();
-      showSuccessMessage(result.message || successMessage);
+      let msg = result.message || successMessage;
+      if (result.warning) {
+        msg += `\n\nWarning: ${result.warning.message || result.warning}`;
+      }
+      showSuccessMessage(msg);
       window.location.reload();
     } else {
       showErrorMessage(result.message || 'Failed to update booking.');
@@ -685,7 +716,7 @@ document.getElementById('closeUpdateRoomModal').addEventListener('click', () => 
   document.getElementById('updateRoomBookingModal').style.display = 'none';
 });
 
-document.getElementById('updateRoomForm').addEventListener('submit', async function(e) {
+document.getElementById('updateRoomForm').addEventListener('submit', guarded(async function(e) {
   e.preventDefault();
 
   const bookingid = document.getElementById('modal_update_bookingid').value;
@@ -736,7 +767,7 @@ document.getElementById('updateRoomForm').addEventListener('submit', async funct
     console.error('Update room booking failed:', err);
     alert('An error occurred while updating the room booking.');
   }
-});
+}, document.querySelector('#updateRoomForm button[type="submit"]')));
 
 
 // ==========================================
@@ -1039,3 +1070,49 @@ async function executeBulkOperation(items, requestFn, actionName) {
   await fetchReport();
   updateBulkActionBar();
 }
+
+// Header links (Back / Home / Logout) — listeners instead of inline onclick.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('[data-nav]');
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.nav === 'back') history.back();
+  else if (a.dataset.nav === 'home') goToHome();
+  else if (a.dataset.nav === 'logout') logout();
+});
+
+// Runs fn once at a time: a second call while the first is still running is
+// dropped. Buttons passed in are disabled meanwhile.
+function guarded(fn, ...buttons) {
+  let busy = false;
+  return async function (...args) {
+    if (busy) return;
+    busy = true;
+    buttons.forEach((b) => b && (b.disabled = true));
+    try {
+      return await fn.apply(this, args);
+    } finally {
+      busy = false;
+      buttons.forEach((b) => b && (b.disabled = false));
+    }
+  };
+}
+
+// Row action links and the approval dialog buttons — listeners instead of inline onclick.
+const rowActions = {
+  openRoomUpdateModal, openFlatUpdateModal,
+  openUpdateRoomBookingModal: (id) => window.openUpdateRoomBookingModal(id),
+  checkin, checkout, cancel, flat_checkin, flat_checkout, flat_cancel
+};
+
+document.getElementById('reportTableBody').addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-action]');
+  if (!a) return;
+  e.preventDefault();
+  const fn = rowActions[a.dataset.action];
+  if (fn) fn(a.dataset.id);
+});
+
+document.getElementById('approvalCloseBtn').addEventListener('click', closeApprovalModal);
+document.getElementById('approvalRejectBtn').addEventListener('click', () => submitApproval('admin cancelled'));
+document.getElementById('approvalApproveBtn').addEventListener('click', () => submitApproval('pending'));

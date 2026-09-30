@@ -14,3 +14,15 @@ function escapeHtml(s) {
     "'": '&#39;'
   }[c]));
 }
+
+/**
+ * Base room number of a bed: "12A" -> "12"; a number with no letter stays as is.
+ */
+function getBaseRoomNo(roomno) {
+  if (!roomno) return '';
+  const str = String(roomno).trim();
+  if (/[a-zA-Z]$/.test(str)) {
+    return str.slice(0, -1);
+  }
+  return str;
+}
