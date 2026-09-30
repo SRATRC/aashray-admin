@@ -9,7 +9,11 @@ const expandedRooms = new Set();
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  // A stored day (YYYY-MM-DD) is a calendar date, not an instant: build it in
+  // local time so viewers west of UTC do not see it one day early.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -350,6 +354,8 @@ function toggleSelectAll() {
     cb.checked = masterChecked;
   });
 
+  // With nothing shown there is nothing to tick: re-derive the box from what is shown.
+  updateSelectAllCheckboxState();
   updateBulkActionsBar();
 }
 
@@ -399,7 +405,7 @@ async function submitBulkUnblock() {
     return;
   }
   
-  if (!confirm(`Cancel ALL blocks (current, future and permanent) on the ${selected.length} selected bed(s)? This cannot be undone.`)) return;
+  if (!confirm(`Cancel the blocks in force today on the ${selected.length} selected bed(s)? Future and permanent blocks are kept. This cannot be undone.`)) return;
 
   const unblockBtn = document.getElementById('bulkUnblockBtn');
   if (unblockBtn) unblockBtn.disabled = true;
@@ -416,10 +422,17 @@ async function submitBulkUnblock() {
     
     const data = await res.json();
     if (res.ok) {
-      // The server cancels every active block on these beds; mirror that here.
+      // The server cancels only blocks in force today (started, not permanent);
+      // mirror that here and keep future and permanent blocks.
       const chosen = new Set(selected);
+      // India date (same as the server), not the browser's date.
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const day = (v) => String(v).slice(0, 10);
       allRooms.forEach((room) => {
-        if (chosen.has(room.roomno)) room.blocks = [];
+        if (!chosen.has(room.roomno)) return;
+        room.blocks = (room.blocks || []).filter(
+          (b) => !(b.end_date && day(b.start_date) <= today && day(b.end_date) >= today)
+        );
       });
       renderTable();
       alert(data.message);

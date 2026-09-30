@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btn) return;
     const id = Number(btn.dataset.id);
     if (btn.dataset.action === 'edit') editExemption(id);
-    else if (btn.dataset.action === 'delete') deleteExemption(id);
+    else if (btn.dataset.action === 'delete') deleteExemption(id, btn);
   });
 });
 
@@ -283,7 +283,7 @@ function closeEditModal() {
   document.getElementById('editExemptionForm').reset();
 }
 
-const deleteExemption = guarded(async function (id) {
+const deleteExemption = guarded(async function (id, btn) {
   if (!confirm('Are you sure you want to delete this exemption?')) return;
   const token = sessionStorage.getItem('token');
   try {
@@ -302,7 +302,7 @@ const deleteExemption = guarded(async function (id) {
     console.error(err);
     alert('Error connecting to server.');
   }
-});
+}, (id, btn) => btn);
 
 window.editExemption = editExemption;
 window.closeEditModal = closeEditModal;
@@ -325,12 +325,14 @@ function guarded(fn, ...buttons) {
   return async function (...args) {
     if (busy) return;
     busy = true;
-    buttons.forEach((b) => b && (b.disabled = true));
+    // A button can be given as a function of the call arguments (rows are re-rendered).
+    const targets = buttons.map((b) => (typeof b === 'function' ? b(...args) : b));
+    targets.forEach((b) => b && (b.disabled = true));
     try {
       return await fn.apply(this, args);
     } finally {
       busy = false;
-      buttons.forEach((b) => b && (b.disabled = false));
+      targets.forEach((b) => b && (b.disabled = false));
     }
   };
 }
