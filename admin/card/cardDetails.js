@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const updateResponse = await fetch(
-        `${CONFIG.basePath}/card/update/${cardno}`,
+        `${CONFIG.basePath}/card/update/${document.getElementById('cardno').value}`,
         {
           method: 'PUT',
           headers: {
