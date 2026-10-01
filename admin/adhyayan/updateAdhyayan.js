@@ -103,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'fetchAllAdhyayan.html';
       } else {
         console.error('Update Response: ' + response.statusText);
-        alert(`Error: ${data.message}`);
+        const data = await response.json().catch(() => ({}));
+        alert(`Error: ${data.message || response.statusText}`);
       }
     } catch (error) {
       console.error('Erorr while updating the data: ' + error);
