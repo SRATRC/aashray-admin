@@ -116,7 +116,7 @@ document.addEventListener('change', function (e) {
 });
 
 // Delete selected button
-deleteSelectedBtn.addEventListener('click', async () => {
+document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
   const selected = Array.from(document.querySelectorAll('.meal-checkbox:checked'));
   if (selected.length === 0) {
     Swal.fire('No Meals Selected', 'Please select at least one meal to delete.', 'info');
