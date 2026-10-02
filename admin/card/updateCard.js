@@ -40,6 +40,8 @@ async function handleUpdate(e) {
     if (!confirm(`This card will stop being a guest of ${host}. Continue?`)) return;
   }
 
+  const reference = isGuest ? document.getElementById('referenceCardno').value.trim() : '';
+
   const updatedData = {
     cardno: document.getElementById('cardno').value,
     issuedto: document.getElementById('issuedto').value,
@@ -56,9 +58,10 @@ async function handleUpdate(e) {
     pin: document.getElementById('pin').value,
     center: document.getElementById('center').value,
     res_status: resStatus,
-    // A blank reference card keeps the guest's current link as it is
-    referenceCardno: isGuest ? document.getElementById('referenceCardno').value.trim() || null : null,
-    guestType: isGuest ? document.getElementById('guestType').value || null : null
+    // A blank reference card keeps the guest's current link as it is, and a
+    // guest type goes only with a reference card
+    referenceCardno: reference || null,
+    guestType: reference ? document.getElementById('guestType').value || null : null
   };
 
   try {
@@ -160,11 +163,11 @@ function updateGuestFields() {
     hint.textContent = 'No reference card on record. Leave blank to keep it that way.';
   }
 
-  // A guest type belongs to the reference card link, so it needs a card number
+  // A guest type belongs to the reference card link, so it needs a card number.
+  // The chosen type stays while the field is blank, so retyping a card keeps it.
   const hasReference = reference.value.trim() !== '';
   guestType.disabled = !isGuest || !hasReference;
   guestType.required = isGuest && hasReference;
-  if (!hasReference) guestType.value = '';
 }
 
 // --- Fetch countries ---
