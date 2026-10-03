@@ -194,6 +194,9 @@ function updateGuestFields() {
   });
 
   const reference = document.getElementById('referenceCardno');
+  // Hidden inputs must not block the submit through validation
+  reference.disabled = !isGuest;
+  document.getElementById('referencePhone').disabled = !isGuest;
   const phoneGiven = document.getElementById('referencePhone').value.trim() !== '';
   const guestType = document.getElementById('guestType');
   const hint = document.getElementById('referenceHint');

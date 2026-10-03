@@ -125,6 +125,10 @@ async function assignCard(event) {
 function toggleResStatusFields(res_status) {
   document.getElementById('guestFields').style.display =
     res_status === 'GUEST' ? 'block' : 'none';
+  // Hidden inputs must not block the submit through validation
+  const isGuest = res_status === 'GUEST';
+  document.getElementById('reference_phone').disabled = !isGuest;
+  document.getElementById('guest_type').disabled = !isGuest;
   document.getElementById('sevaKutirFields').style.display =
     res_status === 'SEVA KUTIR' ? 'block' : 'none';
 }
