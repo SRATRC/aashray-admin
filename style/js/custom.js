@@ -1,3 +1,13 @@
+// Escape a value before it goes into innerHTML. Defined here because custom.js loads
+// synchronously on every staff page; utils.js defines the same function.
+if (typeof window.escapeHtml !== 'function') {
+  window.escapeHtml = function (str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+}
+
 $(document).ready(function() {	
 var input = $('.clockpicker').clockpicker({
     placement: 'bottom',
@@ -100,13 +110,13 @@ function resetAlert() {
 
 function showSuccessMessage(message) {
   const alert = document.getElementById('alert');
-  alert.innerHTML = message;
+  alert.textContent = message;
   alert.classList.add("alert-success");
 }
 
 function showErrorMessage(message) {
   const alert = document.getElementById('alert');
-  alert.innerHTML = message;
+  alert.textContent = message;
   alert.classList.add("alert-danger");
 }
 

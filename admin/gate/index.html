@@ -1,78 +1,237 @@
-<script src="/style/js/roleCheck.js"></script>
-<script>
-  checkRoleAccess(['gateAdmin', 'superAdmin']); // customize allowed roles per page
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gate Management</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gate Management</title>
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
 
-    <!-- Additional Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../sessionstorage.js"></script>
+  <style>
+    /* Premium Portal Grid Layout */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-  </head>
+    /* Force exactly 4 columns for Quick Operations row */
+    .portal-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 12px;
+    }
 
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+    /* Responsive: tablet → 2 cols, mobile → 1 col */
+    @media (max-width: 900px) {
+      .portal-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .portal-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .portal-grid-4,
+      .portal-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .portal-card {
+        padding: 18px !important;
+      }
+    }
+
+    .portal-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-4px);
+      border-color: #4f46e5;
+      box-shadow: 0 12px 20px -8px rgba(79, 70, 229, 0.15), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #4f46e5 0%, #818cf8 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .portal-card:hover::before {
+      opacity: 1;
+    }
+
+    .portal-icon {
+      font-size: 32px;
+      background: #f1f5f9;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      color: #4f46e5;
+      transition: all 0.3s ease;
+    }
+
+    .portal-card:hover .portal-icon {
+      background: #e0f2fe;
+      color: #0284c7;
+      transform: scale(1.05);
+    }
+
+    .portal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+    }
+
+    .portal-desc {
+      font-size: 13.5px;
+      color: #64748b;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .portal-arrow {
+      margin-top: auto;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4f46e5;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: gap 0.2s ease;
+    }
+
+    .portal-card:hover .portal-arrow {
+      gap: 8px;
+    }
+
+    .portal-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-top: 28px;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['gateAdmin', 'superAdmin']); // customize allowed roles per page
+  </script>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
-
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Gate Management</h1>
-            </div>
-
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="gateIn.html">
-                  Gate Checkin
-                </a>
-                <a class="menu-btn" href="gateOut.html">
-                  Gate Checkout
-                </a>
-                <a class="menu-btn" href="gateInTap.html">
-                  Gate Checkin via Tap
-                </a>
-                <a class="menu-btn" href="gateOutTap.html">
-                  Gate Checkout via Tap
-                </a>
-                <a class="menu-btn" href="gateReport.html">
-                    Gate Checkin/out Report
-                </a>
-                <a class="menu-btn" href="onPremise.html">
-                  Current onPremise Report
-                </a>
-                
-              </div>
-            </div>
-
+  </div>
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Gate Management</h1>
           </div>
+
+          <p class="portal-section-label">Quick Operations</p>
+          <div class="portal-grid-4">
+            <a href="gateIn.html" class="portal-card">
+              <div class="portal-icon">📥</div>
+              <h2 class="portal-title">Gate Check-In (Mobile Scanner)</h2>
+              <p class="portal-desc">Log arrival entries for mumukshus and guests using mobile scanner.</p>
+              <div class="portal-arrow">Open Check-In <span>→</span></div>
+            </a>
+
+            <a href="gateOut.html" class="portal-card">
+              <div class="portal-icon">📤</div>
+              <h2 class="portal-title">Gate Check-Out (Mobile Scanner)</h2>
+              <p class="portal-desc">Log departure entries for mumukshus and guests using mobile scanner.</p>
+              <div class="portal-arrow">Open Check-Out <span>→</span></div>
+            </a>
+
+            <a href="gateInTap.html" class="portal-card">
+              <div class="portal-icon">📲</div>
+              <h2 class="portal-title">Gate Check-In (Card Tap)</h2>
+              <p class="portal-desc">Quick RFID smart card scan screen for fast mumukshus and guests entry check-in.</p>
+              <div class="portal-arrow">Open Check-In <span>→</span></div>
+            </a>
+
+            <a href="gateOutTap.html" class="portal-card">
+              <div class="portal-icon">📳</div>
+              <h2 class="portal-title">Gate Check-Out (Card Tap)</h2>
+              <p class="portal-desc">Quick RFID smart card scan screen for fast mumukshus and guests exit check-out.</p>
+              <div class="portal-arrow">Open Check-Out <span>→</span></div>
+            </a>
+          </div>
+
+          <p class="portal-section-label">Reports & Analytics</p>
+          <div class="portal-grid">
+            <a href="gateReport.html" class="portal-card">
+              <div class="portal-icon">📊</div>
+              <h2 class="portal-title">Gate Activity Logs</h2>
+              <p class="portal-desc">View and export complete historical records of all check-in and check-out activity.
+              </p>
+              <div class="portal-arrow">View Logs <span>→</span></div>
+            </a>
+
+            <a href="residents.html?status=onprem" class="portal-card">
+              <div class="portal-icon">👥</div>
+              <h2 class="portal-title">Mumukshus On-Premise</h2>
+              <p class="portal-desc">Real-time census and status report of residents currently inside the premises.</p>
+              <div class="portal-arrow">View Status <span>→</span></div>
+            </a>
+          </div>
+
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
