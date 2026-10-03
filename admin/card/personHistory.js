@@ -2,8 +2,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cardno = sessionStorage.getItem('history_cardno');
 
   if (!cardno) {
+    // Opened in a new tab or from a bookmark: there is no card to show and
+    // no history to go back to, so return to card search.
     alert('Card not found');
-    history.back();
+    window.location.href = 'index.html';
     return;
   }
 
@@ -56,6 +58,7 @@ function renderPerson(person, cardno) {
 
 // ================= SUMMARY =================
 function renderSummary(summary) {
+  summary = summary || {};
   const box = document.getElementById('summaryBox');
 
   box.innerHTML = `
@@ -197,7 +200,8 @@ function formatDate(date) {
   // A booking date is a calendar day: show it as that day in any time zone.
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (m) return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString();
-  return new Date(date).toLocaleDateString();
+  const d = new Date(date);
+  return isNaN(d) ? String(date) : d.toLocaleDateString();
 }
 
 function formatDateRange(start, end) {

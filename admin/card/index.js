@@ -170,4 +170,6 @@ function showErrorMessage(message) {
   alert('Error: ' + message);
 }
 
-function resetAlert() {}
+function resetAlert() {
+  // This could clear UI banners if used in future (currently placeholder)
+}
