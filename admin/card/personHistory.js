@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const response = await fetch(
-      `${CONFIG.basePath}/card/person-activity?cardno=${cardno}`,
+      `${CONFIG.basePath}/card/person-activity?cardno=${encodeURIComponent(cardno)}`,
       {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
@@ -17,22 +17,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     );
 
-    if (!response.ok) throw new Error('API failed');
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || `Request failed (${response.status})`);
+    }
 
-    const data = await response.json();
-
+    renderPerson(data.person, cardno);
     renderSummary(data.summary);
     renderTimelineTable('upcoming', data.upcoming);
     renderTimelineTable('past', data.past30Days);
     renderMaintenance(data.maintenanceOpen);
     renderWifi(data.wifiCodes);
-
   } catch (err) {
     console.error(err);
-    alert('Failed to load history');
+    document.getElementById('personName').textContent = `Card ${cardno}`;
+    alert(`Failed to load history: ${err.message}`);
   }
 });
 
+// Every value from the API goes through this before it is put in the page:
+// maintenance text and WiFi names are typed by members.
+function esc(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ================= PERSON =================
+function renderPerson(person, cardno) {
+  const el = document.getElementById('personName');
+  el.textContent = person
+    ? `${person.issuedto} (${person.cardno}${person.res_status ? `, ${person.res_status}` : ''})`
+    : `Card ${cardno}`;
+}
 
 // ================= SUMMARY =================
 function renderSummary(summary) {
@@ -40,14 +60,13 @@ function renderSummary(summary) {
 
   box.innerHTML = `
     <div style="background:#f4f6f9;padding:15px;border-radius:6px;">
-      <strong>Total Upcoming:</strong> ${summary.totalUpcoming} &nbsp;&nbsp;
-      <strong>Past 30 Days:</strong> ${summary.totalPast} &nbsp;&nbsp;
-      <strong>Open Maintenance:</strong> ${summary.openMaintenance} &nbsp;&nbsp;
-      <strong>WiFi Codes:</strong> ${summary.wifiCodes}
+      <strong>Total Upcoming:</strong> ${esc(summary.totalUpcoming)} &nbsp;&nbsp;
+      <strong>Past 30 Days:</strong> ${esc(summary.totalPast)} &nbsp;&nbsp;
+      <strong>Open Maintenance:</strong> ${esc(summary.openMaintenance)} &nbsp;&nbsp;
+      <strong>WiFi Codes:</strong> ${esc(summary.wifiCodes)}
     </div>
   `;
 }
-
 
 // ================= TIMELINE TABLE =================
 function renderTimelineTable(elementId, list) {
@@ -70,11 +89,11 @@ function renderTimelineTable(elementId, list) {
       <tbody>
   `;
 
-  list.forEach(item => {
+  list.forEach((item) => {
     html += `
       <tr>
-        <td>${formatType(item.type)}</td>
-        <td>${formatDate(item.date)}</td>
+        <td>${esc(formatType(item.type))}</td>
+        <td>${esc(formatDateRange(item.date, item.end_date))}</td>
         <td>${formatStatus(item.status)}</td>
       </tr>
     `;
@@ -84,7 +103,6 @@ function renderTimelineTable(elementId, list) {
 
   el.innerHTML = html;
 }
-
 
 // ================= MAINTENANCE =================
 function renderMaintenance(list) {
@@ -107,11 +125,11 @@ function renderMaintenance(list) {
       <tbody>
   `;
 
-  list.forEach(item => {
+  list.forEach((item) => {
     html += `
       <tr>
-        <td>${item.department}</td>
-        <td>${item.work_detail}</td>
+        <td>${esc(item.department)}</td>
+        <td>${esc(item.work_detail)}</td>
         <td><span style="color:red;font-weight:bold;">OPEN</span></td>
       </tr>
     `;
@@ -121,7 +139,6 @@ function renderMaintenance(list) {
 
   el.innerHTML = html;
 }
-
 
 // ================= WIFI =================
 function renderWifi(list) {
@@ -144,12 +161,12 @@ function renderWifi(list) {
       <tbody>
   `;
 
-  list.forEach(item => {
+  list.forEach((item) => {
     html += `
       <tr>
-        <td>${item.username}</td>
-        <td>${item.ssid || '-'}</td>
-        <td>${item.status}</td>
+        <td>${esc(item.username)}</td>
+        <td>${esc(item.ssid || '-')}</td>
+        <td>${esc(item.status)}</td>
       </tr>
     `;
   });
@@ -159,27 +176,45 @@ function renderWifi(list) {
   el.innerHTML = html;
 }
 
-
 // ================= HELPERS =================
+const TYPE_LABELS = {
+  room_booking: 'Room',
+  flat_booking: 'Flat',
+  food_booking: 'Food',
+  gate_record: 'Gate',
+  travel_booking: 'Travel',
+  shibir_booking: 'Adhyayan',
+  utsav_booking: 'Utsav'
+};
+
 function formatType(type) {
   if (!type) return '-';
-  return type.replace('_', ' ').toUpperCase();
+  return TYPE_LABELS[type] || type.replace(/_/g, ' ').toUpperCase();
 }
 
 function formatDate(date) {
   if (!date) return '-';
+  // A booking date is a calendar day: show it as that day in any time zone.
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString();
   return new Date(date).toLocaleDateString();
+}
+
+function formatDateRange(start, end) {
+  const a = formatDate(start);
+  const b = formatDate(end);
+  return end && b !== a ? `${a} to ${b}` : a;
 }
 
 function formatStatus(status) {
   if (!status) return '-';
 
+  const s = String(status).toLowerCase();
   let color = '#444';
 
-  if (status.includes('CONFIRMED')) color = 'green';
-  else if (status.includes('WAITING')) color = 'orange';
-  else if (status.includes('CANCELLED')) color = 'red';
-  else if (status.includes('CHECKEDIN')) color = 'blue';
+  if (s === 'confirmed' || s === 'checkedin') color = 'green';
+  else if (s === 'waiting' || s === 'pending' || s === 'pending checkin') color = 'orange';
+  else if (s.includes('cancelled')) color = 'red';
 
-  return `<span style="color:${color};font-weight:bold;">${status}</span>`;
+  return `<span style="color:${color};font-weight:bold;">${esc(status)}</span>`;
 }
