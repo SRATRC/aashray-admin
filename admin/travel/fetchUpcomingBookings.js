@@ -449,7 +449,7 @@ function setupDownloadButton() {
   document.getElementById('downloadBtnContainer').innerHTML = '';
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => travelReport.map((b) => ({ ...b, arrival_time: formatDateTime(b.arrival_time) })),
+    getData: () => travelReport.map((b) => ({ ...b, arrival_time: formatDateTime(b.arrival_time) || b.arrival_time })),
     fileName: 'travel report.xlsx',
     sheetName: 'Travel Report',
     tableSelector: '#upcomingBookings'
