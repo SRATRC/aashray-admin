@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           }
 
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${s.destination}</td><td>${displayStatus}</td><td>${s.count}</td>`;
+          row.innerHTML = `<td>${esc(s.destination)}</td><td>${esc(displayStatus)}</td><td>${esc(s.count)}</td>`;
           summaryBody.appendChild(row);
         });
 
@@ -211,7 +211,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       if (bookingsRes.ok) {
         travelReport = data.data || [];
-        console.log("First booking:", travelReport[0]);
+        // Precompute display-string fields so the Excel export (which reads the raw
+        // field named by each column's data-key) mirrors what the table renders,
+        // instead of exporting "[object Object]" for adhyayan or the raw trip id.
+        travelReport.forEach((b) => {
+          b.adhyayan_label = b.adhyayan
+            ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}\u2013${formatDate(b.adhyayan.end_date)})`
+            : '-';
+          b.trip_group_label = b.trip_group_id ? 'Round trip' : '-';
+        });
 
         setupDownloadButton();
 
@@ -221,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const normalize = str =>
           (str || "")
             .toLowerCase()
-            .replace(/[–—]/g, '-') // normalize dash variants
+            .replace(/[\u2013\u2014]/g, '-') // normalize dash variants
             .trim()
             .replace(/\s+/g, ' ');
 
@@ -269,15 +277,15 @@ document.addEventListener('DOMContentLoaded', async function () {
   ${index + 1}
   <span
     style="cursor:pointer; color:blue; margin-left:5px;"
-    onclick="openTransactionEditModal('${b.bookingid}')"
+    data-edit-booking="${esc(b.bookingid)}"
     title="Edit Transaction"
   >
     ✏️
   </span>
 </td>
-<td>${formatDate(b.date)}</td>
-    <td>${b.bookingDate}</td>
-    <td>${b.issuedto}</td>
+<td>${esc(formatDate(b.date))}</td>
+    <td>${esc(b.bookingDate)}</td>
+    <td>${esc(b.issuedto)}</td>
 <td>
   ${b.mobno
     ? `<a href="${esc(getWhatsAppUrl(b.mobno))}" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline; font-weight:600; display:inline-flex; align-items:center; gap:5px;" title="Chat on WhatsApp with ${esc(b.mobno)}">
@@ -287,10 +295,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     : '-'}
 
 </td>
-    <td>${b.type}</td>
-    <td>${b.pickup_point}</td>
+    <td>${esc(b.type)}</td>
+    <td>${esc(b.pickup_point)}</td>
 
-<td>${b.drop_point}</td>
+<td>${esc(b.drop_point)}</td>
 
 <td>
   ${(() => {
@@ -309,24 +317,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 
               if (isRCTOMumbai) {
 
-                return stops.find(
+                return esc(stops.find(
                   stop =>
                     stop.stop_name ===
                     b.drop_point
-                )?.timing || '-';
+                )?.timing || '-');
               }
 
-              return stops.find(
+              return esc(stops.find(
                 stop =>
                   stop.stop_name ===
                   b.pickup_point
-              )?.timing || '-';
+              )?.timing || '-');
 
             })()}
 </td>
 
 <td>
-  ${b.bus_name || ''}
+  ${esc(b.bus_name || '')}
 </td>
 
 <td>
@@ -337,13 +345,25 @@ document.addEventListener('DOMContentLoaded', async function () {
 </td>
 
 <td>
-  ${formatDateTime(arrival_time)}
+  ${esc(formatDateTime(arrival_time))}
 </td>
 
 <td>
   ${b.leaving_post_adhyayan == 1
               ? 'Yes'
               : 'No'}
+</td>
+
+<td>
+  ${b.adhyayan
+              ? `${esc(b.adhyayan.name)} (${esc(formatDate(b.adhyayan.start_date))}\u2013${esc(formatDate(b.adhyayan.end_date))})`
+              : '-'}
+</td>
+
+<td>
+  ${b.trip_group_id
+              ? '<span class="badge bg-info">Round trip</span>'
+              : '-'}
 </td>
 <td>
   ${b.breakfast_booked === 'Yes'
@@ -364,8 +384,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 ? 'Cancelled as all seats are booked'
 
-                : statusLabelMap[b.status] ||
-                b.status
+                : esc(statusLabelMap[b.status] ||
+                b.status)
             }
 
 </td>
@@ -374,37 +394,32 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   <a
     href="#"
-    onclick="
-      openUpdateModal(
-        '${b.bookingid}',
-        '${b.status}'
-      )
-    "
+    data-update-booking="${esc(b.bookingid)}"
   >
     Update Booking Status
   </a>
 
 </td>
 
-<td>${comments}</td>
+<td>${esc(comments)}</td>
 
-<td>${b.total_people}</td>
+<td>${esc(b.total_people)}</td>
 
-<td>${b.amount}</td>
+<td>${esc(b.amount)}</td>
 
-<td>${b.paymentStatus}</td>
+<td>${esc(b.paymentStatus)}</td>
 
-<td>${formatDate(b.paymentDate)}</td>
+<td>${esc(formatDate(b.paymentDate))}</td>
 
-<td>${b.bookingid}</td>
+<td>${esc(b.bookingid)}</td>
 
-<td>${bookedBy}</td>
+<td>${esc(bookedBy)}</td>
 
-<td>${adminComments}</td>
+<td>${esc(adminComments)}</td>
 
-<td>${b.luggage}</td>
+<td>${esc(b.luggage)}</td>
 
-<td>${travellingFrom}</td>  `;
+<td>${esc(travellingFrom)}</td>  `;
 
           upcomingTableBody.appendChild(row);
           // Enhance table after rendering
@@ -426,6 +441,14 @@ document.addEventListener('DOMContentLoaded', async function () {
       console.error('Error fetching bookings:', error);
     }
   });
+  // Row actions use data attributes (no inline handlers built from API values)
+  upcomingTableBody.addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-edit-booking]');
+    if (edit) { openTransactionEditModal(edit.dataset.editBooking); return; }
+    const upd = e.target.closest('[data-update-booking]');
+    if (upd) { e.preventDefault(); openUpdateModal(upd.dataset.updateBooking); }
+  });
+
   // ✅ Update Booking Status modal buttons
   document.getElementById('closeModal')?.addEventListener('click', () => {
     document.getElementById('updateModal').style.display = 'none';
@@ -512,6 +535,7 @@ async function openTransactionEditModal(bookingId) {
     booking.leaving_post_adhyayan != null
       ? String(booking.leaving_post_adhyayan)
       : '';
+
   await loadAvailableBusRoutes(
     booking
   );
