@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       sheetData.push(dataRow);
     });
 
-    const ws = XLSX.utils.aoa_to_sheet(sheetData.map((row) => row.map(safeCell)));
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
     // Merge title across all columns
     ws['!merges'] = [

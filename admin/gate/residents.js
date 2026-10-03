@@ -613,7 +613,7 @@ async function exportToExcel() {
         "Last Gate Out Time"
       ];
 
-      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows].map((row) => row.map(safeCell)));
+      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
       ws['!cols'] = [
         { wch: 6 },  // Sr No
         { wch: 15 }, // Card No

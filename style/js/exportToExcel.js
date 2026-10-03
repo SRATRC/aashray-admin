@@ -16,12 +16,8 @@ function downloadExcelFromJSON(dataArray, fileName = "export.xlsx", sheetName = 
     })
   : dataArray;
 
-  // Spreadsheet formula guard: text starting with = + - @ stays text.
-  const guard = typeof window.safeCell === 'function'
-    ? window.safeCell
-    : (v) => (typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? "'" + v : v);
-  const guarded = formatted.map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, guard(v)])));
-  const worksheet = XLSX.utils.json_to_sheet(guarded);
+  // SheetJS writes strings as text cells, so no formula guard is needed here.
+  const worksheet = XLSX.utils.json_to_sheet(formatted);
 
   // Compute adaptive column widths and enable wrapText on all multi-line cells
   const colKeys = Object.keys(formatted[0] || {});

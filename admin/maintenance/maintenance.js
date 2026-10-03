@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ];
 
       // Create sheet from array of arrays
-      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows].map((row) => row.map(safeCell)));
+      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
 
       // Set custom column widths (in characters)
       ws['!cols'] = [
