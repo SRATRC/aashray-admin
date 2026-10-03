@@ -313,6 +313,22 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
         document.getElementById('edit_utsav_total').value = data.total_seats;
         document.getElementById('edit_utsav_available').value = data.available_seats;
         document.getElementById('edit_utsav_location').value = data.location;
+        document.getElementById('edit_utsav_whatsapp').value = data.whatsapp_link || '';
+
+        const shortlinkGroup = document.getElementById('edit_utsav_shortlink_group');
+        const shortlinkInput = document.getElementById('edit_utsav_shortlink');
+        const shortlinkUrl = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/u${data.id}`;
+        shortlinkInput.value = shortlinkUrl;
+        shortlinkGroup.style.display = 'block';
+
+        const copyBtn = document.getElementById('copy_utsav_shortlink_btn');
+        if (copyBtn) {
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(shortlinkUrl);
+            alert('Shortlink copied to clipboard!');
+          };
+        }
+
         document.getElementById('edit_utsav_deadline').value =
           data.registration_deadline?.split('T')[0];
 
@@ -501,6 +517,7 @@ utsavEditForm?.addEventListener('submit', async function (e) {
     total_seats: document.getElementById('edit_utsav_total').value,
     available_seats: document.getElementById('edit_utsav_available').value,
     location: document.getElementById('edit_utsav_location').value,
+    whatsapp_link: document.getElementById('edit_utsav_whatsapp').value || null,
     registration_deadline:
       document.getElementById('edit_utsav_deadline').value
   };

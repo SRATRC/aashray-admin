@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Attach submit listener
   document.getElementById('updateForm').addEventListener('submit', handleUpdate);
 
+  document.getElementById('res_status').addEventListener('change', updateGuestFields);
+  document.getElementById('referenceCardno').addEventListener('input', updateGuestFields);
+
   // Attach change listeners once
   document.getElementById('country').addEventListener('change', (e) => {
     const country = e.target.value;
@@ -20,9 +23,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+// The card as loaded, to tell what this save changes
+let loadedCard = null;
+
 // --- Handle form submit ---
 async function handleUpdate(e) {
   e.preventDefault();
+  const resStatus = document.getElementById('res_status').value;
+  const isGuest = resStatus === 'GUEST';
+
+  // Changing the member type away from guest removes the guest's reference card link
+  if (loadedCard?.res_status === 'GUEST' && !isGuest && loadedCard.referenceCardno) {
+    const host = loadedCard.referenceName
+      ? `${loadedCard.referenceName} (${loadedCard.referenceCardno})`
+      : loadedCard.referenceCardno;
+    if (!confirm(`This card will stop being a guest of ${host}. Continue?`)) return;
+  }
+
+  const reference = isGuest ? document.getElementById('referenceCardno').value.trim() : '';
+
   const updatedData = {
     cardno: document.getElementById('cardno').value,
     issuedto: document.getElementById('issuedto').value,
@@ -38,9 +57,11 @@ async function handleUpdate(e) {
     city: document.getElementById('city').value,
     pin: document.getElementById('pin').value,
     center: document.getElementById('center').value,
-    res_status: document.getElementById('res_status').value,
-    referenceCardno: document.getElementById('referenceCardno')?.value || null,
-    guestType: document.getElementById('guestType')?.value || null
+    res_status: resStatus,
+    // A blank reference card keeps the guest's current link as it is, and a
+    // guest type goes only with a reference card
+    referenceCardno: reference || null,
+    guestType: reference ? document.getElementById('guestType').value || null : null
   };
 
   try {
@@ -50,7 +71,11 @@ async function handleUpdate(e) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(updatedData)
     });
-    if (!response.ok) throw new Error('Failed to update card');
+    if (!response.ok) {
+      // Show the reason the backend gives, such as a reference card that does not exist
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.message || 'Failed to update card');
+    }
     alert('Card updated successfully!');
     window.location.href = 'index.html';
   } catch (err) {
@@ -82,8 +107,67 @@ function populateForm(data) {
     document.getElementById(field).value = data[field] || '';
   });
 
+  // A guest card comes with its current reference card and guest type
+  loadedCard = data;
+  document.getElementById('referenceCardno').value = data.referenceCardno || '';
+  setGuestType(data.guestType);
+  updateGuestFields();
+
   fetchCountries(data.country, data.state, data.city);
   fetchCenters(data.center); // <-- call this to populate center dropdown correctly
+}
+
+// --- Select the saved guest type ---
+// Saved types differ in case ("family", "Family"), and some are not in the list
+// (such as "RPL Guest"). Add those as an option, so a save keeps them.
+function setGuestType(savedType) {
+  const select = document.getElementById('guestType');
+  if (!savedType) {
+    select.value = '';
+    return;
+  }
+  const match = [...select.options].find(
+    (option) => option.value && option.value.toLowerCase() === String(savedType).toLowerCase()
+  );
+  if (match) {
+    select.value = match.value;
+    return;
+  }
+  select.add(new Option(savedType, savedType));
+  select.value = savedType;
+}
+
+// --- Show and explain the guest fields ---
+function updateGuestFields() {
+  const isGuest = document.getElementById('res_status').value === 'GUEST';
+  document.querySelectorAll('.guest-only').forEach((el) => {
+    el.style.display = isGuest ? '' : 'none';
+  });
+
+  const reference = document.getElementById('referenceCardno');
+  const guestType = document.getElementById('guestType');
+  const hint = document.getElementById('referenceHint');
+  const wasGuest = loadedCard?.res_status === 'GUEST';
+  const currentHost = wasGuest ? loadedCard.referenceCardno : null;
+
+  // A card that becomes a guest needs a reference card. A guest with one on
+  // record can move to another card but not clear it, since a blank field
+  // keeps the current link.
+  reference.required = isGuest && (!wasGuest || Boolean(currentHost));
+  if (!wasGuest) {
+    hint.textContent = "Enter the card number of the member this person is a guest of.";
+  } else if (currentHost) {
+    const name = loadedCard.referenceName ? `${loadedCard.referenceName} (${currentHost})` : currentHost;
+    hint.textContent = `Current reference card: ${name}. Enter another card number to move this guest.`;
+  } else {
+    hint.textContent = 'No reference card on record. Leave blank to keep it that way.';
+  }
+
+  // A guest type belongs to the reference card link, so it needs a card number.
+  // The chosen type stays while the field is blank, so retyping a card keeps it.
+  const hasReference = reference.value.trim() !== '';
+  guestType.disabled = !isGuest || !hasReference;
+  guestType.required = isGuest && hasReference;
 }
 
 // --- Fetch countries ---
