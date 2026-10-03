@@ -58,7 +58,6 @@ async function assignCard(event) {
   submitBtn.textContent = 'Submitting...';
 
   const bodyData = {
-    cardno: form.cardno.value,
     issuedto: form.issuedto.value,
     gender: form.gender.value,
     dob: form.dob.value,
@@ -190,9 +189,9 @@ async function loadLocationData(
         stateSelect.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
       });
 
-      stateSelect.addEventListener('change', () =>
-        fetchCities(country, stateSelect.value)
-      );
+      // One handler that reads the current country when the state changes
+      stateSelect.onchange = () =>
+        fetchCities(document.getElementById('country').value, stateSelect.value);
       if (selectedState) fetchCities(country, selectedState, selectedCity);
     } catch (err) {
       console.error('Failed to load states:', err);

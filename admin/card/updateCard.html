@@ -198,7 +198,7 @@
 
               <div class="form-group guest-only" style="display: none;">
                 <label for="referencePhone">Or Reference Phone Number:</label>
-                <input type="text" id="referencePhone" name="referencePhone" class="form-control" autocomplete="off" placeholder="Used only when the card number is blank" />
+                <input type="text" id="referencePhone" name="referencePhone" class="form-control" maxlength="10" pattern="\d{10}" title="Enter a 10 digit phone number" autocomplete="off" placeholder="Used only when the card number is blank" />
                 <small id="refPhoneName" style="display: block; margin-top: 5px; font-weight: bold;"></small>
               </div>
 

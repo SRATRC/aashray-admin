@@ -16,7 +16,7 @@ function attachRefPhoneCheck(inputEl, messageEl) {
     show('Checking...', null);
     try {
       const res = await fetch(
-        `${CONFIG.baseUrl}/admin/card/by-mobile/${encodeURIComponent(phone)}`,
+        `${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(phone)}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem('token')}`,
