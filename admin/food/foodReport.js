@@ -583,7 +583,7 @@ function downloadCSV() {
 
   // Build CSV string
   const csv = rows.map(row =>
-    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    row.map(cell => `"${String(safeCell(cell)).replace(/"/g, '""')}"`).join(',')
   ).join('\n');
 
   // Trigger download

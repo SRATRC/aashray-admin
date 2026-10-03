@@ -16,7 +16,12 @@ function downloadExcelFromJSON(dataArray, fileName = "export.xlsx", sheetName = 
     })
   : dataArray;
 
-  const worksheet = XLSX.utils.json_to_sheet(formatted);
+  // Spreadsheet formula guard: text starting with = + - @ stays text.
+  const guard = typeof window.safeCell === 'function'
+    ? window.safeCell
+    : (v) => (typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? "'" + v : v);
+  const guarded = formatted.map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, guard(v)])));
+  const worksheet = XLSX.utils.json_to_sheet(guarded);
 
   // Compute adaptive column widths and enable wrapText on all multi-line cells
   const colKeys = Object.keys(formatted[0] || {});

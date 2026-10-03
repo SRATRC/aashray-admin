@@ -595,18 +595,11 @@ function exportBulkFoodCSV() {
     return;
   }
 
-  let csvContent = 'data:text/csv;charset=utf-8,Date,Booked By,Mobile,Department,Guest Count,Breakfast,Lunch,Dinner\n';
+  const rows = [['Date', 'Booked By', 'Mobile', 'Department', 'Guest Count', 'Breakfast', 'Lunch', 'Dinner']];
   bookings.forEach(b => {
-    csvContent += `"${b.date}","${b.CardDb?.issuedto || ''}","${b.mobno || ''}","${b.department || ''}",${b.guestCount},${b.breakfast || 0},${b.lunch || 0},${b.dinner || 0}\n`;
+    rows.push([b.date, b.CardDb?.issuedto || '', b.mobno || '', b.department || '', b.guestCount, b.breakfast || 0, b.lunch || 0, b.dinner || 0]);
   });
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `guest_food_bookings_${new Date().toISOString().split('T')[0]}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  downloadCsvRows(rows, `guest_food_bookings_${new Date().toISOString().split('T')[0]}.csv`);
 }
 
 function showSuccessMessage(message, type = 'member') {

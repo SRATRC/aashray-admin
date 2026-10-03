@@ -339,26 +339,18 @@ window.exportShortLinksCSV = function() {
     return;
   }
 
-  const headers = ['Slug', 'Short URL', 'Target URL', 'Type', 'Created By', 'Clicks', 'Status', 'Created Date'];
-  const rows = allLinks.map(link => [
-    `"${link.slug}"`,
-    `"https://aashray.vitraagvigyaan.org/go/${link.slug}"`,
-    `"${(link.target_url || '').replace(/"/g, '""')}"`,
-    `"${link.type}"`,
-    `"${link.createdBy || 'System'}"`,
+  const rows = [['Slug', 'Short URL', 'Target URL', 'Type', 'Created By', 'Clicks', 'Status', 'Created Date']];
+  allLinks.forEach(link => rows.push([
+    link.slug,
+    `https://aashray.vitraagvigyaan.org/go/${link.slug}`,
+    link.target_url || '',
+    link.type,
+    link.createdBy || 'System',
     link.click_count || 0,
     link.active ? 'Active' : 'Disabled',
-    `"${link.createdAt ? new Date(link.createdAt).toLocaleDateString() : ''}"`
-  ]);
-
-  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `short_links_report_${new Date().toISOString().slice(0, 10)}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    link.createdAt ? new Date(link.createdAt).toLocaleDateString() : ''
+  ]));
+  downloadCsvRows(rows, `short_links_report_${new Date().toISOString().slice(0, 10)}.csv`);
 };
 
 /* ===== Column Sorting Handler ===== */

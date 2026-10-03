@@ -47,6 +47,22 @@
     return typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
   };
 
+  // Quote every cell (double any "), guard formulas, and download through a
+  // Blob (a data: URI breaks at '#'). rows = array of arrays.
+  window.downloadCsvRows = function (rows, fileName) {
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(window.safeCell(c ?? '')).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   // ── Copy to Clipboard Helper ─────────────────────────────────────────────
   window.copyToClipboard = async function (text, successCallback) {
     try {

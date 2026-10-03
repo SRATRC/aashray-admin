@@ -313,7 +313,7 @@ async function fetchGateRecords() {
     }
   } catch (error) {
     console.error('Error:', error);
-    alert('Failed to fetch gate records. Please try again.');
+    if (mySeq === gateFetchSeq) alert('Failed to fetch gate records. Please try again.');
   } finally {
     if (mySeq === gateFetchSeq) {
       if (loader) loader.style.display = 'none';
