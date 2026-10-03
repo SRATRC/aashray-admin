@@ -167,9 +167,9 @@ document.addEventListener('DOMContentLoaded', async function () {
               📅 ${formatDate(item.date)}
             </span>
           </td>
-          <td style="white-space:pre-line; border-left:3px solid #f59e0b; vertical-align:top; padding:10px 14px; font-size:13px; color:#334155;">${item.breakfast || '<span style="color:#cbd5e1;">—</span>'}</td>
-          <td style="white-space:pre-line; border-left:3px solid #3b82f6; vertical-align:top; padding:10px 14px; font-size:13px; color:#334155;">${item.lunch || '<span style="color:#cbd5e1;">—</span>'}</td>
-          <td style="white-space:pre-line; border-left:3px solid #8b5cf6; vertical-align:top; padding:10px 14px; font-size:13px; color:#334155;">${item.dinner || '<span style="color:#cbd5e1;">—</span>'}</td>
+          <td style="white-space:pre-line; border-left:3px solid #f59e0b; vertical-align:top; padding:10px 14px; font-size:13px; color:#334155;">${escapeHtml(item.breakfast) || '<span style="color:#cbd5e1;">—</span>'}</td>
+          <td style="white-space:pre-line; border-left:3px solid #3b82f6; vertical-align:top; padding:10px 14px; font-size:13px; color:#334155;">${escapeHtml(item.lunch) || '<span style="color:#cbd5e1;">—</span>'}</td>
+          <td style="white-space:pre-line; border-left:3px solid #8b5cf6; vertical-align:top; padding:10px 14px; font-size:13px; color:#334155;">${escapeHtml(item.dinner) || '<span style="color:#cbd5e1;">—</span>'}</td>
           <td style="white-space:nowrap; vertical-align:middle; text-align:center;">
             <button onclick="editMenuByDate('${dateKey}')" class="btn btn-sm btn-secondary" style="padding:5px 10px; font-size:12px; border-radius:6px; font-weight:600; background:#475569; border-color:#475569; color:#fff;">✏️ Edit</button>
             <button onclick="deleteMenu('${dateKey}')" class="btn btn-sm btn-danger" style="padding:5px 10px; font-size:12px; margin-left:4px; border-radius:6px; font-weight:600;">🗑️ Delete</button>
@@ -282,19 +282,19 @@ function renderDayCard(dateVal = '', bf = '', lu = '', dn = '', showDelete = fal
     <!-- Breakfast -->
     <div class="meal-card-group bf">
       <div class="meal-card-label" style="color:#d97706;">🌅 Breakfast</div>
-      <textarea id="bf_${cardId}" class="form-control card-bf-input" rows="2" placeholder="e.g. Idli Sambhar, Tea / Coffee" required style="resize:vertical; border-radius:6px; font-size:13px;">${bf}</textarea>
+      <textarea id="bf_${cardId}" class="form-control card-bf-input" rows="2" placeholder="e.g. Idli Sambhar, Tea / Coffee" required style="resize:vertical; border-radius:6px; font-size:13px;">${escapeHtml(bf)}</textarea>
     </div>
 
     <!-- Lunch -->
     <div class="meal-card-group lu">
       <div class="meal-card-label" style="color:#2563eb;">☀️ Lunch</div>
-      <textarea id="lu_${cardId}" class="form-control card-lu-input" rows="2" placeholder="e.g. Roti, Paneer Sabzi, Dal Rice" required style="resize:vertical; border-radius:6px; font-size:13px;">${lu}</textarea>
+      <textarea id="lu_${cardId}" class="form-control card-lu-input" rows="2" placeholder="e.g. Roti, Paneer Sabzi, Dal Rice" required style="resize:vertical; border-radius:6px; font-size:13px;">${escapeHtml(lu)}</textarea>
     </div>
 
     <!-- Dinner -->
     <div class="meal-card-group dn">
       <div class="meal-card-label" style="color:#7c3aed;">🌙 Dinner</div>
-      <textarea id="dn_${cardId}" class="form-control card-dn-input" rows="2" placeholder="e.g. Puri Bhaji, Khichdi, Kadhi" required style="resize:vertical; border-radius:6px; font-size:13px;">${dn}</textarea>
+      <textarea id="dn_${cardId}" class="form-control card-dn-input" rows="2" placeholder="e.g. Puri Bhaji, Khichdi, Kadhi" required style="resize:vertical; border-radius:6px; font-size:13px;">${escapeHtml(dn)}</textarea>
     </div>
   `;
   container.appendChild(card);

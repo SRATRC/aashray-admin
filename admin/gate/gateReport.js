@@ -278,7 +278,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   fetchGateRecords();
 });
 
+// Only the newest request may draw: a slow older reply must not overwrite it.
+let gateFetchSeq = 0;
+
 async function fetchGateRecords() {
+  const mySeq = ++gateFetchSeq;
   const loader = document.getElementById('tableLoader');
   if (loader) loader.style.display = 'flex';
   const container = document.getElementById('gateRecords');
@@ -296,6 +300,7 @@ async function fetchGateRecords() {
       }
     });
     const result = await response.json();
+    if (mySeq !== gateFetchSeq) return;
 
     if (response.ok) {
       const records = result.data.records;
@@ -310,8 +315,10 @@ async function fetchGateRecords() {
     console.error('Error:', error);
     alert('Failed to fetch gate records. Please try again.');
   } finally {
-    if (loader) loader.style.display = 'none';
-    if (container) container.style.opacity = '1';
+    if (mySeq === gateFetchSeq) {
+      if (loader) loader.style.display = 'none';
+      if (container) container.style.opacity = '1';
+    }
   }
 }
 
@@ -492,7 +499,7 @@ async function exportToExcel() {
         "CreatedAt"
       ];
 
-      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows].map((row) => row.map(safeCell)));
       ws['!cols'] = [
         { wch: 6 },  // Sr No
         { wch: 15 }, // Card No

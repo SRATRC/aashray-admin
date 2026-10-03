@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="timeline-info">
                 <div class="timeline-booking">Booking ID: ${escapeHtml(tx.bookingid) || '—'}</div>
                 <div class="timeline-date">${new Date(tx.date).toLocaleString()}</div>
-                <div class="timeline-desc">Order ID: ${escapeHtml(tx.razorpay_order_id) || '—'} ${tx.description ? '· ' + tx.description : ''}</div>
+                <div class="timeline-desc">Order ID: ${escapeHtml(tx.razorpay_order_id) || '—'} ${tx.description ? '· ' + escapeHtml(tx.description) : ''}</div>
               </div>
               <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}">
                 ${amt >= 0 ? '+' : ''}${amt}

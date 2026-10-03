@@ -343,9 +343,9 @@ function renderUtsavWarning(utsavs) {
     const start = formatDate(u.start_date);
     const end = formatDate(u.end_date);
     if (start === end) {
-      return `<b>${start}</b> excluded due to Utsav: <b>${u.name}</b>`;
+      return `<b>${start}</b> excluded due to Utsav: <b>${escapeHtml(u.name)}</b>`;
     }
-    return `<b>${start} to ${end}</b> excluded due to Utsav: <b>${u.name}</b>`;
+    return `<b>${start} to ${end}</b> excluded due to Utsav: <b>${escapeHtml(u.name)}</b>`;
   });
 
   el.style.display = 'block';

@@ -40,6 +40,13 @@
       .replace(/'/g, '&#39;');
   };
 
+  // ── Spreadsheet formula guard ────────────────────────────────────────────
+  // Excel/Sheets run a cell that starts with = + - @ (or a tab/CR) as a
+  // formula. Prefix such text with a quote so it stays text. Numbers pass through.
+  window.safeCell = function (v) {
+    return typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+  };
+
   // ── Copy to Clipboard Helper ─────────────────────────────────────────────
   window.copyToClipboard = async function (text, successCallback) {
     try {

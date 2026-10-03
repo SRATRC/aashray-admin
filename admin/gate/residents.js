@@ -277,7 +277,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   fetchResidentsReport();
 });
 
+// Only the newest request may draw: a slow older reply must not overwrite it.
+let residentsFetchSeq = 0;
+
 async function fetchResidentsReport() {
+  const mySeq = ++residentsFetchSeq;
   const container = document.getElementById('prResidents');
   if (container) {
     container.style.opacity = '0.5';
@@ -293,6 +297,7 @@ async function fetchResidentsReport() {
     });
 
     const resData = await response.json();
+    if (mySeq !== residentsFetchSeq) return;
     if (response.ok && resData.data) {
       displayResidents(resData.data.records);
       renderPagination(resData.data.pagination);
@@ -303,7 +308,7 @@ async function fetchResidentsReport() {
   } catch (error) {
     console.error('Fetch Error:', error);
   } finally {
-    if (container) container.style.opacity = '1';
+    if (container && mySeq === residentsFetchSeq) container.style.opacity = '1';
   }
 }
 
@@ -608,7 +613,7 @@ async function exportToExcel() {
         "Last Gate Out Time"
       ];
 
-      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows].map((row) => row.map(safeCell)));
       ws['!cols'] = [
         { wch: 6 },  // Sr No
         { wch: 15 }, // Card No

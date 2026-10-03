@@ -69,11 +69,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const highlightText = (text, query) => {
     if (!text) return '';
     const textStr = String(text);
-    // The result goes into innerHTML: escape the text first, then wrap the matches
+    // The result goes into innerHTML: match on the raw text, then escape each
+    // piece, so a search like "amp" cannot match inside an entity.
     if (!query || !query.trim()) return escapeHtml(textStr);
-    const escapedQuery = escapeHtml(query.trim()).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    return escapeHtml(textStr).replace(regex, '<mark class="highlight">$1</mark>');
+    const rawQuery = query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`(${rawQuery})`, 'gi');
+    return textStr
+      .split(regex)
+      .map((piece, i) => (i % 2 === 1 ? `<mark class="highlight">${escapeHtml(piece)}</mark>` : escapeHtml(piece)))
+      .join('');
   };
 
   // Truncate long descriptions utility
@@ -156,7 +160,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (clearBtn && searchQuery) clearBtn.style.display = 'block';
   };
 
+  // Only the newest request may draw: a slow older reply must not overwrite it.
+  let fetchSeq = 0;
+
   const fetchMaintenance = async () => {
+    const mySeq = ++fetchSeq;
     console.log('Fetching Maintenance Requests...');
     updateUrlParams();
     showSkeleton();
@@ -264,6 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         options
       );
       const data = await response.json();
+      if (mySeq !== fetchSeq) return;
       console.log('Maintenance requests received:', data);
 
       if (data && data.data) {
@@ -275,7 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
-      hideSpinner();
+      if (mySeq === fetchSeq) hideSpinner();
     }
   };
 
@@ -866,7 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ];
 
       // Create sheet from array of arrays
-      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+      const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows].map((row) => row.map(safeCell)));
 
       // Set custom column widths (in characters)
       ws['!cols'] = [
