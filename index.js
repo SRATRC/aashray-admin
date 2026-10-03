@@ -49,7 +49,8 @@ function login(event) {
         'utsavAdminReadOnly',
         'smilesAdmin',
         'adhyayanAdminReadOnly',
-        'utsavAdminRaj'
+        'utsavAdminRaj',
+        'satshrutAdmin'
       ];
 
       const hasValidRole = roles.some((role) => validRoles.includes(role));

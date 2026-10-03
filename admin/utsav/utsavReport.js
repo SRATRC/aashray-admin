@@ -1,8 +1,37 @@
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
 let utsavfetch = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('isShareToken') === 'true') {
+    const logoutDiv = document.querySelector('.header .logout');
+    if (logoutDiv) {
+      logoutDiv.innerHTML = '<span style="font-weight:600; color:#fff;">📍 Utsav Coordinator View (Read-Only)</span> &nbsp;|&nbsp; <a href="javascript:void(0);" onclick="logout()" style="color:#fff; text-decoration:underline;">Logout</a>';
+    }
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
-  const location = urlParams.get('location'); // ✅ correctly get location value
+  let location = urlParams.get('location'); // ✅ correctly get location value
+
+  // If accessing via share token, prioritize the location embedded in the token's scope
+  if (sessionStorage.getItem('isShareToken') === 'true') {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      const decoded = parseJwtPayload(token);
+      if (decoded?.location || decoded?.scope?.location) {
+        location = decoded.location || decoded.scope.location;
+      }
+    }
+  }
 
   const utsavTableBody = document.getElementById('utsavTable');
 
@@ -23,7 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const response = await fetch(url, options);
       const result = await response.json();
-      const sortedData = (result.data || []).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      if (!response.ok) {
+        const safeMsg = escapeHtml(result.message || 'Unauthorized: Please check your access link.');
+        utsavTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:#dc2626; font-weight:600; padding:20px;">${safeMsg}</td></tr>`;
+        return;
+      }
+      const dataList = Array.isArray(result.data) ? result.data : [];
+      const sortedData = dataList.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
       utsavfetch = sortedData;
       populateTable(sortedData);
       setupDownloadButton();
@@ -116,8 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </td>
 
   <td style="text-align:center;">
-    ${JSON.parse(sessionStorage.getItem('roles') || '[]')
-          .includes('utsavAdminReadOnly')
+    ${(sessionStorage.getItem('isShareToken') === 'true' || JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
           ? '-'
           : `
           <button
@@ -159,6 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
   📝 Copy Feedback Link
 </button>
 
+<button
+  class="btn btn-sm btn-outline-primary short-link"
+  data-slug="u${item.id}"
+>
+  🌐 Copy WhatsApp Shortlink
+</button>
+
+<button
+  class="btn btn-sm btn-info send-grp-reminder"
+  data-utsav="${item.id}"
+  data-name="${item.name}"
+>
+  💬 Audit & Send Reminders
+</button>
+
 <a
   href="fetchUtsavFeedbacks.html?utsav_id=${item.id}"
   class="btn btn-sm btn-success"
@@ -166,8 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ⭐ View Feedback
 </a>
 
-${JSON.parse(sessionStorage.getItem('roles') || '[]')
-          .includes('utsavAdminReadOnly')
+${(JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly') || sessionStorage.getItem('isShareToken') === 'true')
           ? ''
           : `
       <a
@@ -190,15 +238,22 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
       >
         👤 Register Mumukshu
       </a>
+
+      <a
+        href="roomOccupancy.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-secondary"
+      >
+        🏠 Room Occupancy
+      </a>
+
+      <a
+        href="participantHistoryReport.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-primary"
+      >
+        📊 1-Yr History Dashboard
+      </a>
     `
         }
-
-<a
-  href="roomOccupancy.html?utsav_id=${item.id}"
-  class="btn btn-sm btn-secondary"
->
-  🏠 Room Occupancy
-</a>
     </div>
 
   </td>
@@ -301,6 +356,31 @@ ${JSON.parse(sessionStorage.getItem('roles') || '[]')
         showSuccessMessage(`Feedback link copied: ${url}`);
       });
 
+    }
+
+    if (e.target.classList.contains('short-link')) {
+      const slug = e.target.dataset.slug;
+      const url = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/${slug}`;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`WhatsApp Shortlink copied:\n${url}`);
+      } catch {
+        alert('Failed to copy shortlink.');
+      }
+    }
+
+    if (e.target.classList.contains('send-grp-reminder')) {
+      const utsavId = e.target.dataset.utsav;
+      const utsav = utsavfetch.find(u => String(u.id) === String(utsavId));
+      const jid = utsav?.whatsapp_group_jid || '';
+
+      const newUrl = `${window.location.pathname}?event_id=${utsavId}&type=utsav${jid ? '&jid=' + encodeURIComponent(jid) : ''}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      if (typeof openAuditModal === 'function') {
+        openAuditModal(jid || utsavId);
+      }
     }
 
     const toggleStatusBtn = e.target.closest('.toggle-status');

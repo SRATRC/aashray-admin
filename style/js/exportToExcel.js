@@ -17,6 +17,61 @@ function downloadExcelFromJSON(dataArray, fileName = "export.xlsx", sheetName = 
   : dataArray;
 
   const worksheet = XLSX.utils.json_to_sheet(formatted);
+
+  // Compute adaptive column widths and enable wrapText on all multi-line cells
+  const colKeys = Object.keys(formatted[0] || {});
+  const colWidths = colKeys.map(k => {
+    let maxLen = k.length;
+    formatted.forEach(r => {
+      const val = r[k];
+      if (val !== undefined && val !== null) {
+        const lines = String(val).split(/\r?\n/);
+        lines.forEach(l => {
+          if (l.length > maxLen) maxLen = l.length;
+        });
+      }
+    });
+    return { wch: Math.min(Math.max(maxLen + 4, 14), 48) };
+  });
+  worksheet['!cols'] = colWidths;
+
+  // Apply wrapText, colors and top-alignment to every cell
+  for (const cellKey in worksheet) {
+    if (cellKey.startsWith('!')) continue;
+    const cell = worksheet[cellKey];
+    if (cell) {
+      const match = cellKey.match(/^([A-Z]+)(\d+)$/);
+      const rowNum = match ? parseInt(match[2], 10) : 0;
+
+      if (rowNum === 1) {
+        // Header styling: #204060 dark blue, bold white text
+        cell.s = {
+          fill: { fgColor: { rgb: "204060" } },
+          font: { color: { rgb: "FFFFFF" }, bold: true, sz: 11, name: "Calibri" },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+          border: {
+            top: { style: "thin", color: { rgb: "CCCCCC" } },
+            bottom: { style: "medium", color: { rgb: "204060" } },
+            left: { style: "thin", color: { rgb: "CCCCCC" } },
+            right: { style: "thin", color: { rgb: "CCCCCC" } }
+          }
+        };
+      } else {
+        // Data row styling: Top-aligned and wrapText enabled
+        cell.s = {
+          font: { sz: 11, name: "Calibri", color: { rgb: "111111" } },
+          alignment: { vertical: "top", wrapText: true },
+          border: {
+            top: { style: "thin", color: { rgb: "EEEEEE" } },
+            bottom: { style: "thin", color: { rgb: "EEEEEE" } },
+            left: { style: "thin", color: { rgb: "EEEEEE" } },
+            right: { style: "thin", color: { rgb: "EEEEEE" } }
+          }
+        };
+      }
+    }
+  }
+
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
   XLSX.writeFile(workbook, fileName);

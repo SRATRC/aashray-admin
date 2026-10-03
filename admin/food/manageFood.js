@@ -495,7 +495,7 @@ async function getExistingGuestBookings() {
     }
   }
 
-  tableBody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px; color:#64748b;">⏳ Loading guest bookings...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px; color:#64748b;">⏳ Loading guest bookings...</td></tr>`;
 
   try {
     const searchParams = new URLSearchParams();
@@ -513,7 +513,7 @@ async function getExistingGuestBookings() {
     window._cachedGuestBookings = bookings;
 
     if (bookings.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px; color:#94a3b8;">No guest bookings found for this host.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px; color:#94a3b8;">No guest bookings found for this host.</td></tr>`;
       return;
     }
 
@@ -526,6 +526,13 @@ async function getExistingGuestBookings() {
 }
 
 window._guestCurrentPage = 1;
+// HTML-escape API values before they go into innerHTML
+function esc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function renderGuestBookingsTablePage(page = 1) {
   window._guestCurrentPage = page;
   const tableBody = document.querySelector('#guestBookingsTableBody');
@@ -546,19 +553,16 @@ function renderGuestBookingsTablePage(page = 1) {
 
     tr.innerHTML = `
       <td style="font-weight:600;">📅 ${dateStr}</td>
-      <td style="font-weight:600; color:#0f172a;">${b.bookedByCard?.issuedto || 'Guest'}</td>
-      <td>${b.mobno || b.bookedByCard?.mobno || '—'}</td>
-      <td><span style="padding:2px 8px; background:#f1f5f9; border-radius:6px; font-weight:700; font-size:11px; color:#334155;">${b.department || 'RC'}</span></td>
-      <td style="font-weight:700; text-align:center;">${b.guestCount}</td>
+      <td style="font-weight:600; color:#0f172a;">${esc(b.bookedByCard?.issuedto || 'Guest')}</td>
+      <td>${esc(b.mobno || b.bookedByCard?.mobno || '—')}</td>
+      <td><span style="padding:2px 8px; background:#f1f5f9; border-radius:6px; font-weight:700; font-size:11px; color:#334155;">${esc(b.department || 'RC')}</span></td>
+      <td style="font-weight:700; text-align:center;">${esc(b.guestCount)}</td>
       <td style="font-weight:600; color:#d97706;">🌅 ${b.breakfastCount || 0}</td>
       <td style="font-weight:600; color:#2563eb;">☀️ ${b.lunchCount || 0}</td>
       <td style="font-weight:600; color:#7c3aed;">🌙 ${b.dinnerCount || 0}</td>
       <td style="${hideIssuedCols}">${b.breakfastIssued || 0}</td>
       <td style="${hideIssuedCols}">${b.lunchIssued || 0}</td>
       <td style="${hideIssuedCols}">${b.dinnerIssued || 0}</td>
-      <td style="text-align:center; ${hideIssuedCols}">
-        <button type="button" onclick="deleteGuestBooking('${b.id}')" class="btn btn-sm btn-danger" style="border-radius:6px; font-size:11px; padding:2px 7px;">🗑️ Delete</button>
-      </td>
     `;
     tableBody.appendChild(tr);
   });
@@ -572,33 +576,6 @@ function renderGuestBookingsTablePage(page = 1) {
       onPageChange: (newPage) => renderGuestBookingsTablePage(newPage),
       itemLabel: 'bookings'
     });
-  }
-}
-
-async function deleteGuestBooking(bookingId) {
-  const confirm = await Swal.fire({
-    icon: 'warning',
-    title: 'Delete Guest Booking?',
-    text: 'Are you sure you want to delete this guest food reservation?',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, delete'
-  });
-  if (!confirm.isConfirmed) return;
-
-  try {
-    const response = await fetch(`${CONFIG.basePath}/food/bulk_booking/${bookingId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
-    });
-    const data = await response.json();
-    if (response.ok) {
-      await getExistingGuestBookings();
-      Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Guest booking deleted.', timer: 1500, showConfirmButton: false });
-    } else {
-      Swal.fire('Error', data.message || 'Failed to delete guest booking', 'error');
-    }
-  } catch (err) {
-    Swal.fire('Error', err.message || 'Unexpected error', 'error');
   }
 }
 

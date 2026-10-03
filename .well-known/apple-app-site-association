@@ -3,12 +3,16 @@
     "apps": [],
     "details": [
       {
-        "appID": "XQKVYDRXH8.org.vitraagvigyaan.aashray",
+        "appID": "GV7LX9X8B3.org.vitraagvigyaan.aashray",
         "paths": [
           "/adhyayan/*",
           "/utsav/*",
+          "/menu",
+          "/maintenanceRequestList",
           "/pendingPayments",
           "/pendingPayments/*",
+          "/bookings",
+          "/wifi",
           "/"
         ]
       }

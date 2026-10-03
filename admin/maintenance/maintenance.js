@@ -3,11 +3,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const department = params.get('department') || 'maintenance';
 
-  // Dynamic Page Title based on active department
+  // Customize UI based on department
   const formattedDepartment = department.charAt(0).toUpperCase() + department.slice(1);
   const headingEl = document.getElementById('pageHeading');
   if (headingEl) {
-    headingEl.textContent = `All Requests - ${formattedDepartment}`;
+    const titles = {
+      housekeeping: 'Housekeeping Management',
+      electrical: 'Electrical Management',
+      maintenance: 'Maintenance Management'
+    };
+    headingEl.textContent = titles[department] || `All Requests - ${formattedDepartment}`;
+  }
+
+  if (department === 'housekeeping') {
+    let hasAccess = false;
+    try {
+      const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+      const allowedRoles = ['housekeepingAdmin', 'superAdmin'];
+      hasAccess = Array.isArray(roles)
+        ? roles.some(r => allowedRoles.includes(r))
+        : allowedRoles.includes(roles);
+    } catch (e) {
+      console.error('Error parsing roles:', e);
+    }
+    if (hasAccess) {
+      const btnContainer = document.getElementById('deepCleaningBtnContainer');
+      if (btnContainer) btnContainer.style.display = 'block';
+    }
   }
 
   // Parse page size, page number, search query, sorting, and status filter from URL params

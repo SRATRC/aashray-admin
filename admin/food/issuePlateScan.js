@@ -1,105 +1,119 @@
 document.addEventListener('DOMContentLoaded', function () {
   const qrStatus = document.getElementById('qr-status');
   const alertDiv = document.getElementById('alert');
+  const networkBadge = document.getElementById('network-badge');
+  const queueCount = document.getElementById('queue-count');
+  const syncNowBtn = document.getElementById('sync-now-btn');
   const manualScanForm = document.getElementById('manualScanForm');
   const manualCardNoInput = document.getElementById('manualCardNo');
   const btnRestartScanner = document.getElementById('btnRestartScanner');
   const recentScansTableBody = document.getElementById('recentScansTableBody');
+  const recentScans = [];
+
+  const QUEUE_STORAGE_KEY = 'food_offline_scan_queue';
+  const COOLDOWN_MS = 5 * 60 * 1000;
 
   let html5QrCode = null;
   let isProcessing = false;
-  const recentScans = [];
+  let isSyncing = false;
 
-  /* ===== Kiosk Clock & Meal Slot Updater ===== */
+  updateNetworkUI();
+  startQRScanner();
+
+  /* ===== Kiosk clock and meal slot ===== */
   updateKioskHeader();
   setInterval(updateKioskHeader, 1000);
 
   function updateKioskHeader() {
     const clockEl = document.getElementById('liveClockDisplay');
     const badgeEl = document.getElementById('activeMealBadge');
-
     const now = new Date();
-    if (clockEl) clockEl.innerText = now.toLocaleTimeString('en-US', { hour12: true });
-
-    const totalMins = now.getHours() * 60 + now.getMinutes();
-
+    if (clockEl) clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: true });
     if (!badgeEl) return;
-    // Meal windows: Breakfast (6:00 - 10:30), Lunch (11:00 - 15:30), Dinner (17:30 - 22:30)
-    if (totalMins >= 360 && totalMins <= 630) {
-      badgeEl.innerHTML = '🌅 Breakfast';
+    const totalMins = now.getHours() * 60 + now.getMinutes();
+    // Plate meal windows follow the backend: breakfast to 10:00, lunch to 14:00, dinner to 19:00
+    if (totalMins <= 600) {
+      badgeEl.textContent = '🌅 Breakfast';
       badgeEl.style.background = '#f59e0b';
-    } else if (totalMins >= 660 && totalMins <= 930) {
-      badgeEl.innerHTML = '☀️ Lunch';
+    } else if (totalMins <= 840) {
+      badgeEl.textContent = '☀️ Lunch';
       badgeEl.style.background = '#3b82f6';
-    } else if (totalMins >= 1050 && totalMins <= 1350) {
-      badgeEl.innerHTML = '🌙 Dinner';
+    } else if (totalMins <= 1140) {
+      badgeEl.textContent = '🌙 Dinner';
       badgeEl.style.background = '#8b5cf6';
     } else {
-      badgeEl.innerHTML = '⏸️ Off-Meal Hours';
+      badgeEl.textContent = '⏸️ Off-Meal Hours';
       badgeEl.style.background = '#64748b';
     }
   }
 
-  /* ===== Camera Scanner Initialization with Fallback ===== */
-  startQRScanner();
+  if (btnRestartScanner) {
+    btnRestartScanner.addEventListener('click', () => {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(() => {}).then(() => startQRScanner());
+      } else {
+        startQRScanner();
+      }
+    });
+  }
 
-  btnRestartScanner?.addEventListener('click', () => {
-    if (html5QrCode) {
-      html5QrCode.stop().catch(() => {}).then(() => startQRScanner());
-    } else {
-      startQRScanner();
-    }
+  /* ===== Manual card entry: same online / offline-queue path as a scan ===== */
+  if (manualScanForm) {
+    manualScanForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cardno = processScannedText(manualCardNoInput ? manualCardNoInput.value : '');
+      if (!cardno || isProcessing) return;
+      if (manualCardNoInput) manualCardNoInput.value = '';
+      isProcessing = true;
+      await submitCard(cardno, new Date().toISOString());
+      resumeScanning(1500);
+      if (manualCardNoInput) manualCardNoInput.focus();
+    });
+  }
+
+  window.addEventListener('online', () => {
+    updateNetworkUI();
+    syncPendingScans();
   });
 
-  async function startQRScanner() {
+  window.addEventListener('offline', () => {
+    updateNetworkUI();
+  });
+
+  if (syncNowBtn) {
+    syncNowBtn.addEventListener('click', () => {
+      syncPendingScans();
+    });
+  }
+
+  if (navigator.onLine) {
+    syncPendingScans();
+  }
+
+  /* -------------------- SCANNER -------------------- */
+
+  function startQRScanner() {
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('reader');
     }
 
-    setStatus('Initializing camera scanner...', 'scanning');
+    setStatus('Initializing scanner...', 'scanning');
 
-    try {
-      // Attempt 1: Try rear environment camera
-      await html5QrCode.start(
+    html5QrCode
+      .start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
         onScanSuccess,
         onScanFailure
-      );
-      setStatus('Ready to scan QR code...', 'scanning');
-    } catch (err1) {
-      console.warn('Environment camera failed, trying front/user camera...', err1);
-      try {
-        // Attempt 2: Try front user camera
-        await html5QrCode.start(
-          { facingMode: 'user' },
-          { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
-          onScanSuccess,
-          onScanFailure
-        );
-        setStatus('Ready to scan QR code...', 'scanning');
-      } catch (err2) {
-        console.warn('Front camera failed, trying camera devices list...', err2);
-        try {
-          // Attempt 3: Select first available camera device
-          const devices = await Html5Qrcode.getCameras();
-          if (devices && devices.length > 0) {
-            await html5QrCode.start(
-              devices[0].id,
-              { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
-              onScanSuccess,
-              onScanFailure
-            );
-            setStatus('Ready to scan QR code...', 'scanning');
-          } else {
-            throw new Error('No camera devices found.');
-          }
-        } catch (err3) {
-          console.error('All camera initialization attempts failed:', err3);
-          setStatus('❌ Camera access failed or disabled. Use manual card input below.', 'danger');
-        }
-      }
-    }
+      )
+      .then(() => {
+        setStatus('Ready to scan...', 'scanning');
+      })
+      .catch((err) => {
+        setStatus('❌ Camera unavailable. Use manual card input below.', 'danger');
+        if (manualCardNoInput) manualCardNoInput.focus();
+        console.error('QR Scanner Error:', err);
+      });
   }
 
   async function onScanSuccess(decodedText) {
@@ -107,35 +121,64 @@ document.addEventListener('DOMContentLoaded', function () {
     isProcessing = true;
 
     const cardno = processScannedText(decodedText);
-    setStatus(`Issuing plate for ${cardno}...`, 'scanning');
+    const scannedAt = new Date().toISOString();
 
-    try {
-      await sendIssuePlateRequest(cardno);
-    } catch (_) {}
+    if (!cardno) {
+      showMessage('Invalid QR Code scanned', 'danger');
+      resumeScanning(1500);
+      return;
+    }
 
-    setTimeout(() => {
-      isProcessing = false;
-      setStatus('Ready to scan QR code...', 'scanning');
-    }, 1500);
+    await submitCard(cardno, scannedAt);
+    resumeScanning(1500);
   }
 
-  function onScanFailure(error) {}
+  async function submitCard(cardno, scannedAt) {
+    if (navigator.onLine) {
+      setStatus(`Issuing plate for ${cardno}...`, 'scanning');
 
-  /* ===== Manual Form Submit Fallback ===== */
-  manualScanForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const cardno = manualCardNoInput?.value.trim();
-    if (!cardno) return;
+      try {
+        await sendIssuePlateRequest(cardno, scannedAt);
+      } catch (err) {
+        if (isNetworkError(err)) {
+          handleOfflineScan(cardno, scannedAt);
+        }
+      }
+    } else {
+      handleOfflineScan(cardno, scannedAt);
+    }
+  }
 
-    setStatus(`Issuing plate for ${cardno}...`, 'scanning');
-    try {
-      await sendIssuePlateRequest(cardno);
-      if (manualCardNoInput) manualCardNoInput.value = '';
-    } catch (_) {}
-  });
+  function handleOfflineScan(cardno, scannedAt) {
+    const result = enqueueScan(cardno, scannedAt);
+
+    if (result.success) {
+      setStatus(`📦 Saved Offline (${cardno})`, 'warning');
+      showMessage(`Scanned offline! Plate saved to sync queue for ${cardno}.`, 'warning');
+      addRecentScan(cardno, '—', '📦 Queued');
+    } else if (result.reason === 'duplicate') {
+      setStatus(`⚠️ Already Queued (${cardno})`, 'warning');
+      showMessage(`Card ${cardno} was already scanned offline recently.`, 'warning');
+    }
+
+    updateNetworkUI();
+  }
+
+  function resumeScanning(delayMs = 1500) {
+    setTimeout(() => {
+      isProcessing = false;
+      setStatus('Ready to scan...', 'scanning');
+    }, delayMs);
+  }
+
+  function onScanFailure(error) {
+    // silent
+  }
+
+  /* -------------------- HELPERS -------------------- */
 
   function processScannedText(text) {
-    let cardno = text.trim();
+    let cardno = text ? text.trim() : '';
     if (cardno.toLowerCase().startsWith('cardnumber=')) {
       cardno = cardno.split('=')[1].trim();
     }
@@ -144,14 +187,102 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getAlertTypeFromMessage(message = '') {
     const msg = message.toLowerCase();
+
     if (msg.includes('already issued')) return 'warning';
-    if (msg.includes('invalid meal time') || msg.includes('off-meal')) return 'warning';
-    if (msg.includes('booking not found') || msg.includes('not booked')) return 'danger';
+    if (msg.includes('invalid meal time')) return 'info';
+    if (msg.includes('booking not found')) return 'danger';
+
     return 'danger';
   }
 
-  /* ===== Send Plate Issuance API Request ===== */
-  async function sendIssuePlateRequest(cardno) {
+  function isNetworkError(err) {
+    return (
+      !navigator.onLine ||
+      err instanceof TypeError ||
+      err?.name === 'TypeError' ||
+      err?.message?.includes('Failed to fetch') ||
+      err?.message?.includes('NetworkError')
+    );
+  }
+
+  /* -------------------- OFFLINE QUEUE MANAGER -------------------- */
+
+  function getOfflineQueue() {
+    try {
+      const data = localStorage.getItem(QUEUE_STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('Failed to read scan queue from localStorage', e);
+      return [];
+    }
+  }
+
+  function saveOfflineQueue(queue) {
+    try {
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
+    } catch (e) {
+      console.error('Failed to save scan queue to localStorage', e);
+    }
+  }
+
+  function enqueueScan(cardno, scannedAt) {
+    const queue = getOfflineQueue();
+    const now = Date.now();
+
+    const recentDuplicate = queue.find(
+      item => item.cardno === cardno && now - item.timestampMs < COOLDOWN_MS
+    );
+
+    if (recentDuplicate) {
+      return { success: false, reason: 'duplicate' };
+    }
+
+    const newItem = {
+      id: `${cardno}_${now}`,
+      cardno,
+      scannedAt,
+      timestampMs: now,
+      status: 'pending'
+    };
+
+    queue.push(newItem);
+    saveOfflineQueue(queue);
+    return { success: true, item: newItem };
+  }
+
+  function updateNetworkUI() {
+    const isOnline = navigator.onLine;
+    const queue = getOfflineQueue();
+    const pendingCount = queue.filter(item => item.status === 'pending').length;
+
+    if (networkBadge) {
+      if (isOnline) {
+        networkBadge.className = 'network-badge online';
+        networkBadge.innerText = '🟢 Online';
+      } else {
+        networkBadge.className = 'network-badge offline';
+        networkBadge.innerText = '🟠 Offline Mode';
+      }
+    }
+
+    if (queueCount) {
+      queueCount.innerText = `${pendingCount} Pending ${pendingCount === 1 ? 'Scan' : 'Scans'}`;
+    }
+
+    if (syncNowBtn) {
+      if (isOnline && pendingCount > 0) {
+        syncNowBtn.style.display = 'inline-block';
+        syncNowBtn.disabled = isSyncing;
+        syncNowBtn.innerText = isSyncing ? 'Syncing...' : 'Sync Now';
+      } else {
+        syncNowBtn.style.display = 'none';
+      }
+    }
+  }
+
+  /* -------------------- API & BATCH SYNC -------------------- */
+
+  async function sendIssuePlateRequest(cardno, scannedAt) {
     resetAlert();
 
     const token = sessionStorage.getItem('token');
@@ -160,54 +291,153 @@ document.addEventListener('DOMContentLoaded', function () {
       throw new Error('Not authenticated');
     }
 
+    showMessage('Issuing plate...', 'info');
+
+    const payload = { scannedAt: scannedAt || new Date().toISOString() };
+
+    let response;
     try {
-      const response = await fetch(`${CONFIG.basePath}/food/issue/${cardno}`, {
+      response = await fetch(`${CONFIG.basePath}/food/issue/${cardno}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({})
+        body: JSON.stringify(payload)
       });
-
-      const data = await response.json();
-      const timeStr = new Date().toLocaleTimeString('en-US', { hour12: true });
-
-      if (!response.ok) {
-        const alertType = getAlertTypeFromMessage(data.message);
-        setStatus('❌ ' + (data.message || 'Failed to issue plate'), alertType);
-        showMessage(data.message || 'Failed to issue plate', alertType);
-        playErrorBuzzer();
-
-        addRecentScan({
-          time: timeStr,
-          cardno,
-          issuedto: '—',
-          status: '❌ ' + (data.message || 'Failed')
-        });
-        throw data;
-      }
-
-      // Success
-      setStatus(`✅ Plate issued to ${data.issuedto || 'Member'}`, 'success');
-      showMessage(data.message || 'Plate issued successfully!', 'success');
-      playSuccessBeep();
-
-      addRecentScan({
-        time: timeStr,
-        cardno,
-        issuedto: data.issuedto || 'Member',
-        status: '✅ Issued'
-      });
-
-    } catch (err) {
-      if (!err?.message) {
-        setStatus('❌ Unexpected error occurred', 'danger');
-        showMessage('Unexpected error occurred.', 'danger');
-        playErrorBuzzer();
-      }
-      throw err;
+    } catch (fetchErr) {
+      throw fetchErr;
     }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const alertType = getAlertTypeFromMessage(data.message);
+
+      setStatus('❌ ' + (data.message || 'Failed to issue plate'), alertType);
+
+      showMessage(data.message || 'Failed to issue plate', alertType);
+      playErrorBuzzer();
+      addRecentScan(cardno, '—', '❌ ' + (data.message || 'Failed'));
+      throw data;
+    }
+
+    setStatus(`✅ Plate issued to ${data.issuedto}`, 'success');
+    showMessage(data.message || 'Plate issued successfully.', 'success');
+    playSuccessBeep();
+    addRecentScan(cardno, data.issuedto || 'Member', '✅ Issued');
+
+    return data;
+  }
+
+  async function syncPendingScans() {
+    if (isSyncing || !navigator.onLine) return;
+
+    let queue = getOfflineQueue();
+    const pendingItems = queue.filter(item => item.status === 'pending');
+
+    if (pendingItems.length === 0) return;
+
+    isSyncing = true;
+    updateNetworkUI();
+
+    showMessage(`Syncing ${pendingItems.length} offline scans...`, 'info');
+
+    let syncedCount = 0;
+    let warningCount = 0;
+
+    for (let i = 0; i < pendingItems.length; i++) {
+      const item = pendingItems[i];
+
+      if (!navigator.onLine) {
+        showMessage(`Network lost during sync. ${syncedCount} scans synced, ${pendingItems.length - syncedCount} remaining.`, 'warning');
+        break;
+      }
+
+      try {
+        await sendIssuePlateRequest(item.cardno, item.scannedAt);
+        syncedCount++;
+
+        queue = getOfflineQueue().filter(q => q.id !== item.id);
+        saveOfflineQueue(queue);
+        updateNetworkUI();
+
+      } catch (err) {
+        if (isNetworkError(err)) {
+          showMessage(`Network error during sync. ${syncedCount} synced, ${pendingItems.length - syncedCount} pending.`, 'warning');
+          break;
+        } else {
+          warningCount++;
+          queue = getOfflineQueue().filter(q => q.id !== item.id);
+          saveOfflineQueue(queue);
+          updateNetworkUI();
+        }
+      }
+    }
+
+    isSyncing = false;
+    updateNetworkUI();
+
+    if (syncedCount > 0 || warningCount > 0) {
+      showMessage(`Batch sync completed! ${syncedCount} plates issued successfully (${warningCount} warnings/skipped).`, 'success');
+    }
+  }
+
+  /* -------------------- ALERTS -------------------- */
+
+  let alertTimeout = null;
+
+  function setStatus(text, statusType) {
+    if (!qrStatus) return;
+    const t = ['success', 'warning', 'danger', 'scanning'].includes(statusType) ? statusType : (statusType === 'info' ? 'scanning' : 'danger');
+    qrStatus.className = `status-pill status-${t}`;
+    qrStatus.textContent = text;
+  }
+
+  function showMessage(message, type) {
+    alertDiv.className = `big-scan-alert alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+
+    if (alertTimeout) clearTimeout(alertTimeout);
+    alertTimeout = setTimeout(resetAlert, 1500);
+  }
+
+  function resetAlert() {
+    alertDiv.style.display = 'none';
+    alertDiv.className = 'big-scan-alert';
+    alertDiv.textContent = '';
+  }
+
+  /* -------------------- RECENT SCANS + SOUNDS -------------------- */
+
+  function addRecentScan(cardno, issuedto, status) {
+    recentScans.unshift({
+      time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+      cardno,
+      issuedto,
+      status
+    });
+    if (recentScans.length > 5) recentScans.pop();
+    renderRecentScans();
+  }
+
+  // textContent only: card numbers, names and server messages are untrusted
+  function renderRecentScans() {
+    if (!recentScansTableBody) return;
+    recentScansTableBody.textContent = '';
+    recentScans.forEach((r) => {
+      const tr = document.createElement('tr');
+      [r.time, r.cardno, r.issuedto || '—', r.status].forEach((val, i) => {
+        const td = document.createElement('td');
+        td.style.padding = '8px 12px';
+        td.style.fontWeight = '600';
+        if (i === 3) td.style.textAlign = 'center';
+        td.textContent = val == null ? '' : String(val);
+        tr.appendChild(td);
+      });
+      recentScansTableBody.appendChild(tr);
+    });
   }
 
   function playSuccessBeep() {
@@ -246,50 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  /* ===== Status & Alert Helpers ===== */
-  function setStatus(text, statusType) {
-    if (!qrStatus) return;
-    qrStatus.className = `status-pill status-${statusType}`;
-    qrStatus.innerText = text;
-  }
-
-  function showMessage(message, type) {
-    if (!alertDiv) return;
-    alertDiv.className = `alert alert-${type} big-scan-alert`;
-    alertDiv.textContent = message;
-    alertDiv.style.display = 'block';
-
-    if (type === 'success') {
-      setTimeout(resetAlert, 1500);
-    }
-  }
-
-  function resetAlert() {
-    if (!alertDiv) return;
-    alertDiv.style.display = 'none';
-    alertDiv.className = 'alert';
-    alertDiv.textContent = '';
-  }
-
-  function addRecentScan(scanItem) {
-    recentScans.unshift(scanItem);
-    if (recentScans.length > 5) recentScans.pop();
-
-    if (recentScansTableBody) {
-      recentScansTableBody.innerHTML = recentScans.map(s => `
-        <tr>
-          <td style="font-weight:600; color:#64748b;">${s.time}</td>
-          <td style="font-weight:700; color:#0f172a;">${s.cardno}</td>
-          <td style="font-weight:600;">${s.issuedto}</td>
-          <td style="text-align:center;">
-            <span style="font-weight:700; font-size:11px; padding:2px 8px; border-radius:10px; ${s.status.includes('Issued') ? 'background:#ecfdf5; color:#059669;' : 'background:#fef2f2; color:#dc2626;'}">
-              ${s.status}
-            </span>
-          </td>
-        </tr>
-      `).join('');
-    }
-  }
+  /* -------------------- CLEANUP -------------------- */
 
   window.addEventListener('beforeunload', () => {
     if (html5QrCode) {
