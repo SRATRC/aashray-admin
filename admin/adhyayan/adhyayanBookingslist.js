@@ -53,23 +53,40 @@ document.addEventListener('DOMContentLoaded', async function () {
     <td>${item.center || '-'}</td>
     <td>${item.res_status || '-'}</td>
     <td>${item.status || '-'}</td>
+    <td>${formatDateTime(item.createdAt) || '-'}</td>
+    <td>${formatDateTime(item.updatedAt) || '-'}</td>
     <td>${item.transaction_status || '-'}</td>
     <td>${item.comments || '-'}</td>
     <td>${item.bookedby || '-'}</td>
-    <td>
-      ${
-        isReadOnly
-          ? '-'  // show a dash for read-only users
-          : `<a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
-               Update Booking Status
-             </a>`
+   <td>
+  ${
+    (() => {
+      const isSuperAdmin = roles.includes('superAdmin');
+
+      // Hide only for non-super admins when status is waiting
+      if (item.status === 'waiting' && !isSuperAdmin) {
+        return '-';
       }
-    </td>
-    <td>
-  <button class="btn btn-small"
-    onclick="createAttendance('${item.bookingid}')">
-    click here
-  </button>
+
+      // Read only users still cannot update
+      if (isReadOnly) {
+        return '-';
+      }
+
+      return `
+        <a href="adhyayanStatusUpdate.html?bookingIdParam=${item.bookingid}&shibirIdParam=${item.shibir_id}&&statusParam=${item.status}">
+          Update Booking Status
+        </a>
+      `;
+    })()
+  }
+</td>
+  <td>
+  ${
+    item.attendance_id
+      ? `<span style="color: green; font-weight: bold;">✔ Added</span>`
+      : `<button class="btn btn-small" onclick="createAttendance('${item.bookingid}', this)">Add Attendance</button>`
+  }
 </td>
 
   `;
@@ -89,12 +106,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         center: 'center',
         res_status: 'res_status',
         status: 'status',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
         transaction_status: 'transaction status',
         comments: 'admin comments',
         bookedby: 'bookedby',
-        action: 'action',
-        addattendance: 'add attendance records'
-
       });
     }
 
@@ -119,18 +135,24 @@ function injectDataKeysToHeaders(tableSelector, keyMap) {
 }
 
 const setupDownloadButton = () => {
-  document.getElementById('downloadBtnContainer').innerHTML = ''; // Clear previous buttons
+  document.getElementById('downloadBtnContainer').innerHTML = '';
+
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => adhyayanbookings,
+    getData: () => {
+      return adhyayanbookings.map(item => ({
+        ...item,
+        createdAt: formatDateTime(item.createdAt),
+        updatedAt: formatDateTime(item.updatedAt)
+      }));
+    },
     fileName: 'adhyayanbookings.xlsx',
     sheetName: 'Adhyayan Bookings',
     tableSelector: '#waitlistTable'
   });
 };
 
-
-async function createAttendance(bookingid) {
+async function createAttendance(bookingid, buttonEl) {
   try {
     const response = await fetch(
       `${CONFIG.basePath}/adhyayan/attendance/create`,
@@ -148,6 +170,9 @@ async function createAttendance(bookingid) {
 
     if (response.status === 409) {
       alert("Attendance record already exists");
+      if (buttonEl) {
+        buttonEl.parentElement.innerHTML = `<span style="color: green; font-weight: bold;">✔ Added</span>`;
+      }
       return;
     }
 
@@ -157,9 +182,34 @@ async function createAttendance(bookingid) {
     }
 
     alert("Attendance record created successfully");
+    if (buttonEl) {
+      buttonEl.parentElement.innerHTML = `<span style="color: green; font-weight: bold;">✔ Added</span>`;
+    }
 
   } catch (error) {
     console.error(error);
     alert("Something went wrong");
+  }
+}
+
+
+function formatDateTime(dateInput) {
+  if (!dateInput) return '-';
+
+  try {
+    const dateObj = new Date(dateInput);
+
+    return dateObj.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', ''); // Optional: remove comma between date & time
+  } catch (err) {
+    console.error('Invalid date format:', dateInput);
+    return '-';
   }
 }

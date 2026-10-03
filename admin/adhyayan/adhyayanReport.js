@@ -1,5 +1,16 @@
 let adhyayanfetch = [];
 
+function buildSessionOptions(sessions, placeholder, labelPrefix = 'S') {
+  let opts = `<option value="">${placeholder}</option>`;
+  (sessions || []).forEach(s => {
+    const isMV = s.type === 'MV';
+    opts += `<option value="${s.session_number}">
+      ${labelPrefix}${s.session_number}${isMV ? ' (MV)' : ''}
+    </option>`;
+  });
+  return opts;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const adhyayanTableBody = document.getElementById('adhyayanTable');
 
@@ -46,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!Array.isArray(data) || data.length === 0) {
       adhyayanTableBody.innerHTML =
-        '<tr><td colspan="17" style="text-align:center;">No data available</td></tr>';
+        '<tr><td colspan="19" style="text-align:center;">No data available</td></tr>';
       return;
     }
 
@@ -85,21 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
           </a>
         </td>
 
-                <td style="text-align:center;">
+<td style="text-align:center;">
   <select class="attendance-session-dropdown"
+    data-type="tap"
     data-shibir-id="${item.id}">
-    ${(() => {
-      let opts = '<option value="">Scan</option>';
-      const mvSessions = [7, 8, 9];
-      for (let i = 1; i <= 9; i++) {
-        opts += `<option value="${i}">
-          S${i}${mvSessions.includes(i) ? ' (MV)' : ''}
-        </option>`;
-      }
-      return opts;
-    })()}
+    ${buildSessionOptions(item.sessions, 'Tap Scan', 'S')}
   </select>
 </td>
+
+<td style="text-align:center;">
+  <select class="attendance-session-dropdown"
+    data-type="mobile"
+    data-shibir-id="${item.id}">
+    ${buildSessionOptions(item.sessions, 'Mob Scan', 'S')}
+  </select>
 
         <td style="text-align:center;">${item.total_seats}</td>
         <td style="text-align:center;">${item.available_seats}</td>
@@ -136,15 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detailRow.classList.add('detail-row');
       detailRow.style.display = 'none';
 
-      let sessionOptions = '<option value="">Select Attendance Session</option>';
-      const mvSessions = [7, 8, 9];
-
-      for (let i = 1; i <= 9; i++) {
-        sessionOptions += `
-          <option value="${i}">
-            Session ${i}${mvSessions.includes(i) ? ' (MV)' : ''}
-          </option>`;
-      }
+      let sessionOptions = buildSessionOptions(item.sessions, 'Select Attendance Session', 'Session ');
 
       detailRow.innerHTML = `
         <td colspan="18">
@@ -167,6 +169,17 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn btn-sm btn-secondary adhyayan-link"
               data-shibir="${item.id}">
               🔗 Copy Adhyayan Link
+            </button>
+
+            <button class="btn btn-sm btn-outline-primary short-link"
+              data-slug="a${item.id}">
+              🌐 Copy WhatsApp Shortlink
+            </button>
+
+            <button class="btn btn-sm btn-info send-grp-reminder"
+              data-shibir="${item.id}"
+              data-name="${item.name}">
+              💬 Audit & Send Reminders
             </button>
 
             <button class="btn btn-sm btn-warning feedback-link"
@@ -283,12 +296,10 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       const result = await response.json();
-      const mvSessions = [7, 8, 9];
 
       result.data.summary.forEach(row => {
-        const match = String(row.session).match(/\d+/);
-        const sessionNo = match ? Number(match[0]) : null;
-        const isMV = mvSessions.includes(sessionNo);
+        const sessionNo = row.session_number;
+        const isMV = row.type === 'MV';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -304,12 +315,14 @@ document.addEventListener('DOMContentLoaded', () => {
         selector: '#attendanceSummaryDownload',
         getData: () =>
           result.data.summary.map(row => {
-            const match = String(row.session).match(/\d+/);
-            const sessionNo = match ? Number(match[0]) : row.session;
+            const sessionNo = row.session_number;
+            const isMV = row.type === 'MV';
 
             return {
-              ...row,
-              session: `Session ${sessionNo}${mvSessions.includes(sessionNo) ? ' (MV)' : ''}`
+              session: `Session ${sessionNo}${isMV ? ' (MV)' : ''}`,
+              total_registrants: row.total_registrants,
+              total_attended: row.total_attended,
+              total_absentees: row.total_absentees
             };
           }),
         fileName: `${shibirName}_attendance_summary.xlsx`,
@@ -329,6 +342,32 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`Adhyayan link copied:\n${url}`);
       } catch {
         alert('Failed to copy Adhyayan link.');
+      }
+    }
+
+    // Copy Shortlink (WhatsApp redirect link)
+    if (e.target.classList.contains('short-link')) {
+      const slug = e.target.dataset.slug;
+      const url = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/${slug}`;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`WhatsApp Shortlink copied:\n${url}`);
+      } catch {
+        alert('Failed to copy shortlink.');
+      }
+    }
+
+    if (e.target.classList.contains('send-grp-reminder')) {
+      const shibirId = e.target.dataset.shibir;
+      const shibir = adhyayanfetch.find(s => String(s.id) === String(shibirId));
+      const jid = shibir?.whatsapp_group_jid || '';
+      
+      const newUrl = `${window.location.pathname}?event_id=${shibirId}&type=shibir${jid ? '&jid=' + encodeURIComponent(jid) : ''}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      if (typeof openAuditModal === 'function') {
+        openAuditModal(jid || shibirId);
       }
     }
 
@@ -362,9 +401,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!sessionNo) return;
 
-    const url =
-      `adhyayanAttendanceScan.html?shibir_id=${shibirId}&session=${sessionNo}`;
+const type = e.target.dataset.type;
 
+let url = '';
+
+if (type === 'tap') {
+  url = `adhyayanAttendanceScanTap.html?shibir_id=${shibirId}&session=${sessionNo}`;
+} else if (type === 'mobile') {
+  url = `adhyayanAttendanceScanMob.html?shibir_id=${shibirId}&session=${sessionNo}`;
+}
     window.open(url, '_blank');
     e.target.value = '';
   });

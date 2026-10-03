@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
     const rolesInput = document.getElementById('roles').value.trim();
+    const cardno = document.getElementById('cardno').value.trim();
 
     // Convert comma-separated string to array and remove extra spaces
     const roles = rolesInput
@@ -22,14 +23,14 @@ document.addEventListener('DOMContentLoaded', function () {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         },
-        body: JSON.stringify({ username, password, roles })
+        body: JSON.stringify({ username, password, roles, cardno: cardno || null })
       });
 
       const data = await response.json();
 
       if (response.ok) {
         alert(`Admin ${username} created successfully!`);
-        window.location.href = '/admin/sudo/fetchAllAdmins.html';
+        window.location.href = '/admin/sudo/index.html';
       } else {
         statusMessage.innerHTML = `<div class="alert alert-danger">${
           data.message || 'Failed to create admin.'

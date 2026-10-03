@@ -1,11 +1,40 @@
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
 let utsavfetch = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('isShareToken') === 'true') {
+    const logoutDiv = document.querySelector('.header .logout');
+    if (logoutDiv) {
+      logoutDiv.innerHTML = '<span style="font-weight:600; color:#fff;">📍 Utsav Coordinator View (Read-Only)</span> &nbsp;|&nbsp; <a href="javascript:void(0);" onclick="logout()" style="color:#fff; text-decoration:underline;">Logout</a>';
+    }
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
-  const location = urlParams.get('location'); // ✅ correctly get location value
+  let location = urlParams.get('location'); // ✅ correctly get location value
+
+  // If accessing via share token, prioritize the location embedded in the token's scope
+  if (sessionStorage.getItem('isShareToken') === 'true') {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      const decoded = parseJwtPayload(token);
+      if (decoded?.location || decoded?.scope?.location) {
+        location = decoded.location || decoded.scope.location;
+      }
+    }
+  }
 
   const utsavTableBody = document.getElementById('utsavTable');
-  
+
   const fetchUtsavReport = async () => {
     const options = {
       method: 'GET',
@@ -17,14 +46,21 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       let url = `${CONFIG.basePath}/utsav/fetchUtsav`;
 
-if (location) {
-  url += `?location=${encodeURIComponent(location)}`;
-}
+      if (location) {
+        url += `?location=${encodeURIComponent(location)}`;
+      }
 
-const response = await fetch(url, options);
+      const response = await fetch(url, options);
       const result = await response.json();
-      utsavfetch = result.data || [];
-      populateTable(result.data);
+      if (!response.ok) {
+        const safeMsg = escapeHtml(result.message || 'Unauthorized: Please check your access link.');
+        utsavTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:#dc2626; font-weight:600; padding:20px;">${safeMsg}</td></tr>`;
+        return;
+      }
+      const dataList = Array.isArray(result.data) ? result.data : [];
+      const sortedData = dataList.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+      utsavfetch = sortedData;
+      populateTable(sortedData);
       setupDownloadButton();
     } catch (error) {
       console.error('Error fetching Utsav report:', error);
@@ -32,84 +68,238 @@ const response = await fetch(url, options);
   };
 
 
-const populateTable = (data) => {
+  const populateTable = (data) => {
     utsavTableBody.innerHTML = ''; // Clear existing rows
-console.log(data);
 
     if (!Array.isArray(data) || data.length === 0) {
       utsavTableBody.innerHTML =
-        '<tr><td colspan="7" style="text-align:center;">No data available</td></tr>';
+        '<tr><td colspan="17" style="text-align:center;">No data available</td></tr>';
       return;
     }
 
     data.forEach((item, index) => {
       const tableRow = document.createElement('tr');
+
+      tableRow.classList.add('main-row');
+
       tableRow.innerHTML = `
-            <td style="text-align:center;">${index + 1}</td>
-            <td style="text-align:center;">${item.name}</td>
-            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=confirmed">${item.confirmed_count}</a></td>
-            <td style="text-align:center;">
-  <a href="utsavCheckinReport.html?utsavid=${item.id}&status=checkedin">${item.checkedin_count}</a>
-</td>
-<td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">${item.pending_count}</a></td>
-            <td style="text-align:center;">${item.total_seats}</td>
-            <td style="text-align:center;">${item.available_seats}</td>
-            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">${item.waitlist_count}</a></td>
-            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=cancelled">${item.selfcancel_count}</a></td>
-            <td style="text-align:center;"><a href="utsavBookingslist.html?utsavId=${item.id}&status=admin cancelled">${item.admincancel_count}</a></td>
-            <td style="text-align:center;">
-  <a href="utsavVolunteers.html?utsavId=${item.id}">${item.volunteer_opted_count}</a>
-</td>
-<td style="text-align:center;">${item.status}</td>
-            <td style="text-align:center;">
-  ${
-    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
-      ? '-'
-      : `<button class="btn btn-secondary btn-sm toggle-status" data-id="${item.id}" data-status="${item.status}">
-          ${item.status === 'open' ? 'Close' : 'Open'}
-        </button>`
-  }
-</td>
-            <td style="text-align:center;">
-  ${
-    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
-      ? '-'
-      : `<a href="/admin/utsav/utsavCheckin.html?utsavid=${item.id}">
-          <button class="btn btn-secondary btn-sm">Open Scanner</button>
-        </a>`
-  }
-</td>
-<td style="text-align:center;">
-  ${
-    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
-      ? '-'
-      : `<a href="/admin/utsav/issuePlateScanUtsav.html">
-          <button class="btn btn-secondary btn-sm">Open Scanner</button>
-        </a>`
-  }
-</td>
-</td>
-            <td style="text-align:center;">
-  ${
-    JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly')
-      ? '-'
-      : `<a href="/admin/utsav/utsavRegistration.html?utsavId=${item.id}">
-          <button class="btn btn-secondary btn-sm">Open Form</button>
-        </a>`
-  }
-</td>
-<td style="text-align:center;">
-  <a href="roomOccupancy.html?utsav_id=${item.id}">Click Here</a>
-</td>
-            
-         `;
 
+  <td style="text-align:center;">
+    <span class="row-toggle">▶</span>
+  </td>
+
+  <td style="text-align:center;">
+    ${index + 1}
+  </td>
+
+  <td style="text-align:center;">
+    ${item.name}
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavBookingslist.html?utsavId=${item.id}&status=confirmed">
+      ${item.confirmed_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavCheckinReport.html?utsavid=${item.id}&status=checkedin">
+      ${item.checkedin_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavBookingslist.html?utsavId=${item.id}&status=pending">
+      ${item.pending_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    ${item.total_seats}
+  </td>
+
+  <td style="text-align:center;">
+    ${item.available_seats}
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavBookingslist.html?utsavId=${item.id}&status=waiting">
+      ${item.waitlist_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavBookingslist.html?utsavId=${item.id}&status=cancelled">
+      ${item.selfcancel_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavBookingslist.html?utsavId=${item.id}&status=admin cancelled">
+      ${item.admincancel_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    <a href="utsavVolunteers.html?utsavId=${item.id}">
+      ${item.volunteer_opted_count}
+    </a>
+  </td>
+
+  <td style="text-align:center;">
+    ${item.status}
+  </td>
+
+  <td style="text-align:center;">
+    ${(sessionStorage.getItem('isShareToken') === 'true' || JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly'))
+          ? '-'
+          : `
+          <button
+            class="btn btn-secondary btn-sm toggle-status"
+            data-id="${item.id}"
+            data-status="${item.status}"
+          >
+            ${item.status === 'open' ? 'Close' : 'Open'}
+          </button>
+        `
+        }
+  </td>
+`;
+
+      const detailRow = document.createElement('tr');
+
+      detailRow.classList.add('detail-row');
+
+      detailRow.style.display = 'none';
+
+      detailRow.innerHTML = `
+  <td colspan="18">
+
+    <div
+      class="expanded-actions"
+      style="
+        padding:12px;
+        background:#f9f9f9;
+      "
+    >
+
+      <b>Quick Actions:</b>
+<br><br>
+
+<button
+  class="btn btn-sm btn-warning feedback-link"
+  data-utsav="${item.id}"
+>
+  📝 Copy Feedback Link
+</button>
+
+<button
+  class="btn btn-sm btn-outline-primary short-link"
+  data-slug="u${item.id}"
+>
+  🌐 Copy WhatsApp Shortlink
+</button>
+
+<button
+  class="btn btn-sm btn-info send-grp-reminder"
+  data-utsav="${item.id}"
+  data-name="${item.name}"
+>
+  💬 Audit & Send Reminders
+</button>
+
+<a
+  href="fetchUtsavFeedbacks.html?utsav_id=${item.id}"
+  class="btn btn-sm btn-success"
+>
+  ⭐ View Feedback
+</a>
+
+${(JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadOnly') || sessionStorage.getItem('isShareToken') === 'true')
+          ? ''
+          : `
+      <a
+        href="/admin/utsav/utsavCheckin.html?utsavid=${item.id}"
+        class="btn btn-sm btn-primary"
+      >
+        📷 Checkin Scanner
+      </a>
+
+      <a
+        href="/admin/utsav/issuePlateScanUtsav.html"
+        class="btn btn-sm btn-info"
+      >
+        🍽 Food Scanner
+      </a>
+
+      <a
+        href="/admin/utsav/utsavRegistration.html?utsavId=${item.id}"
+        class="btn btn-sm btn-dark"
+      >
+        👤 Register Mumukshu
+      </a>
+
+      <a
+        href="roomOccupancy.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-secondary"
+      >
+        🏠 Room Occupancy
+      </a>
+
+      <a
+        href="participantHistoryReport.html?utsav_id=${item.id}"
+        class="btn btn-sm btn-primary"
+      >
+        📊 1-Yr History Dashboard
+      </a>
+    `
+        }
+    </div>
+
+  </td>
+`;
       utsavTableBody.appendChild(tableRow);
+
+      utsavTableBody.appendChild(detailRow);
     });
 
-    document.querySelectorAll('.toggle-status').forEach((button) => {
-      button.addEventListener('click', toggleStatus);
+
+    document.querySelectorAll('.row-toggle').forEach(toggle => {
+
+      toggle.addEventListener('click', function () {
+
+        const mainRow = this.closest('tr');
+
+        const detailRow = mainRow.nextElementSibling;
+
+        const isOpen =
+          detailRow.style.display === 'table-row';
+
+        document.querySelectorAll('.detail-row')
+          .forEach(r => {
+            r.style.display = 'none';
+          });
+
+        document.querySelectorAll('.row-toggle')
+          .forEach(t => {
+            t.textContent = '▶';
+          });
+
+        if (!isOpen) {
+
+          detailRow.style.display = 'table-row';
+
+          this.textContent = '▼';
+
+        }
+
+      });
+
     });
+    enhanceTable(
+      'waitlistTable',
+      'tableSearch'
+    );
   };
 
   const toggleStatus = async (event) => {
@@ -120,8 +310,7 @@ console.log(data);
 
     if (
       !confirm(
-        `Are you sure you want to ${
-          newStatus === 'open' ? 'open' : 'close'
+        `Are you sure you want to ${newStatus === 'open' ? 'open' : 'close'
         } this Utsav?`
       )
     ) {
@@ -153,6 +342,63 @@ console.log(data);
       console.error('Error updating status:', error);
     }
   };
+
+  document.addEventListener('click', async (e) => {
+
+    if (e.target.classList.contains('feedback-link')) {
+
+      const utsavId = e.target.dataset.utsav;
+
+      const url =
+        `https://aashray.vitraagvigyaan.org/utsav/feedback/${utsavId}`;
+
+      try {
+
+        await navigator.clipboard.writeText(url);
+
+        alert(`Feedback link copied:\n${url}`);
+
+      } catch {
+
+        alert('Failed to copy feedback link.');
+
+      }
+
+    }
+
+    if (e.target.classList.contains('short-link')) {
+      const slug = e.target.dataset.slug;
+      const url = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/${slug}`;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`WhatsApp Shortlink copied:\n${url}`);
+      } catch {
+        alert('Failed to copy shortlink.');
+      }
+    }
+
+    if (e.target.classList.contains('send-grp-reminder')) {
+      const utsavId = e.target.dataset.utsav;
+      const utsav = utsavfetch.find(u => String(u.id) === String(utsavId));
+      const jid = utsav?.whatsapp_group_jid || '';
+
+      const newUrl = `${window.location.pathname}?event_id=${utsavId}&type=utsav${jid ? '&jid=' + encodeURIComponent(jid) : ''}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      if (typeof openAuditModal === 'function') {
+        openAuditModal(jid || utsavId);
+      }
+    }
+
+    const toggleStatusBtn = e.target.closest('.toggle-status');
+    if (toggleStatusBtn) {
+      toggleStatus({
+        target: toggleStatusBtn
+      });
+    }
+
+  });
 
   fetchUtsavReport();
 });

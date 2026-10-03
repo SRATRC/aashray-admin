@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         row.innerHTML = `
           <td>${admin.id}</td>
           <td>${admin.username}</td>
+          <td>${admin.cardno || 'N/A'}</td>
           <td>${admin.status}</td>
         `;
 
@@ -69,10 +70,9 @@ document.addEventListener('DOMContentLoaded', async function () {
               admin.status = admin.status === 'active' ? 'inactive' : 'active';
               actionLink.textContent =
                 admin.status === 'active' ? 'Deactivate' : 'Activate';
-              row.querySelector('td:nth-child(3)').textContent = admin.status; // Update status column
+              row.querySelector('td:nth-child(4)').textContent = admin.status; // Update status column
               alert(
-                `Admin ${admin.username} has been ${
-                  admin.status === 'active' ? 'activated' : 'deactivated'
+                `Admin ${admin.username} has been ${admin.status === 'active' ? 'activated' : 'deactivated'
                 } successfully.`
               );
             } else {
@@ -85,17 +85,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         // Create Reset Password button
-const resetBtn = document.createElement('a');
-resetBtn.textContent = 'Reset Password';
-resetBtn.href = '#';
-resetBtn.style.marginLeft = '10px';
-resetBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  openResetModal(admin.username);
-});
+        const resetBtn = document.createElement('a');
+        resetBtn.textContent = 'Reset Password';
+        resetBtn.href = '#';
+        resetBtn.style.marginLeft = '10px';
+        resetBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          openResetModal(admin.username);
+        });
 
-actionCell.appendChild(actionLink);      // Activate/Deactivate
-actionCell.appendChild(resetBtn);        // Reset Password
+        actionCell.appendChild(actionLink);      // Activate/Deactivate
+        actionCell.appendChild(resetBtn);        // Reset Password
         row.appendChild(actionCell);
         adminTableBody.appendChild(row);
       });
