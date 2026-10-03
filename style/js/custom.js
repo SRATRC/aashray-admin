@@ -54,7 +54,15 @@ function formatDate(date) {
 }
 
 function formatDateTime(datetime) {
+  if (!datetime) return '';
+  if (typeof datetime === 'string') {
+    const trimmed = datetime.trim();
+    if (/^\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$/i.test(trimmed)) {
+      return trimmed;
+    }
+  }
   const d = new Date(datetime);
+  if (isNaN(d)) return datetime;
   return d.toLocaleString();
 }
 

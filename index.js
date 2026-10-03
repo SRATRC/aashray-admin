@@ -31,6 +31,7 @@ function login(event) {
         'cardAdmin',
         'officeAdmin',
         'foodAdmin',
+        'foodPlateAdmin',
         'gateAdmin',
         'adhyayanAdmin',
         'travelAdmin',
@@ -47,7 +48,8 @@ function login(event) {
         'utsavAdminReadOnly',
         'smilesAdmin',
         'adhyayanAdminReadOnly',
-        'utsavAdminRaj'
+        'utsavAdminRaj',
+        'satshrutAdmin'
       ];
 
       const hasValidRole = roles.some((role) => validRoles.includes(role));

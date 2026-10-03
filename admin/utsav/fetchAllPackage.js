@@ -51,11 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       packageListElement.appendChild(tableRow);
     });
-
-    // Attach event listeners to all status toggle buttons
-    document.querySelectorAll('.toggle-status').forEach((button) => {
-      button.addEventListener('click', toggleStatus);
-    });
   };
 
 
