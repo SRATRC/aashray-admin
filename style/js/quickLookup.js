@@ -3,7 +3,29 @@
   let lookupModal = null;
   let debounceTimer = null;
 
+  const CARD_ROLES = ['superAdmin', 'officeAdmin', 'cardAdmin', 'utsavAdmin', 'wifiAdmin', 'foodAdmin'];
+  const GATE_ROLES = ['superAdmin', 'gateAdmin'];
+
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function getRoles() {
+    try {
+      return JSON.parse(sessionStorage.getItem('roles') || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+  function canUseCardRoutes(roles) { return roles.some((r) => CARD_ROLES.includes(r)); }
+  function canUseGateRoutes(roles) { return roles.some((r) => GATE_ROLES.includes(r)); }
+
   function initQuickLookup() {
+    const roles = getRoles();
+    if (!canUseCardRoutes(roles) && !canUseGateRoutes(roles)) {
+      // No route this role may call: hide the buttons instead of showing a 401.
+      document.querySelectorAll('[onclick*="openQuickLookup"]').forEach((el) => { el.style.display = 'none'; });
+      return;
+    }
     createLookupModal();
   }
 
@@ -114,50 +136,41 @@
 
     try {
       let member = null;
-
-      // 1. If 10-digit mobile number, try /card/by-mobile/:mob
-      if (/^\d{10}$/.test(inputVal)) {
+      const roles = getRoles();
+      const hdr = { Authorization: `Bearer ${sessionStorage.getItem('token')}` };
+      const getJson = async (url) => {
         try {
-          const mobRes = await fetch(`${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(inputVal)}`, {
-            headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
-          });
-          const mobData = await mobRes.json();
-          if (mobRes.ok && mobData?.data) {
-            member = mobData.data;
-          }
-        } catch (e) { console.warn('Mobile lookup error:', e); }
-      }
+          const r = await fetch(url, { headers: hdr });
+          const j = await r.json();
+          return r.ok ? j?.data : null;
+        } catch (e) {
+          console.warn('Lookup error:', e);
+          return null;
+        }
+      };
 
-      // 2. Try /card/:cardno
-      if (!member) {
-        try {
-          const cardRes = await fetch(`${CONFIG.basePath}/card/${encodeURIComponent(inputVal)}`, {
-            headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
-          });
-          const cardData = await cardRes.json();
-          if (cardRes.ok && cardData?.data) {
-            member = cardData.data;
-          }
-        } catch (e) { console.warn('Card lookup error:', e); }
-      }
-
-      // 3. Try /gate/residents?search=:query
-      if (!member) {
-        try {
-          const gateRes = await fetch(`${CONFIG.basePath}/gate/residents?search=${encodeURIComponent(inputVal)}`, {
-            headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
-          });
-          const gateData = await gateRes.json();
-          if (gateRes.ok && gateData?.data?.residents?.length > 0) {
-            member = gateData.data.residents[0];
-          }
-        } catch (e) { console.warn('Gate residents lookup error:', e); }
+      if (canUseCardRoutes(roles)) {
+        // 1. 10-digit mobile number
+        if (/^\d{10}$/.test(inputVal)) {
+          member = await getJson(`${CONFIG.basePath}/card/by-mobile/${encodeURIComponent(inputVal)}`);
+        }
+        // 2. Exact card number
+        if (!member) member = await getJson(`${CONFIG.basePath}/card/${encodeURIComponent(inputVal)}`);
+        // 3. Name (or part of a number)
+        if (!member) {
+          const list = await getJson(`${CONFIG.basePath}/card/search/${encodeURIComponent(inputVal)}`);
+          if (Array.isArray(list) && list.length > 0) member = list[0];
+        }
+      } else if (canUseGateRoutes(roles)) {
+        const d = await getJson(`${CONFIG.basePath}/gate/residents?search=${encodeURIComponent(inputVal)}`);
+        const list = d?.records || d?.residents || (Array.isArray(d) ? d : []);
+        if (list.length > 0) member = list[0];
       }
 
       if (!member) {
         resultDiv.innerHTML = `
           <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:16px; text-align:center; color:#991b1b; font-size:13px;">
-            ❌ No member record found for "<b>${inputVal}</b>".
+            ❌ No member record found for "<b>${esc(inputVal)}</b>".
           </div>
         `;
         return;
@@ -166,8 +179,11 @@
       const memberName = member.issuedto || member.CardDb?.issuedto || member.name || 'Member';
       const cardNo = member.cardno || member.card_number || '—';
       const mobNo = member.mobno || member.CardDb?.mobno || member.mobile || '—';
-      const isOnPrem = member.last_checkin_type === 'IN' || member.on_premises === true;
-      const statusBadge = isOnPrem
+      const isOnPrem = member.status === 'onprem';
+      const hasStatus = member.status === 'onprem' || member.status === 'offprem';
+      const statusBadge = !hasStatus
+        ? `<span style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; padding:3px 10px; border-radius:12px; font-weight:800; font-size:11px;">Status unknown</span>`
+        : isOnPrem
         ? `<span style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; padding:3px 10px; border-radius:12px; font-weight:800; font-size:11px;">🟢 On Premises</span>`
         : `<span style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:3px 10px; border-radius:12px; font-weight:800; font-size:11px;">🔴 Off Premises</span>`;
 
@@ -185,11 +201,11 @@
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
             <div style="display:flex; align-items:center; gap:12px;">
               <div style="width:44px; height:44px; background:#4f46e5; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold;">
-                ${memberName.charAt(0).toUpperCase()}
+                ${esc(String(memberName).charAt(0).toUpperCase())}
               </div>
               <div>
-                <h4 style="margin:0; font-size:16px; font-weight:700; color:#0f172a;">${memberName}</h4>
-                <div style="font-size:12px; color:#64748b;">Card No: <b>${cardNo}</b> | Mobile: <b>${mobNo}</b></div>
+                <h4 style="margin:0; font-size:16px; font-weight:700; color:#0f172a;">${esc(memberName)}</h4>
+                <div style="font-size:12px; color:#64748b;">Card No: <b>${esc(cardNo)}</b> | Mobile: <b>${esc(mobNo)}</b></div>
               </div>
             </div>
             ${statusBadge}
@@ -198,11 +214,11 @@
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:12px; margin-top:12px;">
             <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:8px;">
               <div style="color:#64748b; font-size:11px; font-weight:700;">Category</div>
-              <div style="font-weight:700; color:#1e293b; text-transform:uppercase; margin-top:2px;">${categoryText}</div>
+              <div style="font-weight:700; color:#1e293b; text-transform:uppercase; margin-top:2px;">${esc(categoryText)}</div>
             </div>
             <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:8px;">
               <div style="color:#64748b; font-size:11px; font-weight:700;">Location / Department</div>
-              <div style="font-weight:700; color:#1e293b; margin-top:2px;">${locationDetail}</div>
+              <div style="font-weight:700; color:#1e293b; margin-top:2px;">${esc(locationDetail)}</div>
             </div>
           </div>
         </div>

@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
     window.isFoodAdminSS = userRoles.includes('smilesAdmin');
+
+    // Smilestones staff only book bulk food (as before): no Member Booking tab for them.
+    if (userRoles.includes('smilesAdmin')) {
+      const memberBtn = document.getElementById('tabBtnMember');
+      if (memberBtn) memberBtn.style.display = 'none';
+      switchBookingTab('bulk');
+    } else if (new URLSearchParams(location.search).get('tab') === 'bulk') {
+      switchBookingTab('bulk');
+    }
   }, 100);
 
   /* ===== Input Elements ===== */
@@ -68,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ===== Bulk Host Live Blur Lookups ===== */
   bulkMobnoInput?.addEventListener('blur', async () => {
     const mob = bulkMobnoInput.value.trim();
-    if (mob.length < 10) return;
+    if (mob.length < 10 || window.isFoodAdminSS) return; // card routes are closed to Smilestones
     try {
       const res = await fetch(`${CONFIG.basePath}/card/by-mobile/${mob}`, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
@@ -88,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   bulkCardnoInput?.addEventListener('blur', async () => {
     const cardno = bulkCardnoInput.value.trim();
-    if (!cardno) return;
+    if (!cardno || window.isFoodAdminSS) return; // card routes are closed to Smilestones
     try {
       const res = await fetch(`${CONFIG.basePath}/card/${cardno}`, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
@@ -553,13 +562,13 @@ function renderGuestBookingsTablePage(page = 1) {
 
     tr.innerHTML = `
       <td style="font-weight:600;">📅 ${dateStr}</td>
-      <td style="font-weight:600; color:#0f172a;">${esc(b.bookedByCard?.issuedto || 'Guest')}</td>
-      <td>${esc(b.mobno || b.bookedByCard?.mobno || '—')}</td>
+      <td style="font-weight:600; color:#0f172a;">${esc(b.CardDb?.issuedto || 'Guest')}</td>
+      <td>${esc(b.mobno || b.CardDb?.mobno || '—')}</td>
       <td><span style="padding:2px 8px; background:#f1f5f9; border-radius:6px; font-weight:700; font-size:11px; color:#334155;">${esc(b.department || 'RC')}</span></td>
       <td style="font-weight:700; text-align:center;">${esc(b.guestCount)}</td>
-      <td style="font-weight:600; color:#d97706;">🌅 ${b.breakfastCount || 0}</td>
-      <td style="font-weight:600; color:#2563eb;">☀️ ${b.lunchCount || 0}</td>
-      <td style="font-weight:600; color:#7c3aed;">🌙 ${b.dinnerCount || 0}</td>
+      <td style="font-weight:600; color:#d97706;">🌅 ${b.breakfast || 0}</td>
+      <td style="font-weight:600; color:#2563eb;">☀️ ${b.lunch || 0}</td>
+      <td style="font-weight:600; color:#7c3aed;">🌙 ${b.dinner || 0}</td>
       <td style="${hideIssuedCols}">${b.breakfastIssued || 0}</td>
       <td style="${hideIssuedCols}">${b.lunchIssued || 0}</td>
       <td style="${hideIssuedCols}">${b.dinnerIssued || 0}</td>
@@ -588,7 +597,7 @@ function exportBulkFoodCSV() {
 
   let csvContent = 'data:text/csv;charset=utf-8,Date,Booked By,Mobile,Department,Guest Count,Breakfast,Lunch,Dinner\n';
   bookings.forEach(b => {
-    csvContent += `"${b.date}","${b.bookedByCard?.issuedto || ''}","${b.mobno || ''}","${b.department || ''}",${b.guestCount},${b.breakfastCount || 0},${b.lunchCount || 0},${b.dinnerCount || 0}\n`;
+    csvContent += `"${b.date}","${b.CardDb?.issuedto || ''}","${b.mobno || ''}","${b.department || ''}",${b.guestCount},${b.breakfast || 0},${b.lunch || 0},${b.dinner || 0}\n`;
   });
 
   const encodedUri = encodeURI(csvContent);

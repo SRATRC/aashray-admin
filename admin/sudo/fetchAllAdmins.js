@@ -387,13 +387,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Text highlighting utility
   const highlightText = (text, search) => {
-    if (!search || !text) return text || '';
+    // The result goes into innerHTML, so every part is escaped
+    if (!search || !text) return text ? escapeHtml(text) : '';
     const textStr = String(text);
     const index = textStr.toLowerCase().indexOf(search.toLowerCase());
-    if (index === -1) return textStr;
-    const matchedText = textStr.substring(index, index + search.length);
-    const before = textStr.substring(0, index);
-    const after = textStr.substring(index + search.length);
+    if (index === -1) return escapeHtml(textStr);
+    const matchedText = escapeHtml(textStr.substring(index, index + search.length));
+    const before = escapeHtml(textStr.substring(0, index));
+    const after = escapeHtml(textStr.substring(index + search.length));
     return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 2px 4px; border-radius: 4px; font-weight: 500;">${matchedText}</mark>${after}`;
   };
 
@@ -715,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const cardMeta = document.createElement('div');
           cardMeta.className = 'profile-mobile-card-meta';
           cardMeta.innerHTML = `
-            <div><strong>User ID:</strong> ${admin.id}</div>
+            <div><strong>User ID:</strong> ${escapeHtml(admin.id)}</div>
             <div><strong>Card No:</strong> ${highlightText(admin.cardno || 'N/A', query)}</div>
           `;
 
@@ -896,7 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="empty-state-card">
         <div class="empty-state-icon">🔍</div>
         <div class="empty-state-title">No Matches Found</div>
-        <div class="empty-state-desc">We couldn't find any results matching "${query}". Check the spelling or try another keyword.</div>
+        <div class="empty-state-desc">We couldn't find any results matching "${escapeHtml(query)}". Check the spelling or try another keyword.</div>
         <button class="empty-state-btn" id="resetEmptyStateBtn">Reset Search</button>
       </div>
     `;
@@ -915,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isDangerous = action === 'deactivate';
     const title = isDangerous ? 'Deactivate Administrator' : 'Activate Administrator';
     const icon = isDangerous ? '🛑' : '🟢';
-    const confirmText = `Are you sure you want to ${action} admin user "${admin.username}"?`;
+    const confirmText = `Are you sure you want to ${action} admin user "${escapeHtml(admin.username)}"?`;
     if (!(await showConfirmModal(title, confirmText, isDangerous, icon))) return;
 
     // Reset page alerts
@@ -952,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Delete Role
   const triggerDeleteRole = async (roleName) => {
     const title = 'Delete System Role';
-    const confirmText = `Are you sure you want to delete the role "${roleName}"?`;
+    const confirmText = `Are you sure you want to delete the role "${escapeHtml(roleName)}"?`;
     if (!(await showConfirmModal(title, confirmText, true, '🗑️'))) return;
 
     if (typeof resetAlert === 'function') resetAlert();
@@ -987,7 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Delete Administrator
   const triggerDeleteAdmin = async (username) => {
     const title = 'Delete Administrator';
-    const confirmText = `Are you sure you want to permanently delete administrator "${username}"? This action cannot be undone.`;
+    const confirmText = `Are you sure you want to permanently delete administrator "${escapeHtml(username)}"? This action cannot be undone.`;
     if (!(await showConfirmModal(title, confirmText, true, '🚨'))) return;
 
     if (typeof resetAlert === 'function') resetAlert();
@@ -1942,7 +1943,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Remove User from Role Function ---
   const removeUserFromRole = async (userId, username, roleName) => {
     const title = 'Remove Role from User';
-    const confirmText = `Are you sure you want to remove the role "${roleName}" from administrator "${username}"?`;
+    const confirmText = `Are you sure you want to remove the role "${escapeHtml(roleName)}" from administrator "${escapeHtml(username)}"?`;
     if (!(await showConfirmModal(title, confirmText, true, '⚠️'))) return;
 
     if (typeof resetAlert === 'function') resetAlert();
@@ -2215,10 +2216,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const alreadyLinked = fetchedAdmins.find(admin => String(admin.cardno).trim() === String(cardno).trim());
           if (alreadyLinked) {
             validationDiv.className = 'validation-badge validation-warning';
-            validationDiv.innerHTML = `⚠️ Assigned to administrator: "${alreadyLinked.username}"`;
+            validationDiv.innerHTML = `⚠️ Assigned to administrator: "${escapeHtml(alreadyLinked.username)}"`;
           } else {
             validationDiv.className = 'validation-badge validation-valid';
-            validationDiv.innerHTML = `✅ Validated: ${match.issuedto} (${match.center || 'No Center'})`;
+            validationDiv.innerHTML = `✅ Validated: ${escapeHtml(match.issuedto)} (${escapeHtml(match.center || 'No Center')})`;
           }
         }
       } catch (err) {
@@ -2269,7 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestions.slice(0, 5).forEach(card => {
               const div = document.createElement('div');
               div.className = 'autocomplete-suggestion';
-              div.innerHTML = `<strong>${card.issuedto}</strong> (Card: ${card.cardno}) <span style="font-size:11px; color:#64748b;">- ${card.center || 'N/A'}</span>`;
+              div.innerHTML = `<strong>${escapeHtml(card.issuedto)}</strong> (Card: ${escapeHtml(card.cardno)}) <span style="font-size:11px; color:#64748b;">- ${escapeHtml(card.center || 'N/A')}</span>`;
               div.addEventListener('click', () => {
                 cardInput.value = card.cardno;
                 suggestionsBox.style.display = 'none';
@@ -2396,7 +2397,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const title = 'Bulk Deactivate Administrators';
-      const userListHtml = selectedAdminUsernames.map(u => `<li><strong>${u}</strong></li>`).join('');
+      const userListHtml = selectedAdminUsernames.map(u => `<li><strong>${escapeHtml(u)}</strong></li>`).join('');
       const confirmText = `Are you sure you want to deactivate the following <strong>${selectedAdminUsernames.length}</strong> administrators?<ul style="text-align: left; margin: 12px auto; max-width: 250px; padding-left: 20px; max-height: 120px; overflow-y: auto; line-height: 1.5; color: #334155;">${userListHtml}</ul>This action will revoke their login access immediately.`;
       if (!(await showConfirmModal(title, confirmText, true, '🛑'))) return;
 

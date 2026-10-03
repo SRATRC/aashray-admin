@@ -467,7 +467,7 @@ function displayRequests(records) {
     const updateTime = formatDateTime(req.updatedAt);
 
     row.innerHTML = `
-      <td>${req.id}</td>
+      <td>${escapeHtml(req.id)}</td>
       <td>${highlightText(req.cardno, searchQuery)}</td>
       <td>${highlightText(req.CardDb?.issuedto || '-', searchQuery)}</td>
       <td>${renderWhatsAppLink(req.CardDb?.mobno || '-', searchQuery)}</td>
@@ -478,12 +478,21 @@ function displayRequests(records) {
       <td>${highlightText(req.username || '-', searchQuery)}</td>
       <td>${highlightText(req.ssid || '-', searchQuery)}</td>
       <td>${highlightText(req.code || '-', searchQuery)}</td>
-      <td><span class="badge-status ${badgeClass}">${labelText}</span></td>
+      <td><span class="badge-status ${escapeHtml(badgeClass)}">${escapeHtml(labelText)}</span></td>
       <td style="white-space:nowrap;">
-        <button class="btn-take-action" onclick="event.stopPropagation(); openModal('${req.id}')">⚡ Action</button>
-        <button class="btn-take-action" style="background:#475569; margin-left:4px;" onclick="event.stopPropagation(); showWifiQrModal('${req.ssid || 'Aashray-Guest'}', '${req.code || ''}')" title="Generate WiFi QR Code">📷 QR</button>
+        <button class="btn-take-action" data-wifi-open="${escapeHtml(req.id)}">⚡ Action</button>
+        <button class="btn-take-action" style="background:#475569; margin-left:4px;" data-wifi-qr data-ssid="${escapeHtml(req.ssid || 'Aashray-Guest')}" data-code="${escapeHtml(req.code || '')}" title="Generate WiFi QR Code">📷 QR</button>
       </td>
     `;
+    // Buttons use listeners, not inline onclick strings, so API text never becomes code
+    row.querySelector('[data-wifi-open]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal(e.currentTarget.dataset.wifiOpen);
+    });
+    row.querySelector('[data-wifi-qr]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.showWifiQrModal(e.currentTarget.dataset.ssid, e.currentTarget.dataset.code);
+    });
     tableBody.appendChild(row);
   });
 }
@@ -495,8 +504,8 @@ window.showWifiQrModal = function(ssid, code) {
     html: `
       <div style="text-align:center; padding:10px;">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrString)}" style="border-radius:12px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom:12px;" />
-        <div style="font-size:14px; font-weight:700; color:#0f172a;">SSID: ${ssid}</div>
-        <div style="font-size:13px; font-weight:600; color:#2563eb; margin-top:4px;">Password: ${code || '—'}</div>
+        <div style="font-size:14px; font-weight:700; color:#0f172a;">SSID: ${escapeHtml(ssid)}</div>
+        <div style="font-size:13px; font-weight:600; color:#2563eb; margin-top:4px;">Password: ${escapeHtml(code) || '—'}</div>
         <div style="font-size:11px; color:#64748b; margin-top:8px;">Scan with mobile camera to connect to WiFi automatically</div>
       </div>
     `,
@@ -518,9 +527,9 @@ function renderWhatsAppLink(phone, query) {
   if (!phone || phone === '-') return '-';
   const phoneStr = String(phone);
   const cleaned = phoneStr.replace(/\D/g, '');
-  if (cleaned.length === 0) return phoneStr;
+  if (cleaned.length === 0) return escapeHtml(phoneStr);
   const formatted = cleaned.length === 10 ? `91${cleaned}` : cleaned;
-  const displayedText = query ? highlightText(phoneStr, query) : phoneStr;
+  const displayedText = query ? highlightText(phoneStr, query) : escapeHtml(phoneStr);
   return `
     <a href="https://wa.me/${formatted}" target="_blank" title="Chat on WhatsApp" style="color: #16a34a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
       ${displayedText}
@@ -1294,15 +1303,15 @@ function showUploadResult(title, data, isError = false) {
 
   if (isError) {
     summaryDiv.style.borderLeftColor = '#dc3545';
-    summaryDiv.innerHTML = `<strong>Error:</strong> ${data.error || 'Failed to process file'}`;
+    summaryDiv.innerHTML = `<strong>Error:</strong> ${escapeHtml(data.error || 'Failed to process file')}`;
 
     if (data.errors && data.errors.length > 0) {
       headerRow.innerHTML = '<th>Excel Row</th><th>Validation Error Description</th>';
       data.errors.forEach(err => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>Row ${err.row}</td>
-          <td style="color: #dc3545;">${err.error}</td>
+          <td>Row ${escapeHtml(err.row)}</td>
+          <td style="color: #dc3545;">${escapeHtml(err.error)}</td>
         `;
         body.appendChild(row);
       });
@@ -1330,11 +1339,11 @@ function showUploadResult(title, data, isError = false) {
           Object.keys(ch.changes).forEach(field => {
             const row = document.createElement('tr');
             row.innerHTML = `
-              <td>Row ${ch.rowNumber}</td>
-              <td>${ch.cardno}</td>
-              <td><strong>${field}</strong></td>
-              <td style="color: #6c757d; text-decoration: line-through;">${ch.changes[field].old || '-'}</td>
-              <td style="color: #28a745; font-weight: 600;">${ch.changes[field].new || '-'}</td>
+              <td>Row ${escapeHtml(ch.rowNumber)}</td>
+              <td>${escapeHtml(ch.cardno)}</td>
+              <td><strong>${escapeHtml(field)}</strong></td>
+              <td style="color: #6c757d; text-decoration: line-through;">${escapeHtml(ch.changes[field].old) || '-'}</td>
+              <td style="color: #28a745; font-weight: 600;">${escapeHtml(ch.changes[field].new) || '-'}</td>
             `;
             body.appendChild(row);
           });
@@ -1358,12 +1367,12 @@ function showUploadResult(title, data, isError = false) {
         data.toInsert.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>Row ${item.rowNumber}</td>
-            <td>${item.cardno}</td>
-            <td>${item.username || '(auto-generated)'}</td>
-            <td>${item.code || '-'}</td>
-            <td>${item.ssid || '-'}</td>
-            <td><span class="label label-info">${item.status}</span></td>
+            <td>Row ${escapeHtml(item.rowNumber)}</td>
+            <td>${escapeHtml(item.cardno)}</td>
+            <td>${escapeHtml(item.username) || '(auto-generated)'}</td>
+            <td>${escapeHtml(item.code) || '-'}</td>
+            <td>${escapeHtml(item.ssid) || '-'}</td>
+            <td><span class="label label-info">${escapeHtml(item.status)}</span></td>
           `;
           body.appendChild(row);
         });

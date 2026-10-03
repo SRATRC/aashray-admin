@@ -345,11 +345,11 @@ function displayResidents(residents) {
         <td>${highlightText(resident.cardno, searchQuery)}</td>
         <td>${highlightText(resident.issuedto, searchQuery)}</td>
         <td>${highlightText(resident.mobno, searchQuery)}</td>
-        <td>${categoryLabel}</td>
+        <td>${escapeHtml(categoryLabel)}</td>
         <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
         <td>${formatDateTime(resident.last_checkin, true)}</td>
         <td>${formatDateTime(resident.last_checkout, true)}</td>
-        <td><button class="view-history-btn" data-cardno="${resident.cardno}" data-name="${resident.issuedto}">🕒 History</button></td>
+        <td><button class="view-history-btn" data-cardno="${escapeHtml(resident.cardno)}" data-name="${escapeHtml(resident.issuedto)}">🕒 History</button></td>
       `;
 
       // Bind row double-click to open history
@@ -446,7 +446,7 @@ function showGateHistoryModal(history) {
       const statusBadgeClass = isCurrentlyIn ? 'badge-onprem' : 'badge-offprem';
       const statusText = isCurrentlyIn ? 'On Premise' : 'Off Premise';
       const statusBadgeHtml = `<span class="badge-status ${statusBadgeClass}" style="font-size: 11px; margin-left: 10px; vertical-align: middle;">${statusText}</span>`;
-      title.innerHTML = `Gate History for ${residentName} (${cardno}) ${statusBadgeHtml}`;
+      title.innerHTML = `Gate History for ${escapeHtml(residentName)} (${escapeHtml(cardno)}) ${statusBadgeHtml}`;
     }
 
     history.forEach((record, index) => {
@@ -477,7 +477,7 @@ function showGateHistoryModal(history) {
         <td><span class="badge-status ${statusBadgeClass}">${statusText}</span></td>
         <td>${formatDateTime(record.createdAt, true)}</td>
         <td>${durationHtml}</td>
-        <td>${record.updatedBy || '-'}</td>
+        <td>${escapeHtml(record.updatedBy) || '-'}</td>
       `;
       tbody.appendChild(row);
     });

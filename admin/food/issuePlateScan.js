@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (btnRestartScanner) {
     btnRestartScanner.addEventListener('click', () => {
       if (html5QrCode) {
-        html5QrCode.stop().catch(() => {}).then(() => startQRScanner());
+        Promise.resolve().then(() => html5QrCode.stop()).catch(() => {}).then(() => startQRScanner());
       } else {
         startQRScanner();
       }
@@ -480,7 +480,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   window.addEventListener('beforeunload', () => {
     if (html5QrCode) {
-      html5QrCode.stop().catch(() => {});
+      // stop() can throw synchronously when the scanner never started (no camera)
+      Promise.resolve().then(() => html5QrCode.stop()).catch(() => {});
     }
   });
 });

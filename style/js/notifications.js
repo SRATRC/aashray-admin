@@ -105,11 +105,18 @@
     const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
     const toast = document.createElement('div');
     toast.className = `g-toast g-toast-${type}`;
-    toast.innerHTML = `
-      <span class="g-toast-icon">${icons[type] || ''}</span>
-      <span class="g-toast-body">${msg}</span>
-      <button class="g-toast-close" title="Dismiss">✕</button>
-    `;
+    // Build with textContent: the message can carry API values (names, server errors)
+    const iconEl = document.createElement('span');
+    iconEl.className = 'g-toast-icon';
+    iconEl.textContent = icons[type] || '';
+    const bodyEl = document.createElement('span');
+    bodyEl.className = 'g-toast-body';
+    bodyEl.textContent = msg == null ? '' : String(msg);
+    const closeEl = document.createElement('button');
+    closeEl.className = 'g-toast-close';
+    closeEl.title = 'Dismiss';
+    closeEl.textContent = '\u2715';
+    toast.append(iconEl, bodyEl, closeEl);
 
     const dismiss = () => {
       toast.classList.add('leaving');
@@ -128,11 +135,15 @@
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
-  window.showSuccessMessage = function (msg) { createToast(msg, 'success', 3000); };
-  window.showErrorMessage   = function (msg) { createToast(msg, 'error',   5000); };
-  window.showWarningMessage = function (msg) { createToast(msg, 'warning', 4000); };
-  window.showInfoMessage    = function (msg) { createToast(msg, 'info',    3000); };
+  // Only fill the gaps: this file loads async and can finish AFTER a page script, so a page's own
+  // top-level showSuccessMessage / resetAlert etc. must not be overwritten (issuePlate.js relies on its
+  // own resetAlert to bring the scan form back).
+  const define = (name, fn) => { if (typeof window[name] !== 'function') window[name] = fn; };
+  define('showSuccessMessage', function (msg) { createToast(msg, 'success', 3000); });
+  define('showErrorMessage',   function (msg) { createToast(msg, 'error',   5000); });
+  define('showWarningMessage', function (msg) { createToast(msg, 'warning', 4000); });
+  define('showInfoMessage',    function (msg) { createToast(msg, 'info',    3000); });
 
   // Backward-compat shim — pages that called resetAlert() to clear a div alert
-  window.resetAlert = function () { /* no-op for global toasts */ };
+  define('resetAlert', function () { /* no-op for global toasts */ });
 })();

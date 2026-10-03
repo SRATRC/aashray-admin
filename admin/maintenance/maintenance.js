@@ -69,10 +69,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const highlightText = (text, query) => {
     if (!text) return '';
     const textStr = String(text);
-    if (!query || !query.trim()) return textStr;
-    const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    // The result goes into innerHTML: escape the text first, then wrap the matches
+    if (!query || !query.trim()) return escapeHtml(textStr);
+    const escapedQuery = escapeHtml(query.trim()).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    return textStr.replace(regex, '<mark class="highlight">$1</mark>');
+    return escapeHtml(textStr).replace(regex, '<mark class="highlight">$1</mark>');
   };
 
   // Truncate long descriptions utility
@@ -80,12 +81,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!text) return '';
     const textStr = String(text);
     if (textStr.length <= maxLength) {
-      return query ? highlightText(textStr, query) : textStr;
+      return query ? highlightText(textStr, query) : escapeHtml(textStr);
     }
 
     const shortText = textStr.substring(0, maxLength);
-    const highlightedShort = query ? highlightText(shortText, query) : shortText;
-    const highlightedFull = query ? highlightText(textStr, query) : textStr;
+    const highlightedShort = query ? highlightText(shortText, query) : escapeHtml(shortText);
+    const highlightedFull = query ? highlightText(textStr, query) : escapeHtml(textStr);
 
     return `
       <span class="text-truncated-wrapper">
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Default to Indian country code 91 if it is a 10-digit number
     const formatted = cleaned.length === 10 ? `91${cleaned}` : cleaned;
-    const displayedText = query ? highlightText(phoneStr, query) : phoneStr;
+    const displayedText = query ? highlightText(phoneStr, query) : escapeHtml(phoneStr);
 
     return `
       <a href="https://wa.me/${formatted}" target="_blank" title="Chat on WhatsApp" style="color: #16a34a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
@@ -300,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
             </svg>
             <div class="empty-state-title">No matching requests found</div>
-            <div class="empty-state-text">We couldn't find any requests matching "${searchQuery}". Try clearing your search query.</div>
+            <div class="empty-state-text">We couldn't find any requests matching "${escapeHtml(searchQuery)}". Try clearing your search query.</div>
             <button class="btn btn-reset-search" id="clearSearchEmpty">Clear Search</button>
           </div>
         `;
@@ -311,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
             <div class="empty-state-title">No requests found</div>
-            <div class="empty-state-text">There are currently no ${department} requests in this category.</div>
+            <div class="empty-state-text">There are currently no ${escapeHtml(department)} requests in this category.</div>
           </div>
         `;
       }
@@ -381,18 +382,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${formatDateTime(m.closedAt)}${closedRelHtml}</td>
         <td>
           <div class="action-dropdown" style="position:relative; display:inline-block;">
-            <a class="badge-status ${statusClass}" href="#" onclick="toggleMaintenanceDropdown(event, '${m.bookingid}')" style="display:inline-flex; align-items:center; gap:4px;">
-              ${m.status} <span style="font-size:9px;">▾</span>
+            <a class="badge-status ${escapeHtml(statusClass)}" href="#" data-toggle-dropdown="${escapeHtml(m.bookingid)}" style="display:inline-flex; align-items:center; gap:4px;">
+              ${escapeHtml(m.status)} <span style="font-size:9px;">▾</span>
             </a>
-            <div id="m-dropdown-${m.bookingid}" class="action-dropdown-menu" style="display:none; position:absolute; right:0; top:100%; background:#ffffff; min-width:150px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid #cbd5e1; border-radius:8px; z-index:100; padding:4px 0; text-align:left;">
-              <button type="button" onclick="openEditModal({ bookingid: '${m.bookingid}', department: '${m.department}', issuedto: '${(m.CardDb?.issuedto || '').replace(/'/g, "\\'")}', comments: '${(m.comments || '').replace(/'/g, "\\'")}', status: '${m.status}' })" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#334155; cursor:pointer;">✏️ Edit Details</button>
-              <button type="button" onclick="quickUpdateStatus('${m.bookingid}', 'in progress', '${(m.comments || '').replace(/'/g, "\\'")}')" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#2563eb; cursor:pointer;">⏳ In Progress</button>
-              <button type="button" onclick="quickUpdateStatus('${m.bookingid}', 'closed', '${(m.comments || 'Resolved').replace(/'/g, "\\'")}')" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#059669; cursor:pointer;">✅ Mark Resolved</button>
-              <button type="button" onclick="quickUpdateStatus('${m.bookingid}', 'open', '${(m.comments || '').replace(/'/g, "\\'")}')" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#d97706; cursor:pointer;">🔄 Reopen Task</button>
+            <div id="m-dropdown-${escapeHtml(m.bookingid)}" class="action-dropdown-menu" style="display:none; position:absolute; right:0; top:100%; background:#ffffff; min-width:150px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid #cbd5e1; border-radius:8px; z-index:100; padding:4px 0; text-align:left;">
+              <button type="button" data-m-action="edit" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#334155; cursor:pointer;">✏️ Edit Details</button>
+              <button type="button" data-m-action="in progress" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#2563eb; cursor:pointer;">⏳ In Progress</button>
+              <button type="button" data-m-action="closed" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#059669; cursor:pointer;">✅ Mark Resolved</button>
+              <button type="button" data-m-action="open" style="width:100%; text-align:left; background:none; border:none; padding:6px 12px; font-size:11px; font-weight:600; color:#d97706; cursor:pointer;">🔄 Reopen Task</button>
             </div>
           </div>
         </td>
       `;
+
+      // Row actions use listeners, not inline onclick strings, so API text never becomes code
+      const toggleLink = row.querySelector('[data-toggle-dropdown]');
+      if (toggleLink) {
+        toggleLink.addEventListener('click', (e) => window.toggleMaintenanceDropdown(e, m.bookingid));
+      }
+      row.querySelectorAll('[data-m-action]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const action = btn.dataset.mAction;
+          if (action === 'edit') {
+            openEditModal({
+              bookingid: m.bookingid,
+              department: m.department,
+              issuedto: m.CardDb?.issuedto || '',
+              comments: m.comments || '',
+              status: m.status
+            });
+          } else {
+            quickUpdateStatus(m.bookingid, action, action === 'closed' ? (m.comments || 'Resolved') : (m.comments || ''));
+          }
+        });
+      });
 
       // Intercept status badge click to open edit request modal inline
       const editBtn = row.querySelector('.badge-status');

@@ -163,11 +163,22 @@ function formatRelativeTime(dateStr) {
   return date.toLocaleDateString();
 }
 
+function escHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Only http(s) links are clickable; anything else (javascript:, data:) stays plain text.
+function safeHref(url) {
+  return /^https?:\/\//i.test(String(url || '').trim()) ? String(url).trim() : '';
+}
+
 function highlightSearchText(text, search) {
   if (!text) return '';
-  if (!search) return text;
-  const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return text.replace(regex, '<mark style="background:#fef08a; color:#854d0e; padding:0 2px; border-radius:3px;">$1</mark>');
+  const safe = escHtml(text);
+  if (!search) return safe;
+  const safeSearch = escHtml(search);
+  const regex = new RegExp(`(${safeSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return safe.replace(regex, '<mark style="background:#fef08a; color:#854d0e; padding:0 2px; border-radius:3px;">$1</mark>');
 }
 
 window._shortLinksCurrentPage = 1;
@@ -216,44 +227,60 @@ window.renderShortLinksPage = function(page = 1) {
       ? `<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:10px; font-weight:800; font-size:11px;" title="High-Traffic Link">🔥 ${clickCount}</span>`
       : `<span style="font-weight:700; color:#334155;">${clickCount}</span>`;
 
+    const targetHref = safeHref(link.target_url);
+    const targetLinkHtml = targetHref
+      ? `<a href="${escHtml(targetHref)}" target="_blank" rel="noopener noreferrer" class="target-url-text" style="max-width:170px;" title="${escHtml(targetUrlDisplay)}">${targetHtml}</a>`
+      : `<span class="target-url-text" style="max-width:170px;" title="${escHtml(targetUrlDisplay)}">${targetHtml}</span>`;
+
     row.innerHTML = `
       <td style="text-align:center; font-weight:600; color:#64748b; padding:8px 6px;">${globalIndex}</td>
       <td style="font-weight:700; color:#0f172a; padding:8px 8px;">${slugHtml}</td>
       <td style="padding:8px 8px;">
-        <a href="${shortUrl}" target="_blank" class="short-link-text" style="max-width:140px;" title="${shortUrl}">${shortUrl}</a>
+        <a href="${escHtml(shortUrl)}" target="_blank" rel="noopener noreferrer" class="short-link-text" style="max-width:140px;" title="${escHtml(shortUrl)}">${escHtml(shortUrl)}</a>
       </td>
-      <td style="padding:8px 8px;">
-        <a href="${targetUrlDisplay}" target="_blank" class="target-url-text" style="max-width:170px;" title="${targetUrlDisplay}">${targetHtml}</a>
-      </td>
+      <td style="padding:8px 8px;">${targetLinkHtml}</td>
       <td style="padding:8px 6px;">
-        <span style="padding:2px 6px; background:#f1f5f9; border-radius:6px; font-weight:700; font-size:11px; color:#334155; text-transform:capitalize;">${link.type}</span>
+        <span style="padding:2px 6px; background:#f1f5f9; border-radius:6px; font-weight:700; font-size:11px; color:#334155; text-transform:capitalize;">${escHtml(link.type)}</span>
       </td>
-      <td style="font-size:12px; font-weight:600; color:#475569; padding:8px 6px;">${link.createdBy || 'System'}</td>
+      <td style="font-size:12px; font-weight:600; color:#475569; padding:8px 6px;">${escHtml(link.createdBy || 'System')}</td>
       <td style="text-align:center; padding:8px 6px;">${clickBadgeHtml}</td>
       <td style="text-align:center; padding:8px 6px;">
         <span style="font-size:14px;" title="${link.active ? 'Active' : 'Disabled'}">
           ${link.active ? '🟢' : '🔴'}
         </span>
       </td>
-      <td style="font-size:11px; color:#64748b; padding:8px 6px; white-space:nowrap;" title="${fullCreatedTime}">${createdDateDisplay}</td>
+      <td style="font-size:11px; color:#64748b; padding:8px 6px; white-space:nowrap;" title="${escHtml(fullCreatedTime)}">${escHtml(createdDateDisplay)}</td>
       <td style="text-align:center; padding:8px 6px;">
         <div style="display:flex; justify-content:center; align-items:center; gap:6px;">
-          <button type="button" onclick="copyLink('${shortUrl}')" class="btn btn-sm btn-primary" style="font-size:11px; padding:3px 8px; border-radius:6px; font-weight:700;" title="Copy Short Link">📋 Copy</button>
-          
+          <button type="button" data-act="copy" class="btn btn-sm btn-primary" style="font-size:11px; padding:3px 8px; border-radius:6px; font-weight:700;" title="Copy Short Link">📋 Copy</button>
+
           <div class="action-dropdown">
-            <button type="button" onclick="toggleActionDropdown(event, '${link.id}')" class="btn btn-sm btn-secondary" style="font-size:11px; padding:3px 8px; border-radius:6px; background:#475569; color:#fff; font-weight:700;" title="More Actions">⚙️ ▾</button>
-            <div id="dropdown-${link.id}" class="action-dropdown-menu">
-              <button type="button" onclick="showQrCodeModal('${shortUrl}', '${link.slug}')">📷 View QR Code</button>
-              <button type="button" onclick="editShortLink('${link.id}', '${link.slug}', '${link.target_url || ''}')">✏️ Edit Details</button>
-              <button type="button" onclick="window.open('${targetUrlDisplay}', '_blank')">🔗 Test Redirect</button>
-              <button type="button" onclick="toggleStatus('${link.id}', ${link.active})">${link.active ? '⏸️ Disable Link' : '▶️ Enable Link'}</button>
+            <button type="button" data-act="menu" class="btn btn-sm btn-secondary" style="font-size:11px; padding:3px 8px; border-radius:6px; background:#475569; color:#fff; font-weight:700;" title="More Actions">⚙️ ▾</button>
+            <div id="dropdown-${escHtml(link.id)}" class="action-dropdown-menu">
+              <button type="button" data-act="qr">📷 View QR Code</button>
+              <button type="button" data-act="edit">✏️ Edit Details</button>
+              <button type="button" data-act="test">🔗 Test Redirect</button>
+              <button type="button" data-act="toggle">${link.active ? '⏸️ Disable Link' : '▶️ Enable Link'}</button>
               <div style="border-top:1px solid #f1f5f9; margin:2px 0;"></div>
-              <button type="button" onclick="deleteLink('${link.id}')" class="danger-item" style="color:#ef4444;">🗑️ Delete Link</button>
+              <button type="button" data-act="delete" class="danger-item" style="color:#ef4444;">🗑️ Delete Link</button>
             </div>
           </div>
         </div>
       </td>
     `;
+    // Values reach the handlers through the closure, never through attribute strings.
+    const actions = {
+      copy: () => copyLink(shortUrl),
+      menu: (e) => toggleActionDropdown(e, link.id),
+      qr: () => showQrCodeModal(shortUrl, link.slug),
+      edit: () => editShortLink(link.id, link.slug, link.target_url || ''),
+      test: () => { if (targetHref) window.open(targetHref, '_blank', 'noopener'); },
+      toggle: () => toggleStatus(link.id, link.active),
+      delete: () => deleteLink(link.id)
+    };
+    row.querySelectorAll('button[data-act]').forEach((btn) => {
+      btn.addEventListener('click', (e) => actions[btn.dataset.act](e));
+    });
     tbody.appendChild(row);
   });
 
@@ -376,10 +403,10 @@ window.editShortLink = async function(id, currentSlug, currentUrl) {
     html: `
       <div style="text-align:left; font-size:13px; padding:6px 0;">
         <label style="font-weight:700; color:#334155; display:block; margin-bottom:4px;">Custom Slug:</label>
-        <input id="swal-slug" class="swal2-input" value="${currentSlug}" style="width:100%; margin:0 0 14px 0; box-sizing:border-box;" placeholder="e.g. wifi-guest" />
+        <input id="swal-slug" class="swal2-input" value="${escHtml(currentSlug)}" style="width:100%; margin:0 0 14px 0; box-sizing:border-box;" placeholder="e.g. wifi-guest" />
         
         <label style="font-weight:700; color:#334155; display:block; margin-bottom:4px;">Target Redirect URL:</label>
-        <input id="swal-target-url" class="swal2-input" value="${currentUrl}" style="width:100%; margin:0; box-sizing:border-box;" placeholder="https://example.com" />
+        <input id="swal-target-url" class="swal2-input" value="${escHtml(currentUrl)}" style="width:100%; margin:0; box-sizing:border-box;" placeholder="https://example.com" />
       </div>
     `,
     focusConfirm: false,
@@ -667,7 +694,7 @@ function populateAllowedTypes() {
   const filterSelect = document.getElementById('typeFilter');
 
   const options = allowedTypes
-    .map(type => `<option value="${type}">${capitalize(type)}</option>`)
+    .map(type => `<option value="${escHtml(type)}">${escHtml(capitalize(type))}</option>`)
     .join('');
 
   if (typeSelect) typeSelect.innerHTML = options;

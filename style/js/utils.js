@@ -15,14 +15,17 @@
 
   // ── Highlight Search Match Text ──────────────────────────────────────────
   window.highlightText = function (text, search) {
-    if (!search || !text) return text || '';
+    // The result goes into innerHTML, so every part is escaped here
+    const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    if (!search || !text) return text ? esc(text) : '';
     const textStr = String(text);
     const index = textStr.toLowerCase().indexOf(search.toLowerCase());
-    if (index === -1) return textStr;
+    if (index === -1) return esc(textStr);
 
-    const before = textStr.substring(0, index);
-    const match = textStr.substring(index, index + search.length);
-    const after = textStr.substring(index + search.length);
+    const before = esc(textStr.substring(0, index));
+    const match = esc(textStr.substring(index, index + search.length));
+    const after = esc(textStr.substring(index + search.length));
     return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 1px 3px; border-radius: 3px; font-weight: 600;">${match}</mark>${after}`;
   };
 

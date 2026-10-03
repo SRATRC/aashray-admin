@@ -61,13 +61,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Text highlighting utility
   const highlightText = (text, search) => {
-    if (!search || !text) return text || '';
+    // The result goes into innerHTML, so every part is escaped
+    if (!search || !text) return text ? escapeHtml(text) : '';
     const textStr = String(text);
     const index = textStr.toLowerCase().indexOf(search.toLowerCase());
-    if (index === -1) return textStr;
-    const matchedText = textStr.substring(index, index + search.length);
-    const before = textStr.substring(0, index);
-    const after = textStr.substring(index + search.length);
+    if (index === -1) return escapeHtml(textStr);
+    const matchedText = escapeHtml(textStr.substring(index, index + search.length));
+    const before = escapeHtml(textStr.substring(0, index));
+    const after = escapeHtml(textStr.substring(index + search.length));
     return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 2px 4px; border-radius: 4px; font-weight: 500;">${matchedText}</mark>${after}`;
   };
 
@@ -127,10 +128,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${index + 1}</td>
         <td>${highlightText(entry.cardno, query)}</td>
         <td>${highlightText(entry.issuedto, query)}</td>
-        <td><span class="credit-pill credit-pill-room click-credit" data-cardno="${entry.cardno}" data-category="room">${credits.room || 0}</span></td>
-        <td><span class="credit-pill credit-pill-food click-credit" data-cardno="${entry.cardno}" data-category="food">${credits.food || 0}</span></td>
-        <td><span class="credit-pill credit-pill-travel click-credit" data-cardno="${entry.cardno}" data-category="travel">${credits.travel || 0}</span></td>
-        <td><span class="credit-pill credit-pill-utsav click-credit" data-cardno="${entry.cardno}" data-category="utsav">${credits.utsav || 0}</span></td>
+        <td><span class="credit-pill credit-pill-room click-credit" data-cardno="${escapeHtml(entry.cardno)}" data-category="room">${credits.room || 0}</span></td>
+        <td><span class="credit-pill credit-pill-food click-credit" data-cardno="${escapeHtml(entry.cardno)}" data-category="food">${credits.food || 0}</span></td>
+        <td><span class="credit-pill credit-pill-travel click-credit" data-cardno="${escapeHtml(entry.cardno)}" data-category="travel">${credits.travel || 0}</span></td>
+        <td><span class="credit-pill credit-pill-utsav click-credit" data-cardno="${escapeHtml(entry.cardno)}" data-category="utsav">${credits.utsav || 0}</span></td>
         <td>${highlightText(entry.address, query)}</td>
         <td>${highlightText(entry.email, query)}</td>
         <td>${highlightText(entry.mobno, query)}</td>
@@ -177,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Create details loading row
     const loadingRow = document.createElement('tr');
     loadingRow.className = 'transaction-row';
-    loadingRow.innerHTML = `<td colspan="10" style="text-align:center; padding: 16px;"><span style="color: #4f46e5; font-weight: 500;">⏳ Loading ${category} transactions for card ${cardno}...</span></td>`;
+    loadingRow.innerHTML = `<td colspan="10" style="text-align:center; padding: 16px;"><span style="color: #4f46e5; font-weight: 500;">⏳ Loading ${escapeHtml(category)} transactions for card ${escapeHtml(cardno)}...</span></td>`;
     parentRow.insertAdjacentElement('afterend', loadingRow);
 
     try {
@@ -190,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const txs = result.data || [];
 
       if (txs.length === 0) {
-        loadingRow.innerHTML = `<td colspan="10" style="text-align:center; padding: 16px; color: #64748b;">No ${category} credit/debit transactions found for card ${cardno}.</td>`;
+        loadingRow.innerHTML = `<td colspan="10" style="text-align:center; padding: 16px; color: #64748b;">No ${escapeHtml(category)} credit/debit transactions found for card ${escapeHtml(cardno)}.</td>`;
         return;
       }
 
@@ -207,9 +208,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="timeline-dot ${isCredit ? 'credited' : 'debited'}"></div>
             <div class="timeline-content">
               <div class="timeline-info">
-                <div class="timeline-booking">Booking ID: ${tx.bookingid || '—'}</div>
+                <div class="timeline-booking">Booking ID: ${escapeHtml(tx.bookingid) || '—'}</div>
                 <div class="timeline-date">${new Date(tx.date).toLocaleString()}</div>
-                <div class="timeline-desc">Order ID: ${tx.razorpay_order_id || '—'} ${tx.description ? '· ' + tx.description : ''}</div>
+                <div class="timeline-desc">Order ID: ${escapeHtml(tx.razorpay_order_id) || '—'} ${tx.description ? '· ' + tx.description : ''}</div>
               </div>
               <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}">
                 ${amt >= 0 ? '+' : ''}${amt}
@@ -223,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td colspan="10">
           <div class="timeline-container" style="animation: rowFadeIn 0.25s ease-out forwards; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
             <div class="timeline-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-              <span style="font-size: 14.5px; font-weight: bold; color: #0f172a;">🛡️ ${category.toUpperCase()} Credit History (Card: ${cardno})</span>
+              <span style="font-size: 14.5px; font-weight: bold; color: #0f172a;">🛡️ ${escapeHtml(category.toUpperCase())} Credit History (Card: ${escapeHtml(cardno)})</span>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <button id="printLedgerBtn" style="padding: 4px 10px; font-size: 12px; margin: 0; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; color: #475569; font-weight: 500;">🖨️ Print Ledger</button>
                 <span class="timeline-close" id="closeTxBtn" style="font-size: 22px; line-height: 1; cursor: pointer; color: #94a3b8;">&times;</span>
@@ -258,8 +259,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
             return `
               <tr>
-                <td>${tx.bookingid || '—'}</td>
-                <td>${tx.razorpay_order_id || '—'}</td>
+                <td>${escapeHtml(tx.bookingid) || '—'}</td>
+                <td>${escapeHtml(tx.razorpay_order_id) || '—'}</td>
                 <td style="font-weight: bold; color: ${amt >= 0 ? '#16a34a' : '#dc2626'}">${amt >= 0 ? '+' : ''}${amt}</td>
                 <td>${new Date(tx.date).toLocaleString()}</td>
                 <td>${isCredit ? 'CREDITED' : 'DEBITED'}</td>
@@ -270,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           printWindow.document.write(`
             <html>
               <head>
-                <title>Ledger Statement - Card ${cardno}</title>
+                <title>Ledger Statement - Card ${escapeHtml(cardno)}</title>
                 <style>
                   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #1e293b; }
                   h2 { margin-bottom: 5px; color: #0f172a; }
@@ -284,8 +285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               <body>
                 <h2>Ledger Statement</h2>
                 <div class="meta">
-                  <div><strong>Card Number:</strong> ${cardno}</div>
-                  <div><strong>Category:</strong> ${category.toUpperCase()}</div>
+                  <div><strong>Card Number:</strong> ${escapeHtml(cardno)}</div>
+                  <div><strong>Category:</strong> ${escapeHtml(category.toUpperCase())}</div>
                   <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
                 </div>
                 <table>
@@ -320,7 +321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (err) {
       console.error(err);
-      loadingRow.innerHTML = `<td colspan="10" style="text-align:center; padding: 16px; color: #dc2626; font-weight: 500;">❌ Error loading transaction details: ${err.message}</td>`;
+      loadingRow.innerHTML = `<td colspan="10" style="text-align:center; padding: 16px; color: #dc2626; font-weight: 500;">❌ Error loading transaction details: ${escapeHtml(err.message)}</td>`;
     }
   };
 

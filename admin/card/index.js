@@ -150,13 +150,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Text highlighting utility
   const highlightText = (text, search) => {
-    if (!search || !text) return text || '';
+    // The result goes into innerHTML, so every part is escaped
+    if (!search || !text) return text ? escapeHtml(text) : '';
     const textStr = String(text);
     const index = textStr.toLowerCase().indexOf(search.toLowerCase());
-    if (index === -1) return textStr;
-    const matchedText = textStr.substring(index, index + search.length);
-    const before = textStr.substring(0, index);
-    const after = textStr.substring(index + search.length);
+    if (index === -1) return escapeHtml(textStr);
+    const matchedText = escapeHtml(textStr.substring(index, index + search.length));
+    const before = escapeHtml(textStr.substring(0, index));
+    const after = escapeHtml(textStr.substring(index + search.length));
     return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 2px 4px; border-radius: 4px; font-weight: 500;">${matchedText}</mark>${after}`;
   };
 
@@ -576,7 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const statusCell = document.createElement('td');
       const normStatus = (item.res_status || '').trim();
       const statusClass = normStatus.replace(/\s+/g, '_');
-      statusCell.innerHTML = `<span class="badge-res badge-res-${statusClass}">${normStatus || 'Unknown'}</span>`;
+      statusCell.innerHTML = `<span class="badge-res badge-res-${statusClass}">${escapeHtml(normStatus) || "Unknown"}</span>`;
       row.appendChild(statusCell);
 
       // Action Cell
@@ -597,7 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       resetPwdButton.addEventListener('click', async (e) => {
         e.stopPropagation();
         const title = 'Reset Card Password';
-        const confirmText = `Are you sure you want to reset the password for resident <strong>${item.issuedto}</strong> (Card: ${item.cardno})?`;
+        const confirmText = `Are you sure you want to reset the password for resident <strong>${escapeHtml(item.issuedto)}</strong> (Card: ${escapeHtml(item.cardno)})?`;
         if (!(await showConfirmModal(title, confirmText, true, '🔑'))) return;
 
         try {
@@ -705,7 +706,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusRow.className = 'mobile-card-row';
       const normStatus = (item.res_status || '').trim();
       const statusClass = normStatus.replace(/\s+/g, '_');
-      statusRow.innerHTML = `<strong>Status:</strong> <span class="badge-res badge-res-${statusClass}">${normStatus || 'Unknown'}</span>`;
+      statusRow.innerHTML = `<strong>Status:</strong> <span class="badge-res badge-res-${statusClass}">${escapeHtml(normStatus) || "Unknown"}</span>`;
       card.appendChild(statusRow);
 
       // Actions
@@ -727,7 +728,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       resetBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const title = 'Reset Card Password';
-        const confirmText = `Are you sure you want to reset the password for resident <strong>${item.issuedto}</strong> (Card: ${item.cardno})?`;
+        const confirmText = `Are you sure you want to reset the password for resident <strong>${escapeHtml(item.issuedto)}</strong> (Card: ${escapeHtml(item.cardno)})?`;
         if (!(await showConfirmModal(title, confirmText, true, '🔑'))) return;
 
         try {
@@ -1347,14 +1348,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       bdays.forEach(item => {
         const mobStr = item.mobno ? String(item.mobno) : '';
-        const waLink = mobStr ? `<a href="https://wa.me/91${mobStr}" target="_blank" title="Send WhatsApp greeting" style="text-decoration: none; font-size: 13px; color: #25d366; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;">💬 WhatsApp</a>` : '';
+        const waLink = mobStr ? `<a href="https://wa.me/91${encodeURIComponent(mobStr)}" target="_blank" title="Send WhatsApp greeting" style="text-decoration: none; font-size: 13px; color: #25d366; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;">💬 WhatsApp</a>` : '';
         
         container.innerHTML += `
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 12px 6px; gap: 12px;">
             <div style="text-align: left;">
-              <div style="font-weight: 700; color: #0f172a; font-size: 13.5px;">${item.issuedto}</div>
-              <div style="font-size: 12px; color: #64748b; margin-top: 3px;">Card: <strong>${item.cardno}</strong> | ${item.res_status || 'Guest'}</div>
-              <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">Born: ${item.dob}</div>
+              <div style="font-weight: 700; color: #0f172a; font-size: 13.5px;">${escapeHtml(item.issuedto)}</div>
+              <div style="font-size: 12px; color: #64748b; margin-top: 3px;">Card: <strong>${escapeHtml(item.cardno)}</strong> | ${escapeHtml(item.res_status || 'Guest')}</div>
+              <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">Born: ${escapeHtml(item.dob)}</div>
             </div>
             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
               <span style="font-size: 12px; font-weight: bold; color: #db2777; background-color: #fdf2f8; padding: 3px 8px; border-radius: 6px; border: 1px dashed #f472b6; white-space: nowrap;">🎉 Turning ${new Date().getFullYear() - new Date(item.dob).getFullYear()}</span>
@@ -1464,12 +1465,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Avatar — show pfp photo if available, else initials
     const avatar = document.getElementById('drawerAvatar');
     if (item.pfp) {
-      avatar.innerHTML = `<img src="${item.pfp}" alt="${item.issuedto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${(item.issuedto||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}'">`;
+      avatar.textContent = '';
+      const pfpImg = document.createElement('img');
+      pfpImg.src = item.pfp;
+      pfpImg.alt = item.issuedto || '';
+      pfpImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+      const pfpInitials = (item.issuedto || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      pfpImg.addEventListener('error', () => { avatar.textContent = pfpInitials; });
+      avatar.appendChild(pfpImg);
       avatar.style.background = 'none';
       avatar.style.padding = '0';
     } else {
       const initials = (item.issuedto || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-      avatar.innerHTML = initials;
+      avatar.textContent = initials;
       avatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
     }
 
@@ -1489,37 +1497,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       : '';
 
     const mobStr = item.mobno ? String(item.mobno) : '';
-    const waLink = mobStr ? ` <a href="https://wa.me/91${mobStr}" target="_blank" title="WhatsApp" style="text-decoration:none;">💬</a>` : '';
+    const waLink = mobStr ? ` <a href="https://wa.me/91${encodeURIComponent(mobStr)}" target="_blank" title="WhatsApp" style="text-decoration:none;">💬</a>` : '';
 
     body.innerHTML = `
       <div class="drawer-section-title">Identity</div>
-      ${field('🪪', 'Card No', item.cardno)}
-      ${field('👤', 'Name', item.issuedto)}
-      ${field('⚧', 'Gender', item.gender)}
-      ${field('🎂', 'Date of Birth', item.dob ? `${item.dob}${getAge(item.dob)}` : '')}
-      ${field('🏠', 'Res. Status', normStatus)}
+      ${field('🪪', 'Card No', escapeHtml(item.cardno))}
+      ${field('👤', 'Name', escapeHtml(item.issuedto))}
+      ${field('⚧', 'Gender', escapeHtml(item.gender))}
+      ${field('🎂', 'Date of Birth', item.dob ? `${escapeHtml(item.dob)}${getAge(item.dob)}` : '')}
+      ${field("🏠", "Res. Status", escapeHtml(normStatus))}
 
       <div class="drawer-section-title">History</div>
       <div class="drawer-credits-container" style="display: flex; gap: 4px; margin-top: 8px; margin-bottom: 12px; width: 100%; box-sizing: border-box;">
-        <span class="credit-pill credit-pill-room" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Room credit history" onclick="openCreditHistoryModal('${item.cardno}', 'room')">Room:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
-        <span class="credit-pill credit-pill-food" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Food credit history" onclick="openCreditHistoryModal('${item.cardno}', 'food')">Food:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
-        <span class="credit-pill credit-pill-travel" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Travel credit history" onclick="openCreditHistoryModal('${item.cardno}', 'travel')">Travel:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
-        <span class="credit-pill credit-pill-utsav" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Utsav credit history" onclick="openCreditHistoryModal('${item.cardno}', 'utsav')">Utsav:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
-        <span class="credit-pill credit-pill-adhyayan" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; cursor: pointer; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Adhyayan booking history" onclick="openCreditHistoryModal('${item.cardno}', 'adhyayan')">Adhyayan</span>
+        <span class="credit-pill credit-pill-room" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Room credit history" data-credit-cardno="${escapeHtml(item.cardno)}" data-credit-cat="room">Room:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).room || 0}</strong></span>
+        <span class="credit-pill credit-pill-food" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Food credit history" data-credit-cardno="${escapeHtml(item.cardno)}" data-credit-cat="food">Food:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).food || 0}</strong></span>
+        <span class="credit-pill credit-pill-travel" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Travel credit history" data-credit-cardno="${escapeHtml(item.cardno)}" data-credit-cat="travel">Travel:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).travel || 0}</strong></span>
+        <span class="credit-pill credit-pill-utsav" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Utsav credit history" data-credit-cardno="${escapeHtml(item.cardno)}" data-credit-cat="utsav">Utsav:<strong>${item.credits && (typeof item.credits === 'string' ? JSON.parse(item.credits) : item.credits).utsav || 0}</strong></span>
+        <span class="credit-pill credit-pill-adhyayan" style="font-size: 11px; padding: 4px 5px; flex: 1; text-align: center; white-space: nowrap; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; cursor: pointer; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600;" title="Click to view Adhyayan booking history" data-credit-cardno="${escapeHtml(item.cardno)}" data-credit-cat="adhyayan">Adhyayan</span>
       </div>
 
       <div class="drawer-section-title">Contact</div>
-      ${field('📱', 'Mobile', mobStr, waLink)}
-      ${field('✉️', 'Email', item.email ? `<a href="mailto:${item.email}" style="color:#4f46e5;">${item.email}</a>` : '')}
+      ${field('📱', 'Mobile', escapeHtml(mobStr), waLink)}
+      ${field('✉️', 'Email', item.email ? `<a href="mailto:${escapeHtml(item.email)}" style="color:#4f46e5;">${escapeHtml(item.email)}</a>` : '')}
 
       <div class="drawer-section-title">ID Document</div>
-      ${field('🪪', 'ID Type', item.idType)}
-      ${field('#', 'ID Number', item.idNo)}
+      ${field('🪪', 'ID Type', escapeHtml(item.idType))}
+      ${field('#', 'ID Number', escapeHtml(item.idNo))}
 
       <div class="drawer-section-title">Address</div>
-      ${field('🏙️', 'Address', item.address)}
-      ${field('🏘️', 'City', item.city)}
-      ${field('🗺️', 'State', item.state)}
+      ${field('🏙️', 'Address', escapeHtml(item.address))}
+      ${field('🏘️', 'City', escapeHtml(item.city))}
+      ${field('🗺️', 'State', escapeHtml(item.state))}
       ${field('📮', 'PIN', item.pin)}
       ${field('🌍', 'Country', item.country)}
     `;
@@ -1565,7 +1573,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const item = drawerCurrentItem;
       const confirmed = await showConfirmModal(
         'Reset Card Password',
-        `Reset password for <strong>${item.issuedto}</strong> (${item.cardno})?`,
+        `Reset password for <strong>${escapeHtml(item.issuedto)}</strong> (${escapeHtml(item.cardno)})?`,
         true, '🔑'
       );
       if (!confirmed) return;
@@ -1777,7 +1785,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         wrapper.classList.remove('swiped');
         actions.classList.remove('revealed');
         const name = card.querySelector('.mobile-card-name')?.textContent || '';
-        const confirmed = await showConfirmModal('Reset Password', `Reset password for <strong>${name}</strong>?`, true, '🔑');
+        const confirmed = await showConfirmModal('Reset Password', `Reset password for <strong>${escapeHtml(name)}</strong>?`, true, '🔑');
         if (!confirmed) return;
         try {
           const res = await fetch(`${CONFIG.basePath}/card/reset-pwd`, {
@@ -1954,7 +1962,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (idType === 'Aadhar') {
       pIdNoInput.placeholder = 'e.g. 1234 5678 9012';
-      pIdNoInput.pattern = '[0-9]{4} [0-9]{4} [0-9]{4}';
+      pIdNoInput.pattern = '([0-9]{4} [0-9]{4} [0-9]{4})|(\u2022{4} \u2022{4} [0-9]{4})'; // the masked form of a saved number is allowed
       pIdNoInput.maxLength = 14;
       pIdNoInput.required = true;
       pIdNoInput.disabled = false;
@@ -2053,6 +2061,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pRefCardInput = document.getElementById('p_reference_cardno');
   const pRefCardValidation = document.getElementById('p_referenceCardNoValidation');
   const pSponsorPreviewCard = document.getElementById('p_sponsorPreviewCard');
+
+  // The card as loaded for edit (null on create), to tell what a save changes
+  let loadedCard = null;
+
+  // Select the saved guest type. Saved types differ in case ("family") and some
+  // are not in the list (such as "RPL Guest"): add those, so a save keeps them.
+  const setGuestType = (savedType) => {
+    const select = document.getElementById('p_guest_type');
+    if (!select) return;
+    if (!savedType) { select.value = ''; return; }
+    const match = [...select.options].find(
+      (o) => o.value && o.value.toLowerCase() === String(savedType).toLowerCase()
+    );
+    if (match) { select.value = match.value; return; }
+    select.add(new Option(savedType, savedType));
+    select.value = savedType;
+  };
+
+  // Show and explain the guest fields (same rules as the old edit page)
+  const updateGuestFields = () => {
+    const isGuest = pResStatusSelect && pResStatusSelect.value === 'GUEST';
+    if (pGuestFields) pGuestFields.style.display = isGuest ? 'block' : 'none';
+    const guestType = document.getElementById('p_guest_type');
+    const hint = document.getElementById('p_referenceHint');
+    const wasGuest = loadedCard?.res_status === 'GUEST';
+    const currentHost = wasGuest ? loadedCard.referenceCardno : null;
+    if (hint) {
+      if (!wasGuest) {
+        hint.textContent = 'Enter the card number of the member this person is a guest of.';
+      } else if (currentHost) {
+        const name = loadedCard.referenceName ? `${loadedCard.referenceName} (${currentHost})` : currentHost;
+        hint.textContent = `Current host: ${name}. Enter another card number to move this guest. The host cannot be cleared.`;
+      } else {
+        hint.textContent = 'No host on record. Leave blank to keep it that way.';
+      }
+    }
+    // A guest type belongs to the host link, so it needs a card number
+    const hasReference = pRefCardInput && pRefCardInput.value.trim() !== '';
+    if (guestType) guestType.disabled = !isGuest || !hasReference;
+  };
 
   const saveFormDraft = () => {
     if (panelMode === 'create' || panelMode === 'edit') {
@@ -2297,6 +2345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const openFormPanel = async (mode, cardno = null) => {
     panelMode = mode;
+    loadedCard = null;
     
     // Check if there is an unsaved draft in localStorage
     const draftContainer = document.getElementById('formPanelDraftContainer');
@@ -2418,12 +2467,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateIdNoPattern(false);
 
         if (pRefCardInput) pRefCardInput.value = data.referenceCardno || '';
-        const pGuestTypeSelect = document.getElementById('p_guest_type');
-        if (pGuestTypeSelect) pGuestTypeSelect.value = data.guestType || '';
-
-        if (pGuestFields) {
-          pGuestFields.style.display = data.res_status === 'GUEST' ? 'block' : 'none';
-        }
+        loadedCard = data;
+        setGuestType(data.guestType);
+        updateGuestFields();
 
         if (data.res_status === 'GUEST' && data.referenceCardno) {
           validateReferenceCard(data.referenceCardno);
@@ -2881,9 +2927,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (pResStatusSelect) {
     pResStatusSelect.addEventListener('change', () => {
       const resStatus = pResStatusSelect.value;
-      if (pGuestFields) {
-        pGuestFields.style.display = resStatus === 'GUEST' ? 'block' : 'none';
-      }
+      updateGuestFields();
       if (resStatus !== 'GUEST') {
         referenceCardValid = false;
         if (pRefCardValidation) {
@@ -2900,6 +2944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (pRefCardInput) {
+    pRefCardInput.addEventListener('input', updateGuestFields);
     pRefCardInput.addEventListener('input', debounce((e) => {
       validateReferenceCard(e.target.value);
     }, 300));
@@ -3321,20 +3366,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       const resStatus = pResStatusSelect.value;
+      const wasGuest = panelMode === 'edit' && loadedCard?.res_status === 'GUEST';
+      const currentHost = wasGuest ? loadedCard.referenceCardno : null;
+      const reference = resStatus === 'GUEST' ? (pRefCardInput?.value?.trim() || '') : '';
       if (resStatus === "GUEST") {
-        const referenceCardno = pRefCardInput?.value?.trim();
         const guestType = document.getElementById('p_guest_type')?.value?.trim();
+        // A new guest needs a host. A guest with a host on record can move to
+        // another host but not clear it. An old guest with no host may stay so.
+        const hostRequired = !wasGuest || Boolean(currentHost);
 
-        if (!referenceCardno || !guestType) {
-          showPanelError("Please enter both Reference Card Number and Guest Type for GUEST users.");
-          if (!referenceCardno) markInvalid(pRefCardInput);
-          if (!guestType) markInvalid(document.getElementById('p_guest_type'));
+        if (!reference && hostRequired) {
+          showPanelError("Please enter the Reference (host) Card Number for this guest.");
+          markInvalid(pRefCardInput);
           customValid = false;
-        } else if (!referenceCardValid) {
+        } else if (reference && !guestType) {
+          showPanelError("Please choose a Guest Type for the host card.");
+          markInvalid(document.getElementById('p_guest_type'));
+          customValid = false;
+        } else if (reference && !referenceCardValid) {
           showPanelError("Please enter a valid Reference Card Number before submitting.");
           markInvalid(pRefCardInput);
           customValid = false;
         }
+      } else if (wasGuest && currentHost) {
+        // Changing the member type away from guest removes the host link
+        const host = loadedCard.referenceName ? `${loadedCard.referenceName} (${currentHost})` : currentHost;
+        if (!confirm(`This card will stop being a guest of ${host}. Continue?`)) return;
       }
 
       if (panelMode === 'create') {
@@ -3399,10 +3456,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         res_status: resStatus
       };
 
-      if (resStatus === "GUEST") {
-        bodyData.referenceCardno = pRefCardInput.value.trim();
-        bodyData.guestType = document.getElementById('p_guest_type').value.trim();
-      }
+      // A blank host keeps a guest's current link; a guest type goes only with a host
+      bodyData.referenceCardno = reference || null;
+      bodyData.guestType = reference ? (document.getElementById('p_guest_type').value.trim() || null) : null;
 
       try {
         const token = sessionStorage.getItem('token');
@@ -3559,28 +3615,28 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
             <div><strong>Check-in:</strong> ${new Date(b.checkin).toLocaleDateString()}</div>
             <div><strong>Check-out:</strong> ${new Date(b.checkout).toLocaleDateString()}</div>
-            <div><strong>Room No:</strong> ${b.roomno || 'Not Assigned'}</div>
-            <div><strong>Resident:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+            <div><strong>Room No:</strong> ${escapeHtml(b.roomno || 'Not Assigned')}</div>
+            <div><strong>Resident:</strong> ${escapeHtml(b.CardDb?.issuedto || b.cardno)}</div>
           </div>
         `;
       } else if (c === 'travel') {
         return `
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
             <div><strong>Travel Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
-            <div><strong>Route:</strong> ${b.pickup_point} ➔ ${b.drop_point}</div>
-            <div><strong>Passengers:</strong> ${b.total_people || 1}</div>
-            <div><strong>Type:</strong> ${b.type || '—'}</div>
+            <div><strong>Route:</strong> ${escapeHtml(b.pickup_point)} ➔ ${escapeHtml(b.drop_point)}</div>
+            <div><strong>Passengers:</strong> ${escapeHtml(b.total_people || 1)}</div>
+            <div><strong>Type:</strong> ${escapeHtml(b.type || '—')}</div>
           </div>
         `;
       } else if (c === 'utsav') {
         return `
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
-            <div><strong>Utsav:</strong> ${b.UtsavDb?.name || '—'}</div>
-            <div><strong>Package:</strong> ${b.UtsavPackagesDb?.name || '—'}</div>
-            <div><strong>Arrival:</strong> ${b.arrival || '—'}</div>
-            <div><strong>Room:</strong> ${b.roomno || '—'}</div>
-            <div><strong>Car No:</strong> ${b.carno || '—'}</div>
-            <div><strong>Resident:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+            <div><strong>Utsav:</strong> ${escapeHtml(b.UtsavDb?.name || '—')}</div>
+            <div><strong>Package:</strong> ${escapeHtml(b.UtsavPackagesDb?.name || '—')}</div>
+            <div><strong>Arrival:</strong> ${escapeHtml(b.arrival || '—')}</div>
+            <div><strong>Room:</strong> ${escapeHtml(b.roomno || '—')}</div>
+            <div><strong>Car No:</strong> ${escapeHtml(b.carno || '—')}</div>
+            <div><strong>Resident:</strong> ${escapeHtml(b.CardDb?.issuedto || b.cardno)}</div>
           </div>
         `;
       } else if (c === 'food') {
@@ -3588,16 +3644,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
             <div><strong>Meal Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
-            <div><strong>Meals:</strong> ${meals}</div>
-            <div><strong>High Tea:</strong> ${b.hightea && b.hightea !== 'NONE' ? b.hightea : '—'}</div>
+            <div><strong>Meals:</strong> ${escapeHtml(meals)}</div>
+            <div><strong>High Tea:</strong> ${b.hightea && b.hightea !== 'NONE' ? escapeHtml(b.hightea) : '—'}</div>
             <div><strong>Spicy:</strong> ${b.spicy ? 'Yes' : 'No'}</div>
           </div>
         `;
       } else if (c === 'adhyayan') {
         return `
           <div style="display: flex; flex-direction: column; gap: 4px;">
-            <div><strong>Shibir Name:</strong> ${b.ShibirDb?.name || '—'}</div>
-            <div><strong>Speaker:</strong> ${b.ShibirDb?.speaker || '—'}</div>
+            <div><strong>Shibir Name:</strong> ${escapeHtml(b.ShibirDb?.name || '—')}</div>
+            <div><strong>Speaker:</strong> ${escapeHtml(b.ShibirDb?.speaker || '—')}</div>
             <div><strong>Shibir Dates:</strong> ${b.ShibirDb?.start_date ? new Date(b.ShibirDb.start_date).toLocaleDateString() : ''} to ${b.ShibirDb?.end_date ? new Date(b.ShibirDb.end_date).toLocaleDateString() : ''}</div>
           </div>
         `;
@@ -3633,9 +3689,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="timeline-dot ${isCredit ? 'credited' : 'debited'}" style="position: absolute; top: 14px; left: -20px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid; ${isCredit ? 'border-color: #10b981; background-color: #10b981;' : 'border-color: #ef4444; background-color: #ef4444;'} transform: translateX(-50%); z-index: 1;"></div>
                 <div class="timeline-content" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                   <div class="timeline-info" style="flex: 1; min-width: 0; text-align: left;">
-                    <div class="timeline-booking" style="font-weight: 700; color: #1e293b; font-size: 14px;">Booking ID: ${tx.bookingid ? `<span onclick="window.showBookingDetails('${category}', '${tx.bookingid}')" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view booking details">${tx.bookingid}</span>` : '—'}</div>
+                    <div class="timeline-booking" style="font-weight: 700; color: #1e293b; font-size: 14px;">Booking ID: ${tx.bookingid ? `<span data-booking-cat="${escapeHtml(category)}" data-booking-id="${escapeHtml(tx.bookingid)}" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view booking details">${escapeHtml(tx.bookingid)}</span>` : '—'}</div>
                     <div class="timeline-date" style="font-size: 12px; color: #64748b; margin-top: 3px;">${new Date(tx.date).toLocaleString()}</div>
-                    <div class="timeline-desc" style="font-size: 12.5px; color: #475569; margin-top: 5px;">Order ID: ${tx.razorpay_order_id || '—'}</div>
+                    <div class="timeline-desc" style="font-size: 12.5px; color: #475569; margin-top: 5px;">Order ID: ${escapeHtml(tx.razorpay_order_id || '—')}</div>
                   </div>
                   <div class="timeline-amount-badge ${isCredit ? 'credited' : 'debited'}" style="font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; ${isCredit ? 'background-color: #ecfdf5; color: #047857;' : 'background-color: #fef2f2; color: #b91c1c;'}">
                     ${amt >= 0 ? '+' : ''}${amt}
@@ -3682,15 +3738,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           <li style="list-style: none; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-weight: 700; color: #0f172a; font-size: 13.5px;">
-                Booking ID: ${bookingId ? `<span onclick="window.showBookingDetails('${category}', '${bookingId}')" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view details">${bookingId}</span>` : '—'}
+                Booking ID: ${bookingId ? `<span data-booking-cat="${escapeHtml(category)}" data-booking-id="${escapeHtml(bookingId)}" style="color: #4f46e5; cursor: pointer; text-decoration: underline;" title="Click to view details">${escapeHtml(bookingId)}</span>` : '—'}
               </span>
-              ${hasStatus ? `<span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; ${getStatusBadgeStyles(b.status)}">${b.status}</span>` : ''}
+              ${hasStatus ? `<span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; ${getStatusBadgeStyles(b.status)}">${escapeHtml(b.status)}</span>` : ''}
             </div>
             <div style="font-size: 12.5px; color: #475569; padding: 4px 0;">
               ${getBookingInfoHtml(category, b)}
             </div>
             <div style="font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px dashed #f1f5f9; padding-top: 6px;">
-              <span>Booked By: ${b.bookedBy || b.cardno}</span>
+              <span>Booked By: ${escapeHtml(b.bookedBy || b.cardno)}</span>
               <span>Created: ${new Date(b.createdAt || b.date).toLocaleDateString()}</span>
             </div>
           </li>
@@ -3707,14 +3763,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loadCredits = async () => {
       if (category.toLowerCase() === 'adhyayan') return;
       try {
-        const response = await fetch(`${CONFIG.basePath}/accounts/fetchcreditstransactions?cardno=${cardno}&category=${category}`, {
+        const response = await fetch(`${CONFIG.basePath}/accounts/fetchcreditstransactions?cardno=${encodeURIComponent(cardno)}&category=${encodeURIComponent(category)}`, {
           headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
         });
         const result = await response.json();
         txs = result.data || [];
         
         if (txs.length === 0) {
-          list.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No credit/debit transactions found for card ${cardno}.</li>`;
+          list.innerHTML = `<li style="text-align: center; color: #64748b; padding: 20px; list-style: none;">No credit/debit transactions found for card ${escapeHtml(cardno)}.</li>`;
           remainingVal.textContent = '0';
           remainingVal.style.color = '#64748b';
           if (printBtn) {
@@ -3748,8 +3804,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               const amt = isCredit ? tx.credited_amount : -1 * tx.credits_used;
               return `
                 <tr>
-                  <td>${tx.bookingid || '—'}</td>
-                  <td>${tx.razorpay_order_id || '—'}</td>
+                  <td>${escapeHtml(tx.bookingid || '—')}</td>
+                  <td>${escapeHtml(tx.razorpay_order_id || '—')}</td>
                   <td style="font-weight: bold; color: ${amt >= 0 ? '#16a34a' : '#dc2626'}">${amt >= 0 ? '+' : ''}${amt}</td>
                   <td>${new Date(tx.date).toLocaleString()}</td>
                   <td>${isCredit ? 'CREDITED' : 'DEBITED'}</td>
@@ -3760,7 +3816,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             printWindow.document.write(`
               <html>
                 <head>
-                  <title>Ledger Statement - Card ${cardno}</title>
+                  <title>Ledger Statement - Card ${escapeHtml(cardno)}</title>
                   <style>
                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #1e293b; }
                     h2 { margin-bottom: 5px; color: #0f172a; }
@@ -3774,8 +3830,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <body>
                   <h2>Ledger Statement</h2>
                   <div class="meta">
-                    <div><strong>Card Number:</strong> ${cardno}</div>
-                    <div><strong>Category:</strong> ${category.toUpperCase()}</div>
+                    <div><strong>Card Number:</strong> ${escapeHtml(cardno)}</div>
+                    <div><strong>Category:</strong> ${escapeHtml(category.toUpperCase())}</div>
                     <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
                   </div>
                   <table>
@@ -3807,13 +3863,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (err) {
         console.error(err);
-        list.innerHTML = `<li style="text-align: center; color: #dc2626; padding: 20px; list-style: none;">❌ Error loading credits: ${err.message}</li>`;
+        list.innerHTML = `<li style="text-align: center; color: #dc2626; padding: 20px; list-style: none;">❌ Error loading credits: ${escapeHtml(err.message)}</li>`;
       }
     };
 
     const loadBookings = async () => {
       try {
-        const response = await fetch(`${CONFIG.basePath}/bookings/history?cardno=${cardno}&category=${category}`, {
+        const response = await fetch(`${CONFIG.basePath}/bookings/history?cardno=${encodeURIComponent(cardno)}&category=${encodeURIComponent(category)}`, {
           headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
         });
         const result = await response.json();
@@ -3911,7 +3967,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     content.style.display = 'none';
     
     try {
-      const response = await fetch(`${CONFIG.basePath}/bookings/details/${category}/${bookingid}`, {
+      const response = await fetch(`${CONFIG.basePath}/bookings/details/${encodeURIComponent(category)}/${encodeURIComponent(bookingid)}`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
         }
@@ -3927,56 +3983,56 @@ document.addEventListener('DOMContentLoaded', async () => {
       let html = '';
       if (category === 'room' || category === 'flat') {
         html = `
-          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
-          <div style="margin-bottom: 8px;"><strong>Resident:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${escapeHtml(b.bookingid)}</div>
+          <div style="margin-bottom: 8px;"><strong>Resident:</strong> ${escapeHtml(b.CardDb?.issuedto || b.cardno)}</div>
           <div style="margin-bottom: 8px;"><strong>Check-in Date:</strong> ${new Date(b.checkin).toLocaleDateString()}</div>
           <div style="margin-bottom: 8px;"><strong>Check-out Date:</strong> ${new Date(b.checkout).toLocaleDateString()}</div>
-          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #4f46e5;">${b.status}</span></div>
-          ${b.roomno ? `<div style="margin-bottom: 8px;"><strong>Room/Flat No:</strong> ${b.roomno}</div>` : ''}
-          ${b.comments ? `<div><strong>Comments:</strong> ${b.comments}</div>` : ''}
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #4f46e5;">${escapeHtml(b.status)}</span></div>
+          ${b.roomno ? `<div style="margin-bottom: 8px;"><strong>Room/Flat No:</strong> ${escapeHtml(b.roomno)}</div>` : ''}
+          ${b.comments ? `<div><strong>Comments:</strong> ${escapeHtml(b.comments)}</div>` : ''}
         `;
       } else if (category === 'travel') {
         html = `
-          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
-          <div style="margin-bottom: 8px;"><strong>Passenger Card:</strong> ${b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${escapeHtml(b.bookingid)}</div>
+          <div style="margin-bottom: 8px;"><strong>Passenger Card:</strong> ${escapeHtml(b.cardno)}</div>
           <div style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
-          <div style="margin-bottom: 8px;"><strong>Pickup Point:</strong> ${b.pickup_point}</div>
-          <div style="margin-bottom: 8px;"><strong>Drop Point:</strong> ${b.drop_point}</div>
-          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #10b981;">${b.status}</span></div>
-          <div style="margin-bottom: 8px;"><strong>Total People:</strong> ${b.total_people || 1}</div>
-          ${b.comments ? `<div><strong>Comments:</strong> ${b.comments}</div>` : ''}
+          <div style="margin-bottom: 8px;"><strong>Pickup Point:</strong> ${escapeHtml(b.pickup_point)}</div>
+          <div style="margin-bottom: 8px;"><strong>Drop Point:</strong> ${escapeHtml(b.drop_point)}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #10b981;">${escapeHtml(b.status)}</span></div>
+          <div style="margin-bottom: 8px;"><strong>Total People:</strong> ${escapeHtml(b.total_people || 1)}</div>
+          ${b.comments ? `<div><strong>Comments:</strong> ${escapeHtml(b.comments)}</div>` : ''}
         `;
       } else if (category === 'utsav') {
         html = `
-          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
-          <div style="margin-bottom: 8px;"><strong>Resident Name:</strong> ${b.CardDb?.issuedto || b.cardno}</div>
-          <div style="margin-bottom: 8px;"><strong>Arrival:</strong> ${b.arrival || '—'}</div>
-          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #0284c7;">${b.status}</span></div>
-          ${b.roomno ? `<div style="margin-bottom: 8px;"><strong>Allocated Room:</strong> ${b.roomno}</div>` : ''}
-          ${b.carno ? `<div style="margin-bottom: 8px;"><strong>Car No:</strong> ${b.carno}</div>` : ''}
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${escapeHtml(b.bookingid)}</div>
+          <div style="margin-bottom: 8px;"><strong>Resident Name:</strong> ${escapeHtml(b.CardDb?.issuedto || b.cardno)}</div>
+          <div style="margin-bottom: 8px;"><strong>Arrival:</strong> ${escapeHtml(b.arrival || '—')}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> <span style="text-transform: capitalize; font-weight: bold; color: #0284c7;">${escapeHtml(b.status)}</span></div>
+          ${b.roomno ? `<div style="margin-bottom: 8px;"><strong>Allocated Room:</strong> ${escapeHtml(b.roomno)}</div>` : ''}
+          ${b.carno ? `<div style="margin-bottom: 8px;"><strong>Car No:</strong> ${escapeHtml(b.carno)}</div>` : ''}
         `;
       } else if (category === 'food') {
         const meals = [b.breakfast && 'Breakfast', b.lunch && 'Lunch', b.dinner && 'Dinner'].filter(Boolean).join(', ') || '—';
         html = `
-          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.id || '—'}</div>
-          <div style="margin-bottom: 8px;"><strong>Cardholder:</strong> ${b.cardno}</div>
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${escapeHtml(b.id || '—')}</div>
+          <div style="margin-bottom: 8px;"><strong>Cardholder:</strong> ${escapeHtml(b.cardno)}</div>
           <div style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(b.date).toLocaleDateString()}</div>
-          <div style="margin-bottom: 8px;"><strong>Meals:</strong> ${meals}</div>
-          <div style="margin-bottom: 8px;"><strong>High Tea:</strong> ${b.hightea && b.hightea !== 'NONE' ? b.hightea : '—'}</div>
+          <div style="margin-bottom: 8px;"><strong>Meals:</strong> ${escapeHtml(meals)}</div>
+          <div style="margin-bottom: 8px;"><strong>High Tea:</strong> ${b.hightea && b.hightea !== 'NONE' ? escapeHtml(b.hightea) : '—'}</div>
           <div style="margin-bottom: 8px;"><strong>Spicy:</strong> ${b.spicy ? 'Yes' : 'No'}</div>
-          ${b.bookedBy && b.bookedBy !== b.cardno ? `<div style="margin-bottom: 8px;"><strong>Booked By:</strong> ${b.bookedBy}</div>` : ''}
+          ${b.bookedBy && b.bookedBy !== b.cardno ? `<div style="margin-bottom: 8px;"><strong>Booked By:</strong> ${escapeHtml(b.bookedBy)}</div>` : ''}
         `;
       } else {
         html = `
-          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${b.bookingid}</div>
-          <div style="margin-bottom: 8px;"><strong>Status:</strong> ${b.status || '—'}</div>
+          <div style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${escapeHtml(b.bookingid)}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> ${escapeHtml(b.status || '—')}</div>
         `;
       }
       body.innerHTML = html;
       
     } catch (err) {
       console.error(err);
-      body.innerHTML = `<div style="text-align: center; color: #dc2626; font-weight: bold; padding: 10px;">❌ Booking not found: ${bookingid}</div>`;
+      body.innerHTML = `<div style="text-align: center; color: #dc2626; font-weight: bold; padding: 10px;">❌ Booking not found: ${escapeHtml(bookingid)}</div>`;
       loading.style.display = 'none';
       content.style.display = 'block';
     }
@@ -4026,4 +4082,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   restoreUrlState().then(() => {
     setResidenceStatusFilter(activeStatus);
   });
+});
+
+// Credit pills and booking ids carry their values in data attributes (no inline onclick strings)
+document.addEventListener('click', (e) => {
+  const pill = e.target.closest && e.target.closest('[data-credit-cardno]');
+  if (pill && typeof window.openCreditHistoryModal === 'function') {
+    window.openCreditHistoryModal(pill.dataset.creditCardno, pill.dataset.creditCat);
+    return;
+  }
+  const bk = e.target.closest && e.target.closest('[data-booking-id]');
+  if (bk && typeof window.showBookingDetails === 'function') {
+    window.showBookingDetails(bk.dataset.bookingCat, bk.dataset.bookingId);
+  }
 });

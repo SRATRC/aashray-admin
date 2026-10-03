@@ -27,6 +27,20 @@ document.addEventListener('DOMContentLoaded', async function () {
   const ignoreEventsCheckbox = document.getElementById('ignoreEvents');
   if (ignoreEventsCheckbox) ignoreEventsCheckbox.checked = ignore_events;
 
+  // FORM SUBMIT (dev: Load Report reloads the page with the chosen range)
+  const filterForm = document.getElementById('foodReportFilterForm');
+  if (filterForm) {
+    filterForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const s = document.getElementById('start_date').value;
+      const eDate = document.getElementById('end_date').value;
+      const ignoreEvt = document.getElementById('ignoreEvents').checked;
+      const params = new URLSearchParams({ start_date: s, end_date: eDate });
+      if (ignoreEvt) params.set('ignore_events', 'true');
+      window.location.href = `foodReport.html?${params}`;
+    });
+  }
+
   // QUICK FILTER BUTTONS
   const navigateWithDates = (s, e) => {
     const ignoreEvt = document.getElementById('ignoreEvents')?.checked;

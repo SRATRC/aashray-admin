@@ -467,9 +467,9 @@ function renderWhatsAppLink(phone, query) {
   if (!phone || phone === '-') return '-';
   const phoneStr = String(phone);
   const cleaned = phoneStr.replace(/\D/g, '');
-  if (cleaned.length === 0) return phoneStr;
+  if (cleaned.length === 0) return escapeHtml(phoneStr);
   const formatted = cleaned.length === 10 ? `91${cleaned}` : cleaned;
-  const displayedText = query ? highlightText(phoneStr, query) : phoneStr;
+  const displayedText = query ? highlightText(phoneStr, query) : escapeHtml(phoneStr);
   return `
     <a href="https://wa.me/${formatted}" target="_blank" title="Chat on WhatsApp" style="color: #16a34a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
       ${displayedText}

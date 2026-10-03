@@ -118,13 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Text highlighting utility
   const highlightText = (text, search) => {
-    if (!search || !text) return text || '';
+    // The result goes into innerHTML, so every part is escaped
+    if (!search || !text) return text ? escapeHtml(text) : '';
     const textStr = String(text);
     const index = textStr.toLowerCase().indexOf(search.toLowerCase());
-    if (index === -1) return textStr;
-    const matchedText = textStr.substring(index, index + search.length);
-    const before = textStr.substring(0, index);
-    const after = textStr.substring(index + search.length);
+    if (index === -1) return escapeHtml(textStr);
+    const matchedText = escapeHtml(textStr.substring(index, index + search.length));
+    const before = escapeHtml(textStr.substring(0, index));
+    const after = escapeHtml(textStr.substring(index + search.length));
     return `${before}<mark style="background-color: #fef08a; color: #854d0e; padding: 2px 4px; border-radius: 4px; font-weight: 500;">${matchedText}</mark>${after}`;
   };
 
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="empty-state-card">
           <div class="empty-state-icon">🔍</div>
           <div class="empty-state-title">No Matching Profiles Found</div>
-          <div class="empty-state-desc">We couldn't find any card records matching "${query}". Check the spelling or search by card number/email instead.</div>
+          <div class="empty-state-desc">We couldn't find any card records matching "${escapeHtml(query)}". Check the spelling or search by card number/email instead.</div>
           <button class="empty-state-btn" id="resetEmptyStateBtn">Reset Search</button>
         </div>
       `;
@@ -206,11 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let locationText = '';
         if (item.city && item.center) {
-          locationText = `📍 ${item.city} | ${item.center}`;
+          locationText = `📍 ${escapeHtml(item.city)} | ${escapeHtml(item.center)}`;
         } else if (item.city) {
-          locationText = `📍 ${item.city}`;
+          locationText = `📍 ${escapeHtml(item.city)}`;
         } else if (item.center) {
-          locationText = `📍 ${item.center}`;
+          locationText = `📍 ${escapeHtml(item.center)}`;
         }
         
         if (locationText) {
@@ -537,9 +538,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!phone || phone === '-') return '-';
     const phoneStr = String(phone);
     const cleaned = phoneStr.replace(/\D/g, '');
-    if (cleaned.length === 0) return phoneStr;
+    if (cleaned.length === 0) return escapeHtml(phoneStr);
     const formatted = cleaned.length === 10 ? `91${cleaned}` : cleaned;
-    const displayedText = query ? highlightText(phoneStr, query) : phoneStr;
+    const displayedText = query ? highlightText(phoneStr, query) : escapeHtml(phoneStr);
     return `
       <a href="https://wa.me/${formatted}" target="_blank" title="Chat on WhatsApp" class="wa-link">
         ${displayedText}
