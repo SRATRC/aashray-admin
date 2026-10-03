@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['superAdmin', 'utsavAdmin', 'adhyayanAdmin']);
+  checkRoleAccess(['superAdmin', 'utsavAdmin', 'adhyayanAdmin', 'officeAdmin']);
 </script>
 
 <!DOCTYPE html>
@@ -977,6 +977,21 @@
                    </tbody>
                  </table>
                </div>
+            </div>
+
+            <!-- Saved Templates Box -->
+            <div class="wa-card">
+              <h2>Saved Templates</h2>
+              <div class="table-container" style="max-height: 280px;">
+                <table class="group-table" id="templatesTable">
+                  <thead>
+                    <tr><th>Name</th><th>Text</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="3" style="text-align: center; color: #888;">Loading templates...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <!-- Failed Queue Jobs Box -->

@@ -1,6 +1,7 @@
 let allMessages = [];
 let activeJidFilter = null;
 let customTemplates = [];
+let templatesLoadFailed = false;
 let composeMode = 'announcement'; // 'announcement' or 'poll'
 let currentUploadedMedia = null; // { mediaUrl, mediaType, filename, mimetype }
 let reconciliationData = null;
@@ -152,7 +153,7 @@ async function loadMessageHistory(isSilent = false) {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/messages`, { method: 'GET', headers });
+    const res = await fetch(`${CONFIG.basePath}/wa/messages`, { method: 'GET', headers });
     const result = await res.json();
     
     if (!res.ok) {
@@ -211,11 +212,13 @@ function renderMessagesTable() {
     const resolvedName = msg.resolvedGroupName;
     
     const targetHtml = resolvedName 
-      ? `<strong>${resolvedName}</strong><br><code class="jid-code" style="font-size:0.75rem; padding: 2px 5px; opacity:0.8;">${targetJid}</code>`
-      : `<code class="jid-code" style="font-size:0.78rem;">${targetJid}</code>`;
+      ? `<strong>${escapeHtml(resolvedName)}</strong><br><code class="jid-code" style="font-size:0.75rem; padding: 2px 5px; opacity:0.8;">${escapeHtml(targetJid)}</code>`
+      : `<code class="jid-code" style="font-size:0.78rem;">${escapeHtml(targetJid)}</code>`;
 
     // Message payload text
-    const textContent = msg.payload && msg.payload.text ? msg.payload.text : '-';
+    const textContent = msg.payload && msg.payload.text
+      ? msg.payload.text
+      : (msg.payload && msg.payload.name ? `\u{1F4CA} Poll: ${msg.payload.name}` : '-');
     
     // Time formatting
     let timeStr = '-';
@@ -223,6 +226,7 @@ function renderMessagesTable() {
       return new Date(dateVal).toLocaleString(undefined, {
         day: 'numeric',
         month: 'short',
+        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         hour12: true
@@ -247,30 +251,30 @@ function renderMessagesTable() {
     if (msg.status === 'success') {
       statusHtml = '<span class="msg-badge msg-success">Sent</span>';
     } else if (msg.status === 'failed') {
-      const errorTitle = msg.error ? msg.error.replace(/"/g, '&quot;') : 'Unknown error';
+      const errorTitle = escapeHtml(msg.error || 'Unknown error');
       statusHtml = `<span class="msg-badge msg-failed" title="${errorTitle}" style="cursor:help;">Failed</span>`;
       
       // Let failed scheduled/broadcast messages also retry or reschedule
       actionsHtml = `
         <div style="display: flex; gap: 6px;">
-          <button class="action-btn btn-retry" onclick="retryJob(${msg.id})" style="padding: 4px 8px; font-size:0.75rem;">
+          <button class="action-btn btn-retry" data-wa-action="retry" data-id="${escapeHtml(msg.id)}" style="padding: 4px 8px; font-size:0.75rem;">
             Retry
           </button>
-          <button class="action-btn btn-retry" onclick="openRescheduleModal(${msg.id}, '${msg.scheduledAt || ''}')" style="padding: 4px 8px; font-size:0.75rem; background-color:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" title="Reschedule Broadcast">
+          <button class="action-btn btn-retry" data-wa-action="reschedule" data-id="${escapeHtml(msg.id)}" data-scheduled-at="${escapeHtml(msg.scheduledAt || '')}" style="padding: 4px 8px; font-size:0.75rem; background-color:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" title="Reschedule Broadcast">
             Reschedule
           </button>
         </div>
       `;
     } else {
-      statusHtml = `<span class="msg-badge msg-pending">${msg.status}</span>`;
+      statusHtml = `<span class="msg-badge msg-pending">${escapeHtml(msg.status)}</span>`;
       
       // Actions for pending scheduled broadcasts
       actionsHtml = `
         <div style="display: flex; gap: 6px;">
-          <button class="action-btn btn-retry" onclick="openRescheduleModal(${msg.id}, '${msg.scheduledAt || ''}')" style="padding: 4px 8px; font-size:0.75rem; background-color:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" title="Reschedule Broadcast">
+          <button class="action-btn btn-retry" data-wa-action="reschedule" data-id="${escapeHtml(msg.id)}" data-scheduled-at="${escapeHtml(msg.scheduledAt || '')}" style="padding: 4px 8px; font-size:0.75rem; background-color:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" title="Reschedule Broadcast">
             Reschedule
           </button>
-          <button class="action-btn btn-remove-action" onclick="cancelScheduledMessage(${msg.id})" style="padding: 4px 8px; font-size:0.75rem;" title="Cancel Broadcast">
+          <button class="action-btn btn-remove-action" data-wa-action="cancel" data-id="${escapeHtml(msg.id)}" style="padding: 4px 8px; font-size:0.75rem;" title="Cancel Broadcast">
             Cancel
           </button>
         </div>
@@ -347,7 +351,7 @@ async function sendBroadcast(event) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const response = await fetch(`${CONFIG.basePath}/whatsapp/broadcast`, {
+    const response = await fetch(`${CONFIG.basePath}/wa/broadcast`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -398,8 +402,8 @@ function clearJidFilter() {
 
 // Helper: Escape HTML to prevent injection issues in logs display
 function escapeHtml(text) {
-  if (!text) return '';
-  return text
+  if (text === null || text === undefined) return '';
+  return String(text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -430,7 +434,10 @@ function showToast(message, type = 'success') {
     iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
   }
 
-  toast.innerHTML = `${iconSvg}<span>${message}</span>`;
+  toast.innerHTML = iconSvg; // static SVG only
+  const toastText = document.createElement('span');
+  toastText.textContent = message;
+  toast.appendChild(toastText);
   container.appendChild(toast);
 
   // Trigger browser paint
@@ -495,7 +502,7 @@ async function loadCustomTemplates() {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/templates`, { method: 'GET', headers });
+    const res = await fetch(`${CONFIG.basePath}/wa/templates`, { method: 'GET', headers });
     const result = await res.json();
     
     if (!res.ok) {
@@ -503,10 +510,12 @@ async function loadCustomTemplates() {
     }
 
     customTemplates = result.data || [];
+    templatesLoadFailed = false;
     renderTemplateChips();
   } catch (err) {
     console.error('Failed to load templates:', err);
     customTemplates = [];
+    templatesLoadFailed = true;
     renderTemplateChips();
   }
 }
@@ -518,6 +527,8 @@ function renderTemplateChips() {
 
   // Clear existing template options except the first placeholder option
   selector.innerHTML = '<option value="">-- Choose a template --</option>';
+
+  renderTemplatesList();
 
   customTemplates.forEach(tpl => {
     const opt = document.createElement('option');
@@ -572,7 +583,7 @@ async function promptAddTemplate() {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/templates`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/templates`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ name: name.trim(), text: currentMsg })
@@ -595,8 +606,10 @@ async function promptAddTemplate() {
 async function handleTemplateDelete() {
   const selector = document.getElementById('templateSelector');
   if (!selector) return;
+  deleteTemplateById(selector.value);
+}
 
-  const id = selector.value;
+async function deleteTemplateById(id) {
   if (!id) return;
 
   const tpl = customTemplates.find(t => t.id == id);
@@ -611,7 +624,7 @@ async function handleTemplateDelete() {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/templates/${id}`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/templates/${id}`, {
       method: 'DELETE',
       headers
     });
@@ -647,12 +660,36 @@ function insertTextAtCursor(textToInsert) {
   updateLivePreview();
 }
 
+// Uploaded files are only served to logged-in staff, so an <img src> cannot fetch them.
+// Fetch with the token and show the result as a blob URL.
+let mediaPreviewObjectUrl = null;
+async function loadMediaPreview(mediaUrl, imgEl) {
+  const filename = String(mediaUrl || '').split('/').pop();
+  if (!/^[A-Za-z0-9._-]+$/.test(filename)) return;
+  if (imgEl.dataset.file === filename && imgEl.getAttribute('src')) return;
+  imgEl.dataset.file = filename;
+  try {
+    const res = await fetch(`${CONFIG.basePath}/wa/media/${encodeURIComponent(filename)}`, {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+    });
+    if (!res.ok) return;
+    const url = URL.createObjectURL(await res.blob());
+    if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
+    mediaPreviewObjectUrl = url;
+    imgEl.src = url;
+  } catch (err) {
+    console.error('Failed to load media preview:', err);
+  }
+}
+
 // WhatsApp Syntax Parser (Bold, Italic, Strikethrough, Monospace)
 function parseWhatsAppFormatting(text) {
   if (!text) return '';
   
   // Escape HTML to prevent injection and parse standard tags
-  let parsed = escapeHtml(text);
+  // Keep {{placeholders}} literal: hide them while formatting, then put them back
+  const holders = [];
+  let parsed = escapeHtml(text).replace(/\{\{[^{}]*\}\}/g, (m) => { holders.push(m); return `\u0000${holders.length - 1}\u0000`; });
 
   // 1. Monospace: ```code``` -> <code>code</code>
   parsed = parsed.replace(/```([^`]+)```/g, '<code>$1</code>');
@@ -666,7 +703,7 @@ function parseWhatsAppFormatting(text) {
   // 4. Strikethrough: ~text~ -> <del>text</del>
   parsed = parsed.replace(/~([^\s~][^~]*[^\s~]|[^\s~])~/g, '<del>$1</del>');
 
-  return parsed;
+  return parsed.replace(/\u0000(\d+)\u0000/g, (_, i) => holders[Number(i)]);
 }
 
 // Update Live WhatsApp chat preview bubble
@@ -744,11 +781,8 @@ function updateLivePreview() {
     // Media attachment preview
     if (currentUploadedMedia && previewMedia && previewMediaImg && previewMediaDoc && previewMediaDocName) {
       previewMedia.style.display = 'block';
-      const serverOrigin = new URL(CONFIG.baseUrl).origin;
-      const fullMediaUrl = serverOrigin + currentUploadedMedia.mediaUrl;
-
       if (currentUploadedMedia.mediaType === 'image') {
-        previewMediaImg.src = fullMediaUrl;
+        loadMediaPreview(currentUploadedMedia.mediaUrl, previewMediaImg);
         previewMediaImg.style.display = 'block';
         previewMediaDoc.style.display = 'none';
       } else {
@@ -771,7 +805,7 @@ async function loadFailedJobs(isSilent = false) {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/jobs/failed`, { method: 'GET', headers });
+    const res = await fetch(`${CONFIG.basePath}/wa/jobs/failed`, { method: 'GET', headers });
     const result = await res.json();
     
     if (!res.ok) {
@@ -817,14 +851,14 @@ function populateFailedJobsTable(jobs) {
       target = `Group Name: ${job.payload.name}`;
     }
 
-    const errorMsg = job.error ? `<span style="color:#d9534f; font-size:0.85rem;" title="${job.error}">${job.error.substring(0, 50)}${job.error.length > 50 ? '...' : ''}</span>` : '-';
+    const errorMsg = job.error ? `<span style="color:#d9534f; font-size:0.85rem;" title="${escapeHtml(job.error)}">${escapeHtml(String(job.error).substring(0, 50))}${String(job.error).length > 50 ? '...' : ''}</span>` : '-';
 
     row.innerHTML = `
-      <td><strong>${job.action}</strong></td>
-      <td>${target}</td>
+      <td><strong>${escapeHtml(job.action)}</strong></td>
+      <td>${escapeHtml(target)}</td>
       <td>${errorMsg}</td>
       <td>
-        <button class="action-btn btn-retry" onclick="retryJob(${job.id})">
+        <button class="action-btn btn-retry" data-wa-action="retry" data-id="${escapeHtml(job.id)}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
           Retry
         </button>
@@ -845,7 +879,7 @@ async function retryJob(id) {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/jobs/retry/${id}`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/jobs/retry/${id}`, {
       method: 'POST',
       headers
     });
@@ -872,7 +906,7 @@ async function retryAll() {
   };
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/jobs/retry-all`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/jobs/retry-all`, {
       method: 'POST',
       headers
     });
@@ -961,7 +995,7 @@ async function handleAttachmentUpload(event) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/upload`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/upload`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`
@@ -1045,12 +1079,13 @@ function addPollOptionRow(val = '') {
   row.style.alignItems = 'center';
 
   row.innerHTML = `
-    <input type="text" class="form-control poll-option-input" placeholder="Option ${count + 1}" value="${val}" oninput="updateLivePreview()" required />
+    <input type="text" class="form-control poll-option-input" placeholder="Option ${count + 1}" oninput="updateLivePreview()" required />
     <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove(); updateLivePreview();" style="padding: 10px 14px; margin: 0; color: #ef4444; border-color: #fecaca; background-color: #fef2f2; display: flex; align-items: center; justify-content: center;" title="Remove Option">
       ✕
     </button>
   `;
 
+  row.querySelector('.poll-option-input').value = val; // set as a property, never as markup
   optionsList.appendChild(row);
   updateLivePreview();
 }
@@ -1117,7 +1152,7 @@ async function runReconciliationAudit() {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/groups/${encodeURIComponent(groupJid)}/reconciliation`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/groups/${encodeURIComponent(groupJid)}/reconciliation`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1174,7 +1209,7 @@ function renderAuditLists() {
       row.innerHTML = `
         <td><strong>${escapeHtml(m.issuedto)}</strong></td>
         <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
-        <td>+${m.phone}</td>
+        <td>+${escapeHtml(m.phone)}</td>
       `;
       tbodyMatched.appendChild(row);
     });
@@ -1191,9 +1226,9 @@ function renderAuditLists() {
       row.innerHTML = `
         <td><strong>${escapeHtml(m.issuedto)}</strong></td>
         <td><code class="jid-code" style="font-size:0.75rem;">${escapeHtml(m.cardno)}</code></td>
-        <td>+${m.phone}</td>
+        <td>+${escapeHtml(m.phone)}</td>
         <td>
-          <button type="button" class="btn-sync-action" onclick="syncSingleMember('add', '${m.phone}', '${m.issuedto}')">
+          <button type="button" class="btn-sync-action" data-wa-action="sync" data-sync="add" data-phone="${escapeHtml(m.phone)}" data-name="${escapeHtml(m.issuedto)}">
             Add to Group
           </button>
         </td>
@@ -1214,9 +1249,9 @@ function renderAuditLists() {
       row.innerHTML = `
         <td><strong>${escapeHtml(m.issuedto)}</strong></td>
         <td>${cardNoText}</td>
-        <td>+${m.phone}</td>
+        <td>+${escapeHtml(m.phone)}</td>
         <td>
-          <button type="button" class="btn-remove-action" onclick="syncSingleMember('remove', '${m.phone}', '${m.issuedto}')">
+          <button type="button" class="btn-remove-action" data-wa-action="sync" data-sync="remove" data-phone="${escapeHtml(m.phone)}" data-name="${escapeHtml(m.issuedto)}">
             Remove
           </button>
         </td>
@@ -1233,7 +1268,7 @@ async function syncSingleMember(actionType, phone, name) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/groups/${encodeURIComponent(groupJid)}/sync`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/groups/${encodeURIComponent(groupJid)}/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1269,7 +1304,7 @@ async function syncAllMissing() {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/groups/${encodeURIComponent(groupJid)}/sync`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/groups/${encodeURIComponent(groupJid)}/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1301,7 +1336,7 @@ async function syncAllExtra() {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/groups/${encodeURIComponent(groupJid)}/sync`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/groups/${encodeURIComponent(groupJid)}/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1428,7 +1463,7 @@ async function submitReschedule(event) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/jobs/${jobId}/reschedule`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/jobs/${jobId}/reschedule`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1458,7 +1493,7 @@ async function cancelScheduledMessage(jobId) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(`${CONFIG.basePath}/whatsapp/jobs/${jobId}/cancel`, {
+    const res = await fetch(`${CONFIG.basePath}/wa/jobs/${jobId}/cancel`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`
@@ -1475,3 +1510,39 @@ async function cancelScheduledMessage(jobId) {
     showToast(`Error: ${err.message}`, 'error');
   }
 }
+
+// Saved templates list shown on the page (names and text are staff input: escape everything)
+function renderTemplatesList() {
+  const tbody = document.querySelector('#templatesTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (templatesLoadFailed) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #b91c1c;">Could not load saved templates. Refresh the page to try again.</td></tr>';
+    return;
+  }
+  if (customTemplates.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">No saved templates.</td></tr>';
+    return;
+  }
+  customTemplates.forEach(tpl => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><strong>${escapeHtml(tpl.name)}</strong></td>
+      <td style="max-width: 320px; word-wrap: break-word; white-space: pre-wrap;">${escapeHtml(tpl.text)}</td>
+      <td><button class="action-btn btn-remove-action" data-wa-action="delete-template" data-id="${escapeHtml(tpl.id)}" style="padding: 4px 8px; font-size:0.75rem;">Delete</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// One click handler for every button built from data (no values inside onclick strings)
+document.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-wa-action]');
+  if (!btn) return;
+  const { waAction, id, scheduledAt, sync, phone, name } = btn.dataset;
+  if (waAction === 'retry') retryJob(Number(id));
+  else if (waAction === 'reschedule') openRescheduleModal(Number(id), scheduledAt || '');
+  else if (waAction === 'cancel') cancelScheduledMessage(Number(id));
+  else if (waAction === 'sync') syncSingleMember(sync, phone, name);
+  else if (waAction === 'delete-template') deleteTemplateById(Number(id));
+});
