@@ -159,7 +159,9 @@ function renderAttachment(att, wrapper) {
   }
 
   const kind = att.kind === 'video' ? 'video' : 'image';
-  const el = document.createElement(kind);
+  // 'img', not 'image': createElement('image') makes an unknown element that
+  // never displays, so every image thumbnail rendered as a blank box.
+  const el = document.createElement(kind === 'video' ? 'video' : 'img');
   el.className = 'attachment-thumb';
   if (kind === 'video') {
     el.muted = true;
