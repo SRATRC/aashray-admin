@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', function () {
       total_seats: formData.get('total_seats'),
       amount: formData.get('amount'),
       food_allowed: formData.get('food'),
-      comments: formData.get('comments')
+      comments: formData.get('comments'),
+      whatsapp_link: formData.get('whatsapp_link') || null
     };
 
     try {

@@ -8,6 +8,7 @@
     'cardAdmin',
     'officeAdmin',
     'foodAdmin',
+    'foodPlateAdmin',
     'gateAdmin',
     'adhyayanAdmin',
     'travelAdmin',
@@ -24,11 +25,12 @@
     'utsavAdminReadOnly',
     'smilesAdmin',
     'adhyayanAdminReadOnly',
-    'utsavAdminRaj'
+    'utsavAdminRaj',
+    'satshrutAdmin'
   ]);
 </script>
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -76,11 +78,22 @@
       </div>
     </div>
     <script>
+      const shortLinkButton = {
+        href: 'common/shortLinks.html',
+        text: 'Short Link Management'
+      };
+
+      const formBuilderButton = {
+        href: 'forms/index.html',
+        text: 'Form Builder'
+      };
+
       // Role-based button configuration
       const roleButtonMap = {
         superAdmin: [
           { href: 'account/index.html', text: 'Account Management' },
           { href: 'sudo/index.html', text: 'Admin Management' },
+          { href: 'sudo/shareLinkGenerator.html', text: 'Temporary Access Links' },
           { href: 'card/index.html', text: 'Card Management' },
           { href: 'food/index.html', text: 'Food Management' },
           { href: 'gate/index.html', text: 'Gate Management' },
@@ -90,22 +103,48 @@
           { href: 'maintenance/index.html', text: 'Maintenance Management' },
           { href: 'avt/index.html', text: 'AVT Management' },
           { href: 'wifi/index.html', text: 'WiFi Management' },
-          { href: 'utsav/index.html', text: 'Utsav Management' }
+          { href: 'utsav/index.html', text: 'Utsav Management' },
+          shortLinkButton,
+          formBuilderButton,
+          { href: 'whatsapp/index.html', text: 'WhatsApp Automation' },
+          { href: 'satshrut/index.html', text: 'Satshrut' }
         ],
         accountsAdmin: [
-          { href: 'account/index.html', text: 'Account Management' }
+          { href: 'account/index.html', text: 'Account Management' },
+          shortLinkButton,
+          formBuilderButton
         ],
-        roomAdmin: [{ href: 'room/index.html', text: 'Room Management' }],
-        cardAdmin: [{ href: 'card/index.html', text: 'Card Management' }],
+        roomAdmin: [
+          { href: 'room/index.html', text: 'Room Management' },
+          shortLinkButton,
+          formBuilderButton
+        ],
+        cardAdmin: [
+          { href: 'card/index.html', text: 'Card Management' },
+          shortLinkButton,
+          formBuilderButton
+        ],
         officeAdmin: [
           { href: 'adhyayan/index.html', text: 'Adhyayan Management' },
           { href: 'card/index.html', text: 'Card Management' },
-          { href: 'room/index.html', text: 'Room Management' }
+          { href: 'room/index.html', text: 'Room Management' },
+          { href: 'whatsapp/index.html', text: 'WhatsApp Automation' },
+          shortLinkButton,
+          formBuilderButton
         ],
-        foodAdmin: [{ href: 'food/index.html', text: 'Food Management' }],
-        gateAdmin: [{ href: 'gate/index.html', text: 'Gate Management' }],
+        foodAdmin: [
+          { href: 'food/index.html', text: 'Food Management' },
+          shortLinkButton,
+          formBuilderButton
+        ],
+        gateAdmin: [
+          { href: 'gate/index.html', text: 'Gate Management' }
+        ],
         adhyayanAdmin: [
-          { href: 'adhyayan/index.html', text: 'Adhyayan Management' }
+          { href: 'adhyayan/index.html', text: 'Adhyayan Management' },
+          { href: 'whatsapp/index.html', text: 'WhatsApp Automation' },
+          shortLinkButton,
+          formBuilderButton
         ],
         adhyayanAdminKol: [
           {
@@ -131,7 +170,11 @@
             text: 'Rajnandgaon Utsav Report'
           }
         ],
-        travelAdmin: [{ href: 'travel/index.html', text: 'Travel Management' }],
+        travelAdmin: [
+          { href: 'travel/index.html', text: 'Travel Management' },
+          shortLinkButton,
+          formBuilderButton
+        ],
         travelAdminDri: [
           {
             href: 'travel/fetchBookingsForDriver.html',
@@ -160,13 +203,38 @@
           {
             href: 'adhyayan/adhyayanReport.html?location=Research%20Centre',
             text: 'Adhyayan Report'
-          }
+          },
+          { href: 'whatsapp/index.html', text: 'WhatsApp Automation' }
         ],
-        utsavAdmin: [{ href: 'utsav/index.html', text: 'Utsav Management' }],
-        avtAdmin: [{ href: 'avt/index.html', text: 'AVT Management' }],
-        utsavAdminReadOnly: [{ href: 'utsav/utsavCentre.html', text: 'Utsav Report' }],
-        wifiAdmin: [{ href: 'wifi/index.html', text: 'WiFi Management' }],
-        smilesAdmin: [{ href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }]
+        utsavAdmin: [
+          { href: 'utsav/index.html', text: 'Utsav Management' },
+          { href: 'whatsapp/index.html', text: 'WhatsApp Automation' },
+          shortLinkButton,
+          formBuilderButton
+        ],
+        avtAdmin: [
+          { href: 'avt/index.html', text: 'AVT Management' },
+          shortLinkButton,
+          formBuilderButton
+        ],
+        utsavAdminReadOnly: [
+          { href: 'utsav/utsavCentre.html', text: 'Utsav Report' },
+          { href: 'whatsapp/index.html', text: 'WhatsApp Automation' }
+        ],
+        wifiAdmin: [
+          { href: 'wifi/index.html', text: 'WiFi Management' },
+          shortLinkButton,
+          formBuilderButton
+        ],
+        smilesAdmin: [
+          { href: 'food/manageBulkFood.html', text: 'Bulk Food Booking' }
+        ],
+        foodPlateAdmin: [
+          { href: 'food/plateCount.html', text: 'K1 Kitchen Count' }
+        ],
+        satshrutAdmin: [
+          { href: 'satshrut/index.html', text: 'Satshrut' }
+        ]
       };
 
       // Function to populate buttons based on user roles

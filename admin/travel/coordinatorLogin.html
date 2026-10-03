@@ -1,0 +1,108 @@
+<script src="../../style/js/config.js"></script>
+<script src="coordinatorLogin.js" defer></script>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Coordinator Login</title>
+
+  <link
+    rel="stylesheet"
+    href="../../style/css/styles.css"
+  />
+
+</head>
+
+<body>
+
+<div class="middlecontent">
+
+  <div class="container">
+
+    <div class="whitesec">
+
+      <div class="inner-padding">
+
+        <h2>Coordinator Login</h2>
+
+        <!-- MOBILE -->
+
+        <div class="form-group">
+
+          <label>Mobile Number</label>
+
+          <input
+            type="text"
+            id="mobno"
+            class="form-control"
+            placeholder="Enter Mobile Number"
+          />
+
+        </div>
+
+        <!-- SEND OTP -->
+
+        <div class="form-group form-submit">
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="sendOtpBtn"
+          >
+            Send OTP
+          </button>
+
+        </div>
+
+        <!-- OTP SECTION -->
+
+        <div
+          id="otpSection"
+          style="display:none;"
+        >
+
+          <div class="form-group">
+
+            <label>OTP</label>
+
+            <input
+              type="text"
+              id="otp"
+              class="form-control"
+              placeholder="Enter OTP"
+            />
+
+          </div>
+
+          <div class="form-group form-submit">
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="verifyOtpBtn"
+            >
+              Verify OTP
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

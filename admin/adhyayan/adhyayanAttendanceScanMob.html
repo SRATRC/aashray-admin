@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="pageTitle">Adhyayan Attendance Scanner</title>
+
+  <script src="../../style/js/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"><\/script>')</script>
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+  <script src="../../style/js/html5-qrcode.min.js"></script>
+  <script>window.Html5Qrcode || document.write('<script src="https://unpkg.com/html5-qrcode"><\/script>')</script>
+  <script src="/style/js/roleCheck.js"></script>
+
+  <link rel="stylesheet" href="../../style/css/styles.css">
+
+ <style>
+  #qr-scanner-section {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  #qr-status {
+    margin: 20px auto;
+    padding: 25px;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 12px;
+    min-height: 40px;
+    max-width: 500px;
+    transition: all 0.3s ease;
+  }
+
+  .network-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin-bottom: 15px;
+  }
+
+  .network-badge {
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+
+  .network-badge.online {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .network-badge.offline {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .sync-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .queue-count {
+    font-size: 13px;
+    color: #495057;
+    font-weight: 600;
+  }
+
+  .sync-btn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .sync-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .sync-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  .success-status {
+    background-color: #d4edda;
+    color: #155724;
+    border: 3px solid #28a745;
+  }
+
+  .error-status {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 3px solid #dc3545;
+  }
+
+  .warning-status {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 3px solid #ffc107;
+  }
+
+  .scanning-status {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 3px solid #6c757d;
+  }
+
+  #scan-again-btn {
+    margin-top: 10px;
+  }
+</style>
+
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h4 id="scanner-heading"><b><u></u></b></h4>
+          </div>
+
+          <div class="form">
+            <div class="network-status-bar">
+              <span id="network-badge" class="network-badge online">🟢 Online</span>
+              <div class="sync-container">
+                <span id="queue-count" class="queue-count">0 Pending Scans</span>
+                <button id="sync-now-btn" class="sync-btn" style="display: none;">Sync Now</button>
+              </div>
+            </div>
+
+            <div id="alert" class="alert" role="alert" style="display:none;"></div>
+
+            <div id="qr-scanner-section">
+              <div id="reader" style="max-width:400px;margin:auto;"></div>
+              <div id="qr-status" class="scanning-status">Initializing scanner...</div>
+              <button id="scan-again-btn" class="btn btn-small" style="display:none;">
+                Scan Another
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin','adhyayanAdminKol', 'adhyayanAdminRaj', 'adhyayanAdminDhu', 'adhyayanAdminReadOnly']);
+  </script>
+  <script src="./adhyayanAttendanceScanMob.js"></script>
+</body>
+</html>

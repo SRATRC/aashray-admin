@@ -1,5 +1,8 @@
 let utsavbookings = [];
 let filteredBookings = [];
+const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
+const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
 
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -9,11 +12,25 @@ document.addEventListener('DOMContentLoaded', async function () {
   const packageFilter = document.getElementById('packageFilter');
   const downloadAllBtn = document.getElementById('downloadAll');
   const downloadPkgBtn = document.getElementById('downloadPackage');
-  const downloadRoomNoBtn = document.getElementById('downloadRoomNoFormat');
   const tableContainer = document.getElementById('tableContainer');
 
-  const uploadRoomNoBtn = document.getElementById('uploadRoomNoBtn');
-  if (uploadRoomNoBtn) uploadRoomNoBtn.addEventListener('click',()=>window.location.href=`uploadRoomNo.html?utsavId=${utsavid}`);
+  if (isShareToken) {
+    const logoutDiv = document.querySelector('.header .logout');
+    if (logoutDiv) {
+      logoutDiv.innerHTML = '<a href="javascript:void(0);" onclick="history.back()" style="color:#fff;">Back</a> &nbsp;|&nbsp; <span style="font-weight:600; color:#fff;">📍 Utsav Coordinator View (Read-Only)</span> &nbsp;|&nbsp; <a href="javascript:void(0);" onclick="logout()" style="color:#fff; text-decoration:underline;">Logout</a>';
+    }
+  }
+
+  const systemRoomAllocationBtn = document.getElementById('systemRoomAllocationBtn');
+  if (systemRoomAllocationBtn) {
+    if (isReadOnly) {
+      systemRoomAllocationBtn.style.display = 'none';
+    } else {
+      systemRoomAllocationBtn.addEventListener('click', () => {
+        window.location.href = `systemRoomAllocation.html?utsavId=${utsavid}`;
+      });
+    }
+  }
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
   const storedScroll = sessionStorage.getItem('utsavScrollTop');
@@ -44,13 +61,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       renderFilteredTable();
     });
 
-    downloadAllBtn.addEventListener('click',()=>triggerExcelDownload(utsavbookings,'utsav_all_packages.xlsx','All Bookings'));
-    downloadPkgBtn.addEventListener('click',()=>triggerExcelDownload(filteredBookings,'package_filtered.xlsx','Filtered Bookings'));
-
-    if(downloadRoomNoBtn) downloadRoomNoBtn.addEventListener('click',()=>{
-      const minimalData = utsavbookings.map(b=>({bookingid:b.bookingid,cardno:b.cardno,issuedto:b.issuedto,utsavid:b.utsavid,packageid:b.packageid,roomno:b.roomno||''}));
-      triggerExcelDownload(minimalData,'roomno_upload_format.xlsx','RoomNo Upload');
-    });
+    downloadAllBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(utsavbookings),'utsav_all_packages.xlsx','All Bookings'));
+    downloadPkgBtn.addEventListener('click',()=>triggerExcelDownload(formatBookingsForExcel(filteredBookings),'package_filtered.xlsx','Filtered Bookings'));
 
     downloadAllBtn.style.display='inline-block';
     downloadPkgBtn.style.display='none';
@@ -103,6 +115,7 @@ function renderFilteredTable(){
         <th>Car Number</th>
         <th>Volunteering</th>
         <th>Mumukshu Comments</th>
+        <th>Admin Comments</th>
         <th>Mobile</th>
         <th>Gender</th>
         <th>Center</th>
@@ -122,14 +135,13 @@ function renderFilteredTable(){
           <td>${item.issuedto}</td>
           <td>${item.age}</td>
           <td>${item.package_name}</td>
-          <td>${item.roomno||'-'}
-          ${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<span class="edit-room" data-bookingid="${item.bookingid}" data-cardno="${item.cardno}" data-name="${item.issuedto}" data-roomno="${item.roomno||''}" style="cursor:pointer;color:blue;margin-left:5px;">✎</span>`:''}</td>
+          <td>${item.roomno || '-'}</td>
           <td>${formatDateTime(item.createdAt)}</td>
           <td>${item.arrival}</td><td>${item.carno}</td><td>${item.volunteer}</td>
-          <td>${item.other}</td><td>${item.mobno}</td><td>${item.gender}</td>
+          <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
           <td>${item.center}</td><td>${item.res_status}</td>
           <td>${item.status}</td><td>${item.transaction_status}</td><td>${item.bookedby}</td>
-          <td>${!JSON.parse(sessionStorage.getItem('roles')||'[]').includes('utsavAdminReadOnly')?`<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>`:'-'}</td>
+          <td>${!isReadOnly ? `<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>` : '-'}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -142,39 +154,10 @@ function renderFilteredTable(){
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initRoomNoModal(); initStatusModal(); },50);
+  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); },50);
 }
 
-// RoomNo modal init
-function initRoomNoModal(){
-  const modal=document.getElementById('roomNoModal');
-  if(!modal) return;
-  document.querySelectorAll('.edit-room').forEach(icon=>{
-    icon.onclick=()=>{
-      document.getElementById('modalBookingId').value=icon.dataset.bookingid;
-      document.getElementById('modalCardno').value=icon.dataset.cardno;
-      document.getElementById('modalName').value=icon.dataset.name;
-      document.getElementById('modalRoomno').value=icon.dataset.roomno||'';
-      modal.style.display='block';
-    };
-  });
-  document.getElementById('closeRoomNoModal').onclick=()=>modal.style.display='none';
-  window.onclick=e=>{if(e.target===modal) modal.style.display='none';};
-  document.getElementById('roomNoForm').onsubmit=async e=>{
-    e.preventDefault();
-    const bookingid=document.getElementById('modalBookingId').value;
-    const roomno=document.getElementById('modalRoomno').value;
-    try{
-      const res=await fetch(`${CONFIG.basePath}/utsav/updateRoomNo`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('token')}`},body:JSON.stringify({bookingid,roomno})});
-      if(!res.ok) throw new Error('Failed');
-      alert('Room number updated successfully!');
-      const updated=utsavbookings.find(b=>b.bookingid==bookingid);
-      if(updated) updated.roomno=roomno;
-      modal.style.display='none';
-      renderFilteredTable();
-    }catch(err){console.error(err); alert('Error updating room number');}
-  };
-}
+
 
 // Booking Status Modal init (with Credits dropdown)
 function initStatusModal(){
@@ -244,6 +227,31 @@ function initStatusModal(){
 
 // Helper to format date
 function formatDateTime(dt){ if(!dt) return '-'; const d=new Date(dt); return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth()+1).padStart(2, '0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+
+function formatBookingsForExcel(data) {
+  return (data || []).map((item, index) => ({
+    '#': index + 1,
+    'Booking ID': item.bookingid || '',
+    'Booked For': item.cardno || '',
+    'Name': item.issuedto || '',
+    'Age': item.age ?? '',
+    'Package Name': item.package_name || '',
+    'Room No': item.roomno || '',
+    'Registration Time': formatDateTime(item.createdAt),
+    'Arrival?': item.arrival || '',
+    'Car Number': item.carno || '',
+    'Volunteering': item.volunteer || '',
+    'Mumukshu Comments': item.other || '',
+    'Admin Comments': item.comments || '',
+    'Mobile': item.mobno || '',
+    'Gender': item.gender || '',
+    'Center': item.center || '',
+    'Mumukshu Status': item.res_status || '',
+    'Booking Status': item.status || '',
+    'Transaction Status': item.transaction_status || '',
+    'Booked By': item.bookedby || ''
+  }));
+}
 
 function triggerExcelDownload(data, fileName, sheetName) {
   console.log("Download triggered with data:", data);

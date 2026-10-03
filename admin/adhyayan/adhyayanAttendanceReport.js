@@ -17,11 +17,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const result = await response.json();
 
-  heading.innerText = `Attendance Report – ${result.shibirName}`;
+  if (!response.ok) {
+    showMessage(result.message || "Failed to load attendance report", "error");
+    heading.innerText = "Error: Failed to load attendance report";
+    return;
+  }
+
+  const sessions = result.sessions || [];
+  const data = result.data || [];
+
+  heading.innerText = `Attendance Report for "${result.shibirName || 'Shibir'}" \n by ${result.speaker || 'Speaker'} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
 
   // Build header
   let headerHtml = `
     <tr>
+      <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllCheckbox" /></th>
+      <th>Sr No</th>
       <th>Card No</th>
       <th>Name</th>
       <th>Mobile</th>
@@ -30,59 +41,369 @@ document.addEventListener('DOMContentLoaded', async () => {
       <th>Res Status</th>
   `;
 
-for (let i = 1; i <= 9; i++) {
-  const isMV = [7, 8, 9].includes(i);
-  headerHtml += `<th>Session ${i}${isMV ? ' (MV)' : ''}</th>`;
-}
+  sessions.forEach(s => {
+    const suffix = s.type === 'MV' ? ' (MV)' : '';
+    headerHtml += `<th>Session ${s.session_number}${suffix}</th>`;
+  });
 
   headerHtml += '</tr>';
   tableHead.innerHTML = headerHtml;
 
+  // Populate bulk session select dropdown
+  const bulkSelect = document.getElementById('bulkSessionSelect');
+  bulkSelect.innerHTML = '<option value="">Select Session...</option>';
+  sessions.forEach(s => {
+    const suffix = s.type === 'MV' ? ' (MV)' : '';
+    const option = document.createElement('option');
+    option.value = s.session_number;
+    option.textContent = `Session ${s.session_number}${suffix}`;
+    bulkSelect.appendChild(option);
+  });
+
   // Build rows
-  result.data.forEach(row => {
+  data.forEach((row, index) => {
     let rowHtml = `
       <tr>
-        <td>${row.cardno}</td>
-        <td>${row.name}</td>
-        <td>${row.mobno}</td>
-        <td>${row.gender}</td>
-        <td>${row.centre}</td>
-        <td>${row.res_status}</td>
+        <td style="text-align: center;" data-no-enhance="true"><input type="checkbox" class="participant-select" data-cardno="${escapeHtml(row.cardno)}" /></td>
+        <td class="row-number">${index + 1}</td>
+        <td>${escapeHtml(row.cardno)}</td>
+        <td>${escapeHtml(row.name)}</td>
+        <td>${escapeHtml(row.mobno)}</td>
+        <td>${escapeHtml(row.gender)}</td>
+        <td>${escapeHtml(row.centre)}</td>
+        <td>${escapeHtml(row.res_status)}</td>
     `;
 
-    for (let i = 1; i <= 9; i++) {
-  rowHtml += `<td>${row[`session_${i}`] ?? '-'}</td>`;
-}
+    sessions.forEach(s => {
+      const value = row[`session_${s.session_number}`] ?? 'No';
+
+      rowHtml += `
+        <td data-no-enhance="true">
+          <span id="text-${shibirId}-${row.cardno}-${s.session_number}">
+            ${escapeHtml(value)}
+          </span>
+          <span style="cursor:pointer; margin-left:6px;"
+            onclick="toggleAttendance('${shibirId}', '${row.cardno}', ${s.session_number})">
+            ✏️
+          </span>
+        </td>
+      `;
+    });
 
     rowHtml += '</tr>';
     tableBody.insertAdjacentHTML('beforeend', rowHtml);
   });
 
-  enhanceTable('attendanceTable', 'tableSearch');
+  // Selection Checkbox Event Handlers
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  const checkboxes = document.querySelectorAll('.participant-select');
+  const btnBulkPresent = document.getElementById('btnBulkPresent');
+  const btnBulkAbsent = document.getElementById('btnBulkAbsent');
+  const selectedCountText = document.getElementById('selectedCountText');
 
-  const mvSessions = [7, 8, 9];
+  function updateSelectionState() {
+    const visibleChecked = Array.from(document.querySelectorAll('.participant-select:checked'))
+      .filter(cb => {
+        const row = cb.closest('tr');
+        return row && row.style.display !== 'none';
+      });
+    const checkedCount = visibleChecked.length;
+    selectedCountText.textContent = `${checkedCount} selected`;
 
-renderDownloadButton({
-  selector: '#downloadBtnContainer',
-  getData: () =>
-    result.data.map(row => {
-      const newRow = { ...row };
+    const hasCheckedParticipants = checkedCount > 0;
 
-      for (let i = 1; i <= 9; i++) {
-        const oldKey = `session_${i}`;
-        if (!(oldKey in row)) continue;
+    btnBulkPresent.disabled = !hasCheckedParticipants;
+    btnBulkAbsent.disabled = !hasCheckedParticipants;
+  }
 
-        const isMV = mvSessions.includes(i);
-        const newKey = `Session ${i}${isMV ? ' (MV)' : ''}`;
+  selectAllCheckbox.addEventListener('change', () => {
+    checkboxes.forEach(cb => {
+      const row = cb.closest('tr');
+      if (row && row.style.display !== 'none') {
+        cb.checked = selectAllCheckbox.checked;
+      }
+    });
+    updateSelectionState();
+  });
 
-        newRow[newKey] = row[oldKey];
-        delete newRow[oldKey];
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const visibleCheckboxes = Array.from(checkboxes).filter(item => {
+        const row = item.closest('tr');
+        return row && row.style.display !== 'none';
+      });
+
+      if (!cb.checked) {
+        selectAllCheckbox.checked = false;
+      } else {
+        const allVisibleChecked = visibleCheckboxes.every(item => item.checked);
+        selectAllCheckbox.checked = allVisibleChecked;
+      }
+      updateSelectionState();
+    });
+  });
+
+  // Watch for row visibility changes (from search/filtering) to uncheck hidden rows
+  const observer = new MutationObserver(() => {
+    checkboxes.forEach(cb => {
+      const row = cb.closest('tr');
+      if (row && row.style.display === 'none') {
+        cb.checked = false;
+      }
+    });
+
+    const visibleCheckboxes = Array.from(checkboxes).filter(item => {
+      const row = item.closest('tr');
+      return row && row.style.display !== 'none';
+    });
+
+    if (visibleCheckboxes.length > 0) {
+      selectAllCheckbox.checked = visibleCheckboxes.every(item => item.checked);
+    } else {
+      selectAllCheckbox.checked = false;
+    }
+
+    updateSelectionState();
+  });
+
+  observer.observe(tableBody, { attributes: true, subtree: true, attributeFilter: ['style'] });
+
+  bulkSelect.addEventListener('change', updateSelectionState);
+
+  // Bulk Actions
+  btnBulkPresent.addEventListener('click', () => performBulkToggle(1));
+  btnBulkAbsent.addEventListener('click', () => performBulkToggle(0));
+
+  async function performBulkToggle(value) {
+    const selectedSession = bulkSelect.value;
+    if (!selectedSession) {
+      showMessage("Please select a session from the dropdown", "warning");
+      return;
+    }
+
+    const checkedBoxes = Array.from(document.querySelectorAll('.participant-select:checked'))
+      .filter(cb => {
+        const row = cb.closest('tr');
+        return row && row.style.display !== 'none';
+      });
+    const cardnos = checkedBoxes.map(cb => cb.getAttribute('data-cardno'));
+
+    if (cardnos.length === 0) return;
+
+    const confirmMsg = value === 1
+      ? `Are you sure you want to mark ${cardnos.length} selected participants present for Session ${selectedSession}?`
+      : `Are you sure you want to mark ${cardnos.length} selected participants absent for Session ${selectedSession}?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const response = await fetch(
+        `${CONFIG.basePath}/adhyayan/attendance/bulk-toggle`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            shibir_id: Number(shibirId),
+            sessionNumber: Number(selectedSession),
+            cardnos,
+            value
+          })
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        showMessage(res.message || "Bulk update failed", "error");
+        return;
       }
 
-      return newRow;
-    }),
-  fileName: `attendance_shibir_${shibirId}.xlsx`,
-  sheetName: 'Attendance'
+      // Update UI for the modified cells
+      cardnos.forEach(cardno => {
+        const textEl = document.getElementById(`text-${shibirId}-${cardno}-${selectedSession}`);
+        if (textEl) {
+          textEl.innerText = value === 1 ? 'Yes' : 'No';
+        }
+      });
+
+      // Clear checkboxes
+      selectAllCheckbox.checked = false;
+      checkboxes.forEach(cb => {
+        cb.checked = false;
+      });
+      updateSelectionState();
+
+      showMessage(res.message || "Bulk update successful", "success");
+
+    } catch (err) {
+      console.error(err);
+      showMessage("Failed to execute bulk action", "error");
+    }
+  }
+
+  // Setup excel download button
+  const downloadBtnContainer = document.getElementById('downloadBtnContainer');
+  downloadBtnContainer.innerHTML = `
+    <button id="downloadExcelBtn" class="btn btn-primary">
+      Download Excel
+    </button>
+  `;
+
+  document.getElementById('downloadExcelBtn').addEventListener('click', () => {
+    const wb = XLSX.utils.book_new();
+    const sheetData = [];
+
+    // Title Row
+    const title = `Attendance Report for "${result.shibirName || 'Shibir'}" by ${result.speaker || 'Speaker'} from ${formatDateTime(result.startDate)} to ${formatDateTime(result.endDate)}`;
+    sheetData.push([title]);
+
+    // Header Row
+    const headers = ["Sr No", "cardno", "name", "mobno", "gender", "centre", "res_status"];
+    sessions.forEach(s => {
+      const suffix = s.type === 'MV' ? ' (MV)' : '';
+      headers.push(`Session ${s.session_number}${suffix}`);
+    });
+    sheetData.push(headers);
+
+    // Data Rows
+    data.forEach((row, index) => {
+      const dataRow = [
+        index + 1,
+        row.cardno,
+        row.name || '',
+        row.mobno || '',
+        row.gender || '',
+        row.centre || '',
+        row.res_status || ''
+      ];
+
+      sessions.forEach(s => {
+        const cellTextEl = document.getElementById(`text-${shibirId}-${row.cardno}-${s.session_number}`);
+        const cellValue = cellTextEl ? cellTextEl.innerText.trim() : 'No';
+        dataRow.push(cellValue);
+      });
+
+      sheetData.push(dataRow);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Merge title across all columns
+    ws['!merges'] = [
+      {
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: headers.length - 1 }
+      }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    XLSX.writeFile(wb, `attendance_shibir_${shibirId}.xlsx`);
+  });
+
+  enhanceTable('attendanceTable', 'tableSearch');
 });
 
-});
+async function toggleAttendance(shibirId, cardno, sessionNumber) {
+  const textElement = document.getElementById(
+    `text-${shibirId}-${cardno}-${sessionNumber}`
+  );
+
+  if (!textElement) return;
+
+  const currentValue = textElement.innerText.trim();
+  const newValue = currentValue === 'Yes' ? 0 : 1;
+
+  try {
+    const response = await fetch(
+      `${CONFIG.basePath}/adhyayan/attendance/toggle`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          shibir_id: Number(shibirId),
+          cardno,
+          sessionNumber,
+          value: newValue
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      showMessage(result.message || "Update failed", "error");
+      return;
+    }
+
+    textElement.innerText = newValue === 1 ? 'Yes' : 'No';
+
+    if (newValue === 1) {
+      showMessage("Attendance marked successfully", "success");
+    } else {
+      showMessage("Attendance unmarked successfully", "warning");
+    }
+
+  } catch (error) {
+    console.error(error);
+    showMessage("Something went wrong", "error");
+  }
+}
+
+function showMessage(message, type) {
+  const msgDiv = document.createElement("div");
+  msgDiv.innerText = message;
+
+  msgDiv.style.position = "fixed";
+  msgDiv.style.top = "20px";
+  msgDiv.style.right = "20px";
+  msgDiv.style.padding = "10px 15px";
+  msgDiv.style.borderRadius = "6px";
+  msgDiv.style.color = "#fff";
+  msgDiv.style.zIndex = "9999";
+  msgDiv.style.fontSize = "14px";
+
+  if (type === "success") {
+    msgDiv.style.backgroundColor = "#28a745";
+  } else if (type === "warning") {
+    msgDiv.style.backgroundColor = "#ffc107";
+    msgDiv.style.color = "#000";
+  } else {
+    msgDiv.style.backgroundColor = "#dc3545";
+  }
+
+  document.body.appendChild(msgDiv);
+
+  setTimeout(() => {
+    msgDiv.remove();
+  }, 2000);
+}
+
+function formatDateTime(input) {
+  if (!input) return '-';
+  try {
+    const d = new Date(input);
+    return d.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return '-';
+  }
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

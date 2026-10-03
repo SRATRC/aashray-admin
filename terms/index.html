@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of Use - Shrimad Rajchandra Aatma Tatva Research Centre</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+      :root {
+        --primary-color: #6366f1;
+        --primary-light: #818cf8;
+        --primary-dark: #4f46e5;
+        --text-dark: #1f2937;
+        --text-muted: #4b5563;
+        --text-light: #9ca3af;
+        --background-light: #f8fafc;
+        --background-white: #ffffff;
+        --border-color: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text-dark);
+        line-height: 1.7;
+        background-color: var(--background-light);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Premium Header */
+      header {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        color: white;
+        padding: 4rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+        pointer-events: none;
+      }
+
+      .header-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .logo-link {
+        display: inline-block;
+        margin-bottom: 1.5rem;
+        transition: var(--transition-all);
+      }
+
+      .logo-link:hover {
+        transform: scale(1.05);
+      }
+
+      .logo-link img {
+        height: 50px;
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      header p.subtitle {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        max-width: 700px;
+        margin: 0 auto 1.5rem;
+      }
+
+      .meta-info {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      /* Layout Grid */
+      .layout-container {
+        max-width: 1200px;
+        margin: -2rem auto 4rem;
+        padding: 0 1.5rem;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Sidebar (Sticky Table of Contents) */
+      .sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+        background: var(--background-white);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+      }
+
+      .sidebar h4 {
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        font-weight: 700;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+      }
+
+      .toc-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .toc-item a {
+        display: block;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        transition: var(--transition-all);
+        border-left: 2px solid transparent;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toc-item a:hover,
+      .toc-item.active a {
+        color: var(--primary-dark);
+        background-color: rgba(99, 102, 241, 0.05);
+        border-left-color: var(--primary-color);
+      }
+
+      /* Content Card */
+      .content-card {
+        background: var(--background-white);
+        border-radius: 16px;
+        padding: 3rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+      }
+
+      .policy-section {
+        scroll-margin-top: 2rem;
+      }
+
+      .policy-section:not(:last-of-type) {
+        margin-bottom: 3rem;
+        padding-bottom: 2.5rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .policy-section h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .policy-section h3 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 1.5rem 0 0.75rem;
+      }
+
+      .policy-section p {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 1.25rem;
+        text-align: justify;
+      }
+
+      .consent-box {
+        background: linear-gradient(to right, rgba(99, 102, 241, 0.05), rgba(129, 140, 248, 0.05));
+        border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
+        border-radius: 0 12px 12px 0;
+        margin-bottom: 2rem;
+      }
+
+      .consent-box p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Lists */
+      ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 1.5rem;
+      }
+
+      li {
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.975rem;
+        color: var(--text-muted);
+      }
+
+      li::before {
+        content: "•";
+        color: var(--primary-color);
+        font-weight: bold;
+        display: inline-block;
+        width: 1em;
+        margin-left: -1em;
+        position: absolute;
+        font-size: 1.25rem;
+        top: -0.1rem;
+      }
+
+      /* Links styling */
+      a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 1px dashed transparent;
+        transition: var(--transition-all);
+      }
+
+      a:hover {
+        color: var(--primary-dark);
+        border-bottom-style: solid;
+      }
+
+      /* Responsive Adjustments */
+      @media (max-width: 992px) {
+        .layout-container {
+          grid-template-columns: 1fr;
+          margin-top: 1rem;
+        }
+
+        .sidebar {
+          display: none; /* Hide TOC sidebar on mobile/tablet for cleaner read */
+        }
+
+        .content-card {
+          padding: 2rem;
+        }
+
+        header {
+          padding: 3rem 1.5rem;
+        }
+
+        header h1 {
+          font-size: 2rem;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .content-card {
+          padding: 1.5rem;
+          border-radius: 12px;
+        }
+        
+        .policy-section h2 {
+          font-size: 1.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Floating Back to Top Button -->
+    <button id="back-to-top" title="Go to top">↑</button>
+
+    <header>
+      <div class="header-container">
+        <a href="../" class="logo-link">
+          <img src="../assets/images/logo.png" alt="Aashray Logo" />
+        </a>
+        <h1>Terms of Use</h1>
+        <p class="subtitle">Shrimad Rajchandra Aatma Tatva Research Centre (“SRATRC”)</p>
+        <div class="meta-info">
+          <span>📅 Last Updated: 15th June, 2026</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout-container">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <h4>Navigation</h4>
+        <nav>
+          <ul class="toc-list">
+            <li class="toc-item active"><a href="#terms-intro">Consent & Intro</a></li>
+            <li class="toc-item"><a href="#communications">Communications</a></li>
+            <li class="toc-item"><a href="#restrictions">Restrictions</a></li>
+            <li class="toc-item"><a href="#accounts">3. User Accounts</a></li>
+            <li class="toc-item"><a href="#warranty">4. Disclaimer</a></li>
+            <li class="toc-item"><a href="#liability">5. Liability</a></li>
+            <li class="toc-item"><a href="#payments">6. Payments</a></li>
+            <li class="toc-item"><a href="#user-info">7. User Info</a></li>
+            <li class="toc-item"><a href="#links">8. External Links</a></li>
+            <li class="toc-item"><a href="#modification">9. Modifications</a></li>
+            <li class="toc-item"><a href="#privacy">10. Privacy</a></li>
+            <li class="toc-item"><a href="#trademarks">11. Trademarks</a></li>
+            <li class="toc-item"><a href="#law">12. Jurisdiction</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="content-card">
+        <!-- Consent and Introduction -->
+        <section id="terms-intro" class="policy-section">
+          <div class="consent-box">
+            <p>
+              This page states the Terms and Conditions under which you may use this Website/App. Please read this page carefully. If you do not accept the Terms and Conditions stated here, please do not use the Website/App. SRATRC may revise these Terms and Conditions at any time by updating this posting. You should visit this page periodically to review the Terms and Conditions, because they are binding on you.
+            </p>
+          </div>
+        </section>
+
+        <!-- Electronic Communications -->
+        <section id="communications" class="policy-section">
+          <h2>Electronic Communications</h2>
+          <p>
+            By using the Website/App, you consent to receive communications from SRATRC through email, SMS, WhatsApp, push notifications, telephone calls, or other electronic means regarding registrations, bookings, donations, events, services, account activity, and other operational matters.
+          </p>
+        </section>
+
+        <!-- Use Restrictions -->
+        <section id="restrictions" class="policy-section">
+          <h2>Use Restrictions</h2>
+          <p>
+            The copyright in all material provided on this Site is held by SRATRC or by the original creator of the material. Except as stated herein, none of the material may be copied, reproduced, distributed, republished, downloaded, displayed, posted or transmitted in any form or by any means, including, but not limited to, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of SRATRC or the copyright owner.
+          </p>
+          <p>
+            Permission is granted to display, copy, distribute and download the materials on this Site for personal, non-commercial use only provided you do not modify the materials and that you retain all copyright and other proprietary notices contained in the material. This permission terminates automatically if you breach any of these Terms or Conditions. Upon termination, you must immediately destroy any downloaded and printed materials.
+          </p>
+          <p>
+            You also may not, without SRATRC permission, “mirror” any material contained on this Site on any other server. Any unauthorized use of any material contained on this Site may violate copyright laws, trademark laws, and/or other laws, rules and regulations.
+          </p>
+        </section>
+
+        <!-- 3. User Accounts and Acceptable Use -->
+        <section id="accounts" class="policy-section">
+          <h2>3. User Accounts and Acceptable Use</h2>
+          <p>
+            Users are responsible for maintaining the confidentiality of their account credentials and for all activities conducted through their accounts.
+          </p>
+          <p>Users shall not:</p>
+          <ul>
+            <li>Provide false or misleading information;</li>
+            <li>Attempt to gain unauthorized access to the Website/App or its systems;</li>
+            <li>Interfere with the operation or security of the Website/App;</li>
+            <li>Upload, transmit, or distribute malicious code, viruses, or harmful content;</li>
+            <li>Use the Website/App for any unlawful purpose.</li>
+          </ul>
+          <p>
+            SRATRC reserves the right to suspend or terminate access to the Website/App for violation of these Terms.
+          </p>
+        </section>
+
+        <!-- 4. Disclaimer Warranty -->
+        <section id="warranty" class="policy-section">
+          <h2>4. Disclaimer Warranty</h2>
+          <p>
+            The Material posted on the Site may contain inaccuracies or typographical errors. SRATRC OR ITS AFFILIATES, SUPPLIERS MAKE NO REPRESENTATIONS OR WARRANTIES ABOUT THE ACCURACY, RELIABILITY, COMPLETENESS, OR TIMELINESS OF THE MATERIAL, SERVICES, SOFTWARE, TEXT GRAPHICS AND LINKS OR ABOUT THE RESULTS TO BE OBTAINED FROM USING THE WEB SITE AND THE MATERIAL THEREON. The use of the Web Site and the Material is at your own risk. Changes are periodically made to the Web Site and may be made at any time.
+          </p>
+          <p>
+            THE WEB SITE AND THE MATERIAL ARE PROVIDED ON AN “AS IS” BASIS WITHOUT ANY WARRANTIES OF ANY KIND. SRATRC AND ITS AFFILIATES, SUPPLIERS, OR ANY PERSON ACTING, BY UNDER THROUGH OR IN TRUST FOR IT TO THE FULLEST EXTENT PERMITTED BY LAW, DISCLAIM ALL WARRANTIES, INCLUDING THE WARRANTY OF MERCHANTABILITY, NON-INFRINGEMENT OF THIRD PARTIES RIGHTS, AND THE WARRANTY OF FITNESS FOR PARTICULAR PURPOSE.
+          </p>
+        </section>
+
+        <!-- 5. Limitation of Liability -->
+        <section id="liability" class="policy-section">
+          <h2>5. Limitation of Liability</h2>
+          <p>
+            IN NO EVENT SHALL SRATRC, ITS AFFILIATES, SUPPLIERS, OR ANY OTHER PERSON ACTING BY UNDER THROUGH OR IN TRUST FOR IT OR ANY THIRD PARTIES MENTIONED AT THIS SITE BE LIABLE FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, INCIDENTAL AND CONSEQUENTIAL DAMAGES, LOST PROFITS, OR DAMAGES RESULTING FROM THE USE OR INABILITY TO USE THE WEB SITE AND THE MATERIAL, WHETHER BASED ON WARRANTY, CONTRACT, TORT, OR ANY OTHER LEGAL THEORY, AND WHETHER OR NOT SRATRC IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+          </p>
+        </section>
+
+        <!-- 6. Payments and Donations -->
+        <section id="payments" class="policy-section">
+          <h2>6. Payments and Donations</h2>
+          <p>
+            Payments and donations made through the Website/App are processed through authorized third-party payment service providers. SRATRC does not guarantee uninterrupted availability of payment services and shall not be liable for delays or failures caused by payment gateways, banks, telecommunications providers, internet service providers, or other third parties.
+          </p>
+        </section>
+
+        <!-- 7. Users Communications/User Information -->
+        <section id="user-info" class="policy-section">
+          <h2>7. Users Communications / User Information</h2>
+          <p>
+            Any feedback, suggestions, comments, or other non-personal information submitted by users may be used by SRATRC for improving its services, programs, and operations.
+          </p>
+          <p>
+            Personal information submitted through the Website/App shall be collected, processed, stored, and protected in accordance with SRATRC’s Privacy Policy.
+          </p>
+          <p>
+            Users are prohibited from posting or transmitting any unlawful, threatening, defamatory, obscene, fraudulent, misleading, harmful, or otherwise objectionable content through the Website/App.
+          </p>
+        </section>
+
+        <!-- 8. Links to Other Sites -->
+        <section id="links" class="policy-section">
+          <h2>8. Links to Other Sites</h2>
+          <p>
+            The Web Site contains Links to third party Web sites. These links are provided solely as a convenience to you and not as an endorsement by SRATRC of the contents on such third-party Web sites. SRATRC is not responsible for the content of linked third-party sites and does not make any representations regarding the content or accuracy of materials on such third-party Web sites. If you decide to access linked third-party Web sites, you do so at your own risk.
+          </p>
+          <p>
+            YOU SHALL HEREBY INDEMNIFY AND SHALL KEEP HARMLESS AND INDEMNIFIED, SRATRC, ITS SUCCESSORS AND ASSIGNS, AFFILIATES AGAINST ANY CLAIMS, SUITS, ACTIONS OR OTHER PROCEEDINGS BRUGHT AGAINST SRATRC OR ANY CHARGES, EXPENSES, PENALTIES, DUTIES LEVIES, TAXES, DAMAGES OR LOSSES SUFFERED OR INCURRED BY SRATRC AS A RESULT OF YOUR ACCESSING ANY LINKED THIRTY-PARTY WEB SITES OR ANY CONSEQUENCES WHATSOEVER ARISING THEREFROM OR USE THEREOF.
+          </p>
+        </section>
+
+        <!-- 9. Modification of Services -->
+        <section id="modification" class="policy-section">
+          <h2>9. Modification of Services</h2>
+          <p>
+            SRATRC reserves the right to modify, suspend, discontinue, or restrict access to any part of the Website/App, its content, or services at any time without prior notice.
+          </p>
+        </section>
+
+        <!-- 10. Privacy -->
+        <section id="privacy" class="policy-section">
+          <h2>10. Privacy</h2>
+          <p>
+            Use of the Website/App is also governed by the SRATRC Privacy Policy, which forms an integral part of these Terms and Conditions and is incorporated herein by reference.
+          </p>
+        </section>
+
+        <!-- 11. Trade Marks -->
+        <section id="trademarks" class="policy-section">
+          <h2>11. Trade Marks</h2>
+          <p>
+            The trademarks, service marks, and logos (the “Trademarks”) used and displayed on this Site are registered and unregistered Trademarks of SRATRC AND ITS AFFILIATES, and/or others. Nothing on this Site should be construed as granting, by implication, estoppel, or otherwise, any license or right to use any Trademarks displayed on the Site, without the written permission of the Trademark owner.
+          </p>
+        </section>
+
+        <!-- 12. Applicable Law/Jurisdiction -->
+        <section id="law" class="policy-section">
+          <h2>12. Applicable Law / Jurisdiction</h2>
+          <p>
+            These Terms and Conditions shall be governed by and construed in accordance with the laws of India.
+          </p>
+          <p>
+            Subject to applicable law, the courts at Mumbai, Maharashtra shall have exclusive jurisdiction in relation to any disputes arising out of or in connection with the Website/App and these Terms and Conditions.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <div class="header-container">
+        <p>&copy; 2026 Shrimad Rajchandra Aatma Tatva Research Centre. All rights reserved.</p>
+        <p>
+          Back to <a href="../">Aashray Home</a>
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Active section highlighting in sidebar and scroll management
+      const sections = document.querySelectorAll('.policy-section');
+      const tocItems = document.querySelectorAll('.toc-item');
+      const backToTop = document.getElementById('back-to-top');
+
+      function changeActiveTocItem() {
+        let index = sections.length;
+
+        while(--index && window.scrollY + 100 < sections[index].offsetTop) {}
+        
+        tocItems.forEach((item) => item.classList.remove('active'));
+        if (tocItems[index]) {
+          tocItems[index].classList.add('active');
+        }
+
+        // Show/hide back to top button
+        if (window.scrollY > 300) {
+          backToTop.classList.add('show');
+        } else {
+          backToTop.classList.remove('show');
+        }
+      }
+
+      changeActiveTocItem();
+      window.addEventListener('scroll', changeActiveTocItem);
+
+      // Back to top click event
+      backToTop.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+
+      // Smooth scroll for TOC links
+      document.querySelectorAll('.toc-item a').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href');
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 20,
+              behavior: 'smooth'
+            });
+            // Update URL hash
+            history.pushState(null, null, targetId);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
