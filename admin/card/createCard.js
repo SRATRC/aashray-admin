@@ -1,144 +1,3 @@
-// document.addEventListener('DOMContentLoaded', function () {
-//   document.getElementById('cardForm').addEventListener('submit', assignCard);
-//   loadLocationData();
-
-//   const resStatusSelect = document.getElementById('res_status');
-//   resStatusSelect.addEventListener('change', function () {
-//     toggleGuestFields(this.value);
-//   });
-
-//   // Initial check in case GUEST is pre-selected (like after reload)
-//   toggleGuestFields(resStatusSelect.value);
-// });
-
-// async function assignCard(event) {
-//   event.preventDefault();
-
-//   const form = event.target;
-
-//   const bodyData = {
-//     cardno: form.cardno.value,
-//     issuedto: form.issuedto.value,
-//     gender: form.gender.value,
-//     dob: form.dob.value,
-//     mobno: form.mobno.value,
-//     email: form.email.value,
-//     idType: form.idType.value,
-//     idNo: form.idNo.value,
-//     address: form.address.value,
-//     city: form.city.value,
-//     state: form.state.value,
-//     pin: form.pin.value,
-//     centre: form.centre.value,
-//     res_status: form.res_status.value,
-//     country: form.country.value
-//   };
-
-//   if (form.res_status.value === "GUEST") {
-//   bodyData.referenceCardno = form.reference_cardno?.value?.trim(); // ✅ correct field name
-//   bodyData.guestType = form.guest_type?.value?.trim();             // ✅ correct field name
-
-//   if (!bodyData.referenceCardno || !bodyData.guestType) {
-//     alert("Please enter both Reference Card Number and Guest Type for GUEST users.");
-//     return;
-//   }
-// }
-
-//   const options = {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//       Authorization: `Bearer ${sessionStorage.getItem('token')}`
-//     },
-//     body: JSON.stringify(bodyData)
-//   };
-
-//   try {
-//     const response = await fetch(`${CONFIG.basePath}/card/create`, options);
-//     const result = await response.json();
-//     if (!response.ok) throw new Error(result.message || 'Error occurred');
-//     alert('Card assigned successfully!');
-//     window.location.href = 'index.html';
-//   } catch (err) {
-//     alert('Error: ' + err.message);
-//   }
-// }
-
-// function toggleGuestFields(res_status) {
-//   const guestFields = document.getElementById('guestFields');
-//   guestFields.style.display = res_status === 'GUEST' ? 'block' : 'none';
-// }
-
-// async function loadLocationData() {
-//   console.log(
-//     'Fetching countries from:',
-//     `${CONFIG.baseUrl}/location/countries`
-//   );
-
-//   try {
-//     const countriesRes = await fetch("https://aashray-backend.onrender.com/api/v1/location/countries");(
-//     {
-//       headers: {
-//         Authorization: `Bearer ${sessionStorage.getItem('token')}`,
-//         'Content-Type': 'application/json'
-//       }
-//     });
-//     const countriesData = await countriesRes.json();
-//     console.log('Countries API response:', countriesData);
-//     if (!countriesRes.ok)
-//       throw new Error(countriesData.message || 'Failed to load countries');
-
-//     const countrySelect = document.getElementById('country');
-//     countriesData.data.forEach((c) => {
-//       const opt = document.createElement('option');
-//       opt.value = c.value;
-//       opt.textContent = c.value;
-//       countrySelect.appendChild(opt);
-//     });
-
-//     countrySelect.addEventListener('change', async () => {
-//       const selectedCountry = countrySelect.value;
-//       const stateRes = await fetch(
-//         `${CONFIG.baseUrl}/location/states/${selectedCountry}`
-//       );
-//       const stateData = await stateRes.json();
-//       const stateSelect = document.getElementById('state');
-//       stateSelect.innerHTML = `<option value="">Select</option>`;
-//       stateData.data.forEach((s) => {
-//         const opt = document.createElement('option');
-//         opt.value = s.value;
-//         opt.textContent = s.value;
-//         stateSelect.appendChild(opt);
-//       });
-
-//       document.getElementById(
-//         'city'
-//       ).innerHTML = `<option value="">Select</option>`;
-//     });
-
-//     document.getElementById('state').addEventListener('change', async () => {
-//       const selectedCountry = document.getElementById('country').value;
-//       const selectedState = document.getElementById('state').value;
-//       const cityRes = await fetch(
-//         `${CONFIG.baseUrl}/location/cities/${selectedCountry}/${selectedState}`
-//       );
-//       const cityData = await cityRes.json();
-//       const citySelect = document.getElementById('city');
-//       citySelect.innerHTML = `<option value="">Select</option>`;
-//       cityData.data.forEach((city) => {
-//         const opt = document.createElement('option');
-//         opt.value = city.value;
-//         opt.textContent = city.value;
-//         citySelect.appendChild(opt);
-//       });
-//     });
-//   } catch (err) {
-//     console.error('Location load failed:', err);
-//   }
-// }
-
-// // window.onload = loadLocationData;
-
 document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('cardForm').addEventListener('submit', assignCard);
 
@@ -155,40 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
   );
   toggleResStatusFields(resStatusSelect.value);
 
-  // Reference phone validation listener
+  // Reference phone check
   const refPhoneInput = document.getElementById('reference_phone');
   if (refPhoneInput) {
-    refPhoneInput.addEventListener('input', async (e) => {
-      const val = e.target.value.trim();
-      const nameEl = document.getElementById('refPhoneName');
-      if (val.length === 10) {
-        nameEl.textContent = 'Checking...';
-        nameEl.style.color = '#777';
-        try {
-          const res = await fetch(
-            `${CONFIG.baseUrl}/client/checkMobile/${val}`
-          );
-          const data = await res.json();
-          if (data.exists) {
-            if (data.res_status === 'MUMUKSHU') {
-              nameEl.textContent = `Name: ${data.name} (Mumukshu)`;
-              nameEl.style.color = '#2e7d32';
-            } else {
-              nameEl.textContent = `Name: ${data.name} (${data.res_status}) - Warning: Not a Mumukshu`;
-              nameEl.style.color = '#c62828';
-            }
-          } else {
-            nameEl.textContent = 'Phone number is not registered!';
-            nameEl.style.color = '#c62828';
-          }
-        } catch (err) {
-          nameEl.textContent = 'Error checking phone number';
-          nameEl.style.color = '#c62828';
-        }
-      } else {
-        nameEl.textContent = '';
-      }
-    });
+    attachRefPhoneCheck(refPhoneInput, document.getElementById('refPhoneName'));
   }
 });
 
@@ -202,6 +31,7 @@ async function loadDepartments() {
       }
     });
     const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Failed to load departments');
     const deptSelect = document.getElementById('department');
     deptSelect.innerHTML = '<option value="">Select Department</option>';
     (result.data || []).forEach((d) => {
@@ -281,7 +111,8 @@ async function assignCard(event) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Error occurred');
 
-    alert('Card assigned successfully!');
+    const newNo = result.data?.cardno;
+    alert(newNo ? `Card assigned successfully! Card number: ${newNo}` : 'Card assigned successfully!');
     window.location.href = 'index.html';
   } catch (err) {
     alert('Error: ' + err.message);
@@ -322,7 +153,7 @@ async function loadLocationData(
       (c) => {
         const val = c.value || c;
         const selected = val === currentCountry ? 'selected' : '';
-        countrySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        countrySelect.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
       }
     );
 
@@ -356,7 +187,7 @@ async function loadLocationData(
       (stateData.data || []).forEach((s) => {
         const val = s.value || s;
         const selected = val === selectedState ? 'selected' : '';
-        stateSelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        stateSelect.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
       });
 
       stateSelect.addEventListener('change', () =>
@@ -388,7 +219,7 @@ async function loadLocationData(
       (cityData.data || []).forEach((c) => {
         const val = c.value || c;
         const selected = val === selectedCity ? 'selected' : '';
-        citySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        citySelect.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
       });
     } catch (err) {
       console.error('Failed to load cities:', err);

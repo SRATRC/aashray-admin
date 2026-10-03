@@ -2,15 +2,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cardno = sessionStorage.getItem('cardno');
   if (!cardno) return alert('No card number found in session');
 
-  // Load departments dropdown list
   await loadDepartments();
-
   await fetchPersonDetails(cardno);
 
   // Attach submit listener
-  document
-    .getElementById('updateForm')
-    .addEventListener('submit', handleUpdate);
+  document.getElementById('updateForm').addEventListener('submit', handleUpdate);
+
+  document.getElementById('res_status').addEventListener('change', updateGuestFields);
+  document.getElementById('referenceCardno').addEventListener('input', updateGuestFields);
+  document.getElementById('referencePhone').addEventListener('input', updateGuestFields);
+  attachRefPhoneCheck(
+    document.getElementById('referencePhone'),
+    document.getElementById('refPhoneName')
+  );
 
   // Attach change listeners once
   document.getElementById('country').addEventListener('change', (e) => {
@@ -23,63 +27,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     const state = e.target.value;
     fetchCities(country, state);
   });
-
-  document.getElementById('res_status').addEventListener('change', (e) => {
-    toggleResStatusFields(e.target.value);
-  });
-
-  // Reference phone validation listener
-  const refPhoneInput = document.getElementById('referencePhone');
-  if (refPhoneInput) {
-    refPhoneInput.addEventListener('input', (e) => {
-      checkReferencePhone(e.target.value.trim());
-    });
-  }
 });
 
-// --- Fetch and populate departments ---
+// The card as loaded, to tell what this save changes
+let loadedCard = null;
+
+// --- Fetch and populate departments (Seva Kutir cards) ---
 async function loadDepartments() {
+  const deptSelect = document.getElementById('department');
+  deptSelect.innerHTML = '<option value="">Select Department</option>';
   try {
-    const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/departments`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
         'Content-Type': 'application/json'
       }
     });
     const result = await res.json();
-    const deptSelect = document.getElementById('department');
-    deptSelect.innerHTML = '<option value="">Select Department</option>';
+    if (!res.ok) throw new Error(result.message || 'Failed to load departments');
     (result.data || []).forEach((d) => {
       const val = d.value || d;
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = val;
-      deptSelect.appendChild(opt);
+      deptSelect.add(new Option(val, val));
     });
   } catch (err) {
     console.error('Failed to load departments:', err);
   }
 }
 
-// --- Toggle status fields ---
-function toggleResStatusFields(res_status) {
-  // Toggle guest-only fields
-  const guestElements = document.querySelectorAll('.guest-only');
-  guestElements.forEach((el) => {
-    el.style.display = res_status === 'GUEST' ? 'block' : 'none';
-  });
-
-  // Toggle seva-kutir-only fields
-  const sevaKutirElements = document.querySelectorAll('.seva-kutir-only');
-  sevaKutirElements.forEach((el) => {
-    el.style.display = res_status === 'SEVA KUTIR' ? 'block' : 'none';
-  });
-}
-
 // --- Handle form submit ---
 async function handleUpdate(e) {
   e.preventDefault();
+  const resStatus = document.getElementById('res_status').value;
+  const isGuest = resStatus === 'GUEST';
+
+  // Changing the member type away from guest removes the guest's reference card link
+  if (loadedCard?.res_status === 'GUEST' && !isGuest && loadedCard.referenceCardno) {
+    const host = loadedCard.referenceName
+      ? `${loadedCard.referenceName} (${loadedCard.referenceCardno})`
+      : loadedCard.referenceCardno;
+    if (!confirm(`This card will stop being a guest of ${host}. Continue?`)) return;
+  }
+
+  const reference = isGuest ? document.getElementById('referenceCardno').value.trim() : '';
+  // The phone is used only when the card number is blank
+  const phone = isGuest && !reference ? document.getElementById('referencePhone').value.trim() : '';
+  const department = resStatus === 'SEVA KUTIR' ? document.getElementById('department').value : '';
+
+  if (resStatus === 'SEVA KUTIR' && !department) {
+    alert('Please select a department for SEVA KUTIR users.');
+    return;
+  }
+
   const updatedData = {
     cardno: document.getElementById('cardno').value,
     issuedto: document.getElementById('issuedto').value,
@@ -95,39 +93,28 @@ async function handleUpdate(e) {
     city: document.getElementById('city').value,
     pin: document.getElementById('pin').value,
     center: document.getElementById('center').value,
-    res_status: document.getElementById('res_status').value,
-    referencePhone: document.getElementById('referencePhone')?.value || null,
-    guestType: document.getElementById('guestType')?.value || null,
-    department: document.getElementById('department')?.value || null
+    res_status: resStatus,
+    // A blank reference card keeps the guest's current link as it is, and a
+    // guest type goes only with a reference card
+    referenceCardno: reference || null,
+    referencePhone: phone || null,
+    guestType: reference || phone ? document.getElementById('guestType').value || null : null,
+    // A department goes only with a Seva Kutir card
+    department: department || null
   };
-
-  if (updatedData.res_status === 'GUEST') {
-    if (!updatedData.referencePhone || !updatedData.guestType) {
-      alert(
-        'Please enter both Reference Phone Number and Guest Type for GUEST users.'
-      );
-      return;
-    }
-  }
-
-  if (updatedData.res_status === 'SEVA KUTIR') {
-    if (!updatedData.department) {
-      alert('Please select a department for SEVA KUTIR users.');
-      return;
-    }
-  }
 
   try {
     const token = sessionStorage.getItem('token');
     const response = await fetch(`${CONFIG.basePath}/card/update`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(updatedData)
     });
-    if (!response.ok) throw new Error('Failed to update card');
+    if (!response.ok) {
+      // Show the reason the backend gives, such as a reference card that does not exist
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.message || 'Failed to update card');
+    }
     alert('Card updated successfully!');
     window.location.href = 'index.html';
   } catch (err) {
@@ -141,10 +128,7 @@ async function fetchPersonDetails(cardno) {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/card/search/${cardno}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
     });
     if (!res.ok) throw new Error('Failed to fetch person details');
     const result = await res.json();
@@ -158,37 +142,82 @@ async function fetchPersonDetails(cardno) {
 
 // --- Populate form ---
 function populateForm(data) {
-  [
-    'cardno',
-    'issuedto',
-    'gender',
-    'dob',
-    'mobno',
-    'email',
-    'idType',
-    'idNo',
-    'address',
-    'pin',
-    'res_status',
-    'referencePhone',
-    'guestType',
-    'department'
-  ].forEach((field) => {
-    const element = document.getElementById(field);
-    if (element) {
-      element.value = data[field] || '';
-    }
+  ['cardno','issuedto','gender','dob','mobno','email','idType','idNo','address','pin','res_status'].forEach(field => {
+    document.getElementById(field).value = data[field] || '';
   });
 
-  // Toggle fields based on populated status
-  toggleResStatusFields(data.res_status);
-
-  if (data.res_status === 'GUEST' && data.referencePhone) {
-    checkReferencePhone(data.referencePhone);
+  // A guest card comes with its current reference card and guest type
+  loadedCard = data;
+  document.getElementById('referenceCardno').value = data.referenceCardno || '';
+  document.getElementById('referencePhone').value = '';
+  document.getElementById('refPhoneName').textContent = '';
+  const deptSelect = document.getElementById('department');
+  if (data.department && ![...deptSelect.options].some((o) => o.value === data.department)) {
+    deptSelect.add(new Option(data.department, data.department));
   }
+  deptSelect.value = data.department || '';
+  setGuestType(data.guestType);
+  updateGuestFields();
 
   fetchCountries(data.country, data.state, data.city);
   fetchCenters(data.center); // <-- call this to populate center dropdown correctly
+}
+
+// --- Select the saved guest type ---
+// Saved types differ in case ("family", "Family"), and some are not in the list
+// (such as "RPL Guest"). Add those as an option, so a save keeps them.
+function setGuestType(savedType) {
+  const select = document.getElementById('guestType');
+  if (!savedType) {
+    select.value = '';
+    return;
+  }
+  const match = [...select.options].find(
+    (option) => option.value && option.value.toLowerCase() === String(savedType).toLowerCase()
+  );
+  if (match) {
+    select.value = match.value;
+    return;
+  }
+  select.add(new Option(savedType, savedType));
+  select.value = savedType;
+}
+
+// --- Show and explain the guest fields ---
+function updateGuestFields() {
+  const isGuest = document.getElementById('res_status').value === 'GUEST';
+  document.querySelectorAll('.guest-only').forEach((el) => {
+    el.style.display = isGuest ? '' : 'none';
+  });
+  document.querySelectorAll('.seva-kutir-only').forEach((el) => {
+    el.style.display = document.getElementById('res_status').value === 'SEVA KUTIR' ? '' : 'none';
+  });
+
+  const reference = document.getElementById('referenceCardno');
+  const phoneGiven = document.getElementById('referencePhone').value.trim() !== '';
+  const guestType = document.getElementById('guestType');
+  const hint = document.getElementById('referenceHint');
+  const wasGuest = loadedCard?.res_status === 'GUEST';
+  const currentHost = wasGuest ? loadedCard.referenceCardno : null;
+
+  // A card that becomes a guest needs a reference card. A guest with one on
+  // record can move to another card but not clear it, since a blank field
+  // keeps the current link.
+  reference.required = isGuest && (!wasGuest || Boolean(currentHost)) && !phoneGiven;
+  if (!wasGuest) {
+    hint.textContent = "Enter the card number of the member this person is a guest of.";
+  } else if (currentHost) {
+    const name = loadedCard.referenceName ? `${loadedCard.referenceName} (${currentHost})` : currentHost;
+    hint.textContent = `Current reference card: ${name}. Enter another card number to move this guest.`;
+  } else {
+    hint.textContent = 'No reference card on record. Leave blank to keep it that way.';
+  }
+
+  // A guest type belongs to the reference card link, so it needs a card number.
+  // The chosen type stays while the field is blank, so retyping a card keeps it.
+  const hasReference = reference.value.trim() !== '' || phoneGiven;
+  guestType.disabled = !isGuest || !hasReference;
+  guestType.required = isGuest && hasReference;
 }
 
 // --- Fetch countries ---
@@ -199,27 +228,16 @@ async function fetchCountries(currentCountry, currentState, currentCity) {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/countries`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
     });
-    const data = (await res.json()).data || [
-      'India',
-      'USA',
-      'UK',
-      'UAE',
-      'Canada'
-    ];
-    data.forEach((c) => {
+    const data = (await res.json()).data || ['India','USA','UK','UAE','Canada'];
+    data.forEach(c => {
       const val = c.value || c;
       const selected = val === currentCountry ? 'selected' : '';
-      countryDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      countryDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
     if (currentCountry) fetchStates(currentCountry, currentState, currentCity);
-  } catch (err) {
-    console.warn(err);
-  }
+  } catch (err) { console.warn(err); }
 }
 
 // --- Fetch states ---
@@ -231,21 +249,16 @@ async function fetchStates(country, currentState, currentCity) {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/states/${country}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
     });
     const data = (await res.json()).data || [];
-    data.forEach((s) => {
+    data.forEach(s => {
       const val = s.value || s;
       const selected = val === currentState ? 'selected' : '';
-      stateDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      stateDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
     if (currentState) fetchCities(country, currentState, currentCity);
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 // --- Fetch cities ---
@@ -256,24 +269,16 @@ async function fetchCities(country, state, currentCity) {
 
   try {
     const token = sessionStorage.getItem('token');
-    const res = await fetch(
-      `${CONFIG.basePath}/location/cities/${country}/${state}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+    const res = await fetch(`${CONFIG.basePath}/location/cities/${country}/${state}`, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
     const data = (await res.json()).data || [];
-    data.forEach((c) => {
+    data.forEach(c => {
       const val = c.value || c;
       const selected = val === currentCity ? 'selected' : '';
-      cityDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      cityDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 const fetchCenters = async (currentCenter) => {
@@ -283,58 +288,21 @@ const fetchCenters = async (currentCenter) => {
   try {
     const token = sessionStorage.getItem('token');
     const res = await fetch(`${CONFIG.basePath}/location/centres`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
     });
     const centersData = (await res.json()).data || [];
 
-    centersData.forEach((c) => {
+    centersData.forEach(c => {
       const val = c.value || c;
       const selected = val === currentCenter ? 'selected' : '';
-      centerDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      centerDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
 
     // If currentCenter is not in the fetched list, add it
-    if (
-      currentCenter &&
-      !centersData.find((c) => (c.value || c) === currentCenter)
-    ) {
-      centerDropdown.innerHTML += `<option value="${currentCenter}" selected>${currentCenter}</option>`;
+    if (currentCenter && !centersData.find(c => (c.value || c) === currentCenter)) {
+      centerDropdown.innerHTML += `<option value="${escapeHtml(currentCenter)}" selected>${escapeHtml(currentCenter)}</option>`;
     }
   } catch (err) {
     console.error('Error fetching centers:', err);
   }
 };
-
-// --- Check and display reference phone Mumukshu name ---
-async function checkReferencePhone(val) {
-  const nameEl = document.getElementById('refPhoneName');
-  if (!nameEl) return;
-  if (!val || val.trim().length !== 10) {
-    nameEl.textContent = '';
-    return;
-  }
-  nameEl.textContent = 'Checking...';
-  nameEl.style.color = '#777';
-  try {
-    const res = await fetch(`${CONFIG.baseUrl}/client/checkMobile/${val}`);
-    const data = await res.json();
-    if (data.exists) {
-      if (data.res_status === 'MUMUKSHU') {
-        nameEl.textContent = `Name: ${data.name} (Mumukshu)`;
-        nameEl.style.color = '#2e7d32';
-      } else {
-        nameEl.textContent = `Name: ${data.name} (${data.res_status}) - Warning: Not a Mumukshu`;
-        nameEl.style.color = '#c62828';
-      }
-    } else {
-      nameEl.textContent = 'Phone number is not registered!';
-      nameEl.style.color = '#c62828';
-    }
-  } catch (err) {
-    nameEl.textContent = 'Error checking phone number';
-    nameEl.style.color = '#c62828';
-  }
-}

@@ -1,0 +1,352 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['superAdmin']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Temporary Access Link Generator</title>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Additional Scripts -->
+    <script src="../../style/js/plugin.js"></script>
+    <script src="../../style/js/custom.js"></script>
+    <script src="../../style/js/config.js"></script>
+    <script src="../../sessionstorage.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="../../style/css/styles.css" />
+
+    <style>
+      .generator-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .section-subtitle {
+        color: #64748b;
+        font-size: 14px;
+        margin-top: -6px;
+        margin-bottom: 20px;
+      }
+
+      .result-box {
+        display: none;
+        background: #f0fdf4;
+        border: 2px solid #86efac;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 24px;
+      }
+
+      .result-title {
+        color: #166534;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .url-display-group {
+        margin-bottom: 14px;
+      }
+
+      .url-display-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      .url-input-container {
+        display: flex;
+        gap: 8px;
+      }
+
+      .url-input-container input {
+        flex: 1;
+        background: #ffffff;
+        font-family: monospace;
+        font-size: 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 8px 12px;
+      }
+
+      .btn-copy {
+        background-color: #0f766e;
+        color: #ffffff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.15s;
+        white-space: nowrap;
+      }
+
+      .btn-copy:hover {
+        background-color: #115e59;
+      }
+
+      .badge-status {
+        display: inline-block;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 4px;
+      }
+
+      .badge-active {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .badge-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .badge-expired {
+        background: #f1f5f9;
+        color: #64748b;
+      }
+
+      .table-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .btn-xs {
+        padding: 4px 8px;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="logout">
+          <a href="javascript:void(0);" onclick="history.back()">Back</a>
+          &nbsp; | &nbsp; <a href="javascript:void(0);" onclick="goToHome()">Home</a> &nbsp; | &nbsp;
+          <a href="javascript:void(0);" onclick="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="middlecontent">
+      <div class="container">
+        <div class="whitesec">
+          <div class="inner-padding">
+            <div class="frm-head">
+              <h1>Temporary Access Link Generator</h1>
+              <div class="section-subtitle">
+                SuperAdmin tool to generate secure, time-expiring read-only links and shortlinks without user logins.
+              </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="generator-card">
+              <form id="shareLinkForm">
+                <div class="row">
+                  <!-- Module Selection -->
+                  <div class="col-md-6 form-group">
+                    <label for="resourceSelect"><strong>Resource / Module:</strong></label>
+                    <select id="resourceSelect" class="form-control" onchange="handleResourceChange()">
+                      <option value="utsav_report" selected>Utsav Registration Report (Read-Only)</option>
+                      <option value="custom">Custom Admin Page (Generic)</option>
+                    </select>
+                  </div>
+
+                  <!-- Validity -->
+                  <div class="col-md-6 form-group">
+                    <label for="validityDays"><strong>Validity Period:</strong></label>
+                    <select id="validityDays" class="form-control" onchange="handleValidityChange()">
+                      <option value="1">1 Day (24 Hours)</option>
+                      <option value="3">3 Days</option>
+                      <option value="7">7 Days</option>
+                      <option value="14" selected>14 Days (2 Weeks)</option>
+                      <option value="30">30 Days (1 Month)</option>
+                      <option value="60">60 Days (2 Months)</option>
+                      <option value="custom">📅 Custom Date (Pick End Date)...</option>
+                    </select>
+                    <div id="customExpiryDateGroup" style="display: none; margin-top: 10px;">
+                      <label for="customExpiryDate"><strong>Valid Until (End Date):</strong></label>
+                      <input type="date" id="customExpiryDate" class="form-control" />
+                      <small class="text-muted">Link expires automatically at 11:59 PM on this date.</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Utsav-Specific Fields -->
+                <div id="utsavFieldsGroup">
+                  <div class="row">
+                    <div class="col-md-6 form-group">
+                      <label for="utsavSelect"><strong>Select Utsav:</strong></label>
+                      <select id="utsavSelect" class="form-control" onchange="handleUtsavSelect()">
+                        <option value="">-- Loading Utsavs... --</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6 form-group">
+                      <label for="utsavLocation"><strong>Location / Centre:</strong></label>
+                      <input
+                        type="text"
+                        id="utsavLocation"
+                        class="form-control"
+                        placeholder="e.g. Hyderabad"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Custom Resource Fields -->
+                <div id="customFieldsGroup" style="display: none;">
+                  <div class="row">
+                    <div class="col-md-6 form-group">
+                      <label for="customTargetPath"><strong>Admin Target Path:</strong></label>
+                      <input
+                        type="text"
+                        id="customTargetPath"
+                        class="form-control"
+                        placeholder="e.g. room/index.html"
+                      />
+                      <small class="text-muted">Relative path inside /admin/ (e.g. utsav/utsavReport.html)</small>
+                    </div>
+                    <div class="col-md-6 form-group">
+                      <label for="customRoleSelect"><strong>Access Role:</strong></label>
+                      <select id="customRoleSelect" class="form-control">
+                        <option value="utsavAdminReadOnly" selected>Utsav Read-Only (utsavAdminReadOnly)</option>
+                        <option value="adhyayanAdminReadOnly">Adhyayan Read-Only (adhyayanAdminReadOnly)</option>
+                      </select>
+                      <small class="text-muted">Allowed read-only role granted to this temporary share link.</small>
+                    </div>
+                    <div class="col-md-6 form-group">
+                      <label for="customLocation"><strong>Scope Location (Optional):</strong></label>
+                      <input
+                        type="text"
+                        id="customLocation"
+                        class="form-control"
+                        placeholder="e.g. Research Centre"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Slug and Notes -->
+                <div class="row">
+                  <div class="col-md-6 form-group">
+                    <label for="shortlinkSlug"><strong>Shortlink Slug:</strong></label>
+                    <div class="input-group" style="display: flex;">
+                      <span class="input-group-addon" style="padding: 9px 12px; background: #e2e8f0; border: 1px solid #ccc; border-radius: 6px 0 0 6px; font-size: 13px;">.../go/</span>
+                      <input
+                        type="text"
+                        id="shortlinkSlug"
+                        class="form-control"
+                        style="border-radius: 0 6px 6px 0;"
+                        placeholder="e.g. hyd26"
+                        required
+                      />
+                    </div>
+                    <small class="text-muted">Only letters, numbers, hyphens, and underscores.</small>
+                  </div>
+
+                  <div class="col-md-6 form-group">
+                    <label for="shareNotes"><strong>Description / Notes (Optional):</strong></label>
+                    <input
+                      type="text"
+                      id="shareNotes"
+                      class="form-control"
+                      placeholder="e.g. Hyderabad Coordinator Live Access"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group form-submit" style="margin-top: 15px;">
+                  <button type="submit" id="submitBtn" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600;">
+                    Generate Temporary Share Link
+                  </button>
+                </div>
+              </form>
+
+              <!-- Result Container -->
+              <div id="resultBox" class="result-box">
+                <div class="result-title">
+                  <span>✅ Share Link Generated Successfully!</span>
+                </div>
+
+                <!-- Shortlink -->
+                <div class="url-display-group">
+                  <label>Short Link (Easy to share via WhatsApp / SMS):</label>
+                  <div class="url-input-container">
+                    <input type="text" id="resultShortUrl" readonly />
+                    <button type="button" class="btn-copy" onclick="copyToClipboard('resultShortUrl')">Copy Short Link</button>
+                    <a id="btnTestShortlink" href="#" target="_blank" class="btn btn-default" style="padding: 8px 14px;">Open / Test</a>
+                  </div>
+                </div>
+
+                <!-- Direct URL -->
+                <div class="url-display-group">
+                  <label>Direct URL (With embedded token):</label>
+                  <div class="url-input-container">
+                    <input type="text" id="resultFullUrl" readonly />
+                    <button type="button" class="btn-copy" onclick="copyToClipboard('resultFullUrl')">Copy Full URL</button>
+                  </div>
+                </div>
+
+                <div style="font-size: 13px; color: #166534; margin-top: 10px;">
+                  <strong>Expires At:</strong> <span id="resultExpiresAt"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing Links Table -->
+            <div class="frm-head" style="margin-top: 30px;">
+              <h2>Active & Past Temporary Links</h2>
+            </div>
+
+            <div class="table-responsive">
+              <table id="linksTable" class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Slug</th>
+                    <th>Module / Scope</th>
+                    <th>Clicks</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="linksTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center">Loading temporary links...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="shareLinkGenerator.js"></script>
+  </body>
+</html>
