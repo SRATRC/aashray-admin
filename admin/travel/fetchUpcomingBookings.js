@@ -449,7 +449,7 @@ function setupDownloadButton() {
   document.getElementById('downloadBtnContainer').innerHTML = '';
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => travelReport,
+    getData: () => travelReport.map((b) => ({ ...b, arrival_time: formatDateTime(b.arrival_time) })),
     fileName: 'travel report.xlsx',
     sheetName: 'Travel Report',
     tableSelector: '#upcomingBookings'
@@ -1036,7 +1036,11 @@ function formatDateTime(dateInput) {
     const trimmed = dateInput.trim();
     // Time only, 24 h ("9:05", "21:30", "21:30:00"): show in 12 h.
     const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-    if (timeMatch) return to12Hour(timeMatch[1], timeMatch[2]);
+    if (timeMatch) {
+      // Out of range ("25:99"): show it as typed.
+      if (+timeMatch[1] > 23 || +timeMatch[2] > 59) return dateInput;
+      return to12Hour(timeMatch[1], timeMatch[2]);
+    }
     // Already 12 h ("9:05 PM"): leave as is.
     if (/^\d{1,2}:\d{2}(:\d{2})?\s*(AM|PM)$/i.test(trimmed)) return trimmed;
   }
