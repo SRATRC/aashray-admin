@@ -165,9 +165,12 @@ function renderWifi(list) {
   `;
 
   list.forEach((item) => {
+    // Some deleted codes (an old bulk import) used the code as the username,
+    // so a deleted code's username is not shown.
+    const username = item.status === 'deleted' ? '-' : item.username;
     html += `
       <tr>
-        <td>${esc(item.username)}</td>
+        <td>${esc(username)}</td>
         <td>${esc(item.ssid || '-')}</td>
         <td>${esc(item.status)}</td>
       </tr>
