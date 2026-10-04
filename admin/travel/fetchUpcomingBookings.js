@@ -1043,6 +1043,9 @@ function formatDateTime(dateInput) {
     }
     // Already 12 h ("9:05 PM"): leave as is.
     if (/^\d{1,2}:\d{2}(:\d{2})?\s*(AM|PM)$/i.test(trimmed)) return trimmed;
+    // Only a full date ("2026-10-05..."), not loose text, is read as a date:
+    // the browser would turn "10.30" or "9" into a made-up date in 2001.
+    if (!/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return dateInput;
   }
 
   const dateObj = new Date(dateInput);
