@@ -631,6 +631,9 @@ async function exportToExcel() {
       const categoryLabel = categoryFilter === 'all' ? 'All' : (categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1));
       const statusLabel = statusFilter === 'all' ? 'All' : (statusFilter === 'onprem' ? 'OnPremise' : 'OffPremise');
       XLSX.writeFile(wb, `Residents_Report_${categoryLabel}_${statusLabel}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      if (resData.data && resData.data.truncated) {
+        alert(`Only the first ${Number(rows.length).toLocaleString()} of ${Number(resData.data.totalCount).toLocaleString()} rows were exported. Narrow the date range or filters and export again.`);
+      }
     } else {
       alert('Failed to fetch data for export.');
     }

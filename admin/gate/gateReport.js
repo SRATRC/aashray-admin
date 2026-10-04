@@ -535,6 +535,9 @@ async function exportToExcel() {
       }
 
       XLSX.writeFile(wb, `${filename}.xlsx`);
+      if (result.data && result.data.truncated) {
+        alert(`Only the first ${Number(records.length).toLocaleString()} of ${Number(result.data.totalCount).toLocaleString()} rows were exported. Narrow the date range or filters and export again.`);
+      }
     } else {
       alert('Failed to fetch data for export.');
     }

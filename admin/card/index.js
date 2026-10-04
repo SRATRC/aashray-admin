@@ -617,6 +617,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
       actionCell.appendChild(resetPwdButton);
+
+      const historyButton = document.createElement('button');
+      historyButton.textContent = 'View History';
+      historyButton.className = 'action-btn action-btn-history history-btn';
+      historyButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sessionStorage.setItem('history_cardno', item.cardno);
+        window.location.href = 'personHistory.html';
+      });
+      actionCell.appendChild(historyButton);
       row.appendChild(actionCell);
 
       dataListTableBody.appendChild(row);
@@ -747,6 +757,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
       actions.appendChild(resetBtn);
+
+      const historyBtn = document.createElement('button');
+      historyBtn.textContent = 'View History';
+      historyBtn.className = 'action-btn action-btn-history history-btn';
+      historyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sessionStorage.setItem('history_cardno', item.cardno);
+        window.location.href = 'personHistory.html';
+      });
+      actions.appendChild(historyBtn);
 
       card.appendChild(actions);
       mobileCardsGrid.appendChild(card);

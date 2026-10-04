@@ -797,6 +797,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       let records = [];
+      let exportMeta = null;
       if (params.get('mock') === 'true') {
         records = Array.from({ length: 45 }, (_, i) => {
           const idx = i + 1;
@@ -840,6 +841,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
         const resData = await response.json();
         records = (resData && resData.data && resData.data.requests) || [];
+        exportMeta = resData && resData.data;
       }
 
       if (records.length === 0) {
@@ -897,6 +899,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Save file with a native .xlsx extension to prevent warnings in Excel
       XLSX.writeFile(wb, `maintenance_requests_${department}_${activeStatusFilter || 'all'}.xlsx`);
+      if (exportMeta && exportMeta.truncated) {
+        alert(`Only the first ${Number(records.length).toLocaleString()} of ${Number(exportMeta.totalCount).toLocaleString()} rows were exported. Narrow the date range or filters and export again.`);
+      }
     } catch (err) {
       console.error('Excel Export Error:', err);
       alert('An error occurred while exporting requests.');
