@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const ignoreEventsCheckbox = document.getElementById('ignoreEvents');
   if (ignoreEventsCheckbox) ignoreEventsCheckbox.checked = ignore_events;
 
-  // FORM SUBMIT (dev: Load Report reloads the page with the chosen range)
+  // FORM SUBMIT
   const filterForm = document.getElementById('foodReportFilterForm');
   if (filterForm) {
     filterForm.addEventListener('submit', (e) => {
@@ -40,32 +40,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       window.location.href = `foodReport.html?${params}`;
     });
   }
-
-  // QUICK FILTER BUTTONS
-  const navigateWithDates = (s, e) => {
-    const ignoreEvt = document.getElementById('ignoreEvents')?.checked;
-    const params = new URLSearchParams({ start_date: s, end_date: e });
-    if (ignoreEvt) params.set('ignore_events', 'true');
-    window.location.href = `foodReport.html?${params}`;
-  };
-
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  document.getElementById('btnToday')?.addEventListener('click', () => {
-    navigateWithDates(todayStr, todayStr);
-  });
-
-  document.getElementById('btnNext7Days')?.addEventListener('click', () => {
-    const next7Obj = new Date(); next7Obj.setDate(next7Obj.getDate() + 6);
-    navigateWithDates(todayStr, next7Obj.toISOString().split('T')[0]);
-  });
-
-  document.getElementById('btnThisMonth')?.addEventListener('click', () => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    navigateWithDates(firstDay, lastDay);
-  });
 
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const reportTitle = document.getElementById('reportTitle');
@@ -91,46 +65,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     _reportData = data.data || [];
     document.getElementById('btnDownload').disabled = false;
-
-    // --- Summary Pills ---
-    const summaryEl = document.getElementById('mealSummaryCards');
-    if (summaryEl && _reportData.length) {
-      let bRegd=0, bIssued=0, lRegd=0, lIssued=0, dRegd=0, dIssued=0, tea=0, coffee=0;
-      _reportData.forEach(r => {
-        bRegd  += (r.breakfast||0) + (r.breakfast_guest_count||0);
-        bIssued+= (r.breakfast_plate_issued||0) + (r.breakfast_guest_issued||0);
-        lRegd  += (r.lunch||0) + (r.lunch_guest_count||0);
-        lIssued+= (r.lunch_plate_issued||0) + (r.lunch_guest_issued||0);
-        dRegd  += (r.dinner||0) + (r.dinner_guest_count||0);
-        dIssued+= (r.dinner_plate_issued||0) + (r.dinner_guest_issued||0);
-        tea    += r.tea||0;
-        coffee += r.coffee||0;
-      });
-      const cs = `background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 20px;min-width:140px;text-align:center;`;
-      summaryEl.style.display = 'flex';
-      summaryEl.innerHTML = `
-        <div style="${cs}border-top:3px solid #f59e0b;">
-          <div style="font-size:11px;color:#92400e;font-weight:600;text-transform:uppercase;">🌅 Breakfast</div>
-          <div style="font-size:24px;font-weight:700;color:#1e293b;margin:4px 0;">${bRegd}</div>
-          <div style="font-size:12px;color:#64748b;">Regd &nbsp;·&nbsp; <b style="color:#10b981">${bIssued}</b> Issued</div>
-        </div>
-        <div style="${cs}border-top:3px solid #3b82f6;">
-          <div style="font-size:11px;color:#1e40af;font-weight:600;text-transform:uppercase;">☀️ Lunch</div>
-          <div style="font-size:24px;font-weight:700;color:#1e293b;margin:4px 0;">${lRegd}</div>
-          <div style="font-size:12px;color:#64748b;">Regd &nbsp;·&nbsp; <b style="color:#10b981">${lIssued}</b> Issued</div>
-        </div>
-        <div style="${cs}border-top:3px solid #8b5cf6;">
-          <div style="font-size:11px;color:#5b21b6;font-weight:600;text-transform:uppercase;">🌙 Dinner</div>
-          <div style="font-size:24px;font-weight:700;color:#1e293b;margin:4px 0;">${dRegd}</div>
-          <div style="font-size:12px;color:#64748b;">Regd &nbsp;·&nbsp; <b style="color:#10b981">${dIssued}</b> Issued</div>
-        </div>
-        <div style="${cs}border-top:3px solid #06b6d4;">
-          <div style="font-size:11px;color:#164e63;font-weight:600;text-transform:uppercase;">☕ High Tea</div>
-          <div style="font-size:18px;font-weight:700;color:#1e293b;margin:4px 0;">Tea: ${tea}</div>
-          <div style="font-size:12px;color:#64748b;">Coffee: <b>${coffee}</b></div>
-        </div>
-      `;
-    }
 
     ['breakfast', 'lunch', 'dinner'].forEach((meal) => {
       const reportTable = document.getElementById(`${meal}ReportTable`);
@@ -583,7 +517,7 @@ function downloadCSV() {
 
   // Build CSV string
   const csv = rows.map(row =>
-    row.map(cell => `"${String(safeCell(cell)).replace(/"/g, '""')}"`).join(',')
+    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
   ).join('\n');
 
   // Trigger download
@@ -632,7 +566,7 @@ function downloadTappReportCSV(tappData, firstDate, lastDate) {
     ]);
   });
 
-  const csv = rows.map(r => r.map(c => `"${String(safeCell(c)).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -691,7 +625,7 @@ function downloadVendorReportCSV(vendorData, startDate, endDate) {
     ]);
   });
 
-  const csv = rows.map(r => r.map(c => `"${String(safeCell(c)).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
