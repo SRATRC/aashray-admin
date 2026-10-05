@@ -1,21 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
   const foodCheckinForm = document.getElementById('foodCheckinForm');
-  const cardnoInput = document.getElementById('cardno');
-
-  // --- 🔒 Hands-Free Auto-Focus Lock ---
-  if (cardnoInput) {
-    cardnoInput.focus();
-    document.addEventListener('click', function (e) {
-      if (!e.target.closest('a, button, select, option')) {
-        cardnoInput.focus();
-      }
-    });
-  }
-
-  // --- 🕒 Live Clock & Active Meal Slot Header ---
-  updateMealSlotHeader();
-  setInterval(updateMealSlotHeader, 1000);
-
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
@@ -299,47 +283,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
-/* ===== Active Meal Slot & Live Clock Update ===== */
-function updateMealSlotHeader() {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const clockEl = document.getElementById('liveClockDisplay');
-  if (clockEl) clockEl.textContent = timeStr;
-
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  const totalMins = hours * 60 + minutes;
-
-  const badgeEl = document.getElementById('activeMealBadge');
-  if (!badgeEl) return;
-
-  // Plate meal windows follow the backend: breakfast to 10:00, lunch to 14:00, dinner to 19:00
-  if (totalMins <= 600) {
-    badgeEl.textContent = '🌅 Breakfast';
-    badgeEl.style.background = '#f59e0b';
-  } else if (totalMins <= 840) {
-    badgeEl.textContent = '☀️ Lunch';
-    badgeEl.style.background = '#3b82f6';
-  } else if (totalMins <= 1140) {
-    badgeEl.textContent = '🌙 Dinner';
-    badgeEl.style.background = '#8b5cf6';
-  } else {
-    badgeEl.textContent = '⏸️ Off-Meal Hours';
-    badgeEl.style.background = '#64748b';
-  }
-}
-
-/* ===== Alert Helpers ===== */
-function showAlert(element, message, type, icon = '') {
+function showAlert(element, message, type) {
   element.className = `big-alert alert-${type}`;
-  // textContent only: card numbers and server messages are untrusted
-  element.textContent = '';
-  const iconEl = document.createElement('div');
-  iconEl.style.cssText = 'font-size:36px; margin-bottom:8px;';
-  iconEl.textContent = icon;
-  const msgEl = document.createElement('div');
-  msgEl.textContent = message;
-  element.append(iconEl, msgEl);
+  element.textContent = message;
   element.style.display = 'block';
 }
 
@@ -355,5 +301,5 @@ function resetAlert() {
 
 function playErrorSound() {
   const sound = document.getElementById('errorSound');
-  if (sound) sound.play().catch(() => {});
+  if (sound) sound.play();
 }
