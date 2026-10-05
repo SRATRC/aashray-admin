@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 </td>
 
 <td>
-  ${formatDateTime(arrival_time)}
+  ${esc(formatDateTime(arrival_time))}
 </td>
 
 <td>
@@ -449,7 +449,7 @@ function setupDownloadButton() {
   document.getElementById('downloadBtnContainer').innerHTML = '';
   renderDownloadButton({
     selector: '#downloadBtnContainer',
-    getData: () => travelReport,
+    getData: () => travelReport.map((b) => ({ ...b, arrival_time: formatDateTime(b.arrival_time) || b.arrival_time })),
     fileName: 'travel report.xlsx',
     sheetName: 'Travel Report',
     tableSelector: '#upcomingBookings'
@@ -1026,11 +1026,26 @@ function restoreFilters() {
 function formatDateTime(dateInput) {
   if (!dateInput) return '';
 
+  const to12Hour = (h, m) => {
+    const hour = parseInt(h, 10);
+    const minute = String(m).padStart(2, '0');
+    return `${hour % 12 || 12}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`;
+  };
+
   if (typeof dateInput === 'string') {
     const trimmed = dateInput.trim();
-    if (/^\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$/i.test(trimmed)) {
-      return trimmed;
+    // Time only, 24 h ("9:05", "21:30", "21:30:00"): show in 12 h.
+    const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (timeMatch) {
+      // Out of range ("25:99"): show it as typed.
+      if (+timeMatch[1] > 23 || +timeMatch[2] > 59) return dateInput;
+      return to12Hour(timeMatch[1], timeMatch[2]);
     }
+    // Already 12 h ("9:05 PM"): leave as is.
+    if (/^\d{1,2}:\d{2}(:\d{2})?\s*(AM|PM)$/i.test(trimmed)) return trimmed;
+    // Only a full date ("2026-10-05..."), not loose text, is read as a date:
+    // the browser would turn "10.30" or "9" into a made-up date in 2001.
+    if (!/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return dateInput;
   }
 
   const dateObj = new Date(dateInput);
@@ -1040,10 +1055,7 @@ function formatDateTime(dateInput) {
   const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
   const year = dateObj.getFullYear();
 
-  const hours = String(dateObj.getHours()).padStart(2, '0');
-  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
+  return `${day}-${month}-${year} ${to12Hour(dateObj.getHours(), dateObj.getMinutes())}`;
 }
 
 
