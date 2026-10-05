@@ -114,8 +114,15 @@ function _showInAlertBox(message, cls) {
   const alert = document.getElementById('alert');
   if (!alert) {
     const type = cls === 'alert-danger' ? 'error' : 'success';
-    if (typeof window._globalToast === 'function') window._globalToast(message, type);
-    else window.alert(message);
+    // notifications.js loads async: before it arrives, wait briefly rather than block
+    // (a native alert() would stop a scan/kiosk page until someone clicks it).
+    let tries = 0;
+    const show = () => {
+      if (typeof window._globalToast === 'function') window._globalToast(message, type);
+      else if (++tries < 10) setTimeout(show, 200); // up to ~2 s for notifications.js
+      else window.alert(message);
+    };
+    show();
     return;
   }
   alert.textContent = message;
