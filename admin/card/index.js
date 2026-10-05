@@ -298,8 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Rebuild options
     stateSelect.innerHTML = '<option value="all">All States</option>';
     sortedStates.forEach(state => {
-      const selected = state === currentVal ? 'selected' : '';
-      stateSelect.innerHTML += `<option value="${state}" ${selected}>${state}</option>`;
+      stateSelect.add(new Option(state, state, false, state === currentVal));
     });
   };
 
@@ -2662,8 +2661,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const countries = result.data || ['India','USA','UK','UAE','Canada'];
       countries.forEach(c => {
         const val = c.value || c;
-        const selected = val === currentCountry ? 'selected' : '';
-        countrySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        countrySelect.add(new Option(val, val, false, val === currentCountry));
       });
 
       if (currentCountry) {
@@ -2703,8 +2701,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const states = result.data || [];
       states.forEach(s => {
         const val = s.value || s;
-        const selected = val === currentState ? 'selected' : '';
-        stateSelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        stateSelect.add(new Option(val, val, false, val === currentState));
       });
 
       if (currentState) {
@@ -2739,8 +2736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const cities = result.data || [];
       cities.forEach(c => {
         const val = c.value || c;
-        const selected = val === currentCity ? 'selected' : '';
-        citySelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        citySelect.add(new Option(val, val, false, val === currentCity));
       });
     } catch (err) {
       console.error('Failed to load cities:', err);
@@ -2766,12 +2762,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       centres.forEach(c => {
         const val = c.value || c;
-        const selected = val === currentCentre ? 'selected' : '';
-        centreSelect.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+        centreSelect.add(new Option(val, val, false, val === currentCentre));
       });
 
       if (currentCentre && !centres.find(c => (c.value || c) === currentCentre)) {
-        centreSelect.innerHTML += `<option value="${currentCentre}" selected>${currentCentre}</option>`;
+        centreSelect.add(new Option(currentCentre, currentCentre, true, true));
       }
     } catch (err) {
       console.error('Failed to load centres:', err);

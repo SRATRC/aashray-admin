@@ -64,7 +64,10 @@
   };
 
   // ── Copy to Clipboard Helper ─────────────────────────────────────────────
-  window.copyToClipboard = async function (text, successCallback) {
+  // admin/whatsapp/whatsapp.js declares its own global copyToClipboard(text) (JID copy) and, loaded later on the
+  // adhyayan / utsav report pages, replaces this one: staff then saw "JID copied to clipboard!" for a feedback
+  // link. Pages that need this helper call copyTextToClipboard, which no other script defines.
+  window.copyToClipboard = window.copyTextToClipboard = async function (text, successCallback) {
     try {
       await navigator.clipboard.writeText(String(text));
       if (typeof successCallback === 'function') {

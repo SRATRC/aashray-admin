@@ -11,7 +11,7 @@
 
 // ─── formatDate ─────────────────────────────────────────────────────────────
 // Backward-compatible: accepts YYYY-MM-DD string or Date object → "DD-MM-YYYY"
-function formatDate(dateInput) {
+if (typeof window.formatDate !== 'function' || window.formatDate._legacyGlobal) window.formatDate = function formatDate(dateInput) {
   if (!dateInput) return '';
 
   if (typeof dateInput === 'string') {
@@ -33,7 +33,7 @@ function formatDate(dateInput) {
 
 // ─── formatSimpleDate ────────────────────────────────────────────────────────
 // Accepts ISO strings, Date objects, or any parseable date → "DD-MM-YYYY"
-function formatSimpleDate(dateInput) {
+if (typeof window.formatSimpleDate !== 'function' || window.formatSimpleDate._legacyGlobal) window.formatSimpleDate = function formatSimpleDate(dateInput) {
   if (!dateInput) return '-';
   if (typeof dateInput === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(dateInput)) return dateInput;
   const d = new Date(dateInput);
@@ -45,7 +45,7 @@ function formatSimpleDate(dateInput) {
 
 // ─── getRelativeTimeString ───────────────────────────────────────────────────
 // Returns "just now", "5m ago", "2h ago", "3d ago", "1mo ago", "2y ago"
-function getRelativeTimeString(dateInput) {
+if (typeof window.getRelativeTimeString !== 'function' || window.getRelativeTimeString._legacyGlobal) window.getRelativeTimeString = function getRelativeTimeString(dateInput) {
   if (!dateInput) return '';
   const d = new Date(dateInput);
   if (isNaN(d)) return '';
@@ -61,7 +61,7 @@ function getRelativeTimeString(dateInput) {
 
 // ─── formatDateTime ──────────────────────────────────────────────────────────
 // Returns "DD-MM-YYYY HH:MM" + optional relative-time span below
-function formatDateTime(dateInput, includeRelative = true) {
+if (typeof window.formatDateTime !== 'function' || window.formatDateTime._legacyGlobal) window.formatDateTime = function formatDateTime(dateInput, includeRelative = true) {
   if (!dateInput) return '-';
   const d = new Date(dateInput);
   if (isNaN(d)) return '-';
@@ -74,4 +74,4 @@ function formatDateTime(dateInput, includeRelative = true) {
   const relative = getRelativeTimeString(dateInput);
   if (!relative) return absolute;
   return `${absolute}<span class="relative-time" style="font-size:11px;color:#94a3b8;display:block;margin-top:2px;">${relative}</span>`;
-}
+}

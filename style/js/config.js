@@ -41,7 +41,7 @@ const CONFIG = {
   ];
   globalScripts.forEach(function (src) {
     // Skip if already loaded (e.g., explicitly added by a page)
-    if (document.querySelector(`script[src="${src}"]`)) return;
+    if (document.querySelector(`script[src$="${src}"]`)) return;
     const s = document.createElement('script');
     s.src = src;
     s.defer = true;

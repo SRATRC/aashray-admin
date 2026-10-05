@@ -10,7 +10,7 @@ let _guestTableBody = null;
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams  = new URLSearchParams(window.location.search);
   const date       = urlParams.get('date') || '';
-  const meal       = urlParams.get('meal') || '';
+  const meal       = (urlParams.get('meal') || '').replace(/[^a-z_]/gi, '');  // meal is a field name; keep it inert in onclick/title
   const is_issued  = urlParams.get('is_issued') || '1';
 
   _guestMeal      = meal;
@@ -97,16 +97,16 @@ function renderGuestPage(page) {
     const pending    = mealCount - plateIssued;
     const mobStr     = String(card.mobno || '');
     const waLink     = mobStr
-      ? `<a href="https://wa.me/91${mobStr}" target="_blank" title="WhatsApp" style="text-decoration:none;margin-right:5px;">💬</a>`
+      ? `<a href="https://wa.me/91${encodeURIComponent(mobStr)}" target="_blank" title="WhatsApp" style="text-decoration:none;margin-right:5px;">💬</a>`
       : '';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${rowNum}</td>
       <td>${formatDate(entry.date)}</td>
-      <td>${card.issuedto || ''}</td>
-      <td style="white-space:nowrap">${waLink}${mobStr || '—'}</td>
-      <td>${entry.department || ''}</td>
+      <td>${escapeHtml(card.issuedto || '')}</td>
+      <td style="white-space:nowrap">${waLink}${escapeHtml(mobStr) || '—'}</td>
+      <td>${escapeHtml(entry.department || '')}</td>
       <td>${mealCount}</td>
       <td>
         <span id="issued-${entry.bookingid}-${meal}">${plateIssued}</span>
@@ -165,7 +165,7 @@ window.exportGuestCSV = function () {
   if (!_allGuestData.length) return;
   const urlParams  = new URLSearchParams(window.location.search);
   const date       = urlParams.get('date') || '';
-  const meal       = urlParams.get('meal') || '';
+  const meal       = (urlParams.get('meal') || '').replace(/[^a-z_]/gi, '');  // meal is a field name; keep it inert in onclick/title
   const is_issued  = urlParams.get('is_issued') || '1';
 
   const headers = ['Sr No', 'Date', 'Name', 'Mobile No', 'Department', 'Meal Count', 'Plate Issued'];

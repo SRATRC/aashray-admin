@@ -159,7 +159,7 @@
         html += `<div class="cmd-item" onclick="window.location.href='${item.url}'"><span>${item.name}</span> <span class="cmd-tag">${item.category}</span></div>`;
       });
     } else {
-      html += `<div style="padding:16px; text-align:center; color:#94a3b8; font-size:13px;">No pages matching "${query}".</div>`;
+      html += `<div style="padding:16px; text-align:center; color:#94a3b8; font-size:13px;">No pages matching "${String(query).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))}".</div>`;
     }
 
     resultsContainer.innerHTML = html;
