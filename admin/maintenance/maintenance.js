@@ -383,12 +383,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${globalIndex}</td>
         <td>${highlightText(m.CardDb?.issuedto, searchQuery) || '-'}</td>
         <td>${renderWhatsAppLink(m.CardDb?.mobno, searchQuery)}</td>
-        <td>${formatDateTime(m.createdAt)}${createdRelHtml}</td>
+        <td>${formatDateTime(m.createdAt, false)}${createdRelHtml}</td>
         <td>${highlightText(m.department, searchQuery)}</td>
         <td>${highlightText(m.area_of_work, searchQuery)}</td>
         <td>${truncateText(m.work_detail, searchQuery)}</td>
         <td>${truncateText(m.comments, searchQuery)}</td>
-        <td>${formatDateTime(m.closedAt)}${closedRelHtml}</td>
+        <td>${formatDateTime(m.closedAt, false)}${closedRelHtml}</td>
         <td>
           <div class="action-dropdown" style="position:relative; display:inline-block;">
             <a class="badge-status ${escapeHtml(statusClass)}" href="#" data-toggle-dropdown="${escapeHtml(m.bookingid)}" style="display:inline-flex; align-items:center; gap:4px;">
@@ -854,12 +854,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         idx + 1,
         r.CardDb?.issuedto || '',
         r.CardDb?.mobno ? String(r.CardDb.mobno) : '',
-        formatDateTime(r.createdAt),
+        formatDateTime(r.createdAt, false),
         r.department || '',
         r.area_of_work || '',
         r.work_detail || '',
         r.comments || '',
-        formatDateTime(r.closedAt),
+        formatDateTime(r.closedAt, false),
         r.status || ''
       ]);
 

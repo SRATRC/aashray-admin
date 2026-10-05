@@ -352,7 +352,7 @@ ${(JSON.parse(sessionStorage.getItem('roles') || '[]').includes('utsavAdminReadO
       const url =
         `https://aashray.vitraagvigyaan.org/utsav/feedback/${utsavId}`;
 
-      await copyToClipboard(url, () => {
+      await copyTextToClipboard(url, () => {
         showSuccessMessage(`Feedback link copied: ${url}`);
       });
 

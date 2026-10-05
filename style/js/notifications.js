@@ -142,6 +142,8 @@
   define('showSuccessMessage', function (msg) { createToast(msg, 'success', 3000); });
   define('showErrorMessage',   function (msg) { createToast(msg, 'error',   5000); });
   define('showWarningMessage', function (msg) { createToast(msg, 'warning', 4000); });
+  // Handle for custom.js: its showSuccessMessage/showErrorMessage fall back to a toast on pages with no #alert.
+  define('_globalToast', function (msg, type) { createToast(msg, type === 'error' ? 'error' : 'success', type === 'error' ? 5000 : 3000); });
   define('showInfoMessage',    function (msg) { createToast(msg, 'info',    3000); });
 
   // Backward-compat shim — pages that called resetAlert() to clear a div alert

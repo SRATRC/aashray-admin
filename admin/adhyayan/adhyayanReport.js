@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.classList.contains('adhyayan-link')) {
       const shibirId = e.target.dataset.shibir;
       const url = `https://aashray.vitraagvigyaan.org/adhyayan/${shibirId}`;
-      await copyToClipboard(url, () => {
+      await copyTextToClipboard(url, () => {
         showSuccessMessage(`Adhyayan link copied: ${url}`);
       });
     }
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.classList.contains('feedback-link')) {
       const shibirId = e.target.dataset.shibir;
       const url = `https://aashray.vitraagvigyaan.org/adhyayan/feedback/${shibirId}`;
-      await copyToClipboard(url, () => {
+      await copyTextToClipboard(url, () => {
         showSuccessMessage(`Feedback link copied: ${url}`);
       });
     }

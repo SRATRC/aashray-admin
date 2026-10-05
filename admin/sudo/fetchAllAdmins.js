@@ -888,7 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset page alerts
     if (typeof resetAlert === 'function') resetAlert();
 
-    const endpoint = `${CONFIG.basePath}/sudo/${action}/${admin.username}`;
+    const endpoint = `${CONFIG.basePath}/sudo/${action}/${encodeURIComponent(admin.username)}`;
     try {
       const response = await fetch(endpoint, {
         method: 'PUT',

@@ -76,6 +76,11 @@ function formatDateTime(datetime) {
   return d.toLocaleString();
 }
 
+// Legacy fallbacks: formatDate.js (loaded site-wide by config.js) replaces these two. A page's own
+// function of the same name does not carry this flag, so formatDate.js leaves it alone.
+formatDate._legacyGlobal = true;
+formatDateTime._legacyGlobal = true;
+
 function equalHeight(group) {
 	 var tallest = 0;
 	 group.each(function() {
@@ -102,22 +107,43 @@ var onImgLoad = function(selector, callback){
 };
 
 // Alert related functions
+// These write to the page's #alert box. Pages without #alert (or whose #alert is hidden by
+// CSS / inline display:none) must still show the message, so: no #alert -> toast from
+// notifications.js (window._globalToast) or a browser alert(); #alert hidden -> make it visible.
+function _showInAlertBox(message, cls) {
+  const alert = document.getElementById('alert');
+  if (!alert) {
+    const type = cls === 'alert-danger' ? 'error' : 'success';
+    if (typeof window._globalToast === 'function') window._globalToast(message, type);
+    else window.alert(message);
+    return;
+  }
+  alert.textContent = message;
+  alert.classList.add(cls);
+  if (getComputedStyle(alert).display === 'none') {
+    alert.dataset.prevInlineDisplay = alert.style.display;
+    alert.dataset.shownByHelper = '1';
+    alert.style.display = 'block';
+  }
+}
+
 function resetAlert() {
   const alert = document.getElementById('alert');
+  if (!alert) return;
   alert.innerHTML = "";
   alert.classList.remove('alert-success', 'alert-danger');
+  if (alert.dataset.shownByHelper) {
+    alert.style.display = alert.dataset.prevInlineDisplay || '';
+    delete alert.dataset.shownByHelper;
+  }
 }
 
 function showSuccessMessage(message) {
-  const alert = document.getElementById('alert');
-  alert.textContent = message;
-  alert.classList.add("alert-success");
+  _showInAlertBox(message, 'alert-success');
 }
 
 function showErrorMessage(message) {
-  const alert = document.getElementById('alert');
-  alert.textContent = message;
-  alert.classList.add("alert-danger");
+  _showInAlertBox(message, 'alert-danger');
 }
 
 
