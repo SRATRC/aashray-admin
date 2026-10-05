@@ -644,26 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {
           openResetModal(admin.username);
         });
 
-        const deleteUserBtn = document.createElement('a');
-        if (isSelf) {
-          deleteUserBtn.className = 'action-btn';
-          deleteUserBtn.style.opacity = '0.5';
-          deleteUserBtn.style.cursor = 'not-allowed';
-          deleteUserBtn.style.pointerEvents = 'none';
-          deleteUserBtn.innerHTML = '🔒 Delete';
-        } else {
-          deleteUserBtn.className = 'action-btn action-btn-delete';
-          deleteUserBtn.innerHTML = '🗑️ Delete';
-          deleteUserBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            triggerDeleteAdmin(admin.username);
-          });
-        }
-
         actionCell.appendChild(toggleBtn);
         actionCell.appendChild(editRolesBtn);
         actionCell.appendChild(resetPassBtn);
-        actionCell.appendChild(deleteUserBtn);
         row.appendChild(actionCell);
 
         adminTableBody.appendChild(row);
@@ -773,26 +756,9 @@ document.addEventListener('DOMContentLoaded', () => {
             openResetModal(admin.username);
           });
 
-          const cardDelete = document.createElement('a');
-          if (isSelf) {
-            cardDelete.className = 'action-btn';
-            cardDelete.style.opacity = '0.5';
-            cardDelete.style.cursor = 'not-allowed';
-            cardDelete.style.pointerEvents = 'none';
-            cardDelete.innerHTML = '🔒 Delete';
-          } else {
-            cardDelete.className = 'action-btn action-btn-delete';
-            cardDelete.innerHTML = '🗑️ Delete';
-            cardDelete.addEventListener('click', (e) => {
-              e.preventDefault();
-              triggerDeleteAdmin(admin.username);
-            });
-          }
-
           cardActions.appendChild(cardToggle);
           cardActions.appendChild(cardEditRoles);
           cardActions.appendChild(cardReset);
-          cardActions.appendChild(cardDelete);
           card.appendChild(cardActions);
 
           mobileUsersContainer.appendChild(card);
@@ -981,41 +947,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error deleting role:', error);
       if (typeof showErrorMessage === 'function') {
         showErrorMessage('An error occurred while deleting the role.');
-      }
-    }
-  };
-
-  // Delete Administrator
-  const triggerDeleteAdmin = async (username) => {
-    const title = 'Delete Administrator';
-    const confirmText = `Are you sure you want to permanently delete administrator "${escapeHtml(username)}"? This action cannot be undone.`;
-    if (!(await showConfirmModal(title, confirmText, true, '🚨'))) return;
-
-    if (typeof resetAlert === 'function') resetAlert();
-
-    try {
-      const response = await fetch(`${CONFIG.basePath}/sudo/user/${encodeURIComponent(username)}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        if (typeof showSuccessMessage === 'function') {
-          showSuccessMessage(data.message || 'Administrator deleted successfully.');
-        }
-        loadInitialData();
-      } else {
-        if (typeof showErrorMessage === 'function') {
-          showErrorMessage(`Failed to delete administrator: ${data.message}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting administrator:', error);
-      if (typeof showErrorMessage === 'function') {
-        showErrorMessage('An error occurred while deleting the administrator.');
       }
     }
   };
@@ -2585,7 +2516,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.closeAssignUserModal = closeAssignUserModal;
   window.submitAssignUserToRole = submitAssignUserToRole;
   window.removeUserFromRole = removeUserFromRole;
-  window.triggerDeleteAdmin = triggerDeleteAdmin;
 
   // Helper to switch active tab programmatically
   const switchTab = (tabName) => {

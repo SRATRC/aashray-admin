@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   /* --- Title --- */
   const reportTitle = document.getElementById('reportTitle');
   reportTitle.innerHTML = is_issued === '1'
-    ? `Issued Food Plate Report<br/>${formatDate(date)} — ${meal}`
-    : `No Show Report<br/>${formatDate(date)} — ${meal}`;
+    ? `Issued Food Plate Report<br/>${escapeHtml(formatDate(date))} — ${escapeHtml(meal)}`
+    : `No Show Report<br/>${escapeHtml(formatDate(date))} — ${escapeHtml(meal)}`;
 
   resetAlert();
 
@@ -126,8 +126,8 @@ function renderIssuedPlateSummary(is_issued, meal, date, count) {
   container.innerHTML = `
     <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px 18px; flex:1; min-width:200px; box-shadow:0 1px 3px rgba(0,0,0,0.04); border-left:4px solid ${statusColor};">
       <div style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase;">Total Members</div>
-      <div style="font-size:24px; font-weight:800; color:#0f172a; margin:2px 0;">${count}</div>
-      <div style="font-size:12px; color:#64748b;">${mealIcon} ${meal ? meal.toUpperCase() : ''} on ${formatDate(date)}</div>
+      <div style="font-size:24px; font-weight:800; color:#0f172a; margin:2px 0;">${escapeHtml(count)}</div>
+      <div style="font-size:12px; color:#64748b;">${mealIcon} ${meal ? escapeHtml(meal.toUpperCase()) : ''} on ${escapeHtml(formatDate(date))}</div>
     </div>
 
     <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px 18px; flex:1; min-width:200px; box-shadow:0 1px 3px rgba(0,0,0,0.04); border-left:4px solid ${statusColor};">
@@ -159,11 +159,11 @@ function renderPlatePage(page) {
 
     const baseCells = `
       <td style="text-align:center; font-weight:600;">${rowNum}</td>
-      <td style="text-align:center; white-space:nowrap; font-weight:600;">📅 ${formatDate(report.date)}</td>
-      <td style="font-weight:700; color:#1e293b;">${report.CardDb?.issuedto || '—'}</td>
+      <td style="text-align:center; white-space:nowrap; font-weight:600;">📅 ${escapeHtml(formatDate(report.date))}</td>
+      <td style="font-weight:700; color:#1e293b;">${escapeHtml(report.CardDb?.issuedto) || '—'}</td>
       <td style="white-space:nowrap;">
         ${contactLinks}
-        <span style="font-weight:600; color:#334155;">${mobStr || '—'}</span>
+        <span style="font-weight:600; color:#334155;">${escapeHtml(mobStr) || '—'}</span>
       </td>
     `;
 
@@ -172,17 +172,24 @@ function renderPlatePage(page) {
 
     if (_plateCanIssue) {
       row.innerHTML = `
-        <td><input type="checkbox" class="rowCheckbox" value="${report.CardDb?.cardno}" /></td>
+        <td><input type="checkbox" class="rowCheckbox" value="${escapeHtml(report.CardDb?.cardno)}" /></td>
         ${baseCells}
         <td>
-          <a href="#" class="issueLink"
-             onclick="foodCheckin('${report.CardDb?.cardno}', '${_plateMeal}', '${(report.CardDb?.issuedto || '').replace(/'/g, "\\'")}'); return false;">
+          <a href="#" class="issueLink">
             Issue Plate
           </a>
         </td>
       `;
     } else {
       row.innerHTML = baseCells;
+    }
+
+    const issueLink = row.querySelector('.issueLink');
+    if (issueLink) {
+      issueLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        foodCheckin(report.CardDb?.cardno, _plateMeal, report.CardDb?.issuedto || '');
+      });
     }
 
     _plateTableBody.appendChild(row);
