@@ -16,6 +16,7 @@ function downloadExcelFromJSON(dataArray, fileName = "export.xlsx", sheetName = 
     })
   : dataArray;
 
+  // SheetJS writes strings as text cells, so no formula guard is needed here.
   const worksheet = XLSX.utils.json_to_sheet(formatted);
 
   // Compute adaptive column widths and enable wrapText on all multi-line cells

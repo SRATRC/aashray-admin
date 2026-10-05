@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('gateCheckinForm');
+  const form = document.getElementById('tapForm') || document.getElementById('gateCheckoutForm');
   const cardInput = document.getElementById('cardno');
   const alertDiv = document.getElementById('alert');
   const networkBadge = document.getElementById('network-badge');
@@ -241,7 +241,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let alertTimeout = null;
 
   function showMessage(message, type) {
-    alertDiv.className = `big-alert alert-${type}`;
+    if (!alertDiv) return;
+    alertDiv.className = `big-scan-alert alert alert-${type}`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
@@ -250,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function showSuccessMessage(message) {
-    playSuccessSound();
     showMessage(message, 'success');
   }
 
@@ -264,17 +264,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function resetAlert() {
-    alertDiv.className = 'big-alert';
+    if (!alertDiv) return;
     alertDiv.style.display = 'none';
     alertDiv.textContent = '';
   }
 
   function playErrorSound() {
     const sound = document.getElementById('errorSound');
-    if (sound) sound.play();
-  }
-
-  function playSuccessSound() {
-    // Optional: Add separate success sound if needed
+    if (sound) sound.play().catch(() => {});
   }
 });

@@ -168,12 +168,4 @@ const setupDownloadButton = () => {
 /* ---------------------------------------------------
     BASIC ALERT HELPERS
 ----------------------------------------------------*/
-function showSuccessMessage(msg) {
-  alert(msg);
-}
-
-function showErrorMessage(msg) {
-  alert(msg);
-}
-
-function resetAlert() {}
+// showSuccessMessage, showErrorMessage, resetAlert → provided by global /style/js/notifications.js

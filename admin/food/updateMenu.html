@@ -8,7 +8,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Update Menu</title>
+    <title>Update Daily Menu</title>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -19,11 +19,71 @@
     <script src="../../style/js/clockpicker.js"></script>
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
+    <script src="../../style/js/formatDate.js"></script>
     <script src="/sessionstorage.js"></script>
     <script src="updateMenu.js"></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      .meal-edit-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      }
+      .meal-edit-card label {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .dish-suggestion-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+      .dish-suggestion-chip:hover {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        transform: translateY(-1px);
+      }
+      .dish-autocomplete-dropdown {
+        position: absolute;
+        z-index: 1050;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        max-height: 180px;
+        overflow-y: auto;
+        width: 100%;
+        display: none;
+      }
+      .dish-autocomplete-item {
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #1e293b;
+        cursor: pointer;
+        font-weight: 500;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .dish-autocomplete-item:hover {
+        background: #f1f5f9;
+        color: #4f46e5;
+      }
+    </style>
   </head>
 
   <body>
@@ -42,39 +102,64 @@
         <div class="whitesec">
           <div class="inner-padding">
 
-            <div class="frm-head">
-              <h1>Update Menu</h1>
+            <!-- Modern Page Banner Header -->
+            <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#fff; border-radius:14px; padding:20px 24px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:28px;">✏️</span>
+                <div>
+                  <h1 style="margin:0; font-size:20px; font-weight:700; color:#ffffff;">Update Daily Food Menu</h1>
+                  <div style="font-size:13px; color:#cbd5e1; margin-top:2px;">Modify menu dishes for selected date</div>
+                </div>
+              </div>
+              <div style="background:rgba(255,255,255,0.15); padding:6px 14px; border-radius:20px; font-weight:bold; font-size:14px; color:#fff;" id="selectedDateBadge">
+                📅 Date: —
+              </div>
             </div>
 
-            <div class="form">
+            <div class="form" style="max-width:800px; margin:0 auto;">
               <div id="alert" class="alert" role="alert" style="display:none;"></div>
 
-              <form id="updateMenuForm">
-                <div class="form-group">
-                  <label for="date">Date:</label>
-                  <input type="date" id="date" name="date" class="form-control" disabled />
+              <form id="updateMenuForm" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:24px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+
+                <div class="form-group" style="margin-bottom:20px;">
+                  <label for="date" style="font-weight:700; color:#1e293b;">Target Date:</label>
+                  <input type="date" id="date" name="date" class="form-control" disabled style="padding:8px 14px; border-radius:8px; font-weight:700; background:#e2e8f0; border:1px solid #cbd5e1;" />
                 </div>
 
-                <div class="form-group">
-                  <label for="breakfast">Breakfast:</label>
-                  <textarea id="breakfast" name="breakfast" class="form-control" required></textarea>
+                <!-- 🌅 Breakfast Card -->
+                <div class="meal-edit-card" style="border-left:5px solid #f59e0b;">
+                  <label for="breakfast" style="color:#d97706;">🌅 Breakfast Menu:</label>
+                  <div style="position:relative;">
+                    <textarea id="breakfast" name="breakfast" class="form-control" rows="3" placeholder="Enter breakfast dishes (e.g. Upma, Poha, Tea...)" style="border-radius:8px; border:1px solid #cbd5e1;" required></textarea>
+                    <div id="ac_breakfast" class="dish-autocomplete-dropdown"></div>
+                  </div>
                 </div>
 
-                <div class="form-group">
-                  <label for="lunch">Lunch:</label>
-                  <textarea id="lunch" name="lunch" class="form-control" required></textarea>
+                <!-- ☀️ Lunch Card -->
+                <div class="meal-edit-card" style="border-left:5px solid #3b82f6;">
+                  <label for="lunch" style="color:#2563eb;">☀️ Lunch Menu:</label>
+                  <div style="position:relative;">
+                    <textarea id="lunch" name="lunch" class="form-control" rows="3" placeholder="Enter lunch dishes (e.g. Dal Rice, Rotli, Sabzi...)" style="border-radius:8px; border:1px solid #cbd5e1;" required></textarea>
+                    <div id="ac_lunch" class="dish-autocomplete-dropdown"></div>
+                  </div>
                 </div>
 
-                <div class="form-group">
-                  <label for="dinner">Dinner:</label>
-                  <textarea id="dinner" name="dinner" class="form-control" required></textarea>
+                <!-- 🌙 Dinner Card -->
+                <div class="meal-edit-card" style="border-left:5px solid #8b5cf6;">
+                  <label for="dinner" style="color:#7c3aed;">🌙 Dinner Menu:</label>
+                  <div style="position:relative;">
+                    <textarea id="dinner" name="dinner" class="form-control" rows="3" placeholder="Enter dinner dishes (e.g. Khichdi, Kadhi, Bhakri...)" style="border-radius:8px; border:1px solid #cbd5e1;" required></textarea>
+                    <div id="ac_dinner" class="dish-autocomplete-dropdown"></div>
+                  </div>
                 </div>
 
-                <div class="form-group form-submit">
-                  <button type="submit" class="btn btn-primary">Update Menu</button>
-                  <a href="/admin/food/fetchMenu.html" class="btn btn-secondary" style="margin-left: 10px;">
-                    Menu Home
+                <div class="form-group form-submit" style="display:flex; justify-content:space-between; align-items:center; margin:0;">
+                  <a href="/admin/food/fetchMenu.html" class="btn btn-secondary" style="border-radius:8px; padding:8px 18px;">
+                    ⬅ Cancel & Back
                   </a>
+                  <button type="submit" class="btn btn-primary" style="padding:10px 24px; border-radius:8px; font-weight:bold;">
+                    💾 Save Menu Updates
+                  </button>
                 </div>
               </form>
             </div>
