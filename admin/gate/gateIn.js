@@ -5,10 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
-  const manualForm = document.getElementById('manualCheckinForm');
-  const manualInput = document.getElementById('manualCardNo');
-  const recentTableBody = document.getElementById('recentScansTableBody');
-  const recentScans = [];
 
   const QUEUE_STORAGE_KEY = 'gate_in_offline_queue';
   const COOLDOWN_MS = 5 * 60 * 1000;
@@ -19,27 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   updateNetworkUI();
   startQRScanner();
-
-  /* ===== Kiosk live clock ===== */
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  function updateClock() {
-    const clockEl = document.getElementById('liveClockDisplay');
-    if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('en-US', { hour12: true });
-  }
-
-  /* ===== Manual card entry (same online / offline-queue path as a scan) ===== */
-  if (manualForm) {
-    manualForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const cardno = processScannedText(manualInput ? manualInput.value : '');
-      if (!cardno) return;
-      if (manualInput) manualInput.value = '';
-      submitCard(cardno, new Date().toISOString());
-      if (manualInput) manualInput.focus();
-    });
-  }
 
   scanAgainBtn.addEventListener('click', startQRScanner);
 
@@ -90,9 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch((err) => {
         qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ Camera unavailable. Use manual card input below. (' + err.message + ')';
-        scanAgainBtn.style.display = 'inline-block';
-        if (manualInput) manualInput.focus();
+        qrStatus.innerText = '❌ Scanner initialization failed: ' + err.message;
         console.error('QR Scanner Error:', err);
       });
   }
@@ -123,10 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     scanAgainBtn.style.display = 'inline-block';
-    await submitCard(cardno, scannedAt);
-  }
 
-  async function submitCard(cardno, scannedAt) {
     if (navigator.onLine) {
       qrStatus.className = 'scanning-status';
       qrStatus.innerText = `Processing check-in for ${cardno}...`;
@@ -150,7 +120,6 @@ document.addEventListener('DOMContentLoaded', function () {
       qrStatus.className = 'scanning-status';
       qrStatus.innerText = `📦 Saved Offline: ${cardno}`;
       showInfoMessage(`Check-in for ${cardno} saved to offline sync queue.`);
-      addRecentScan(cardno, '—', '📦 Queued');
     } else if (result.reason === 'duplicate') {
       qrStatus.className = 'error-status';
       qrStatus.innerText = `⚠️ Already Queued: ${cardno}`;
@@ -293,14 +262,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!response.ok) {
       showErrorMessage(data.message || 'Failed to check-in.');
-      addRecentScan(cardno, '—', '❌ Denied');
       throw data;
     }
 
     if (data.cardno && data.issuedto) {
       qrStatus.className = 'success-status';
       qrStatus.innerText = `✅ QR Code Scanned: ${data.cardno} (${data.issuedto})`;
-      addRecentScan(data.cardno, data.issuedto, '✅ Allowed');
     }
 
     if (data.success || data.message === 'Success') {
@@ -366,56 +333,6 @@ document.addEventListener('DOMContentLoaded', function () {
       showErrorMessage(`Sync failed: ${warningCount} item(s) could not be submitted.`);
     }
   }
-
-  /* -------------------- RECENT SCANS + MODE SWITCH -------------------- */
-
-  function addRecentScan(cardno, issuedto, status) {
-    recentScans.unshift({
-      time: new Date().toLocaleTimeString('en-US', { hour12: true }),
-      cardno,
-      issuedto,
-      status
-    });
-    if (recentScans.length > 5) recentScans.pop();
-    renderRecentScans();
-  }
-
-  // textContent only: card numbers and names come from scans and the server
-  function renderRecentScans() {
-    if (!recentTableBody) return;
-    recentTableBody.textContent = '';
-    recentScans.forEach((r) => {
-      const tr = document.createElement('tr');
-      [r.time, r.cardno, r.issuedto || '—', r.status].forEach((val, i) => {
-        const td = document.createElement('td');
-        td.style.padding = '8px 12px';
-        td.style.fontWeight = '600';
-        if (i === 3) td.style.textAlign = 'center';
-        td.textContent = val == null ? '' : String(val);
-        tr.appendChild(td);
-      });
-      recentTableBody.appendChild(tr);
-    });
-  }
-
-  window.switchKioskMode = function (mode) {
-    const btnCamera = document.getElementById('btnModeCamera');
-    const btnManual = document.getElementById('btnModeManual');
-    const cameraSec = document.getElementById('qr-scanner-section');
-
-    if (mode === 'camera') {
-      if (btnCamera) btnCamera.classList.add('active');
-      if (btnManual) btnManual.classList.remove('active');
-      if (cameraSec) cameraSec.style.display = 'block';
-      startQRScanner();
-    } else {
-      if (btnManual) btnManual.classList.add('active');
-      if (btnCamera) btnCamera.classList.remove('active');
-      if (cameraSec) cameraSec.style.display = 'none';
-      stopQRScanner();
-      if (manualInput) manualInput.focus();
-    }
-  };
 
   /* -------------------- ALERTS -------------------- */
 

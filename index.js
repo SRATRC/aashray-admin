@@ -20,7 +20,6 @@ function login(event) {
     .then((data) => {
       sessionStorage.setItem('token', data.token);
       sessionStorage.setItem('roles', JSON.stringify(data.roles));
-      sessionStorage.setItem('username', username);
 
       const roles = data.roles;
 

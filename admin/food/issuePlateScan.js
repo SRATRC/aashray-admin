@@ -4,11 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
-  const manualScanForm = document.getElementById('manualScanForm');
-  const manualCardNoInput = document.getElementById('manualCardNo');
-  const btnRestartScanner = document.getElementById('btnRestartScanner');
-  const recentScansTableBody = document.getElementById('recentScansTableBody');
-  const recentScans = [];
 
   const QUEUE_STORAGE_KEY = 'food_offline_scan_queue';
   const COOLDOWN_MS = 5 * 60 * 1000;
@@ -19,57 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   updateNetworkUI();
   startQRScanner();
-
-  /* ===== Kiosk clock and meal slot ===== */
-  updateKioskHeader();
-  setInterval(updateKioskHeader, 1000);
-
-  function updateKioskHeader() {
-    const clockEl = document.getElementById('liveClockDisplay');
-    const badgeEl = document.getElementById('activeMealBadge');
-    const now = new Date();
-    if (clockEl) clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: true });
-    if (!badgeEl) return;
-    const totalMins = now.getHours() * 60 + now.getMinutes();
-    // Plate meal windows follow the backend: breakfast to 10:00, lunch to 14:00, dinner to 19:00
-    if (totalMins <= 600) {
-      badgeEl.textContent = '🌅 Breakfast';
-      badgeEl.style.background = '#f59e0b';
-    } else if (totalMins <= 840) {
-      badgeEl.textContent = '☀️ Lunch';
-      badgeEl.style.background = '#3b82f6';
-    } else if (totalMins <= 1140) {
-      badgeEl.textContent = '🌙 Dinner';
-      badgeEl.style.background = '#8b5cf6';
-    } else {
-      badgeEl.textContent = '⏸️ Off-Meal Hours';
-      badgeEl.style.background = '#64748b';
-    }
-  }
-
-  if (btnRestartScanner) {
-    btnRestartScanner.addEventListener('click', () => {
-      if (html5QrCode) {
-        Promise.resolve().then(() => html5QrCode.stop()).catch(() => {}).then(() => startQRScanner());
-      } else {
-        startQRScanner();
-      }
-    });
-  }
-
-  /* ===== Manual card entry: same online / offline-queue path as a scan ===== */
-  if (manualScanForm) {
-    manualScanForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const cardno = processScannedText(manualCardNoInput ? manualCardNoInput.value : '');
-      if (!cardno || isProcessing) return;
-      if (manualCardNoInput) manualCardNoInput.value = '';
-      isProcessing = true;
-      await submitCard(cardno, new Date().toISOString());
-      resumeScanning(1500);
-      if (manualCardNoInput) manualCardNoInput.focus();
-    });
-  }
 
   window.addEventListener('online', () => {
     updateNetworkUI();
@@ -97,7 +41,8 @@ document.addEventListener('DOMContentLoaded', function () {
       html5QrCode = new Html5Qrcode('reader');
     }
 
-    setStatus('Initializing scanner...', 'scanning');
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = 'Initializing scanner...';
 
     html5QrCode
       .start(
@@ -107,11 +52,11 @@ document.addEventListener('DOMContentLoaded', function () {
         onScanFailure
       )
       .then(() => {
-        setStatus('Ready to scan...', 'scanning');
+        qrStatus.innerText = 'Ready to scan...';
       })
       .catch((err) => {
-        setStatus('❌ Camera unavailable. Use manual card input below.', 'danger');
-        if (manualCardNoInput) manualCardNoInput.focus();
+        qrStatus.className = 'error-status';
+        qrStatus.innerText = '❌ Scanner initialization failed';
         console.error('QR Scanner Error:', err);
       });
   }
@@ -129,13 +74,9 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    await submitCard(cardno, scannedAt);
-    resumeScanning(1500);
-  }
-
-  async function submitCard(cardno, scannedAt) {
     if (navigator.onLine) {
-      setStatus(`Issuing plate for ${cardno}...`, 'scanning');
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = `Issuing plate for ${cardno}...`;
 
       try {
         await sendIssuePlateRequest(cardno, scannedAt);
@@ -147,17 +88,20 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       handleOfflineScan(cardno, scannedAt);
     }
+
+    resumeScanning(1500);
   }
 
   function handleOfflineScan(cardno, scannedAt) {
     const result = enqueueScan(cardno, scannedAt);
 
     if (result.success) {
-      setStatus(`📦 Saved Offline (${cardno})`, 'warning');
+      qrStatus.className = 'warning-status';
+      qrStatus.innerText = `📦 Saved Offline (${cardno})`;
       showMessage(`Scanned offline! Plate saved to sync queue for ${cardno}.`, 'warning');
-      addRecentScan(cardno, '—', '📦 Queued');
     } else if (result.reason === 'duplicate') {
-      setStatus(`⚠️ Already Queued (${cardno})`, 'warning');
+      qrStatus.className = 'warning-status';
+      qrStatus.innerText = `⚠️ Already Queued (${cardno})`;
       showMessage(`Card ${cardno} was already scanned offline recently.`, 'warning');
     }
 
@@ -167,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function () {
   function resumeScanning(delayMs = 1500) {
     setTimeout(() => {
       isProcessing = false;
-      setStatus('Ready to scan...', 'scanning');
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = 'Ready to scan...';
     }, delayMs);
   }
 
@@ -314,18 +259,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!response.ok) {
       const alertType = getAlertTypeFromMessage(data.message);
 
-      setStatus('❌ ' + (data.message || 'Failed to issue plate'), alertType);
+      qrStatus.className = `${alertType}-status`;
+      qrStatus.innerText = '❌ ' + (data.message || 'Failed to issue plate');
 
       showMessage(data.message || 'Failed to issue plate', alertType);
-      playErrorBuzzer();
-      addRecentScan(cardno, '—', '❌ ' + (data.message || 'Failed'));
       throw data;
     }
 
-    setStatus(`✅ Plate issued to ${data.issuedto}`, 'success');
+    qrStatus.className = 'success-status';
+    qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
     showMessage(data.message || 'Plate issued successfully.', 'success');
-    playSuccessBeep();
-    addRecentScan(cardno, data.issuedto || 'Member', '✅ Issued');
 
     return data;
   }
@@ -387,15 +330,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let alertTimeout = null;
 
-  function setStatus(text, statusType) {
-    if (!qrStatus) return;
-    const t = ['success', 'warning', 'danger', 'scanning'].includes(statusType) ? statusType : (statusType === 'info' ? 'scanning' : 'danger');
-    qrStatus.className = `status-pill status-${t}`;
-    qrStatus.textContent = text;
-  }
-
   function showMessage(message, type) {
-    alertDiv.className = `big-scan-alert alert alert-${type}`;
+    alertDiv.className = `alert alert-${type}`;
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
 
@@ -405,83 +341,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function resetAlert() {
     alertDiv.style.display = 'none';
-    alertDiv.className = 'big-scan-alert';
+    alertDiv.className = 'alert';
     alertDiv.textContent = '';
-  }
-
-  /* -------------------- RECENT SCANS + SOUNDS -------------------- */
-
-  function addRecentScan(cardno, issuedto, status) {
-    recentScans.unshift({
-      time: new Date().toLocaleTimeString('en-US', { hour12: true }),
-      cardno,
-      issuedto,
-      status
-    });
-    if (recentScans.length > 5) recentScans.pop();
-    renderRecentScans();
-  }
-
-  // textContent only: card numbers, names and server messages are untrusted
-  function renderRecentScans() {
-    if (!recentScansTableBody) return;
-    recentScansTableBody.textContent = '';
-    recentScans.forEach((r) => {
-      const tr = document.createElement('tr');
-      [r.time, r.cardno, r.issuedto || '—', r.status].forEach((val, i) => {
-        const td = document.createElement('td');
-        td.style.padding = '8px 12px';
-        td.style.fontWeight = '600';
-        if (i === 3) td.style.textAlign = 'center';
-        td.textContent = val == null ? '' : String(val);
-        tr.appendChild(td);
-      });
-      recentScansTableBody.appendChild(tr);
-    });
-  }
-
-  function playSuccessBeep() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.25);
-    } catch (e) {
-      console.warn('Audio feedback error:', e);
-    }
-  }
-
-  function playErrorBuzzer() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.value = 220;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.4);
-    } catch (e) {
-      console.warn('Audio feedback error:', e);
-    }
   }
 
   /* -------------------- CLEANUP -------------------- */
 
   window.addEventListener('beforeunload', () => {
     if (html5QrCode) {
-      // stop() can throw synchronously when the scanner never started (no camera)
-      Promise.resolve().then(() => html5QrCode.stop()).catch(() => {});
+      html5QrCode.stop().catch(() => {});
     }
   });
 });
