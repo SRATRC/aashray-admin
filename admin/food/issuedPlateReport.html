@@ -23,10 +23,53 @@
     <script src="/sessionstorage.js"></script>
     <script src="issuedPlateReport.js"></script>
     <script src="../../style/js/tableSortFilter.js" defer></script>
-    
+    <script src="../../style/js/pagination.js" defer></script>
+    <script src="../../style/js/commandPalette.js" defer></script>
+    <script src="../../style/js/quickLookup.js" defer></script>
+    <script src="../../style/js/reportExporter.js" defer></script>
     
     <!-- Styles -->
     <link rel="stylesheet" href="../../style/css/styles.css" />
+    <style>
+      @media print {
+        .header, .logout, .no-print, .search-box, #platePaginationContainer {
+          display: none !important;
+        }
+        body, .middlecontent, .container, .whitesec, .inner-padding {
+          background: #ffffff !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+        }
+        .table-responsive {
+          overflow: visible !important;
+          width: 100% !important;
+        }
+        .table {
+          width: 100% !important;
+          table-layout: auto !important;
+        }
+      }
+
+      /* Mobile Responsive Enhancements */
+      @media (max-width: 768px) {
+        .container {
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 8px !important;
+        }
+        .inner-padding {
+          padding: 12px !important;
+        }
+        .table-responsive {
+          width: 100% !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch;
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -45,29 +88,42 @@
         <div class="whitesec">
           <div class="inner-padding">
 
+            <!-- Modern Page Banner Header -->
+            <div style="background:linear-gradient(135deg, #1e293b 0%, #334155 100%); color:#fff; border-radius:14px; padding:20px 24px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:28px;">📋</span>
+                <div>
+                  <h1 id="reportTitle" style="margin:0; font-size:20px; font-weight:700; color:#ffffff;">Issued Food Plate Report</h1>
+                  <div style="font-size:13px; color:#cbd5e1; margin-top:2px;">Detailed member list for meal issuance & no-shows</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px;" class="no-print">
+                <button onclick="exportPlateCSV()" class="btn btn-success" style="font-weight:bold; border-radius:8px; padding:8px 16px;">⬇ Export CSV</button>
+                <button onclick="window.print()" class="btn btn-secondary" style="font-weight:bold; border-radius:8px; padding:8px 16px; background:#475569; color:#fff; border-color:#475569;">🖨️ Print</button>
+              </div>
+            </div>
 
             <div id="alert" class="alert" role="alert" style="display: none;"></div>
-<div class="frm-head">
-  <h1 id="reportTitle">Issued Food Plate Report</h1>
-  <div id="alertBox" style="display: none; padding: 10px; margin-top: 10px; border-radius: 5px; font-weight: bold;"></div>
-</div>
-<input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
-<button
-  id="bulkIssueBtn"
-  class="btn btn-primary"
-  style="display:none; margin-bottom:10px;"
->
-  Issue Selected Plates
-</button>
+            <div id="alertBox" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: bold;"></div>
 
-            <div class="table-responsive">
-              <table id="bookingsTable" class="table table-striped table-bordered">
+            <!-- Top Summary Cards -->
+            <div id="issuedPlateSummaryCards" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px;"></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;" class="no-print">
+              <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search by name or mobile..." style="width:260px; padding:6px 12px; border-radius:8px;" />
+              <button id="bulkIssueBtn" class="btn btn-primary" style="display:none; font-weight:bold; border-radius:8px;">
+                ⚡ Issue Selected Plates
+              </button>
+            </div>
+
+            <div class="table-responsive" style="border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.04);">
+              <table id="bookingsTable" class="table table-striped table-bordered" style="margin-bottom:0;">
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Date</th>
-                    <th>Name</th>
-                    <th>Mobile No</th>
+                  <tr style="background:#1e293b; color:#ffffff;">
+                    <th style="background:#1e293b; color:#ffffff; padding:12px 14px; font-weight:700; width:50px; text-align:center;">#</th>
+                    <th style="background:#1e293b; color:#ffffff; padding:12px 14px; font-weight:700;">Date</th>
+                    <th style="background:#1e293b; color:#ffffff; padding:12px 14px; font-weight:700;">Member Name</th>
+                    <th style="background:#1e293b; color:#ffffff; padding:12px 14px; font-weight:700;">Mobile & Contact</th>
                   </tr>
                 </thead>
                 <tbody id="reportTableBody">
@@ -75,6 +131,9 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination -->
+            <div id="platePaginationContainer" class="no-print"></div>
 
           </div>
         </div>

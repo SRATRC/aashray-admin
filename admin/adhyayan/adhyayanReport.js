@@ -336,13 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.classList.contains('adhyayan-link')) {
       const shibirId = e.target.dataset.shibir;
       const url = `https://aashray.vitraagvigyaan.org/adhyayan/${shibirId}`;
-
-      try {
-        await navigator.clipboard.writeText(url);
-        alert(`Adhyayan link copied:\n${url}`);
-      } catch {
-        alert('Failed to copy Adhyayan link.');
-      }
+      await copyToClipboard(url, () => {
+        showSuccessMessage(`Adhyayan link copied: ${url}`);
+      });
     }
 
     // Copy Shortlink (WhatsApp redirect link)
@@ -375,13 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.classList.contains('feedback-link')) {
       const shibirId = e.target.dataset.shibir;
       const url = `https://aashray.vitraagvigyaan.org/adhyayan/feedback/${shibirId}`;
-
-      try {
-        await navigator.clipboard.writeText(url);
-        alert(`Feedback link copied:\n${url}`);
-      } catch {
-        alert('Failed to copy feedback link.');
-      }
+      await copyToClipboard(url, () => {
+        showSuccessMessage(`Feedback link copied: ${url}`);
+      });
     }
 
     // Toggle status
