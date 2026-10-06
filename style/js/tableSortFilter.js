@@ -8,15 +8,7 @@ function parseSortValue(text) {
   return text;
 }
 
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
+// escapeHtml() comes from common.js (every page that loads this file loads common.js first).
 function escapeRegex(string) {
   return string.replace(/[.*+?^$\{\}()|[\]\\\/]/g, '\\$&');
 }

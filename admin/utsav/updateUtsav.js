@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('total_seats').value = data.total_seats;
     document.getElementById('available_seats').value = data.available_seats;
     document.getElementById('comments').value = data.comments;
-    document.getElementById('location').value = data.location;
     document.getElementById('whatsapp_link').value = data.whatsapp_link || '';
+    document.getElementById('location').value = data.location;
 
     const shortlinkGroup = document.getElementById('shortlink_group');
     const shortlinkInput = document.getElementById('shortlink');
