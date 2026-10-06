@@ -1,3 +1,15 @@
+// Shared by every page that loads this script (via a plain <script> tag,
+// not a module import) — reads the logged-in admin's roles out of
+// sessionStorage, failing closed to no roles rather than throwing past
+// whatever access check called this.
+function getRoles() {
+  try {
+    return JSON.parse(sessionStorage.getItem('roles') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
 // Helper to decode JWT payload safely in browser
 function parseJwtPayload(token) {
   try {
@@ -59,7 +71,7 @@ function checkRoleAccess(allowedRoles) {
     return;
   }
 
-  const roles    = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const roles = getRoles();
   const currentPage = window.location.pathname.split('/').pop();
 
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
@@ -123,7 +135,7 @@ function logout() {
 }
 
 function getHomePageForRole() {
-  const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  const roles = getRoles();
 
   // Check if user has any valid roles
   const validRoles = [
