@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', async function () {
-    initializeDatepicker();
   await fetchWiFiRecords();
 
   document.getElementById('statusFilter').addEventListener('change', function () {
@@ -87,11 +86,13 @@ function applyFilters(status) {
   }
 
   // Apply date range filter only when dates are explicitly entered
-  if (fromDate && toDate) {
+  if (fromDate || toDate) {
     filtered = filtered.filter((rec) => {
-      if (status === 'active' || status === 'deactivated') return true;
+      if (rec.status === 'active' || rec.status === 'deactivated') return true;
       const codeDate = new Date(rec.wifi_updatedAt);
-      return codeDate >= fromDate && codeDate <= toDate;
+      if (fromDate && codeDate < fromDate) return false;
+      if (toDate && codeDate > toDate) return false;
+      return true;
     });
   }
 
@@ -192,27 +193,37 @@ function displayGateRecords(records, filterType) {
     selectAll.checked = false;
     selectAll.addEventListener('change', function () {
       document.querySelectorAll('.row-checkbox').forEach((cb) => {
-        cb.checked = selectAll.checked;
+        if (cb.closest('tr').style.display !== 'none') {
+          cb.checked = selectAll.checked;
+        }
       });
       updateSelectedCount();
     });
 
     document.querySelectorAll('.row-checkbox').forEach((cb) => {
       cb.addEventListener('change', () => {
-        const total = document.querySelectorAll('.row-checkbox').length;
-        const checked = document.querySelectorAll('.row-checkbox:checked').length;
-        selectAll.checked = total > 0 && total === checked;
+        const visibleCheckboxes = Array.from(document.querySelectorAll('.row-checkbox')).filter(
+          (c) => c.closest('tr').style.display !== 'none'
+        );
+        const checkedVisible = visibleCheckboxes.filter((c) => c.checked);
+        selectAll.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedVisible.length;
         updateSelectedCount();
       });
     });
   }
 
   updateSelectedCount();
+  const gateTable = document.getElementById('gateRecordTable');
+  if (gateTable) {
+    gateTable._columnFilters = {};
+  }
   enhanceTable('gateRecordTable', 'tableSearch');
 }
 
 function updateSelectedCount() {
-  const checked = document.querySelectorAll('.row-checkbox:checked').length;
+  const checked = Array.from(document.querySelectorAll('.row-checkbox:checked')).filter(
+    (cb) => cb.closest('tr').style.display !== 'none'
+  ).length;
   const countText = document.getElementById('selectedCountText');
   if (countText) {
     countText.textContent = `${checked} selected`;
@@ -220,7 +231,9 @@ function updateSelectedCount() {
 }
 
 async function executeSelectedBulkAction(action) {
-  const selectedCheckboxes = Array.from(document.querySelectorAll('.row-checkbox:checked'));
+  const selectedCheckboxes = Array.from(document.querySelectorAll('.row-checkbox:checked')).filter(
+    (cb) => cb.closest('tr').style.display !== 'none'
+  );
   const passwords = selectedCheckboxes.map((cb) => cb.value);
 
   if (passwords.length === 0) {
@@ -279,26 +292,6 @@ function updateCodeCounts(records) {
 
   document.getElementById('activeCount').textContent =
     `Active Codes: ${activeCount} | Used Codes: ${usedCount} | Deactivated Codes: ${deactivatedCount} | Deleted Codes: ${deletedCount}`;
-}
-
-function setDefaultDateRange() {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - 7);
-
-  document.getElementById('startDate').value = formatInputDate(start);
-  document.getElementById('endDate').value = formatInputDate(end);
-}
-
-function formatInputDate(date) {
-  return date.toISOString().split('T')[0];
-}
-
-function initializeDatepicker() {
-  $('.datepicker').datepicker({
-    format: 'yyyy-mm-dd',
-    autoclose: true
-  });
 }
 
 function setupDownloadButton(filteredRecords, status) {

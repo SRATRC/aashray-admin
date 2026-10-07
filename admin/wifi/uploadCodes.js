@@ -121,7 +121,7 @@ async function executeBulkActionFromExcel() {
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
       const passwords = rows
-        .map(r => r.password || r.Password || r.code || r.Code)
+        .map(r => String(r.password || r.Password || r.code || r.Code || '').trim())
         .filter(Boolean);
 
       if (passwords.length === 0) {
