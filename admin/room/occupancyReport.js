@@ -44,7 +44,9 @@ function normalizeDateOnly(dateInput) {
   return local.toISOString().split('T')[0];
 }
 
+let latestOccupancyRequest = 0;
 async function fetchOccupancyReport(date) {
+  const requestId = ++latestOccupancyRequest;
   const tableBody = document.querySelector('#occupancyTable tbody');
   tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading occupancy report...</td></tr>';
 
@@ -65,6 +67,7 @@ async function fetchOccupancyReport(date) {
     }
 
     const data = await response.json();
+    if (requestId !== latestOccupancyRequest) return; // a newer date was picked meanwhile
     occupancy = (data.data || []).map((booking) => ({
       ...booking,
       checkin: normalizeDateOnly(booking.checkin),
@@ -205,6 +208,9 @@ function renderTable() {
   if (!window._occupancyTableEnhanced) {
     enhanceTable('occupancyTable', 'tableSearch');
     window._occupancyTableEnhanced = true;
+  } else {
+    // Rows were rebuilt: re-apply the search text and column filters still shown.
+    document.getElementById('tableSearch').dispatchEvent(new Event('input'));
   }
 }
 
@@ -234,10 +240,7 @@ const setupDownloadButton = (dataToExport) => {
 };
 
 window.showOccupiedRooms = function() {
-  const activeOccupants = occupancy.filter(b => 
-    (b.status === 'checkedin' && b.checkout > currentReportDate) ||
-    (b.status === 'pending checkin' && b.checkin === currentReportDate)
-  );
+  const activeOccupants = occupancy.filter(isStayingTonight);
   
   const roomStatusMap = {}; // baseRoomNo -> Set of statuses ('staying', 'arriving')
   activeOccupants.forEach(b => {
@@ -245,7 +248,7 @@ window.showOccupiedRooms = function() {
     if (!roomStatusMap[r]) {
       roomStatusMap[r] = new Set();
     }
-    if (b.status === 'pending checkin' && b.checkin === currentReportDate) {
+    if (b.checkin === currentReportDate) {
       roomStatusMap[r].add('arriving');
     } else {
       roomStatusMap[r].add('staying');
