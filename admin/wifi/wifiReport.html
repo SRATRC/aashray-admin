@@ -94,8 +94,10 @@
             <div class="filter-bar">
               <label for="statusFilter"><strong>Filter by status:</strong></label>
               <select id="statusFilter">
-                <option value="inactive" selected>Used</option>
-                <option value="active">Unused</option>
+                <option value="active" selected>Unused</option>
+                <option value="inactive">Used</option>
+                <option value="deactivated">Deactivated</option>
+                <option value="deleted">Deleted</option>
                 <option value="all">All</option>
               </select>
 
@@ -107,24 +109,31 @@
               </select>
 
               <label><strong>Date Range:</strong></label>
-              <input type="text" id="startDate" class="form-control datepicker" placeholder="From"
-                style="width: 130px" />
+              <input type="date" id="startDate" class="form-control" style="width: 145px; display:inline-block;" />
               <span>to</span>
-              <input type="text" id="endDate" class="form-control datepicker" placeholder="To" style="width: 130px" />
+              <input type="date" id="endDate" class="form-control" style="width: 145px; display:inline-block;" />
 
               <button id="applyDateFilter" class="btn btn-primary btn-sm">Filter</button>
+              <button id="clearDateFilter" class="btn btn-default btn-sm">Clear</button>
 
               <div id="downloadBtnContainer" style="margin-top: 10px;"></div>
             </div>
 
             <!-- Count line -->
-            <div class="code-count-line" id="activeCount">Active Codes: 0 | Inactive Codes: 0</div>
+            <div class="code-count-line" id="activeCount">Active Codes: 0 | Used Codes: 0 | Deactivated Codes: 0 | Deleted Codes: 0</div>
+            
+            <div id="bulkActionBar" style="display:none; margin: 10px 0; padding: 10px 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; align-items:center; gap: 10px; flex-wrap:wrap;">
+              <span id="selectedCountText" style="font-weight:600; color:#334155;">0 selected</span>
+              <button id="bulkDeactivateSelectedBtn" class="btn btn-warning btn-sm" style="display:none;">Deactivate Selected</button>
+              <button id="bulkReactivateSelectedBtn" class="btn btn-success btn-sm" style="display:none;">Reactivate Selected</button>
+              <button id="bulkDeleteSelectedBtn" class="btn btn-danger btn-sm">Delete Selected (Soft)</button>
+            </div>
           </div>
 
           <!-- Table -->
           <div class="table-responsive">
             <table id="gateRecordTable" class="table table-striped table-bordered">
-              <thead>
+              <thead id="gateRecordHead">
                 <tr>
                   <th>#</th>
                   <th>Password</th>

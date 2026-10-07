@@ -53,9 +53,36 @@
               <input class="btn btn-primary" type="file" id="excelFile" accept=".xlsx" />
               <button class="btn btn-primary" id="parseBtn">Preview</button>
               <button class="btn btn-primary" id="uploadBtn">Update WiFi DB</button>
+              <button class="btn btn-info" id="downloadSampleBtn">Download Sample Excel</button>
             </div>
 
+            
             <div id="tableContainer" style="margin-top: 20px;"></div>
+
+            <hr style="margin: 30px 0; border-top: 1px solid #ddd;" />
+
+            <div class="frm-head">
+              <h2>Bulk Deactivate / Reactivate / Delete from Excel</h2>
+            </div>
+
+            <div class="form-group" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <label for="bulkActionSelect" style="margin:0; font-weight:600;">Action:</label>
+              <select id="bulkActionSelect" class="form-control" style="width:auto; display:inline-block;">
+                <option value="deactivate">Deactivate Codes</option>
+                <option value="reactivate">Reactivate Codes</option>
+                <option value="delete">Delete Codes (Soft Delete)</option>
+              </select>
+
+              <label style="display:inline-flex; align-items:center; gap:5px; margin:0 5px; cursor:pointer;">
+                <input type="checkbox" id="bulkActionDryRun" /> Dry Run
+              </label>
+
+              <input class="btn btn-primary" type="file" id="bulkActionFile" accept=".xlsx,.xls" />
+              <button class="btn btn-warning" id="bulkActionBtn">Execute Action</button>
+              <button class="btn btn-info" id="downloadActiveBtn">Download Active Codes</button>
+            </div>
+
+            <div id="bulkActionResult" style="margin-top: 15px;"></div>
           </div>
         </div>
       </div>
