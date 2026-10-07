@@ -2,6 +2,9 @@ let occupancy = [];
 let currentReportDate = '';
 let requestedReportDate = '';
 let loadFailed = false;
+let loading = false;
+const LOADING_ROW = '<tr><td colspan="11" class="text-center">Loading occupancy report...</td></tr>';
+const ERROR_ROW = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
 
 document.addEventListener('DOMContentLoaded', function () {
   const dateInput = document.getElementById('reportDate');
@@ -56,8 +59,9 @@ async function fetchOccupancyReport(date) {
   const requestId = ++latestOccupancyRequest;
   requestedReportDate = date;
   loadFailed = false;
+  loading = true;
   const tableBody = document.querySelector('#occupancyTable tbody');
-  tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading occupancy report...</td></tr>';
+  tableBody.innerHTML = LOADING_ROW;
 
   try {
     const response = await fetch(
@@ -83,6 +87,7 @@ async function fetchOccupancyReport(date) {
       checkout: normalizeDateOnly(booking.checkout)
     }));
     currentReportDate = date;
+    loading = false;
     
     // Filter active occupants staying tonight (checkedin staying beyond today, OR pending checkin today)
     const activeOccupants = occupancy.filter(isStayingTonight);
@@ -105,7 +110,8 @@ async function fetchOccupancyReport(date) {
     if (requestId !== latestOccupancyRequest) return; // stale request; a newer one owns the table
     console.error('Error fetching occupancy report:', error);
     loadFailed = true;
-    tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
+    loading = false;
+    tableBody.innerHTML = ERROR_ROW;
     // Do not leave the previous date's data behind the new date in the picker.
     occupancy = [];
     currentReportDate = date;
@@ -126,9 +132,9 @@ function isStayingTonight(b) {
 
 function renderTable() {
   const tableBody = document.querySelector('#occupancyTable tbody');
-  // After a failed load keep the error visible; a filter change must not look like "no occupants".
-  if (loadFailed) {
-    tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
+  // While a load runs, or after one failed, keep that message; a filter change must not look like "no occupants".
+  if (loading || loadFailed) {
+    tableBody.innerHTML = loadFailed ? ERROR_ROW : LOADING_ROW;
     return;
   }
   tableBody.innerHTML = '';
