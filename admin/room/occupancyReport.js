@@ -1,5 +1,6 @@
 let occupancy = [];
 let currentReportDate = '';
+let requestedReportDate = '';
 
 document.addEventListener('DOMContentLoaded', function () {
   const dateInput = document.getElementById('reportDate');
@@ -15,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
   fetchOccupancyReport(dateInput.value);
 
   dateInput.addEventListener('change', function () {
-    // The picker can be cleared; keep showing the date the report is for.
+    // The picker can be cleared; keep showing the date the report is (being) loaded for.
     if (!this.value) {
-      this.value = currentReportDate;
+      this.value = requestedReportDate;
       return;
     }
     fetchOccupancyReport(this.value);
@@ -52,6 +53,7 @@ function normalizeDateOnly(dateInput) {
 let latestOccupancyRequest = 0;
 async function fetchOccupancyReport(date) {
   const requestId = ++latestOccupancyRequest;
+  requestedReportDate = date;
   const tableBody = document.querySelector('#occupancyTable tbody');
   tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading occupancy report...</td></tr>';
 

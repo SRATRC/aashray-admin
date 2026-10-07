@@ -182,10 +182,10 @@ function displayGateRecords(records, filterType) {
       row.innerHTML = `
         <td>${index + 1}</td>
         <td>${escapeHtml(record.password)}</td>
-        <td>${record.status}</td>
+        <td>${escapeHtml(record.status)}</td>
         <td>${formatDateTime(record.wifi_updatedAt)}</td>
-        <td>${record.issuedto || ''}</td>
-        <td>${record.mobno || ''}</td>
+        <td>${escapeHtml(record.issuedto || '')}</td>
+        <td>${escapeHtml(record.mobno || '')}</td>
         <td>${record.room_checkin || record.flat_checkin || ''}</td>
         <td>${record.room_checkout || record.flat_checkout || ''}</td>
       `;
