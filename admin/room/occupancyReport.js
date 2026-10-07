@@ -1,6 +1,7 @@
 let occupancy = [];
 let currentReportDate = '';
 let requestedReportDate = '';
+let loadFailed = false;
 
 document.addEventListener('DOMContentLoaded', function () {
   const dateInput = document.getElementById('reportDate');
@@ -54,6 +55,7 @@ let latestOccupancyRequest = 0;
 async function fetchOccupancyReport(date) {
   const requestId = ++latestOccupancyRequest;
   requestedReportDate = date;
+  loadFailed = false;
   const tableBody = document.querySelector('#occupancyTable tbody');
   tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading occupancy report...</td></tr>';
 
@@ -102,6 +104,7 @@ async function fetchOccupancyReport(date) {
   } catch (error) {
     if (requestId !== latestOccupancyRequest) return; // stale request; a newer one owns the table
     console.error('Error fetching occupancy report:', error);
+    loadFailed = true;
     tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
     // Do not leave the previous date's data behind the new date in the picker.
     occupancy = [];
@@ -123,6 +126,11 @@ function isStayingTonight(b) {
 
 function renderTable() {
   const tableBody = document.querySelector('#occupancyTable tbody');
+  // After a failed load keep the error visible; a filter change must not look like "no occupants".
+  if (loadFailed) {
+    tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
+    return;
+  }
   tableBody.innerHTML = '';
 
   const filterValue = document.getElementById('roomTypeFilter').value;
