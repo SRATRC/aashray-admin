@@ -34,6 +34,14 @@ document.addEventListener('DOMContentLoaded', async function () {
   document.getElementById('bulkDeleteSelectedBtn').addEventListener('click', () => {
     executeSelectedBulkAction('delete');
   });
+
+  // Keep the "N selected" label in sync when search hides/shows rows
+  const tableSearch = document.getElementById('tableSearch');
+  if (tableSearch) {
+    tableSearch.addEventListener('input', () => {
+      setTimeout(updateSelectedCount, 0);
+    });
+  }
 });
 
 async function fetchWiFiRecords() {
@@ -221,12 +229,17 @@ function displayGateRecords(records, filterType) {
 }
 
 function updateSelectedCount() {
-  const checked = Array.from(document.querySelectorAll('.row-checkbox:checked')).filter(
+  const visibleCheckboxes = Array.from(document.querySelectorAll('.row-checkbox')).filter(
     (cb) => cb.closest('tr').style.display !== 'none'
-  ).length;
+  );
+  const checked = visibleCheckboxes.filter((cb) => cb.checked).length;
   const countText = document.getElementById('selectedCountText');
   if (countText) {
     countText.textContent = `${checked} selected`;
+  }
+  const selectAll = document.getElementById('selectAllCheckbox');
+  if (selectAll) {
+    selectAll.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checked;
   }
 }
 
