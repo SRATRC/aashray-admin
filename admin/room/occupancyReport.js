@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', function () {
   fetchOccupancyReport(dateInput.value);
 
   dateInput.addEventListener('change', function () {
+    // The picker can be cleared; keep showing the date the report is for.
+    if (!this.value) {
+      this.value = currentReportDate;
+      return;
+    }
     fetchOccupancyReport(this.value);
   });
 
@@ -96,6 +101,13 @@ async function fetchOccupancyReport(date) {
     if (requestId !== latestOccupancyRequest) return; // stale request; a newer one owns the table
     console.error('Error fetching occupancy report:', error);
     tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
+    // Do not leave the previous date's data behind the new date in the picker.
+    occupancy = [];
+    currentReportDate = date;
+    ['statTotalOccupants', 'statRoomsOccupied', 'statCleanings'].forEach((id) => {
+      document.getElementById(id).textContent = '-';
+    });
+    document.getElementById('downloadBtnContainer').innerHTML = '';
     alert('An error occurred while fetching occupancy report.');
   }
 }
@@ -279,7 +291,7 @@ window.showOccupiedRooms = function() {
         label = 'PARTIAL ARRIVAL (STAYING + ARRIVING)';
       }
       
-      html += `<span style="background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; font-weight: bold; padding: 8px 12px; border-radius: 6px; font-size: 13px; text-align: center; width: 100%; box-sizing: border-box;">Room ${r} (${label})</span>`;
+      html += `<span style="background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; font-weight: bold; padding: 8px 12px; border-radius: 6px; font-size: 13px; text-align: center; width: 100%; box-sizing: border-box;">Room ${escapeHtml(r)} (${label})</span>`;
     });
   } else {
     html += '<span style="color: #6c757d;">No rooms occupied</span>';
@@ -324,7 +336,7 @@ window.showCheckoutsToday = function() {
         }
       }
       
-      html += `<span style="background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; font-weight: bold; padding: 8px 12px; border-radius: 6px; font-size: 13px; text-align: center; width: 100%; box-sizing: border-box;">Room ${r} (${label})</span>`;
+      html += `<span style="background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; font-weight: bold; padding: 8px 12px; border-radius: 6px; font-size: 13px; text-align: center; width: 100%; box-sizing: border-box;">Room ${escapeHtml(r)} (${label})</span>`;
     });
     html += '</div>';
   }

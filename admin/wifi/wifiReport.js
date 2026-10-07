@@ -35,12 +35,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     executeSelectedBulkAction('delete');
   });
 
-  // Keep the "N selected" label in sync when search hides/shows rows
-  const tableSearch = document.getElementById('tableSearch');
-  if (tableSearch) {
-    tableSearch.addEventListener('input', () => {
-      setTimeout(updateSelectedCount, 0);
-    });
+  // Keep the "N selected" label in sync whenever search or column filters hide or show rows
+  const gateTable = document.getElementById('gateRecordTable');
+  if (gateTable) {
+    gateTable.addEventListener('tableFilterChanged', updateSelectedCount);
   }
 });
 
@@ -174,16 +172,16 @@ function displayGateRecords(records, filterType) {
           : `<span class="label label-default">${record.status}</span>`;
 
       row.innerHTML = `
-        <td style="text-align: center;"><input type="checkbox" class="row-checkbox" value="${record.password}" /></td>
+        <td style="text-align: center;"><input type="checkbox" class="row-checkbox" value="${escapeHtml(record.password)}" /></td>
         <td>${index + 1}</td>
-        <td><strong>${record.password}</strong></td>
+        <td><strong>${escapeHtml(record.password)}</strong></td>
         <td>${statusLabel}</td>
         <td>${formatDateTime(record.wifi_updatedAt)}</td>
       `;
     } else {
       row.innerHTML = `
         <td>${index + 1}</td>
-        <td>${record.password}</td>
+        <td>${escapeHtml(record.password)}</td>
         <td>${record.status}</td>
         <td>${formatDateTime(record.wifi_updatedAt)}</td>
         <td>${record.issuedto || ''}</td>

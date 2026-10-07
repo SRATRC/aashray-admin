@@ -170,13 +170,18 @@ window.enhanceTable = function(tableId, searchBoxId = null, enableRowNumbers = t
     });
   }
 
+  // Keep the latest closure on the table. The search listener below is attached
+  // only once, so it must call this and not the first call's applyAllFilters
+  // (which would keep that call's row-number column after the header is rebuilt).
+  table._applyAllFilters = applyAllFilters;
+
   // SEARCH listener attached once
   if (searchBoxId) {
     const searchInput = document.getElementById(searchBoxId);
     if (searchInput && !searchInput._hasEnhanceListener) {
       searchInput._hasEnhanceListener = true;
       searchInput.addEventListener('input', function () {
-        applyAllFilters();
+        table._applyAllFilters();
       });
     }
   }
