@@ -153,11 +153,11 @@ async function executeBulkActionFromExcel() {
       }
 
       renderBulkActionResult(result);
+      // Keep the file after a dry run so the real run can follow without picking it again.
+      if (!dryRun) fileInput.value = '';
     } catch (err) {
       console.error('Bulk action error:', err);
       alert('Error: ' + err.message);
-    } finally {
-      fileInput.value = '';
     }
   };
   reader.readAsArrayBuffer(file);
@@ -178,16 +178,16 @@ function renderBulkActionResult(result) {
   container.innerHTML = `
     <div style="border-left: 5px solid ${badgeColor}; background: #fdfdfe; padding: 15px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h4 style="margin-top:0;">${dryRun ? '🔍 Dry Run Summary' : '✅ Action Completed'}</h4>
-      <p><strong>${message}</strong></p>
-      <ul>
+      <p><strong>${escapeHtml(message)}</strong></p>
+      ${summary ? `<ul>
         <li>Total submitted in file: <strong>${summary.totalSubmitted}</strong></li>
         <li>Matching codes found in DB: <strong>${summary.found}</strong></li>
         <li>Eligible for action: <strong style="color:#28a745;">${summary.eligible}</strong></li>
         <li>Skipped (already used by guest): <strong style="color:#dc3545;">${summary.skippedUsed}</strong></li>
         <li>Skipped (already in requested status): <strong>${summary.skippedStatus}</strong></li>
         <li>Not found in DB: <strong>${summary.notFound}</strong></li>
-      </ul>
-      ${details?.skippedUsed?.length ? `<p style="color:#dc3545;"><strong>Note:</strong> Used codes skipped: ${details.skippedUsed.join(', ')}</p>` : ''}
+      </ul>` : ''}
+      ${details?.skippedUsed?.length ? `<p style="color:#dc3545;"><strong>Note:</strong> Used codes skipped: ${details.skippedUsed.map(escapeHtml).join(', ')}</p>` : ''}
     </div>
   `;
 }
