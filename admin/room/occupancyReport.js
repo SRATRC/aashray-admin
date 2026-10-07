@@ -93,6 +93,7 @@ async function fetchOccupancyReport(date) {
     renderTable();
 
   } catch (error) {
+    if (requestId !== latestOccupancyRequest) return; // stale request; a newer one owns the table
     console.error('Error fetching occupancy report:', error);
     tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading occupancy report.</td></tr>';
     alert('An error occurred while fetching occupancy report.');
