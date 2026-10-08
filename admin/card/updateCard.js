@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cardno = sessionStorage.getItem('cardno');
   if (!cardno) return alert('No card number found in session');
 
+  await loadDepartments();
   await fetchPersonDetails(cardno);
 
   // Attach submit listener
@@ -9,6 +10,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('res_status').addEventListener('change', updateGuestFields);
   document.getElementById('referenceCardno').addEventListener('input', updateGuestFields);
+  document.getElementById('referencePhone').addEventListener('input', updateGuestFields);
+  attachRefPhoneCheck(
+    document.getElementById('referencePhone'),
+    document.getElementById('refPhoneName')
+  );
 
   // Attach change listeners once
   document.getElementById('country').addEventListener('change', (e) => {
@@ -26,6 +32,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 // The card as loaded, to tell what this save changes
 let loadedCard = null;
 
+// --- Fetch and populate departments (Seva Kutir cards) ---
+async function loadDepartments() {
+  const deptSelect = document.getElementById('department');
+  deptSelect.innerHTML = '<option value="">Select Department</option>';
+  try {
+    const res = await fetch(`${CONFIG.basePath}/location/departments`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Failed to load departments');
+    (result.data || []).forEach((d) => {
+      const val = d.value || d;
+      deptSelect.add(new Option(val, val));
+    });
+  } catch (err) {
+    console.error('Failed to load departments:', err);
+  }
+}
+
 // --- Handle form submit ---
 async function handleUpdate(e) {
   e.preventDefault();
@@ -41,6 +69,14 @@ async function handleUpdate(e) {
   }
 
   const reference = isGuest ? document.getElementById('referenceCardno').value.trim() : '';
+  // The phone is used only when the card number is blank
+  const phone = isGuest && !reference ? document.getElementById('referencePhone').value.trim() : '';
+  const department = resStatus === 'SEVA KUTIR' ? document.getElementById('department').value : '';
+
+  if (resStatus === 'SEVA KUTIR' && !department) {
+    alert('Please select a department for SEVA KUTIR users.');
+    return;
+  }
 
   const updatedData = {
     cardno: document.getElementById('cardno').value,
@@ -61,7 +97,10 @@ async function handleUpdate(e) {
     // A blank reference card keeps the guest's current link as it is, and a
     // guest type goes only with a reference card
     referenceCardno: reference || null,
-    guestType: reference ? document.getElementById('guestType').value || null : null
+    referencePhone: phone || null,
+    guestType: reference || phone ? document.getElementById('guestType').value || null : null,
+    // A department goes only with a Seva Kutir card
+    department: department || null
   };
 
   try {
@@ -110,6 +149,13 @@ function populateForm(data) {
   // A guest card comes with its current reference card and guest type
   loadedCard = data;
   document.getElementById('referenceCardno').value = data.referenceCardno || '';
+  document.getElementById('referencePhone').value = '';
+  document.getElementById('refPhoneName').textContent = '';
+  const deptSelect = document.getElementById('department');
+  if (data.department && ![...deptSelect.options].some((o) => o.value === data.department)) {
+    deptSelect.add(new Option(data.department, data.department));
+  }
+  deptSelect.value = data.department || '';
   setGuestType(data.guestType);
   updateGuestFields();
 
@@ -143,8 +189,15 @@ function updateGuestFields() {
   document.querySelectorAll('.guest-only').forEach((el) => {
     el.style.display = isGuest ? '' : 'none';
   });
+  document.querySelectorAll('.seva-kutir-only').forEach((el) => {
+    el.style.display = document.getElementById('res_status').value === 'SEVA KUTIR' ? '' : 'none';
+  });
 
   const reference = document.getElementById('referenceCardno');
+  // Hidden inputs must not block the submit through validation
+  reference.disabled = !isGuest;
+  document.getElementById('referencePhone').disabled = !isGuest;
+  const phoneGiven = document.getElementById('referencePhone').value.trim() !== '';
   const guestType = document.getElementById('guestType');
   const hint = document.getElementById('referenceHint');
   const wasGuest = loadedCard?.res_status === 'GUEST';
@@ -153,7 +206,7 @@ function updateGuestFields() {
   // A card that becomes a guest needs a reference card. A guest with one on
   // record can move to another card but not clear it, since a blank field
   // keeps the current link.
-  reference.required = isGuest && (!wasGuest || Boolean(currentHost));
+  reference.required = isGuest && (!wasGuest || Boolean(currentHost)) && !phoneGiven;
   if (!wasGuest) {
     hint.textContent = "Enter the card number of the member this person is a guest of.";
   } else if (currentHost) {
@@ -165,7 +218,7 @@ function updateGuestFields() {
 
   // A guest type belongs to the reference card link, so it needs a card number.
   // The chosen type stays while the field is blank, so retyping a card keeps it.
-  const hasReference = reference.value.trim() !== '';
+  const hasReference = reference.value.trim() !== '' || phoneGiven;
   guestType.disabled = !isGuest || !hasReference;
   guestType.required = isGuest && hasReference;
 }
@@ -184,7 +237,7 @@ async function fetchCountries(currentCountry, currentState, currentCity) {
     data.forEach(c => {
       const val = c.value || c;
       const selected = val === currentCountry ? 'selected' : '';
-      countryDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      countryDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
     if (currentCountry) fetchStates(currentCountry, currentState, currentCity);
   } catch (err) { console.warn(err); }
@@ -205,7 +258,7 @@ async function fetchStates(country, currentState, currentCity) {
     data.forEach(s => {
       const val = s.value || s;
       const selected = val === currentState ? 'selected' : '';
-      stateDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      stateDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
     if (currentState) fetchCities(country, currentState, currentCity);
   } catch (err) { console.error(err); }
@@ -226,7 +279,7 @@ async function fetchCities(country, state, currentCity) {
     data.forEach(c => {
       const val = c.value || c;
       const selected = val === currentCity ? 'selected' : '';
-      cityDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      cityDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
   } catch (err) { console.error(err); }
 }
@@ -245,12 +298,12 @@ const fetchCenters = async (currentCenter) => {
     centersData.forEach(c => {
       const val = c.value || c;
       const selected = val === currentCenter ? 'selected' : '';
-      centerDropdown.innerHTML += `<option value="${val}" ${selected}>${val}</option>`;
+      centerDropdown.innerHTML += `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(val)}</option>`;
     });
 
     // If currentCenter is not in the fetched list, add it
     if (currentCenter && !centersData.find(c => (c.value || c) === currentCenter)) {
-      centerDropdown.innerHTML += `<option value="${currentCenter}" selected>${currentCenter}</option>`;
+      centerDropdown.innerHTML += `<option value="${escapeHtml(currentCenter)}" selected>${escapeHtml(currentCenter)}</option>`;
     }
   } catch (err) {
     console.error('Error fetching centers:', err);
