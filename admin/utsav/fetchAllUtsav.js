@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Map to store utsav by id for quick lookup of location & other attributes
   const utsavMap = {};
+  const RESEARCH_CENTRE = 'Research Centre';
+
+  function isResearchCentre(location) {
+    return location === RESEARCH_CENTRE;
+  }
 
   function formatMeals(meals) {
     if (!meals) return '-';
@@ -14,6 +19,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (!Array.isArray(arr) || !arr.length) return '-';
     return arr.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ');
+  }
+
+  function getSelectedMeals(selectEl) {
+    if (!selectEl) return [];
+    return Array.from(selectEl.selectedOptions).map(o => o.value);
+  }
+
+  function prefillMultiSelect(selectEl, values) {
+    if (!selectEl) return;
+    let vals = values;
+    if (typeof vals === 'string') {
+      try { vals = JSON.parse(vals); } catch(e) { vals = []; }
+    }
+    if (!Array.isArray(vals)) vals = [];
+    Array.from(selectEl.options).forEach(opt => {
+      opt.selected = vals.includes(opt.value);
+    });
+  }
+
+  function renderMealSelectOptions() {
+    return `
+      <option value="breakfast">Breakfast</option>
+      <option value="lunch">Lunch</option>
+      <option value="dinner">Dinner</option>
+    `;
   }
 
   /* ======================================================
@@ -45,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const editForm = document.getElementById('packageEditForm');
 
   let currentEditingUtsavId = null;
+  let currentEditingIsRC = false;
 
   function openPackageModal() {
     modal.style.display = 'block';
@@ -61,6 +92,34 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('click', (e) => {
     if (e.target === modal) closePackageModal();
   });
+
+  // Toggle meal fields in Package Edit Modal based on RC and same-day (start === end)
+  function toggleEditPackageMealFields() {
+    const startGroup = document.getElementById('edit_package_starting_meal_group');
+    const endGroup = document.getElementById('edit_package_ending_meal_group');
+    const endSelect = document.getElementById('edit_package_ending_meal');
+
+    if (!currentEditingIsRC) {
+      if (startGroup) startGroup.style.display = 'none';
+      if (endGroup) endGroup.style.display = 'none';
+      return;
+    }
+
+    if (startGroup) startGroup.style.display = '';
+
+    const startVal = document.getElementById('edit_package_start')?.value;
+    const endVal = document.getElementById('edit_package_end')?.value;
+
+    if (startVal && endVal && startVal === endVal) {
+      if (endGroup) endGroup.style.display = 'none';
+      if (endSelect) Array.from(endSelect.options).forEach(o => o.selected = false);
+    } else {
+      if (endGroup) endGroup.style.display = '';
+    }
+  }
+
+  document.getElementById('edit_package_start')?.addEventListener('change', toggleEditPackageMealFields);
+  document.getElementById('edit_package_end')?.addEventListener('change', toggleEditPackageMealFields);
 
   /* ======================================================
      BULK MODAL REFERENCES
@@ -131,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPackageTable(packages, utsavId) {
     let html = '';
-    const isRC = utsavMap[utsavId]?.location === 'Research Centre';
+    const isRC = isResearchCentre(utsavMap[utsavId]?.location);
 
     if (!packages.length) {
       html += '<center>No packages found</center>';
@@ -363,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.add-more-packages-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         bulkUtsavId = this.dataset.utsavid;
-        const isRC = utsavMap[bulkUtsavId]?.location === 'Research Centre';
+        const isRC = isResearchCentre(utsavMap[bulkUtsavId]?.location);
 
         // Toggle bulk meal columns in table header
         document.querySelectorAll('.bulk-meal-col').forEach(el => {
@@ -377,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function addBulkRow() {
-    const isRC = utsavMap[bulkUtsavId]?.location === 'Research Centre';
+    const isRC = isResearchCentre(utsavMap[bulkUtsavId]?.location);
     const tr = document.createElement('tr');
 
     if (isRC) {
@@ -388,20 +447,34 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><input type="number" class="form-control pkg-amount" required></td>
         <td class="bulk-meal-col">
           <select class="form-control pkg-starting-meal" multiple>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
+            ${renderMealSelectOptions()}
           </select>
         </td>
         <td class="bulk-meal-col">
           <select class="form-control pkg-ending-meal" multiple>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
+            ${renderMealSelectOptions()}
           </select>
         </td>
         <td><button type="button" class="btn btn-danger remove-row">X</button></td>
       `;
+
+      // Handle same-day (start === end) in bulk row
+      const checkSameDay = () => {
+        const s = tr.querySelector('.pkg-start')?.value;
+        const e = tr.querySelector('.pkg-end')?.value;
+        const endSelect = tr.querySelector('.pkg-ending-meal');
+        if (s && e && s === e) {
+          if (endSelect) {
+            endSelect.style.visibility = 'hidden';
+            Array.from(endSelect.options).forEach(o => o.selected = false);
+          }
+        } else if (endSelect) {
+          endSelect.style.visibility = 'visible';
+        }
+      };
+
+      tr.querySelector('.pkg-start')?.addEventListener('change', checkSameDay);
+      tr.querySelector('.pkg-end')?.addEventListener('change', checkSameDay);
     } else {
       tr.innerHTML = `
         <td><input class="form-control pkg-name" required></td>
@@ -429,29 +502,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   saveBulkBtn?.addEventListener('click', async () => {
     const rows = document.querySelectorAll('#bulkPackageTable tbody tr');
-    const isRC = utsavMap[bulkUtsavId]?.location === 'Research Centre';
+    const isRC = isResearchCentre(utsavMap[bulkUtsavId]?.location);
 
     const packages = [];
 
     rows.forEach(row => {
+      const sDate = row.querySelector('.pkg-start').value;
+      const eDate = row.querySelector('.pkg-end').value;
+      const isSameDay = sDate && eDate && sDate === eDate;
+
       const startSelect = row.querySelector('.pkg-starting-meal');
       const endSelect = row.querySelector('.pkg-ending-meal');
-      const startingMeal = (isRC && startSelect)
-        ? Array.from(startSelect.selectedOptions).map(o => o.value)
-        : [];
-      const endingMeal = (isRC && endSelect)
-        ? Array.from(endSelect.selectedOptions).map(o => o.value)
-        : [];
 
-      packages.push({
+      const startingMeal = (isRC && startSelect) ? getSelectedMeals(startSelect) : [];
+      const endingMeal = (isRC && endSelect && !isSameDay) ? getSelectedMeals(endSelect) : [];
+
+      const pkgData = {
         utsavid: bulkUtsavId,
         name: row.querySelector('.pkg-name').value,
-        start_date: row.querySelector('.pkg-start').value,
-        end_date: row.querySelector('.pkg-end').value,
-        amount: row.querySelector('.pkg-amount').value,
-        starting_meal: startingMeal.length ? startingMeal : null,
-        ending_meal: endingMeal.length ? endingMeal : null
-      });
+        start_date: sDate,
+        end_date: eDate,
+        amount: row.querySelector('.pkg-amount').value
+      };
+
+      if (isRC) {
+        pkgData.starting_meal = startingMeal.length ? startingMeal : null;
+        pkgData.ending_meal = endingMeal.length ? endingMeal : null;
+      }
+
+      packages.push(pkgData);
     });
 
     try {
@@ -558,38 +637,22 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('edit_package_amount').value = pkg.amount;
 
           currentEditingUtsavId = pkg.utsavid;
+          // Determine isRC once and save in currentEditingIsRC for both open and submit
+          currentEditingIsRC = isResearchCentre(pkg.location) || isResearchCentre(utsavMap[pkg.utsavid]?.location);
 
-          // Check if parent utsav is Research Centre
-          const isRC = pkg.location === 'Research Centre' || utsavMap[pkg.utsavid]?.location === 'Research Centre';
-          const startMealGroup = document.getElementById('edit_package_starting_meal_group');
-          const endMealGroup = document.getElementById('edit_package_ending_meal_group');
           const startMealSelect = document.getElementById('edit_package_starting_meal');
           const endMealSelect = document.getElementById('edit_package_ending_meal');
 
-          if (isRC) {
-            if (startMealGroup) startMealGroup.style.display = '';
-            if (endMealGroup) endMealGroup.style.display = '';
-
-            const prefillSelect = (selectEl, values) => {
-              if (!selectEl) return;
-              let vals = values;
-              if (typeof vals === 'string') {
-                try { vals = JSON.parse(vals); } catch(e) { vals = []; }
-              }
-              if (!Array.isArray(vals)) vals = [];
-              Array.from(selectEl.options).forEach(opt => {
-                opt.selected = vals.includes(opt.value);
-              });
-            };
-
-            prefillSelect(startMealSelect, pkg.starting_meal);
-            prefillSelect(endMealSelect, pkg.ending_meal);
+          if (currentEditingIsRC) {
+            prefillMultiSelect(startMealSelect, pkg.starting_meal);
+            prefillMultiSelect(endMealSelect, pkg.ending_meal);
           } else {
-            if (startMealGroup) startMealGroup.style.display = 'none';
-            if (endMealGroup) endMealGroup.style.display = 'none';
             if (startMealSelect) Array.from(startMealSelect.options).forEach(o => o.selected = false);
             if (endMealSelect) Array.from(endMealSelect.options).forEach(o => o.selected = false);
           }
+
+          // Apply visibility & same-day logic
+          toggleEditPackageMealFields();
 
           openPackageModal();
         } catch (err) {
@@ -657,26 +720,30 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
 
     const id = document.getElementById('edit_package_id').value;
-    const isRC = utsavMap[currentEditingUtsavId]?.location === 'Research Centre';
+    const sDate = document.getElementById('edit_package_start').value;
+    const eDate = document.getElementById('edit_package_end').value;
+    const isSameDay = sDate && eDate && sDate === eDate;
+
+    // Use currentEditingIsRC computed consistently during open
+    const isRC = currentEditingIsRC;
 
     const startMealSelect = document.getElementById('edit_package_starting_meal');
     const endMealSelect = document.getElementById('edit_package_ending_meal');
 
-    const startingMeal = (isRC && startMealSelect)
-      ? Array.from(startMealSelect.selectedOptions).map(o => o.value)
-      : [];
-    const endingMeal = (isRC && endMealSelect)
-      ? Array.from(endMealSelect.selectedOptions).map(o => o.value)
-      : [];
+    const startingMeal = (isRC && startMealSelect) ? getSelectedMeals(startMealSelect) : [];
+    const endingMeal = (isRC && endMealSelect && !isSameDay) ? getSelectedMeals(endMealSelect) : [];
 
     const payload = {
       name: document.getElementById('edit_package_name').value,
-      start_date: document.getElementById('edit_package_start').value,
-      end_date: document.getElementById('edit_package_end').value,
-      amount: document.getElementById('edit_package_amount').value,
-      starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null
+      start_date: sDate,
+      end_date: eDate,
+      amount: document.getElementById('edit_package_amount').value
     };
+
+    if (isRC) {
+      payload.starting_meal = startingMeal.length ? startingMeal : null;
+      payload.ending_meal = endingMeal.length ? endingMeal : null;
+    }
 
     try {
       const response = await fetch(

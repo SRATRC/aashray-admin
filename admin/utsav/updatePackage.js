@@ -17,13 +17,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       );
       const packageData = await response.json();
-      fillFormData(packageData);
+      await fillFormData(packageData);
     } catch (error) {
       console.log('Error while fetching the package data: ' + error);
     }
   };
 
-  const fillFormData = (packageData) => {
+  const toggleMealFields = () => {
+    const startMealGroup = document.getElementById('starting_meal')?.closest('.form-group');
+    const endMealGroup = document.getElementById('ending_meal')?.closest('.form-group');
+    const endMealSelect = document.getElementById('ending_meal');
+
+    if (!isRC) {
+      if (startMealGroup) startMealGroup.style.display = 'none';
+      if (endMealGroup) endMealGroup.style.display = 'none';
+      return;
+    }
+
+    if (startMealGroup) startMealGroup.style.display = '';
+
+    const s = document.getElementById('start_date')?.value;
+    const e = document.getElementById('end_date')?.value;
+
+    if (s && e && s === e) {
+      if (endMealGroup) endMealGroup.style.display = 'none';
+      if (endMealSelect) Array.from(endMealSelect.options).forEach(o => o.selected = false);
+    } else {
+      if (endMealGroup) endMealGroup.style.display = '';
+    }
+  };
+
+  document.getElementById('start_date')?.addEventListener('change', toggleMealFields);
+  document.getElementById('end_date')?.addEventListener('change', toggleMealFields);
+
+  const fillFormData = async (packageData) => {
     const data = packageData.data;
     document.getElementById('id').value = data.id;
     document.getElementById('name').value = data.name;
@@ -33,13 +60,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     isRC = data.location === 'Research Centre';
 
-    const startMealGroup = document.getElementById('starting_meal')?.closest('.form-group');
-    const endMealGroup = document.getElementById('ending_meal')?.closest('.form-group');
+    // Fallback: if data.location was missing, fetch parent utsav directly
+    const effectiveUtsavId = utsavId || data.utsavid;
+    if (!isRC && effectiveUtsavId) {
+      try {
+        const uRes = await fetch(`${CONFIG.basePath}/utsav/fetch/${effectiveUtsavId}`, {
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        });
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          isRC = uData.data?.location === 'Research Centre';
+        }
+      } catch (err) {
+        console.error('Error fetching parent utsav details:', err);
+      }
+    }
 
     if (isRC) {
-      if (startMealGroup) startMealGroup.style.display = '';
-      if (endMealGroup) endMealGroup.style.display = '';
-
       const prefillSelect = (id, values) => {
         if (!values) return;
         let vals = values;
@@ -55,10 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       prefillSelect('starting_meal', data.starting_meal);
       prefillSelect('ending_meal', data.ending_meal);
-    } else {
-      if (startMealGroup) startMealGroup.style.display = 'none';
-      if (endMealGroup) endMealGroup.style.display = 'none';
     }
+
+    toggleMealFields();
 
     document.getElementById('saveButton').addEventListener('click', () => {
       updatePackageDetails(document.getElementById('id').value);
@@ -69,24 +105,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const packageFormData = document.getElementById('editPackageForm');
     const packageForm = new FormData(packageFormData);
 
+    const sDate = packageForm.get('start_date');
+    const eDate = packageForm.get('end_date');
+    const isSameDay = sDate && eDate && sDate === eDate;
+
     const startMealSelect = document.getElementById('starting_meal');
     const endMealSelect = document.getElementById('ending_meal');
 
     const startingMeal = (isRC && startMealSelect)
       ? Array.from(startMealSelect.selectedOptions).map(o => o.value)
       : [];
-    const endingMeal = (isRC && endMealSelect)
+    const endingMeal = (isRC && endMealSelect && !isSameDay)
       ? Array.from(endMealSelect.selectedOptions).map(o => o.value)
       : [];
 
     const updatedData = {
       name: packageForm.get('name'),
-      start_date: packageForm.get('start_date'),
-      end_date: packageForm.get('end_date'),
-      amount: parseFloat(packageForm.get('amount')),
-      starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null
+      start_date: sDate,
+      end_date: eDate,
+      amount: parseFloat(packageForm.get('amount'))
     };
+
+    // Only send meal config when isRC to avoid unintentionally clearing existing values
+    if (isRC) {
+      updatedData.starting_meal = startingMeal.length ? startingMeal : null;
+      updatedData.ending_meal = endingMeal.length ? endingMeal : null;
+    }
 
     try {
       const response = await fetch(
