@@ -52,18 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
     document.getElementById('registration_deadline').value = data.registration_deadline;
-
-    const prefillSelect = (id, values) => {
-      if (!values) return;
-      const select = document.getElementById(id);
-      Array.from(select.options).forEach(opt => {
-        opt.selected = values.includes(opt.value);
-      });
-    };
-    prefillSelect('starting_meal', data.starting_meal);
-    prefillSelect('ending_meal', data.ending_meal);
-
-    toggleMealFields();
     
     document.getElementById('saveButton').addEventListener('click', () => {
       updateUtsavDetails(document.getElementById('id').value);
@@ -76,8 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const utsavFormData = document.getElementById('editUtsavForm');
     const utsavForm = new FormData(utsavFormData);
-    const startingMeal = Array.from(document.getElementById('starting_meal').selectedOptions).map(o => o.value);
-    const endingMeal = Array.from(document.getElementById('ending_meal').selectedOptions).map(o => o.value);
 
     const updatedData = {
       name: utsavForm.get('name'),
@@ -88,9 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
       comments: utsavForm.get('comments'),
       location: utsavForm.get('location'),
       whatsapp_link: utsavForm.get('whatsapp_link') || null,
-      registration_deadline: utsavForm.get('registration_deadline'),
-      starting_meal: startingMeal.length ? startingMeal : null,
-      ending_meal: endingMeal.length ? endingMeal : null
+      registration_deadline: utsavForm.get('registration_deadline')
     };
 
     try {
@@ -120,36 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error while updating the data: ' + error);
     }
   };
-
-  function toggleMealFields() {
-    const location = document.getElementById('location').value.trim();
-    const isRC = location === 'Research Centre';
-    const startingMealGroup = document.getElementById('starting_meal').closest('.form-group');
-    const endingMealGroup = document.getElementById('ending_meal').closest('.form-group');
-
-    if (!isRC) {
-      startingMealGroup.style.display = 'none';
-      endingMealGroup.style.display = 'none';
-      Array.from(document.getElementById('starting_meal').options).forEach(o => o.selected = false);
-      Array.from(document.getElementById('ending_meal').options).forEach(o => o.selected = false);
-      return;
-    }
-
-    startingMealGroup.style.display = '';
-
-    const start = document.getElementById('start_date').value;
-    const end = document.getElementById('end_date').value;
-    if (start && end && start === end) {
-      endingMealGroup.style.display = 'none';
-      Array.from(document.getElementById('ending_meal').options).forEach(o => o.selected = false);
-    } else {
-      endingMealGroup.style.display = '';
-    }
-  }
-
-  document.getElementById('location').addEventListener('input', toggleMealFields);
-  document.getElementById('start_date').addEventListener('change', toggleMealFields);
-  document.getElementById('end_date').addEventListener('change', toggleMealFields);
 
   // Call fetchUtsavDetails to retrieve the Utsav data for editing
   fetchUtsavDetails(utsavToEdit);
