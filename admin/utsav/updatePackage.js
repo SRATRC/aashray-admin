@@ -1,15 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-const urlParams = new URLSearchParams(window.location.search);
-const packageToEdit = urlParams.get('id');
-const utsavId = urlParams.get('utsavId');
+  const urlParams = new URLSearchParams(window.location.search);
+  const packageToEdit = urlParams.get('id');
+  const utsavId = urlParams.get('utsavId');
 
-console.log('packageToEdit:', packageToEdit);
-console.log('utsavId:', utsavId);
+  let isRC = false;
 
   const fetchPackageDetails = async (packageToEdit) => {
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/utsav/fetchpackage/${packageToEdit}`, // Adjust API path if needed
+        `${CONFIG.basePath}/utsav/fetchpackage/${packageToEdit}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -32,26 +31,66 @@ console.log('utsavId:', utsavId);
     document.getElementById('end_date').value = data.end_date;
     document.getElementById('amount').value = data.amount;
 
+    isRC = data.location === 'Research Centre';
+
+    const startMealGroup = document.getElementById('starting_meal')?.closest('.form-group');
+    const endMealGroup = document.getElementById('ending_meal')?.closest('.form-group');
+
+    if (isRC) {
+      if (startMealGroup) startMealGroup.style.display = '';
+      if (endMealGroup) endMealGroup.style.display = '';
+
+      const prefillSelect = (id, values) => {
+        if (!values) return;
+        let vals = values;
+        if (typeof vals === 'string') {
+          try { vals = JSON.parse(vals); } catch(e) { vals = []; }
+        }
+        if (!Array.isArray(vals)) vals = [];
+        const select = document.getElementById(id);
+        if (!select) return;
+        Array.from(select.options).forEach(opt => {
+          opt.selected = vals.includes(opt.value);
+        });
+      };
+      prefillSelect('starting_meal', data.starting_meal);
+      prefillSelect('ending_meal', data.ending_meal);
+    } else {
+      if (startMealGroup) startMealGroup.style.display = 'none';
+      if (endMealGroup) endMealGroup.style.display = 'none';
+    }
+
     document.getElementById('saveButton').addEventListener('click', () => {
       updatePackageDetails(document.getElementById('id').value);
     });
   };
 
   const updatePackageDetails = async (packageId) => {
-    console.log('Updating Package with Id: ' + packageId);
-    console.log('Updating Package with Utsav Id: ' + utsavId);
     const packageFormData = document.getElementById('editPackageForm');
     const packageForm = new FormData(packageFormData);
+
+    const startMealSelect = document.getElementById('starting_meal');
+    const endMealSelect = document.getElementById('ending_meal');
+
+    const startingMeal = (isRC && startMealSelect)
+      ? Array.from(startMealSelect.selectedOptions).map(o => o.value)
+      : [];
+    const endingMeal = (isRC && endMealSelect)
+      ? Array.from(endMealSelect.selectedOptions).map(o => o.value)
+      : [];
+
     const updatedData = {
       name: packageForm.get('name'),
       start_date: packageForm.get('start_date'),
       end_date: packageForm.get('end_date'),
-      amount: parseFloat(packageForm.get('amount'))
+      amount: parseFloat(packageForm.get('amount')),
+      starting_meal: startingMeal.length ? startingMeal : null,
+      ending_meal: endingMeal.length ? endingMeal : null
     };
 
     try {
       const response = await fetch(
-        `${CONFIG.basePath}/utsav/updatepackage/${packageId}/${utsavId}`, // Adjust API path if needed
+        `${CONFIG.basePath}/utsav/updatepackage/${packageId}`,
         {
           method: 'PUT',
           headers: {
@@ -63,13 +102,10 @@ console.log('utsavId:', utsavId);
       );
 
       if (response.ok) {
-        const updateResponse = await response.json();
-        console.log('Update Response: ', updateResponse);
         alert('Utsav Package details updated successfully!');
-        window.location.href = 'fetchAllUtsav.html'; // Change to your package list page
+        window.location.href = 'fetchAllUtsav.html';
       } else {
         const data = await response.json();
-        console.error('Update failed:', data.message);
         alert(`Error: ${data.message}`);
       }
     } catch (error) {

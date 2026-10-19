@@ -3,25 +3,38 @@ document.addEventListener('DOMContentLoaded', () => {
     .getElementById('utsavList')
     .querySelector('tbody');
 
-    /* ======================================================
-   UTSAV EDIT MODAL REFERENCES
-====================================================== */
+  // Map to store utsav by id for quick lookup of location & other attributes
+  const utsavMap = {};
 
-const utsavModal = document.getElementById('utsavEditModal');
-const closeUtsavModalBtn = document.getElementById('closeUtsavModal');
-const utsavEditForm = document.getElementById('utsavEditForm');
+  function formatMeals(meals) {
+    if (!meals) return '-';
+    let arr = meals;
+    if (typeof arr === 'string') {
+      try { arr = JSON.parse(arr); } catch(e) { return arr; }
+    }
+    if (!Array.isArray(arr) || !arr.length) return '-';
+    return arr.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ');
+  }
 
-function openUtsavModal() {
-  utsavModal.style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
+  /* ======================================================
+     UTSAV EDIT MODAL REFERENCES
+  ====================================================== */
 
-function closeUtsavModal() {
-  utsavModal.style.display = 'none';
-  document.body.style.overflow = 'auto';
-}
+  const utsavModal = document.getElementById('utsavEditModal');
+  const closeUtsavModalBtn = document.getElementById('closeUtsavModal');
+  const utsavEditForm = document.getElementById('utsavEditForm');
 
-closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
+  function openUtsavModal() {
+    utsavModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeUtsavModal() {
+    utsavModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
 
   /* ======================================================
      EDIT MODAL REFERENCES
@@ -50,7 +63,7 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
   });
 
   /* ======================================================
-     BULK MODAL REFERENCES (FIXED)
+     BULK MODAL REFERENCES
   ====================================================== */
 
   const bulkModal = document.getElementById('bulkPackageModal');
@@ -117,62 +130,64 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
   ====================================================== */
 
   function renderPackageTable(packages, utsavId) {
-  let html = '';
+    let html = '';
+    const isRC = utsavMap[utsavId]?.location === 'Research Centre';
 
-  if (!packages.length) {
-    html += '<center>No packages found</center>';
-  } else {
-    html += `
-      <table class="table table-bordered">
-        <thead>
+    if (!packages.length) {
+      html += '<center>No packages found</center>';
+    } else {
+      html += `
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th><center>#</center></th>
+              <th><center>Package Name</center></th>
+              <th><center>Start Date</center></th>
+              <th><center>End Date</center></th>
+              <th><center>Amount</center></th>
+              ${isRC ? '<th><center>Starting Meal</center></th><th><center>Ending Meal</center></th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      packages.forEach((pkg, i) => {
+        html += `
           <tr>
-            <th><center>#</center></th>
-            <th><center>Package Name</center></th>
-            <th><center>Start Date</center></th>
-            <th><center>End Date</center></th>
-            <th><center>Amount</center></th>
+            <td style="text-align:center;">${i + 1}</td>
+            <td style="text-align:center;">
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                ${pkg.name}
+                <a href="javascript:void(0)"
+                   class="edit-package-btn"
+                   data-id="${pkg.id}"
+                   title="Edit Package">
+                   <i class="fas fa-pen"></i>
+                </a>
+              </span>
+            </td>
+            <td style="text-align:center;">${formatDate(pkg.start_date)}</td>
+            <td style="text-align:center;">${formatDate(pkg.end_date)}</td>
+            <td style="text-align:center;">${pkg.amount}</td>
+            ${isRC ? `<td style="text-align:center;">${formatMeals(pkg.starting_meal)}</td><td style="text-align:center;">${formatMeals(pkg.ending_meal)}</td>` : ''}
           </tr>
-        </thead>
-        <tbody>
+        `;
+      });
+
+      html += '</tbody></table>';
+    }
+
+    html += `
+      <div style="margin-top:10px; text-align:left;">
+        <button class="btn btn-primary add-more-packages-btn"
+                data-utsavid="${utsavId}">
+          + Add More Packages
+        </button>
+      </div>
     `;
 
-    packages.forEach((pkg, i) => {
-  html += `
-    <tr>
-      <td style="text-align:center;">${i + 1}</td>
-      <td style="text-align:center;">
-        <span style="display:inline-flex; align-items:center; gap:6px;">
-          ${pkg.name}
-          <a href="javascript:void(0)"
-             class="edit-package-btn"
-             data-id="${pkg.id}"
-             title="Edit Package">
-             <i class="fas fa-pen"></i>
-          </a>
-        </span>
-      </td>
-      <td style="text-align:center;">${formatDate(pkg.start_date)}</td>
-      <td style="text-align:center;">${formatDate(pkg.end_date)}</td>
-      <td style="text-align:center;">${pkg.amount}</td>
-    </tr>
-  `;
-});
-
-    html += '</tbody></table>';
+    return html;
   }
-
-  // ✅ BUTTON NOW BELOW + LEFT
-  html += `
-    <div style="margin-top:10px; text-align:left;">
-      <button class="btn btn-primary add-more-packages-btn"
-              data-utsavid="${utsavId}">
-        + Add More Packages
-      </button>
-    </div>
-  `;
-
-  return html;
-}
 
   /* ======================================================
      POPULATE UTSAV TABLE
@@ -188,29 +203,28 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
     }
 
     data.forEach((item, index) => {
+      utsavMap[item.id] = item;
+
       const tableRow = document.createElement('tr');
 
       tableRow.innerHTML = `
         <td style="text-align:center;">${index + 1}</td>
-<td style="text-align:center;">
-  <span style="display:inline-flex; align-items:center; gap:6px;">
-
-    <a href="javascript:void(0)"
-       class="toggle-packages"
-       data-id="${item.id}">
-       ${item.name}
-    </a>
-
-    <a href="javascript:void(0)"
-       class="edit-utsav-btn"
-       data-id="${item.id}"
-       title="Edit Utsav">
-       <i class="fas fa-pen"></i>
-    </a>
-
-  </span>
-</td>
-<td style="text-align:center;">${formatDate(item.start_date)}</td>
+        <td style="text-align:center;">
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <a href="javascript:void(0)"
+               class="toggle-packages"
+               data-id="${item.id}">
+               ${item.name}
+            </a>
+            <a href="javascript:void(0)"
+               class="edit-utsav-btn"
+               data-id="${item.id}"
+               title="Edit Utsav">
+               <i class="fas fa-pen"></i>
+            </a>
+          </span>
+        </td>
+        <td style="text-align:center;">${formatDate(item.start_date)}</td>
         <td style="text-align:center;">${formatDate(item.end_date)}</td>
         <td style="text-align:center;">${formatDate(item.registration_deadline)}</td>
         <td style="text-align:center;">${item.total_seats}</td>
@@ -283,68 +297,79 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
   }
 
   /* ======================================================
-     ADD MORE HANDLERS
+     UTSAV EDIT HANDLERS
   ====================================================== */
 
   function attachUtsavEditHandlers() {
-  document.querySelectorAll('.edit-utsav-btn').forEach(btn => {
-    btn.addEventListener('click', async function () {
-      const utsavId = this.dataset.id;
+    document.querySelectorAll('.edit-utsav-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        const utsavId = this.dataset.id;
 
-      try {
-        const response = await fetch(
-          `${CONFIG.basePath}/utsav/fetch/${utsavId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        try {
+          const response = await fetch(
+            `${CONFIG.basePath}/utsav/fetch/${utsavId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${sessionStorage.getItem('token')}`
+              }
             }
+          );
+
+          const result = await response.json();
+          const data = result.data;
+
+          document.getElementById('edit_utsav_id').value = data.id;
+          document.getElementById('edit_utsav_name').value = data.name;
+          document.getElementById('edit_utsav_start').value =
+            data.start_date?.split('T')[0];
+          document.getElementById('edit_utsav_end').value =
+            data.end_date?.split('T')[0];
+          document.getElementById('edit_utsav_total').value = data.total_seats;
+          document.getElementById('edit_utsav_available').value = data.available_seats;
+          document.getElementById('edit_utsav_location').value = data.location;
+          document.getElementById('edit_utsav_whatsapp').value = data.whatsapp_link || '';
+
+          const shortlinkGroup = document.getElementById('edit_utsav_shortlink_group');
+          const shortlinkInput = document.getElementById('edit_utsav_shortlink');
+          const shortlinkUrl = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/u${data.id}`;
+          shortlinkInput.value = shortlinkUrl;
+          shortlinkGroup.style.display = 'block';
+
+          const copyBtn = document.getElementById('copy_utsav_shortlink_btn');
+          if (copyBtn) {
+            copyBtn.onclick = () => {
+              navigator.clipboard.writeText(shortlinkUrl);
+              alert('Shortlink copied to clipboard!');
+            };
           }
-        );
 
-        const result = await response.json();
-        const data = result.data;
+          document.getElementById('edit_utsav_deadline').value =
+            data.registration_deadline?.split('T')[0];
 
-        document.getElementById('edit_utsav_id').value = data.id;
-        document.getElementById('edit_utsav_name').value = data.name;
-        document.getElementById('edit_utsav_start').value =
-          data.start_date?.split('T')[0];
-        document.getElementById('edit_utsav_end').value =
-          data.end_date?.split('T')[0];
-        document.getElementById('edit_utsav_total').value = data.total_seats;
-        document.getElementById('edit_utsav_available').value = data.available_seats;
-        document.getElementById('edit_utsav_location').value = data.location;
-        document.getElementById('edit_utsav_whatsapp').value = data.whatsapp_link || '';
-
-        const shortlinkGroup = document.getElementById('edit_utsav_shortlink_group');
-        const shortlinkInput = document.getElementById('edit_utsav_shortlink');
-        const shortlinkUrl = `${CONFIG.baseUrl.replace('/api/v1', '')}/go/u${data.id}`;
-        shortlinkInput.value = shortlinkUrl;
-        shortlinkGroup.style.display = 'block';
-
-        const copyBtn = document.getElementById('copy_utsav_shortlink_btn');
-        if (copyBtn) {
-          copyBtn.onclick = () => {
-            navigator.clipboard.writeText(shortlinkUrl);
-            alert('Shortlink copied to clipboard!');
-          };
+          openUtsavModal();
+        } catch (err) {
+          console.error(err);
+          alert('Failed to load utsav');
         }
-
-        document.getElementById('edit_utsav_deadline').value =
-          data.registration_deadline?.split('T')[0];
-
-        openUtsavModal();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to load utsav');
-      }
+      });
     });
-  });
-}
+  }
+
+  /* ======================================================
+     ADD MORE PACKAGES (BULK) HANDLERS
+  ====================================================== */
 
   function attachAddMoreHandlers() {
     document.querySelectorAll('.add-more-packages-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         bulkUtsavId = this.dataset.utsavid;
+        const isRC = utsavMap[bulkUtsavId]?.location === 'Research Centre';
+
+        // Toggle bulk meal columns in table header
+        document.querySelectorAll('.bulk-meal-col').forEach(el => {
+          el.style.display = isRC ? '' : 'none';
+        });
+
         addBulkRow();
         openBulkModal();
       });
@@ -352,20 +377,45 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
   }
 
   function addBulkRow() {
+    const isRC = utsavMap[bulkUtsavId]?.location === 'Research Centre';
     const tr = document.createElement('tr');
 
-    tr.innerHTML = `
-      <td><input class="form-control pkg-name"></td>
-      <td><input type="date" class="form-control pkg-start"></td>
-      <td><input type="date" class="form-control pkg-end"></td>
-      <td><input type="number" class="form-control pkg-amount"></td>
-      <td><button class="btn btn-danger remove-row">X</button></td>
-    `;
+    if (isRC) {
+      tr.innerHTML = `
+        <td><input class="form-control pkg-name" required></td>
+        <td><input type="date" class="form-control pkg-start" required></td>
+        <td><input type="date" class="form-control pkg-end" required></td>
+        <td><input type="number" class="form-control pkg-amount" required></td>
+        <td class="bulk-meal-col">
+          <select class="form-control pkg-starting-meal" multiple>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+          </select>
+        </td>
+        <td class="bulk-meal-col">
+          <select class="form-control pkg-ending-meal" multiple>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+          </select>
+        </td>
+        <td><button type="button" class="btn btn-danger remove-row">X</button></td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td><input class="form-control pkg-name" required></td>
+        <td><input type="date" class="form-control pkg-start" required></td>
+        <td><input type="date" class="form-control pkg-end" required></td>
+        <td><input type="number" class="form-control pkg-amount" required></td>
+        <td><button type="button" class="btn btn-danger remove-row">X</button></td>
+      `;
+    }
 
     bulkTableBody.appendChild(tr);
   }
 
-  addRowBtn?.addEventListener('click', addBulkRow);
+  addRowBtn?.addEventListener('click', () => addBulkRow());
 
   bulkTableBody?.addEventListener('click', e => {
     if (e.target.classList.contains('remove-row')) {
@@ -379,16 +429,28 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
 
   saveBulkBtn?.addEventListener('click', async () => {
     const rows = document.querySelectorAll('#bulkPackageTable tbody tr');
+    const isRC = utsavMap[bulkUtsavId]?.location === 'Research Centre';
 
     const packages = [];
 
     rows.forEach(row => {
+      const startSelect = row.querySelector('.pkg-starting-meal');
+      const endSelect = row.querySelector('.pkg-ending-meal');
+      const startingMeal = (isRC && startSelect)
+        ? Array.from(startSelect.selectedOptions).map(o => o.value)
+        : [];
+      const endingMeal = (isRC && endSelect)
+        ? Array.from(endSelect.selectedOptions).map(o => o.value)
+        : [];
+
       packages.push({
         utsavid: bulkUtsavId,
         name: row.querySelector('.pkg-name').value,
         start_date: row.querySelector('.pkg-start').value,
         end_date: row.querySelector('.pkg-end').value,
-        amount: row.querySelector('.pkg-amount').value
+        amount: row.querySelector('.pkg-amount').value,
+        starting_meal: startingMeal.length ? startingMeal : null,
+        ending_meal: endingMeal.length ? endingMeal : null
       });
     });
 
@@ -424,196 +486,241 @@ closeUtsavModalBtn?.addEventListener('click', closeUtsavModal);
   });
 
   const toggleStatus = async (event) => {
-  const button = event.target;
-  const utsavId = button.dataset.id;
-  const currentStatus = button.dataset.status;
-  const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+    const button = event.target;
+    const utsavId = button.dataset.id;
+    const currentStatus = button.dataset.status;
+    const newStatus = currentStatus === 'open' ? 'closed' : 'open';
 
-  if (!confirm(`Are you sure you want to ${newStatus === 'open' ? 'open' : 'close'} this Utsav?`)) {
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `${CONFIG.basePath}/utsav/${utsavId}/${newStatus}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
-      }
-    );
-
-    const result = await response.json();
-
-    if (response.ok) {
-      alert(`Success: ${result.message}`);
-      fetchUtsavList();
-    } else {
-      alert(`Error: ${result.message}`);
+    if (!confirm(`Are you sure you want to ${newStatus === 'open' ? 'open' : 'close'} this Utsav?`)) {
+      return;
     }
-  } catch (error) {
-    alert(`Error: ${error.message}`);
-    console.error('Error updating status:', error);
-  }
-};
+
+    try {
+      const response = await fetch(
+        `${CONFIG.basePath}/utsav/${utsavId}/${newStatus}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          }
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Success: ${result.message}`);
+        fetchUtsavList();
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+      console.error('Error updating status:', error);
+    }
+  };
 
   function attachStatusHandlers() {
-  document.querySelectorAll('.toggle-status').forEach((button) => {
-    button.addEventListener('click', toggleStatus);
-  });
-}
+    document.querySelectorAll('.toggle-status').forEach((button) => {
+      button.addEventListener('click', toggleStatus);
+    });
+  }
 
-function attachPackageEditHandlers() {
-  document.querySelectorAll('.edit-package-btn').forEach(btn => {
-    btn.addEventListener('click', async function () {
-      const packageId = this.dataset.id;
+  /* ======================================================
+     PACKAGE EDIT HANDLER (OPEN MODAL & PREFILL)
+  ====================================================== */
 
-      try {
-        const response = await fetch(
-          `${CONFIG.basePath}/utsav/fetchpackage/${packageId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem('token')}`
+  function attachPackageEditHandlers() {
+    document.querySelectorAll('.edit-package-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        const packageId = this.dataset.id;
+
+        try {
+          const response = await fetch(
+            `${CONFIG.basePath}/utsav/fetchpackage/${packageId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${sessionStorage.getItem('token')}`
+              }
             }
+          );
+
+          const result = await response.json();
+          const pkg = result.data;
+
+          document.getElementById('edit_package_id').value = pkg.id;
+          document.getElementById('edit_package_name').value = pkg.name;
+          document.getElementById('edit_package_start').value =
+            pkg.start_date?.split('T')[0];
+          document.getElementById('edit_package_end').value =
+            pkg.end_date?.split('T')[0];
+          document.getElementById('edit_package_amount').value = pkg.amount;
+
+          currentEditingUtsavId = pkg.utsavid;
+
+          // Check if parent utsav is Research Centre
+          const isRC = pkg.location === 'Research Centre' || utsavMap[pkg.utsavid]?.location === 'Research Centre';
+          const startMealGroup = document.getElementById('edit_package_starting_meal_group');
+          const endMealGroup = document.getElementById('edit_package_ending_meal_group');
+          const startMealSelect = document.getElementById('edit_package_starting_meal');
+          const endMealSelect = document.getElementById('edit_package_ending_meal');
+
+          if (isRC) {
+            if (startMealGroup) startMealGroup.style.display = '';
+            if (endMealGroup) endMealGroup.style.display = '';
+
+            const prefillSelect = (selectEl, values) => {
+              if (!selectEl) return;
+              let vals = values;
+              if (typeof vals === 'string') {
+                try { vals = JSON.parse(vals); } catch(e) { vals = []; }
+              }
+              if (!Array.isArray(vals)) vals = [];
+              Array.from(selectEl.options).forEach(opt => {
+                opt.selected = vals.includes(opt.value);
+              });
+            };
+
+            prefillSelect(startMealSelect, pkg.starting_meal);
+            prefillSelect(endMealSelect, pkg.ending_meal);
+          } else {
+            if (startMealGroup) startMealGroup.style.display = 'none';
+            if (endMealGroup) endMealGroup.style.display = 'none';
+            if (startMealSelect) Array.from(startMealSelect.options).forEach(o => o.selected = false);
+            if (endMealSelect) Array.from(endMealSelect.options).forEach(o => o.selected = false);
           }
+
+          openPackageModal();
+        } catch (err) {
+          console.error(err);
+          alert('Failed to load package');
+        }
+      });
+    });
+  }
+
+  /* ======================================================
+     UTSAV UPDATE SUBMIT
+  ====================================================== */
+
+  utsavEditForm?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const id = document.getElementById('edit_utsav_id').value;
+
+    const payload = {
+      name: document.getElementById('edit_utsav_name').value,
+      start_date: document.getElementById('edit_utsav_start').value,
+      end_date: document.getElementById('edit_utsav_end').value,
+      total_seats: document.getElementById('edit_utsav_total').value,
+      available_seats: document.getElementById('edit_utsav_available').value,
+      location: document.getElementById('edit_utsav_location').value,
+      whatsapp_link: document.getElementById('edit_utsav_whatsapp').value || null,
+      registration_deadline:
+        document.getElementById('edit_utsav_deadline').value
+    };
+
+    try {
+      const response = await fetch(
+        `${CONFIG.basePath}/utsav/update/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Utsav updated successfully');
+        closeUtsavModal();
+        fetchUtsavList(); // refresh table
+      } else {
+        alert(result.message || 'Update failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Update failed');
+    }
+  });
+
+  /* ======================================================
+     PACKAGE UPDATE SUBMIT
+  ====================================================== */
+
+  editForm?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const id = document.getElementById('edit_package_id').value;
+    const isRC = utsavMap[currentEditingUtsavId]?.location === 'Research Centre';
+
+    const startMealSelect = document.getElementById('edit_package_starting_meal');
+    const endMealSelect = document.getElementById('edit_package_ending_meal');
+
+    const startingMeal = (isRC && startMealSelect)
+      ? Array.from(startMealSelect.selectedOptions).map(o => o.value)
+      : [];
+    const endingMeal = (isRC && endMealSelect)
+      ? Array.from(endMealSelect.selectedOptions).map(o => o.value)
+      : [];
+
+    const payload = {
+      name: document.getElementById('edit_package_name').value,
+      start_date: document.getElementById('edit_package_start').value,
+      end_date: document.getElementById('edit_package_end').value,
+      amount: document.getElementById('edit_package_amount').value,
+      starting_meal: startingMeal.length ? startingMeal : null,
+      ending_meal: endingMeal.length ? endingMeal : null
+    };
+
+    try {
+      const response = await fetch(
+        `${CONFIG.basePath}/utsav/updatepackage/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Package updated successfully');
+        closePackageModal();
+
+        // Refresh that utsav package list
+        const container = document.getElementById(
+          `packages-${currentEditingUtsavId}`
         );
 
-        const result = await response.json();
-        const pkg = result.data;
+        const packages = await fetchPackagesByUtsav(
+          currentEditingUtsavId
+        );
 
-        document.getElementById('edit_package_id').value = pkg.id;
-        document.getElementById('edit_package_name').value = pkg.name;
-        document.getElementById('edit_package_start').value =
-          pkg.start_date?.split('T')[0];
-        document.getElementById('edit_package_end').value =
-          pkg.end_date?.split('T')[0];
-        document.getElementById('edit_package_amount').value = pkg.amount;
+        container.innerHTML = renderPackageTable(
+          packages,
+          currentEditingUtsavId
+        );
 
-        currentEditingUtsavId = pkg.utsavid;
-
-        openPackageModal();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to load package');
+        attachPackageEditHandlers();
+        attachAddMoreHandlers();
+      } else {
+        alert(result.message || 'Update failed');
       }
-    });
+    } catch (err) {
+      console.error(err);
+      alert('Update failed');
+    }
   });
-}
-/* ======================================================
-   UTSAV UPDATE SUBMIT
-====================================================== */
-
-utsavEditForm?.addEventListener('submit', async function (e) {
-  e.preventDefault();
-
-  const id = document.getElementById('edit_utsav_id').value;
-
-  const payload = {
-    name: document.getElementById('edit_utsav_name').value,
-    start_date: document.getElementById('edit_utsav_start').value,
-    end_date: document.getElementById('edit_utsav_end').value,
-    total_seats: document.getElementById('edit_utsav_total').value,
-    available_seats: document.getElementById('edit_utsav_available').value,
-    location: document.getElementById('edit_utsav_location').value,
-    whatsapp_link: document.getElementById('edit_utsav_whatsapp').value || null,
-    registration_deadline:
-      document.getElementById('edit_utsav_deadline').value
-  };
-
-  try {
-    const response = await fetch(
-      `${CONFIG.basePath}/utsav/update/${id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      }
-    );
-
-    const result = await response.json();
-
-    if (response.ok) {
-      alert('Utsav updated successfully');
-      closeUtsavModal();
-      fetchUtsavList(); // refresh table
-    } else {
-      alert(result.message || 'Update failed');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Update failed');
-  }
-});
-
-
-  /* ====================================================== */
-/* ======================================================
-   PACKAGE UPDATE SUBMIT 
-====================================================== */
-
-editForm?.addEventListener('submit', async function (e) {
-  e.preventDefault(); // ✅ STOPS PAGE REFRESH
-
-  const id = document.getElementById('edit_package_id').value;
-
-  const payload = {
-    name: document.getElementById('edit_package_name').value,
-    start_date: document.getElementById('edit_package_start').value,
-    end_date: document.getElementById('edit_package_end').value,
-    amount: document.getElementById('edit_package_amount').value
-  };
-
-  try {
-    const response = await fetch(
-      `${CONFIG.basePath}/utsav/updatepackage/${id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      }
-    );
-
-    const result = await response.json();
-
-    if (response.ok) {
-      alert('Package updated successfully');
-
-      closePackageModal();
-
-      // ✅ refresh only that utsav package list
-      const container = document.getElementById(
-        `packages-${currentEditingUtsavId}`
-      );
-
-      const packages = await fetchPackagesByUtsav(
-        currentEditingUtsavId
-      );
-
-      container.innerHTML = renderPackageTable(
-        packages,
-        currentEditingUtsavId
-      );
-
-      attachPackageEditHandlers();
-      attachAddMoreHandlers();
-
-    } else {
-      alert(result.message || 'Update failed');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Update failed');
-  }
-});
 
   fetchUtsavList();
-
 });
