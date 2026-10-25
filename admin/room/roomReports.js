@@ -141,6 +141,21 @@ async function flat_checkout(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
 
+function formatStatusWithHoldReason(booking) {
+  if (booking.status !== 'waiting') return booking.status;
+  const reasonMap = {
+    'RC_BLOCKED': 'RC Blocked',
+    'ROOM_UNAVAILABLE': 'No Room Available',
+    'ROLLING_WINDOW_LIMIT': 'Rolling Cap',
+    'UTSAV_BOUNDARY': 'Event Boundary Date',
+    'MANUAL': 'Manual Waitlist'
+  };
+  const label = reasonMap[booking.hold_reason] || booking.hold_reason;
+  return label
+    ? `waiting <span style="font-size: 0.85em; color: #b45309; display: block; font-weight: 500;">(${label})</span>`
+    : 'waiting';
+}
+
 function createRoomBookingRow(booking, index) {
   const row = document.createElement('tr');
   row.innerHTML = `
@@ -157,7 +172,7 @@ function createRoomBookingRow(booking, index) {
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
-    <td>${booking.status}</td>
+    <td>${formatStatusWithHoldReason(booking)}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
     <td>${booking.transactions?.[0]?.description || '-'}</td>
     <td>${booking.bookedBy || "Self"}</td>
@@ -183,7 +198,7 @@ function createFlatBookingRow(booking, index) {
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
-    <td>${booking.status}</td>
+    <td>${formatStatusWithHoldReason(booking)}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
     <td>${booking.transactions?.[0]?.description || '-'}</td> 
     <td>${booking.bookedBy || "Self"}</td>
@@ -362,6 +377,24 @@ function openGenericModal(bookingid, type) {
 
   document.getElementById('modal_bookingid').value = booking.bookingid;
   document.getElementById('modal_bookingid_display').value = booking.bookingid;
+
+  const holdReasonGroup = document.getElementById('modal_hold_reason_group');
+  const holdReasonInput = document.getElementById('modal_hold_reason');
+  if (holdReasonGroup && holdReasonInput) {
+    if (booking.status === 'waiting' && booking.hold_reason) {
+      const reasonMap = {
+        'RC_BLOCKED': 'Research Centre Blocked (Manual Block)',
+        'ROOM_UNAVAILABLE': 'No Room Available',
+        'ROLLING_WINDOW_LIMIT': 'Rolling Cap Exceeded (9 nights / 30 days)',
+        'UTSAV_BOUNDARY': 'Event Boundary Date',
+        'MANUAL': 'Manual Waitlist'
+      };
+      holdReasonInput.value = reasonMap[booking.hold_reason] || booking.hold_reason;
+      holdReasonGroup.style.display = 'block';
+    } else {
+      holdReasonGroup.style.display = 'none';
+    }
+  }
 
   const perNight = type === 'room' && booking.roomtype?.toLowerCase() === 'ac' ? 1100 : 700;
   const baseAmount = perNight * booking.nights;
