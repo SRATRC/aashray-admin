@@ -141,16 +141,20 @@ async function flat_checkout(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
 
+const HOLD_REASON_LABELS = {
+  RC_BLOCKED: { short: 'RC Blocked', long: 'Research Centre Blocked (Manual Block)' },
+  ROOM_UNAVAILABLE: { short: 'No Room Available', long: 'No Room Available' },
+  ROLLING_WINDOW_LIMIT: { short: 'Rolling Cap', long: 'Rolling Cap Exceeded' },
+  UTSAV_BOUNDARY: { short: 'Event Boundary Date', long: 'Event Boundary Date' },
+  MANUAL: { short: 'Manual Waitlist', long: 'Manual Waitlist' }
+};
+
 function formatStatusWithHoldReason(booking) {
   if (booking.status !== 'waiting') return booking.status;
-  const reasonMap = {
-    'RC_BLOCKED': 'RC Blocked',
-    'ROOM_UNAVAILABLE': 'No Room Available',
-    'ROLLING_WINDOW_LIMIT': 'Rolling Cap',
-    'UTSAV_BOUNDARY': 'Event Boundary Date',
-    'MANUAL': 'Manual Waitlist'
-  };
-  const label = reasonMap[booking.hold_reason] || booking.hold_reason;
+  const entry = HOLD_REASON_LABELS[booking.hold_reason];
+  const label = entry
+    ? entry.short
+    : (booking.hold_reason ? (typeof window.escapeHtml === 'function' ? window.escapeHtml(booking.hold_reason) : booking.hold_reason) : null);
   return label
     ? `waiting <span style="font-size: 0.85em; color: #b45309; display: block; font-weight: 500;">(${label})</span>`
     : 'waiting';
@@ -382,14 +386,8 @@ function openGenericModal(bookingid, type) {
   const holdReasonInput = document.getElementById('modal_hold_reason');
   if (holdReasonGroup && holdReasonInput) {
     if (booking.status === 'waiting' && booking.hold_reason) {
-      const reasonMap = {
-        'RC_BLOCKED': 'Research Centre Blocked (Manual Block)',
-        'ROOM_UNAVAILABLE': 'No Room Available',
-        'ROLLING_WINDOW_LIMIT': 'Rolling Cap Exceeded (9 nights / 30 days)',
-        'UTSAV_BOUNDARY': 'Event Boundary Date',
-        'MANUAL': 'Manual Waitlist'
-      };
-      holdReasonInput.value = reasonMap[booking.hold_reason] || booking.hold_reason;
+      const entry = HOLD_REASON_LABELS[booking.hold_reason];
+      holdReasonInput.value = entry ? entry.long : booking.hold_reason;
       holdReasonGroup.style.display = 'block';
     } else {
       holdReasonGroup.style.display = 'none';
