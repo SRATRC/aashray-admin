@@ -141,6 +141,25 @@ async function flat_checkout(bookingid) {
   await fetchUrl(`${CONFIG.basePath}/stay/flat_checkout/${bookingid}`);
 }
 
+const HOLD_REASON_LABELS = {
+  RC_BLOCKED: { short: 'RC Blocked', long: 'Research Centre Blocked (Manual Block)' },
+  ROOM_UNAVAILABLE: { short: 'No Room Available', long: 'No Room Available' },
+  ROLLING_WINDOW_LIMIT: { short: 'Rolling Cap', long: 'Rolling Cap Exceeded' },
+  UTSAV_BOUNDARY: { short: 'Event Boundary Date', long: 'Event Boundary Date' },
+  MANUAL: { short: 'Manual Waitlist', long: 'Manual Waitlist' }
+};
+
+function formatStatusWithHoldReason(booking) {
+  if (booking.status !== 'waiting') return booking.status;
+  const entry = HOLD_REASON_LABELS[booking.hold_reason];
+  const label = entry
+    ? entry.short
+    : (booking.hold_reason ? (typeof window.escapeHtml === 'function' ? window.escapeHtml(booking.hold_reason) : booking.hold_reason) : null);
+  return label
+    ? `waiting <span style="font-size: 0.85em; color: #b45309; display: block; font-weight: 500;">(${label})</span>`
+    : 'waiting';
+}
+
 function createRoomBookingRow(booking, index) {
   const row = document.createElement('tr');
   row.innerHTML = `
@@ -157,7 +176,7 @@ function createRoomBookingRow(booking, index) {
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
-    <td>${booking.status}</td>
+    <td>${formatStatusWithHoldReason(booking)}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
     <td>${booking.transactions?.[0]?.description || '-'}</td>
     <td>${booking.bookedBy || "Self"}</td>
@@ -183,7 +202,7 @@ function createFlatBookingRow(booking, index) {
     <td>${formatDate(booking.checkin)}</td>
     <td>${formatDate(booking.checkout)}</td>
     <td>${booking.nights}</td>
-    <td>${booking.status}</td>
+    <td>${formatStatusWithHoldReason(booking)}</td>
     <td>${booking.transactions?.[0]?.status || '-'}</td>
     <td>${booking.transactions?.[0]?.description || '-'}</td> 
     <td>${booking.bookedBy || "Self"}</td>
@@ -362,6 +381,18 @@ function openGenericModal(bookingid, type) {
 
   document.getElementById('modal_bookingid').value = booking.bookingid;
   document.getElementById('modal_bookingid_display').value = booking.bookingid;
+
+  const holdReasonGroup = document.getElementById('modal_hold_reason_group');
+  const holdReasonInput = document.getElementById('modal_hold_reason');
+  if (holdReasonGroup && holdReasonInput) {
+    if (booking.status === 'waiting' && booking.hold_reason) {
+      const entry = HOLD_REASON_LABELS[booking.hold_reason];
+      holdReasonInput.value = entry ? entry.long : booking.hold_reason;
+      holdReasonGroup.style.display = 'block';
+    } else {
+      holdReasonGroup.style.display = 'none';
+    }
+  }
 
   const perNight = type === 'room' && booking.roomtype?.toLowerCase() === 'ac' ? 1100 : 700;
   const baseAmount = perNight * booking.nights;

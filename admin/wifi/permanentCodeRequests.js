@@ -222,7 +222,7 @@ function setupDownloadAndUploadButtons(data) {
     <button id="updateExcelBtn" class="btn btn-secondary">Update from Excel</button>
     <button id="insertExcelBtn" class="btn btn-success">Insert from Excel</button>
     <label style="display:inline-flex; align-items:center; gap:4px; margin:0 10px; cursor:pointer;">
-      <input type="checkbox" id="dryRunCheckbox" checked /> Dry Run
+      <input type="checkbox" id="dryRunCheckbox" /> Dry Run
     </label>
     <input type="file" id="updateExcelInput" accept=".xlsx,.xls" hidden />
     <input type="file" id="insertExcelInput" accept=".xlsx,.xls" hidden />
