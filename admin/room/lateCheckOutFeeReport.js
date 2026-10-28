@@ -58,10 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
         actionBtn = `<button type="button" class="btn btn-success btn-sm" onclick="toggleRevoke(${row.id},'cash pending')">Restore</button>`;
       }
 
+      if (payment_type === "overdue_checkouts") {
+        actionBtn = `<button type="button" class="btn btn-warning btn-sm" onclick="checkoutOverdueBooking('${row.bookingid}', ${row.is_flat || false})">Check Out</button>`;
+      }
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td>
-        <td>₹${row.amount || 0}</td>
+        <td>${row.is_overdue ? (row.amount || 'Overdue') : `₹${row.amount || 0}`}</td>
         <td>${actionBtn}</td>
         <td>${row.bookingid || '-'}</td>
         <td>${row.guest_name || '-'}</td>
@@ -77,6 +81,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     enhanceTable("reportTable", "tableSearch");
   }
+
+  window.checkoutOverdueBooking = async (bookingId, isFlat) => {
+    if (!confirm(`Are you sure you want to check out ${isFlat ? 'Flat' : 'Room'} booking ${bookingId}? Any applicable late fees will be calculated.`)) {
+      return;
+    }
+
+    try {
+      const endpoint = isFlat ? `/stay/flat_checkout/${bookingId}` : `/stay/checkout/${bookingId}`;
+      const res = await fetch(`${CONFIG.basePath}${endpoint}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`
+        }
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        alert(json.message || "Guest checked out successfully!");
+        loadReport();
+      } else {
+        alert(json.message || "Failed to check out guest");
+      }
+    } catch (error) {
+      console.error("Error checking out booking:", error);
+      alert("An error occurred during check out. Please check console.");
+    }
+  };
 
   window.toggleRevoke = async (transactionId, status) => {
     console.log(`toggleRevoke called with: transactionId=${transactionId}, status=${status}`);

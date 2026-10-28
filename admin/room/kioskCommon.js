@@ -243,11 +243,11 @@ const Kiosk = (() => {
     });
   }
 
-  async function run(handleCard, rawScannedText) {
+  async function run(handleCard, rawScannedText, fromCamera = false) {
     if (isProcessing) return;
     const cardno = extractCardNo(rawScannedText);
     if (!cardno) return;
-    if (cardno === lastCard && Date.now() - lastReleaseAt < RESCAN_COOLDOWN_MS) return;
+    if (fromCamera && cardno === lastCard && Date.now() - lastReleaseAt < RESCAN_COOLDOWN_MS) return;
     lastCard = cardno;
     isProcessing = true;
     playBeep();
@@ -289,7 +289,7 @@ const Kiosk = (() => {
     html5QrcodeScanner.start(
       cameraId,
       { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => { if (!isProcessing) run(cardHandler, decodedText); },
+      (decodedText) => { if (!isProcessing) run(cardHandler, decodedText, true); },
       () => { /* routine scanning frame errors */ }
     ).catch((err) => console.error('Unable to start camera:', err));
   }
