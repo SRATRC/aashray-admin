@@ -5,11 +5,14 @@
 const Kiosk = (() => {
   const CONFIRM_TIMEOUT_SECONDS = 30;
   const RESULT_SECONDS = 5;
+  const RESCAN_COOLDOWN_MS = 8000;
 
   let html5QrcodeScanner = null;
   let camerasList = [];
   let cameraIndex = 0;
   let isProcessing = false;
+  let lastCard = '';
+  let lastReleaseAt = 0;
   let autoResetTimer = null;
   let confirmTimer = null;
   let buffer = '';
@@ -66,11 +69,14 @@ const Kiosk = (() => {
   // Fetches the card's bookings. Returns { data } on success, or { error: {title, message} }.
   async function fetchBookings(cardno) {
     const res = await fetch(
-      `${CONFIG.basePath}/stay/fetch_room_bookings/${encodeURIComponent(cardno)}?kiosk=true`,
+      `${CONFIG.basePath}/stay/kiosk/bookings/${encodeURIComponent(cardno)}`,
       { headers: authHeaders() }
     );
     if (res.status === 401 || res.status === 403) {
       return { error: { title: 'Session Expired', message: 'This kiosk needs to be logged in again. Please ask staff for assistance.' } };
+    }
+    if (res.status === 404) {
+      return { error: { title: 'Card Not Found', message: `Card No: ${cardno} was not found.` } };
     }
     if (!res.ok) {
       return { error: { title: 'System Error', message: 'Something went wrong. Please contact staff.' } };
@@ -109,14 +115,17 @@ const Kiosk = (() => {
   async function fetchWifiCode(cardno) {
     try {
       const listRes = await fetch(
-        `${CONFIG.basePath}/stay/kiosk/wifi/fetch-temp-codes/${encodeURIComponent(cardno)}`,
+        `${CONFIG.basePath}/stay/kiosk/wifi/fetch_temp_codes/${encodeURIComponent(cardno)}`,
         { headers: authHeaders() }
       );
       if (listRes.ok) {
         const list = await listRes.json();
-        if (list.data && list.data.length > 0) return list.data[list.data.length - 1].password;
+        if (list.data && list.data.length > 0) {
+          const sorted = [...list.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          return sorted[0].password;
+        }
       }
-      const genRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/generate-temp-code`, {
+      const genRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/generate_temp_code`, {
         method: 'POST',
         headers: authHeaders(true),
         body: JSON.stringify({ cardno })
@@ -131,6 +140,7 @@ const Kiosk = (() => {
 
   function release() {
     document.getElementById('manualCardNo').value = '';
+    lastReleaseAt = Date.now();
     isProcessing = false;
   }
 
@@ -237,6 +247,8 @@ const Kiosk = (() => {
     if (isProcessing) return;
     const cardno = extractCardNo(rawScannedText);
     if (!cardno) return;
+    if (cardno === lastCard && Date.now() - lastReleaseAt < RESCAN_COOLDOWN_MS) return;
+    lastCard = cardno;
     isProcessing = true;
     playBeep();
     try {
@@ -288,8 +300,12 @@ const Kiosk = (() => {
     startCamera(camerasList[cameraIndex].id);
   }
 
-  function start(opts) {
-    settings = { ...settings, beepHz: opts.beepHz, beepSeconds: opts.beepSeconds };
+  function start(opts = {}) {
+    settings = {
+      ...settings,
+      ...(opts.beepHz && { beepHz: opts.beepHz }),
+      ...(opts.beepSeconds && { beepSeconds: opts.beepSeconds })
+    };
     const handleCard = opts.handleCard;
     document.addEventListener('DOMContentLoaded', () => {
       if (!token()) {
