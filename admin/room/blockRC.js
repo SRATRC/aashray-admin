@@ -1,24 +1,23 @@
+function isWaitlistAllowed(block) {
+  return block.allow_waitlist == null ? true : Boolean(Number(block.allow_waitlist));
+}
+
 function getAction(block) {
   switch (block.status) {
     case 'active':
-      const toggleLabel = block.allow_waitlist !== false ? 'Switch to Hard Block' : 'Switch to Waitlist';
-      const toggleColor = block.allow_waitlist !== false ? '#dc2626' : '#059669';
-      return `
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button type="button" class="btn btn-sm" onclick="toggleBlockMode('${block.id}')" style="background: none; border: 1px solid ${toggleColor}; color: ${toggleColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-            ${toggleLabel}
-          </button>
-          <a href='#' onclick="return unblock('${block.id}')" style="color: #64748b; font-size: 0.85rem; text-decoration: underline;">Unblock</a>
-        </div>
-      `;
+      return `<a href='#' onclick="return unblock('${block.id}')" style="color: #64748b; font-size: 0.85rem; text-decoration: underline;">Unblock</a>`;
     default:
       return '';
   }
 }
 
-async function toggleBlockMode(blockid) {
+async function toggleBlockMode(blockid, targetMode) {
+  if (!confirm('Change the booking mode for this RC block?')) {
+    return false;
+  }
   resetAlert();
   try {
+    const payload = typeof targetMode === 'boolean' ? { allow_waitlist: targetMode } : {};
     const response = await fetch(
       `${CONFIG.basePath}/stay/toggle_rc_block_mode/${blockid}`,
       {
@@ -26,7 +25,8 @@ async function toggleBlockMode(blockid) {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        }
+        },
+        body: JSON.stringify(payload)
       }
     );
 
@@ -92,8 +92,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify() // Unnecessary but harmless in GET, can be removed
+        }
       }
     );
 
@@ -106,9 +105,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     blocks.forEach((block) => {
       const row = document.createElement('tr');
-      const isWaitlist = block.allow_waitlist !== false;
+      const isWaitlist = isWaitlistAllowed(block);
+      const targetMode = !isWaitlist;
       const modeBadge = block.status === 'active'
-        ? `<button type="button" onclick="toggleBlockMode('${block.id}')" title="Click to toggle between Waitlist and Hard Block" style="background:${isWaitlist ? '#059669' : '#dc2626'}; color:#fff; border:none; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">${isWaitlist ? 'Waitlist Allowed' : 'Hard Block'} <span style="font-size:0.9em;">&#8644;</span></button>`
+        ? `<button type="button" onclick="toggleBlockMode('${block.id}', ${targetMode})" title="Click to toggle between Waitlist and Hard Block" style="background:${isWaitlist ? '#059669' : '#dc2626'}; color:#fff; border:none; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">${isWaitlist ? 'Waitlist Allowed' : 'Hard Block'} <span style="font-size:0.9em;">&#8644;</span></button>`
         : `<span class="badge" style="background:${isWaitlist ? '#059669' : '#dc2626'}; color:#fff; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 0.8rem;">${isWaitlist ? 'Waitlist Allowed' : 'Hard Block'}</span>`;
       row.innerHTML = `
         <td>${block.id}</td>
