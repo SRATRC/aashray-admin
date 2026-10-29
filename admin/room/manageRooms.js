@@ -24,11 +24,15 @@ function todayIST() {
 // Same rules as the room list API: end_date is the LAST blocked day.
 function decorateBlock(b) {
   const today = todayIST();
+  const start = b.start_date ? String(b.start_date).slice(0, 10) : null;
+  const end = b.end_date ? String(b.end_date).slice(0, 10) : null;
   return {
     ...b,
-    isExpired: Boolean(b.end_date && b.end_date < today),
-    isCurrent: b.start_date <= today && (!b.end_date || b.end_date >= today),
-    isFuture: Boolean(b.start_date > today)
+    start_date: start,
+    end_date: end,
+    isExpired: Boolean(end && end < today),
+    isCurrent: Boolean(start && start <= today && (!end || end >= today)),
+    isFuture: Boolean(start && start > today)
   };
 }
 
@@ -291,12 +295,13 @@ async function submitBlock() {
     renderTable();
 
     // Show warning if there are conflicting bookings
-    if (data.warnings) {
+    const warningsObj = data.warnings || (data.warning ? { message: data.warning, bookings: [] } : null);
+    if (warningsObj) {
       const warningEl = document.getElementById('modalWarning');
-      const bookingList = data.warnings.bookings
+      const bookingList = (warningsObj.bookings || [])
         .map((b) => `${escapeHtml(b.bookingid)} (${escapeHtml(b.roomno)}: ${formatDate(b.checkin)} → ${formatDate(b.checkout)})`)
         .join(', ');
-      warningEl.innerHTML = `⚠️ <strong>${escapeHtml(data.warnings.message)}</strong><br>Affected: ${bookingList}`;
+      warningEl.innerHTML = `⚠️ <strong>${escapeHtml(warningsObj.message || 'Warning')}</strong>${bookingList ? `<br>Affected: ${bookingList}` : ''}`;
       warningEl.style.display = 'block';
       // The block is saved. Keep the modal open so the admin can read who is
       // affected; Confirm is hidden so it cannot be pressed twice.
@@ -426,7 +431,7 @@ async function submitBulkUnblock() {
       // mirror that here and keep future and permanent blocks.
       const chosen = new Set(selected);
       // India date (same as the server), not the browser's date.
-      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const today = todayIST();
       const day = (v) => String(v).slice(0, 10);
       allRooms.forEach((room) => {
         if (!chosen.has(room.roomno)) return;
@@ -540,10 +545,7 @@ function renderTable() {
 
   filteredGroups.forEach((group, index) => {
     const baseRoomNo = group.baseRoomNo;
-    const totalBeds = group.totalBeds || group.beds.length;
-    const blockedBeds =
-      group.blockedBeds ??
-      group.beds.filter((b) => (b.blocks || []).some((block) => block.isCurrent)).length;
+    const { totalBeds, blockedBeds } = group;
     
     // Status text
     let statusText = 'available';
@@ -554,11 +556,13 @@ function renderTable() {
     }
 
     // Action button for the entire room
-    const allBlocked = blockedBeds === totalBeds;
+    const allPermanentlyBlocked = group.beds.length > 0 && group.beds.every((bed) =>
+      (bed.blocks || []).some((b) => b.isCurrent && !b.end_date)
+    );
     const safeBaseRoomNo = escapeHtml(baseRoomNo);
     const safeRoomType = escapeHtml(group.roomtype);
     const safeGender = escapeHtml(group.gender);
-    const actionHtml = allBlocked
+    const actionHtml = allPermanentlyBlocked
       ? `<span style="color:#aaa; cursor:not-allowed;">Block Room</span>`
       : `<a href="#" data-action="block-room" data-room="${safeBaseRoomNo}">Block Room</a>`;
 
@@ -588,9 +592,9 @@ function renderTable() {
 
     // Render child rows representing individual beds
     group.beds.forEach((bed, subIndex) => {
-      const isBedBlocked = (bed.blocks || []).some((b) => b.isCurrent);
+      const isBedPermanentlyBlocked = (bed.blocks || []).some((b) => b.isCurrent && !b.end_date);
       const safeBedNo = escapeHtml(bed.roomno);
-      const bedActionHtml = isBedBlocked
+      const bedActionHtml = isBedPermanentlyBlocked
         ? `<span style="color:#aaa; cursor:not-allowed;">Block Bed</span>`
         : `<a href="#" data-action="block-bed" data-bed="${safeBedNo}">Block Bed</a>`;
 
@@ -623,7 +627,7 @@ function onTableClick(e) {
   if (actionEl && tableBody.contains(actionEl)) {
     e.preventDefault();
     const { action } = actionEl.dataset;
-    if (action === 'block-room') openBlockModal(`${actionEl.dataset.room}A`, true);
+    if (action === 'block-room') openBlockModal(bedsOfRoom(actionEl.dataset.room)?.[0]?.roomno ?? actionEl.dataset.room, true);
     else if (action === 'block-bed') openBlockModal(actionEl.dataset.bed, false);
     else if (action === 'edit-room') openUpdateRoomModal(actionEl.dataset.room, actionEl.dataset.type, actionEl.dataset.gender);
     else if (action === 'cancel-block') openCancelBlockModal(actionEl.dataset.blockId);
@@ -705,7 +709,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       return;
     }
 
-    allRooms = data.data;
+    allRooms = (data.data || []).map((room) => ({
+      ...room,
+      blocks: (room.blocks || []).map(decorateBlock)
+    }));
     renderTable();
 
   } catch (error) {
