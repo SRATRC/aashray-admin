@@ -13,7 +13,7 @@ function formatDate(dateStr) {
   // local time so viewers west of UTC do not see it one day early.
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
   const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(dateStr);
-  if (isNaN(d.getTime())) return String(dateStr);
+  if (isNaN(d.getTime())) return escapeHtml(String(dateStr));
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -198,7 +198,7 @@ async function submitUpdateRoom() {
   if (confirmBtn) confirmBtn.disabled = true;
 
   try {
-    const res = await fetch(`${CONFIG.basePath}/stay/update_room/${currentUpdateRoomNo}`, {
+    const res = await fetch(`${CONFIG.basePath}/stay/update_room/${encodeURIComponent(currentUpdateRoomNo)}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -556,7 +556,7 @@ function renderTable() {
     }
 
     // Action button for the entire room
-    const allPermanentlyBlocked = group.beds.length > 0 && group.beds.every((bed) =>
+    const allPermanentlyBlocked = bedsOfRoom(baseRoomNo).every((bed) =>
       (bed.blocks || []).some((b) => b.isCurrent && !b.end_date)
     );
     const safeBaseRoomNo = escapeHtml(baseRoomNo);
