@@ -40,11 +40,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('selectMonth').addEventListener('change', (e) => {
     const val = e.target.value;
     const monthNum = val === 'default' ? null : Number(val);
-    const existing = configuredRules.find(r => r.month === monthNum);
+    const existing = configuredRules.find(r => (r.month === null ? null : Number(r.month)) === monthNum);
+    const select = document.getElementById('selectMonth');
+    const monthName = monthNum === null ? 'Global Default' : MONTH_NAMES[monthNum];
+
     if (existing && existing.priority_order) {
       currentOrder = existing.priority_order.split(',').map(s => s.trim());
+      isEditMode = true;
+      document.getElementById('modalTitle').textContent = select.disabled
+        ? `Edit Priority Rule (${monthName})`
+        : `Edit Priority Rule (${monthName}) — Rule Exists`;
     } else {
       currentOrder = ['OAG_1st', 'OAG_2nd', 'NAG_1st', 'NAG_2nd'];
+      isEditMode = false;
+      document.getElementById('modalTitle').textContent = 'Add New Priority Rule';
     }
     renderPriorityList();
   });
@@ -82,7 +91,7 @@ function renderPriorityList() {
   ul.innerHTML = '';
 
   currentOrder.forEach((groupId, index) => {
-    const groupInfo = GROUPS.find(g => g.id === groupId) || { name: groupId, description: '' };
+    const groupInfo = GROUPS.find(g => g.id === groupId) || { name: escapeHtml(groupId), description: '' };
     const li = document.createElement('li');
     li.className = 'priority-item';
     li.draggable = true;

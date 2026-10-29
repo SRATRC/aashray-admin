@@ -125,7 +125,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch (e) {
         console.error('Lookup failed for mobile', mob, e);
-        if (mySeq === seq) clearFields();
+        if (mySeq === seq) {
+          clearFields();
+          lookedFor = null;
+          failMsg = `Mobile No lookup failed for ${mob}: network error`;
+          if (alertOnFail) { alert(failMsg); failMsg = null; }
+        }
       } finally {
         activeLookups--;
       }
@@ -170,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function collectRows() {
     const bookings = [];
     let isValid = true;
+    let hasDuplicate = false;
 
     tableBody.querySelectorAll('tr').forEach(tr => {
       const getVal = (field) => tr.querySelector(`[data-field="${field}"]`)?.value?.trim() || '';
@@ -184,10 +190,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!entry.cardno) {
         isValid = false;
       }
+      if (entry.cardno && bookings.some(b => b.cardno === entry.cardno)) {
+        isValid = false;
+        hasDuplicate = true;
+      }
       bookings.push(entry);
     });
 
-    return { bookings, isValid };
+    return { bookings, isValid, hasDuplicate };
   }
 
   // Guards the whole handler, not just the POST. Disabling the button further
@@ -227,12 +237,12 @@ document.addEventListener('DOMContentLoaded', function () {
       alert('Please fill in both Check-in and Check-out dates.');
       return;
     }
-    if (checkin_date > checkout_date) {
+    if (checkin_date >= checkout_date) {
       alert('Check-out date must be after Check-in date.');
       return;
     }
 
-    const { bookings, isValid } = collectRows();
+    const { bookings, isValid, hasDuplicate } = collectRows();
 
     if (bookings.length === 0) {
       alert('Please add at least one guest row with a valid Mobile No.');
@@ -240,7 +250,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (!isValid) {
-      alert('One or more rows have lookup errors. Please verify all Mobile Numbers.');
+      if (hasDuplicate) {
+        alert('Duplicate guest detected. Each guest/card can only be added once.');
+      } else {
+        alert('One or more rows have lookup errors. Please verify all Mobile Numbers.');
+      }
       return;
     }
 
