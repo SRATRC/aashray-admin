@@ -25,6 +25,23 @@ const Kiosk = (() => {
     return sessionStorage.getItem('token');
   }
 
+  function tokenExpired() {
+    try {
+      const payload = JSON.parse(atob(token().split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return !!payload.exp && payload.exp * 1000 < Date.now();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function sessionExpired() {
+    showResult(false, 'Session Expired', 'This kiosk needs to be logged in again. Please ask staff for assistance.');
+    setTimeout(() => {
+      sessionStorage.clear();
+      window.location.href = '/admin/index.html';
+    }, (RESULT_SECONDS + 1) * 1000);
+  }
+
   function authHeaders(json) {
     const h = { Authorization: `Bearer ${token()}` };
     if (json) h['Content-Type'] = 'application/json';
@@ -58,6 +75,8 @@ const Kiosk = (() => {
         if (obj.cardno) return String(obj.cardno).trim();
       } catch (e) {}
     }
+    const prefixed = str.match(/^cardnumber=\s*(.+)$/i);
+    if (prefixed) return prefixed[1].trim();
     // URL e.g. https://domain.com/card?cardno=000123
     if (str.includes('cardno=')) {
       const match = str.match(/cardno=([A-Za-z0-9]+)/);
@@ -73,7 +92,8 @@ const Kiosk = (() => {
       { headers: authHeaders() }
     );
     if (res.status === 401 || res.status === 403) {
-      return { error: { title: 'Session Expired', message: 'This kiosk needs to be logged in again. Please ask staff for assistance.' } };
+      sessionExpired();
+      return { handled: true };
     }
     if (res.status === 404) {
       return { error: { title: 'Card Not Found', message: `Card No: ${cardno} was not found.` } };
@@ -88,9 +108,6 @@ const Kiosk = (() => {
     return { data: body.data };
   }
 
-  // The lookup returns every booking this card has ever had, oldest first and with
-  // no date window. Pick the checked-in stay that covers today; failing that (the
-  // overstay case) the most recent stay that has actually started.
   function currentCheckedIn(bookings, today) {
     const checkedIn = bookings.filter((b) => b.status === 'checkedin');
     const covering = checkedIn.filter((b) => b.checkin <= today && b.checkout >= today);
@@ -136,6 +153,17 @@ const Kiosk = (() => {
       console.error('Error fetching WiFi code:', e);
     }
     return null;
+  }
+
+  function showCameraProblem(text) {
+    let el = document.getElementById('cameraMessage');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'cameraMessage';
+      el.style.cssText = 'color:#dc3545;font-weight:600;margin:12px 0 0;';
+      document.getElementById('reader').insertAdjacentElement('afterend', el);
+    }
+    el.innerText = text;
   }
 
   function release() {
@@ -186,10 +214,9 @@ const Kiosk = (() => {
     }, 1000);
   }
 
-  // Shows "is this you?" with the name (and room, when given) and waits for the
   // guest. Resolves true on Confirm, false on Cancel or when nobody answers in time.
   // Cancel releases the scanner; nothing is sent to the server.
-  function confirm({ question, guestName, roomNo, confirmLabel }) {
+  function confirm({ question, guestName, roomNo, note, confirmLabel }) {
     return new Promise((resolve) => {
       let overlay = document.getElementById('confirmOverlay');
       if (!overlay) {
@@ -204,6 +231,7 @@ const Kiosk = (() => {
               <div style="font-size:0.85rem;color:#6c757d;text-transform:uppercase;">Room / Flat</div>
               <div id="confirmRoomNo" class="room-badge">--</div>
             </div>
+            <div id="confirmNote" style="white-space:pre-line;margin-top:12px;font-size:0.95rem;color:#664d03;"></div>
             <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;">
               <button type="button" id="confirmCancelBtn" style="padding:12px 28px;font-size:1rem;border:1px solid #ced4da;background:#fff;border-radius:8px;cursor:pointer;">Cancel</button>
               <button type="button" id="confirmOkBtn" style="padding:12px 28px;font-size:1rem;border:0;background:#28a745;color:#fff;border-radius:8px;cursor:pointer;"></button>
@@ -216,6 +244,7 @@ const Kiosk = (() => {
       document.getElementById('confirmGuestName').innerText = guestName || '';
       document.getElementById('confirmRoomBox').style.display = roomNo ? 'block' : 'none';
       document.getElementById('confirmRoomNo').innerText = roomNo || '--';
+      document.getElementById('confirmNote').innerText = note || '';
       const okBtn = document.getElementById('confirmOkBtn');
       const cancelBtn = document.getElementById('confirmCancelBtn');
       okBtn.innerText = confirmLabel;
@@ -251,6 +280,10 @@ const Kiosk = (() => {
     lastCard = cardno;
     isProcessing = true;
     playBeep();
+    if (tokenExpired()) {
+      sessionExpired();
+      return;
+    }
     try {
       await handleCard(cardno);
     } catch (err) {
@@ -269,9 +302,11 @@ const Kiosk = (() => {
         startCamera(camerasList[cameraIndex].id);
       } else {
         console.warn('No camera devices found.');
+        showCameraProblem('No camera found. Type the card number below or use the USB scanner.');
       }
     } catch (err) {
       console.error('Camera initialization error:', err);
+      showCameraProblem('Camera is not available. Allow camera access, or type the card number below or use the USB scanner.');
     }
   }
 
@@ -291,7 +326,10 @@ const Kiosk = (() => {
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (decodedText) => { if (!isProcessing) run(cardHandler, decodedText, true); },
       () => { /* routine scanning frame errors */ }
-    ).catch((err) => console.error('Unable to start camera:', err));
+    ).catch((err) => {
+      console.error('Unable to start camera:', err);
+      showCameraProblem('Camera could not start. Type the card number below or use the USB scanner.');
+    });
   }
 
   function switchCamera() {

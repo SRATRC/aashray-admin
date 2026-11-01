@@ -1,6 +1,7 @@
 // Self check-out kiosk. Shared scanner/modal code lives in kioskCommon.js.
 async function handleCheckout(cardno) {
-  const { data, error } = await Kiosk.fetchBookings(cardno);
+  const { data, error, handled } = await Kiosk.fetchBookings(cardno);
+  if (handled) return;
   if (error) {
     Kiosk.showResult(false, error.title, error.message);
     return;
@@ -23,10 +24,18 @@ async function handleCheckout(cardno) {
   const units = [targetRoomBooking && (targetRoomBooking.roomno || 'Room'), targetFlatBooking && (targetFlatBooking.flatno || 'Flat')]
     .filter(Boolean)
     .join(' & ');
+  const previews = [targetRoomBooking, targetFlatBooking].map((b) => b && b.checkout_preview).filter(Boolean);
+  const lateFee = previews.reduce((sum, p) => sum + (p.late_fee || 0), 0);
+  const credit = previews.reduce((sum, p) => sum + (p.credit || 0), 0);
+  const note = [
+    lateFee > 0 && `Late check-out fee: ₹${lateFee}, to be paid at the office.`,
+    credit > 0 && `Early check-out: ₹${credit} will be added to your credits.`
+  ].filter(Boolean).join('\n');
   const ok = await Kiosk.confirm({
     question: 'Check out?',
     guestName,
     roomNo: units,
+    note,
     confirmLabel: 'Confirm Check-Out'
   });
   if (!ok) return;

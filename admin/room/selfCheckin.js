@@ -1,6 +1,7 @@
 // Self check-in kiosk. Shared scanner/modal code lives in kioskCommon.js.
 async function handleCheckin(cardno) {
-  const { data, error } = await Kiosk.fetchBookings(cardno);
+  const { data, error, handled } = await Kiosk.fetchBookings(cardno);
+  if (handled) return;
   if (error) {
     Kiosk.showResult(false, error.title, error.message);
     return;
@@ -82,8 +83,10 @@ async function handleCheckin(cardno) {
   }
 
   const wifiCode = await Kiosk.fetchWifiCode(cardno);
-  const message = failures.length
-    ? `Welcome, ${guestName}! Note: ${failures.join(' ')}`
+  const notes = [...failures];
+  if (!wifiCode) notes.push('A WiFi code could not be issued. Please ask staff.');
+  const message = notes.length
+    ? `Welcome, ${guestName}! Note: ${notes.join(' ')}`
     : `Welcome to Ashram Stay, ${guestName}!`;
   Kiosk.showResult(true, 'Check-In Successful!', message, guestName, checkedInUnits.join(' & '), wifiCode);
 }
