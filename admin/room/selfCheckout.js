@@ -25,8 +25,8 @@ async function handleCheckout(cardno) {
     .filter(Boolean)
     .join(' & ');
   const previews = [targetRoomBooking, targetFlatBooking].map((b) => b && b.checkout_preview).filter(Boolean);
-  const lateFee = previews.reduce((sum, p) => sum + (p.late_fee || 0), 0);
-  const credit = previews.reduce((sum, p) => sum + (p.credit || 0), 0);
+  const lateFee = previews.reduce((sum, p) => sum + (Number(p.late_fee) || 0), 0);
+  const credit = previews.reduce((sum, p) => sum + (Number(p.credit) || 0), 0);
   const note = [
     lateFee > 0 && `Late check-out fee: ₹${lateFee}, to be paid at the office.`,
     credit > 0 && `Early check-out: ₹${credit} will be added to your credits.`
