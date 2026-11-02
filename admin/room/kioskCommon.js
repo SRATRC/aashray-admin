@@ -23,26 +23,7 @@ const Kiosk = (() => {
   let settings = { beepHz: 880, beepSeconds: 0.15 };
 
   function token() {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlToken = urlParams.get('token') || urlParams.get('kiosk_token');
-      if (urlToken) {
-        sessionStorage.setItem('token', urlToken);
-        localStorage.setItem('kiosk_token', urlToken);
-        return urlToken;
-      }
-    } catch (e) {}
-    const sToken = sessionStorage.getItem('token');
-    if (sToken) {
-      try { localStorage.setItem('kiosk_token', sToken); } catch (e) {}
-      return sToken;
-    }
-    const lToken = localStorage.getItem('kiosk_token') || localStorage.getItem('token');
-    if (lToken) {
-      try { sessionStorage.setItem('token', lToken); } catch (e) {}
-      return lToken;
-    }
-    return null;
+    return sessionStorage.getItem('token');
   }
 
   function checkSessionStatus() {
@@ -75,6 +56,7 @@ const Kiosk = (() => {
     showResult(false, 'Session Expired', 'This kiosk needs to be logged in again. Please ask staff for assistance.');
     setTimeout(() => {
       sessionStorage.clear();
+      try { localStorage.removeItem('kiosk_token'); } catch (e) {}
       window.location.href = '/admin/index.html';
     }, (RESULT_ERROR_SECONDS + 1) * 1000);
   }
