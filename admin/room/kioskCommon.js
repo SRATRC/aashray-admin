@@ -156,35 +156,120 @@ const Kiosk = (() => {
   }
 
   function showCameraProblem(text) {
-    let el = document.getElementById('cameraMessage');
-    if (!el) {
-      el = document.createElement('p');
-      el.id = 'cameraMessage';
-      el.style.cssText = 'color:#dc3545;font-weight:600;margin:12px 0 0;';
-      document.getElementById('reader').insertAdjacentElement('afterend', el);
+    const reader = document.getElementById('reader');
+    const switchBtn = document.getElementById('switchCamBtn');
+    if (switchBtn) switchBtn.style.display = 'none';
+    if (reader) reader.style.display = 'none';
+
+    let msgEl = document.getElementById('cameraMessage');
+    if (msgEl) msgEl.remove();
+
+    let prompt = document.getElementById('usbScannerPrompt');
+    if (!prompt) {
+      prompt = document.createElement('div');
+      prompt.id = 'usbScannerPrompt';
+      prompt.className = 'usb-prompt-card';
+      prompt.innerHTML = `
+        <div class="scanner-icon-pulse">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+            <path d="M7 15h2"></path>
+            <path d="M14 15h3"></path>
+          </svg>
+        </div>
+        <div class="usb-prompt-title">Scanner Ready</div>
+        <div class="usb-prompt-subtitle">Scan your card or QR with the USB scanner, or enter your card number below.</div>
+        <div class="scanner-live-badge"><span class="live-dot"></span> USB Scanner Active</div>
+      `;
+      if (reader) reader.insertAdjacentElement('afterend', prompt);
+    } else {
+      prompt.style.display = 'block';
     }
-    el.innerText = text;
+  }
+
+    function setLoading(isLoading, cardno = '') {
+    const btn = document.getElementById('submitManualBtn');
+    const input = document.getElementById('manualCardNo');
+    let pill = document.getElementById('kioskLoadingPill');
+
+    if (isLoading) {
+      if (btn) {
+        if (!btn.dataset.origText) btn.dataset.origText = btn.innerText;
+        btn.innerHTML = '<span class="kiosk-spinner"></span> Checking...';
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+      }
+      if (input) input.disabled = true;
+
+      if (!pill) {
+        pill = document.createElement('div');
+        pill.id = 'kioskLoadingPill';
+        pill.className = 'kiosk-loading-pill';
+        const card = document.querySelector('.scanner-card');
+        if (card) card.appendChild(pill);
+      }
+      if (pill) {
+        pill.style.display = 'inline-flex';
+        pill.innerHTML = '<span class="kiosk-spinner"></span> Looking up reservation for <strong>' + cardno + '</strong>...';
+      }
+    } else {
+      if (btn) {
+        btn.innerHTML = btn.dataset.origText || 'Submit';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+      if (input) input.disabled = false;
+      if (pill) pill.style.display = 'none';
+    }
   }
 
   function release() {
-    document.getElementById('manualCardNo').value = '';
+    setLoading(false);
+    const manual = document.getElementById('manualCardNo');
+    if (manual) {
+      manual.value = '';
+      manual.focus();
+    }
     lastReleaseAt = Date.now();
     isProcessing = false;
   }
 
-  function showResult(isSuccess, title, message, guestName = '', roomNo = '', wifiCode = null) {
+  function showResult(isSuccess, title, message, guestName = '', roomNo = '', wifiCode = null, roomLabel = '') {
+    setLoading(false);
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    if (confirmOverlay) {
+      confirmOverlay.style.display = 'none';
+      const okBtn = document.getElementById('confirmOkBtn');
+      const cancelBtn = document.getElementById('confirmCancelBtn');
+      if (okBtn) okBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+    }
     const overlay = document.getElementById('resultOverlay');
     const icon = document.getElementById('resultIcon');
     const titleEl = document.getElementById('resultTitle');
     const wifiBox = document.getElementById('wifiBox');
+    const roomContainer = document.getElementById('roomBadgeContainer');
     const progressFill = document.getElementById('progressFill');
 
     icon.className = `status-icon ${isSuccess ? 'icon-success' : 'icon-error'}`;
     icon.innerHTML = isSuccess ? '✓' : '✕';
-    titleEl.style.color = isSuccess ? '#28a745' : '#dc3545';
+    titleEl.style.color = isSuccess ? '#10b981' : '#ef4444';
     titleEl.innerText = title;
     document.getElementById('resultGuestName').innerText = guestName || '';
-    document.getElementById('resultRoomNo').innerText = roomNo || '--';
+    
+    if (roomContainer) {
+      if (roomNo) {
+        roomContainer.style.display = 'block';
+        document.getElementById('resultRoomNo').innerText = roomNo;
+        if (roomLabel) {
+          const labelEl = roomContainer.querySelector('.room-badge-label');
+          if (labelEl) labelEl.innerText = roomLabel;
+        }
+      } else {
+        roomContainer.style.display = 'none';
+      }
+    }
     document.getElementById('resultMessage').innerText = message || '';
 
     if (wifiBox) {
@@ -216,7 +301,8 @@ const Kiosk = (() => {
 
   // guest. Resolves true on Confirm, false on Cancel or when nobody answers in time.
   // Cancel releases the scanner; nothing is sent to the server.
-  function confirm({ question, guestName, roomNo, note, confirmLabel }) {
+  function confirm({ question, guestName, roomNo, note, bookerName, confirmLabel }) {
+    setLoading(false);
     return new Promise((resolve) => {
       let overlay = document.getElementById('confirmOverlay');
       if (!overlay) {
@@ -225,26 +311,54 @@ const Kiosk = (() => {
         overlay.className = 'overlay-result';
         overlay.innerHTML = `
           <div class="result-card">
-            <div id="confirmQuestion" class="result-title" style="color:#343a40;"></div>
-            <div id="confirmGuestName" class="result-guest">--</div>
-            <div id="confirmRoomBox">
-              <div style="font-size:0.85rem;color:#6c757d;text-transform:uppercase;">Room / Flat</div>
-              <div id="confirmRoomNo" class="room-badge">--</div>
+            <div style="width:58px;height:58px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;margin:0 auto 14px auto;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
             </div>
-            <div id="confirmNote" style="white-space:pre-line;margin-top:12px;font-size:0.95rem;color:#664d03;"></div>
-            <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;">
-              <button type="button" id="confirmCancelBtn" style="padding:12px 18px;font-size:1rem;white-space:nowrap;border:1px solid #ced4da;background:#fff;border-radius:8px;cursor:pointer;">Cancel</button>
-              <button type="button" id="confirmOkBtn" style="padding:12px 18px;font-size:1rem;white-space:nowrap;border:0;background:#28a745;color:#fff;border-radius:8px;cursor:pointer;"></button>
+            <div id="confirmQuestion" class="result-title" style="color:#0f172a;"></div>
+            <div id="confirmGuestName" class="result-guest" style="margin-bottom:6px;">--</div>
+            <div id="confirmBookerBox" style="font-size:0.9rem;color:#64748b;margin-bottom:14px;display:none;">
+              Booked by: <strong id="confirmBookerName" style="color:#1e293b;"></strong>
             </div>
-            <div style="font-size:0.8rem;color:#999;margin-top:12px;">Cancels automatically in <span id="confirmCountdown"></span>s</div>
+            <div id="confirmRoomBox" class="room-badge-card" style="display:none;">
+              <div class="room-badge-label">Room / Flat</div>
+              <div id="confirmRoomNo" class="room-badge-number">--</div>
+            </div>
+            <div id="confirmNote" style="white-space:pre-line;margin-top:12px;font-size:0.95rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;padding:12px 14px;border-radius:14px;display:none;"></div>
+            <div class="confirm-actions">
+              <button type="button" id="confirmCancelBtn" class="btn-kiosk-cancel">Cancel</button>
+              <button type="button" id="confirmOkBtn" class="btn-kiosk-confirm"></button>
+            </div>
+            <div>
+              <div class="confirm-countdown-badge">⏱ Cancels automatically in <span id="confirmCountdown"></span>s</div>
+            </div>
           </div>`;
         document.body.appendChild(overlay);
       }
       document.getElementById('confirmQuestion').innerText = question;
       document.getElementById('confirmGuestName').innerText = guestName || '';
+      const bookerBox = document.getElementById('confirmBookerBox');
+      const bookerEl = document.getElementById('confirmBookerName');
+      if (bookerBox && bookerEl) {
+        if (bookerName) {
+          bookerBox.style.display = 'block';
+          bookerEl.innerText = bookerName;
+        } else {
+          bookerBox.style.display = 'none';
+        }
+      }
       document.getElementById('confirmRoomBox').style.display = roomNo ? 'block' : 'none';
       document.getElementById('confirmRoomNo').innerText = roomNo || '--';
-      document.getElementById('confirmNote').innerText = note || '';
+      const noteEl = document.getElementById('confirmNote');
+      if (note) {
+        noteEl.style.display = 'block';
+        noteEl.innerText = note;
+      } else {
+        noteEl.style.display = 'none';
+      }
       const okBtn = document.getElementById('confirmOkBtn');
       const cancelBtn = document.getElementById('confirmCancelBtn');
       okBtn.innerText = confirmLabel;
@@ -253,8 +367,14 @@ const Kiosk = (() => {
         clearInterval(confirmTimer);
         okBtn.onclick = null;
         cancelBtn.onclick = null;
-        overlay.style.display = 'none';
-        if (!answer) release();
+        if (answer) {
+          okBtn.innerHTML = '<span class="kiosk-spinner"></span> Processing...';
+          okBtn.disabled = true;
+          cancelBtn.disabled = true;
+        } else {
+          overlay.style.display = 'none';
+          release();
+        }
         resolve(answer);
       };
       okBtn.onclick = () => done(true);
@@ -272,7 +392,7 @@ const Kiosk = (() => {
     });
   }
 
-  async function run(handleCard, rawScannedText, fromCamera = false) {
+  async function run(handleCard, rawScannedText, fromCamera = false, fromScan = false) {
     if (isProcessing) return;
     const cardno = extractCardNo(rawScannedText);
     if (!cardno) return;
@@ -280,12 +400,18 @@ const Kiosk = (() => {
     lastCard = cardno;
     isProcessing = true;
     playBeep();
+    setLoading(true, cardno);
+    const manualEl = document.getElementById('manualCardNo');
+    if (manualEl) {
+      manualEl.value = cardno;
+      manualEl.blur();
+    }
     if (tokenExpired()) {
       sessionExpired();
       return;
     }
     try {
-      await handleCard(cardno);
+      await handleCard(cardno, Boolean(fromCamera || fromScan));
     } catch (err) {
       console.error(err);
       showResult(false, 'System Error', 'Unable to connect to server.');
@@ -320,6 +446,13 @@ const Kiosk = (() => {
   }
 
   function runCameraInstance(cameraId) {
+    const reader = document.getElementById('reader');
+    if (reader) reader.style.display = 'block';
+    const prompt = document.getElementById('usbScannerPrompt');
+    if (prompt) prompt.style.display = 'none';
+    const switchBtn = document.getElementById('switchCamBtn');
+    if (switchBtn) switchBtn.style.display = camerasList.length > 1 ? 'inline-block' : 'none';
+
     html5QrcodeScanner = new Html5Qrcode('reader');
     html5QrcodeScanner.start(
       cameraId,
@@ -355,25 +488,81 @@ const Kiosk = (() => {
       document.getElementById('switchCamBtn').addEventListener('click', switchCamera);
 
       const manual = document.getElementById('manualCardNo');
-      document.getElementById('submitManualBtn').addEventListener('click', () => {
-        const cardno = manual.value.trim();
-        if (cardno) run(handleCard, cardno);
-      });
-      manual.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const cardno = e.target.value.trim();
-          if (cardno) run(handleCard, cardno);
+      if (manual) manual.focus();
+
+      let keyStrokes = [];
+      let autoSubmitTimer = null;
+
+      manual.addEventListener('input', () => {
+        const now = Date.now();
+        // Reset stroke history if user paused longer than 250ms (indicates manual human typing)
+        if (keyStrokes.length > 0 && now - keyStrokes[keyStrokes.length - 1] > 250) {
+          keyStrokes = [];
+        }
+        keyStrokes.push(now);
+        clearTimeout(autoSubmitTimer);
+
+        const raw = manual.value.trim();
+        if (!raw) return;
+
+        const count = keyStrokes.length;
+        const duration = count > 1 ? now - keyStrokes[0] : 0;
+        // USB barcode/QR scanner transmits characters in a rapid burst (< 75ms average interval, or all at once)
+        const isScannerBurst = (count >= 3 && duration < 500 && (duration / count) < 75) || (count === 1 && raw.length >= 4);
+
+        if (isScannerBurst) {
+          // Scanner finished typing characters; auto-submit 100ms after last character (handles scanners that don't send Enter)
+          autoSubmitTimer = setTimeout(() => {
+            const cardno = manual.value.trim();
+            if (cardno && !isProcessing) {
+              keyStrokes = [];
+              run(handleCard, cardno, false, true);
+            }
+          }, 100);
         }
       });
 
-      // USB barcode scanner: fast keystrokes ending in Enter
+      document.getElementById('submitManualBtn').addEventListener('click', () => {
+        clearTimeout(autoSubmitTimer);
+        const cardno = manual.value.trim();
+        keyStrokes = [];
+        if (cardno) run(handleCard, cardno, false, false);
+      });
+
+      manual.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          clearTimeout(autoSubmitTimer);
+          const cardno = manual.value.trim();
+          if (!cardno) return;
+
+          const now = Date.now();
+          const count = keyStrokes.length;
+          const duration = count > 1 ? now - keyStrokes[0] : 999;
+          const isScanner = (count >= 2 && duration < 500 && (duration / count) < 75) || (count === 1 && cardno.length >= 4);
+          keyStrokes = [];
+          run(handleCard, cardno, false, isScanner);
+        }
+      });
+
+      // Keep cursor focused in the input field by default for USB scanner
+      document.addEventListener('click', (e) => {
+        if (!isProcessing && !e.target.closest('button, a, input, select, textarea, .overlay-result')) {
+          if (manual) manual.focus();
+        }
+      });
+      window.addEventListener('focus', () => {
+        if (!isProcessing && manual) manual.focus();
+      });
+
+      // USB barcode scanner fallback: fast keystrokes ending in Enter if unfocused
       document.addEventListener('keydown', (e) => {
         if (document.activeElement && document.activeElement.id === 'manualCardNo') return;
         const now = Date.now();
-        if (now - lastKeyTime > 100) buffer = '';
+        if (now - lastKeyTime > 200) buffer = '';
         lastKeyTime = now;
         if (e.key === 'Enter') {
-          if (buffer.length > 2) run(handleCard, buffer.trim());
+          if (buffer.length > 2) run(handleCard, buffer.trim(), false, true);
           buffer = '';
         } else if (e.key.length === 1) {
           buffer += e.key;
