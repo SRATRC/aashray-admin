@@ -24,13 +24,16 @@ async function handleCheckin(cardno) {
       // Room number and WiFi code belong to the guest: show them only after
       // the person at the kiosk confirms the name is theirs.
       const ok = await Kiosk.confirm({
-        question: 'Already checked in. Is this you?',
+        question: 'Get your WiFi code. Is this you?',
         guestName,
-        confirmLabel: 'Yes, show my room'
+        confirmLabel: 'Yes, show my WiFi code'
       });
       if (!ok) return;
       const wifiCode = await Kiosk.fetchWifiCode(cardno);
-      Kiosk.showResult(true, 'Already Checked In', `Guest ${guestName} is already checked into Room/Flat ${roomNum}.`, guestName, roomNum, wifiCode);
+      const message = wifiCode
+        ? `You are checked into Room/Flat ${roomNum}.`
+        : `You are checked into Room/Flat ${roomNum}. A WiFi code could not be issued. Please ask staff.`;
+      Kiosk.showResult(true, 'Your WiFi Code', message, guestName, roomNum, wifiCode);
       return;
     }
 

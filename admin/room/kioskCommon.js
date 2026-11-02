@@ -233,8 +233,8 @@ const Kiosk = (() => {
             </div>
             <div id="confirmNote" style="white-space:pre-line;margin-top:12px;font-size:0.95rem;color:#664d03;"></div>
             <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;">
-              <button type="button" id="confirmCancelBtn" style="padding:12px 28px;font-size:1rem;border:1px solid #ced4da;background:#fff;border-radius:8px;cursor:pointer;">Cancel</button>
-              <button type="button" id="confirmOkBtn" style="padding:12px 28px;font-size:1rem;border:0;background:#28a745;color:#fff;border-radius:8px;cursor:pointer;"></button>
+              <button type="button" id="confirmCancelBtn" style="padding:12px 18px;font-size:1rem;white-space:nowrap;border:1px solid #ced4da;background:#fff;border-radius:8px;cursor:pointer;">Cancel</button>
+              <button type="button" id="confirmOkBtn" style="padding:12px 18px;font-size:1rem;white-space:nowrap;border:0;background:#28a745;color:#fff;border-radius:8px;cursor:pointer;"></button>
             </div>
             <div style="font-size:0.8rem;color:#999;margin-top:12px;">Cancels automatically in <span id="confirmCountdown"></span>s</div>
           </div>`;
