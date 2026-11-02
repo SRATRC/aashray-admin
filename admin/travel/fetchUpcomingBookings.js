@@ -212,6 +212,12 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (bookingsRes.ok) {
         travelReport = data.data || [];
         console.log("First booking:", travelReport[0]);
+        // Display text for the Excel export, so the Adhyayan column exports its text instead of "[object Object]".
+        travelReport.forEach((b) => {
+          b.adhyayan_label = b.adhyayan
+            ? `${b.adhyayan.name} (${formatDate(b.adhyayan.start_date)}\u2013${formatDate(b.adhyayan.end_date)})`
+            : '-';
+        });
 
         setupDownloadButton();
 
@@ -338,6 +344,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 <td>
   ${esc(formatDateTime(arrival_time))}
+</td>
+
+<td>
+  ${b.adhyayan
+              ? `${esc(b.adhyayan.name)} (${esc(formatDate(b.adhyayan.start_date))}\u2013${esc(formatDate(b.adhyayan.end_date))})`
+              : '-'}
 </td>
 
 <td>
