@@ -447,11 +447,116 @@
       border-color: rgba(220, 38, 38, 0.25);
       border-top-color: #dc2626;
     }
+
+    /* Fullscreen Toggle Button */
+    .kiosk-fullscreen-btn {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 100;
+    }
+    .kiosk-fullscreen-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    .kiosk-fullscreen-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Done / Dismiss Button on Result Modal */
+    .btn-result-done {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 260px;
+      margin: 16px auto 0 auto;
+      padding: 12px 24px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.2px;
+    }
+    .btn-done-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+    .btn-done-success:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+    }
+    .btn-done-error {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    }
+    .btn-done-error:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Confirmation Modal Countdown Progress */
+    .confirm-progress-container {
+      width: 100%;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+    .confirm-progress-fill {
+      height: 100%;
+      background: #64748b;
+      width: 100%;
+      border-radius: 9999px;
+      transition: width 1s linear;
+    }
+
+    /* Kiosk Session Warning Banner */
+    .kiosk-session-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      color: #991b1b;
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      text-align: center;
+      animation: overlayFadeIn 0.3s ease;
+    }
   </style>
 </head>
 <body>
 
   <div class="kiosk-header">
+    <button type="button" id="fullscreenToggleBtn" class="kiosk-fullscreen-btn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+      <svg id="fullscreenIconExpand" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      </svg>
+      <svg id="fullscreenIconCompress" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+      </svg>
+    </button>
     <div class="kiosk-brand-badge">Ashram Stay</div>
     <h1>Self Check-Out Kiosk</h1>
     <p>Scan your QR or Card to complete check-out</p>
@@ -459,6 +564,9 @@
 
   <div class="kiosk-container">
     <div class="scanner-card">
+      <div id="kioskSessionBanner" class="kiosk-session-banner">
+        ⚠️ <strong>Kiosk Session Inactive</strong>: Please log in from the staff panel to activate scanner.
+      </div>
       <button type="button" id="switchCamBtn" class="btn-cam-switch" style="display: none;">Switch Camera</button>
       <div id="reader"></div>
 
@@ -491,6 +599,7 @@
         <div id="progressFill" class="progress-bar-fill"></div>
       </div>
       <div class="countdown-text">Resetting scanner in <span id="countdown">5</span>s...</div>
+      <button type="button" id="resultDoneBtn" class="btn-result-done btn-done-success">Done / Next Guest</button>
     </div>
   </div>
 

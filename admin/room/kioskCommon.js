@@ -3,8 +3,9 @@
 // handleCard(cardno) runs once per accepted scan. It must end by calling
 // Kiosk.showResult(...) or by awaiting Kiosk.confirm(...) and cancelling.
 const Kiosk = (() => {
-  const CONFIRM_TIMEOUT_SECONDS = 30;
-  const RESULT_SECONDS = 5;
+  const CONFIRM_TIMEOUT_SECONDS = 20;
+  const RESULT_SUCCESS_SECONDS = 5;
+  const RESULT_ERROR_SECONDS = 10;
   const RESCAN_COOLDOWN_MS = 8000;
 
   let html5QrcodeScanner = null;
@@ -22,7 +23,42 @@ const Kiosk = (() => {
   let settings = { beepHz: 880, beepSeconds: 0.15 };
 
   function token() {
-    return sessionStorage.getItem('token');
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token') || urlParams.get('kiosk_token');
+      if (urlToken) {
+        sessionStorage.setItem('token', urlToken);
+        localStorage.setItem('kiosk_token', urlToken);
+        return urlToken;
+      }
+    } catch (e) {}
+    const sToken = sessionStorage.getItem('token');
+    if (sToken) {
+      try { localStorage.setItem('kiosk_token', sToken); } catch (e) {}
+      return sToken;
+    }
+    const lToken = localStorage.getItem('kiosk_token') || localStorage.getItem('token');
+    if (lToken) {
+      try { sessionStorage.setItem('token', lToken); } catch (e) {}
+      return lToken;
+    }
+    return null;
+  }
+
+  function checkSessionStatus() {
+    const t = token();
+    const isExp = tokenExpired();
+    const banner = document.getElementById('kioskSessionBanner');
+    if (!t || isExp) {
+      if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = isExp
+          ? '⚠️ <strong>Kiosk Session Expired</strong>: Please log in from staff panel to re-activate.'
+          : '⚠️ <strong>Kiosk Session Inactive</strong>: Please log in from staff panel to activate scanner.';
+      }
+    } else {
+      if (banner) banner.style.display = 'none';
+    }
   }
 
   function tokenExpired() {
@@ -35,11 +71,12 @@ const Kiosk = (() => {
   }
 
   function sessionExpired() {
+    checkSessionStatus();
     showResult(false, 'Session Expired', 'This kiosk needs to be logged in again. Please ask staff for assistance.');
     setTimeout(() => {
       sessionStorage.clear();
       window.location.href = '/admin/index.html';
-    }, (RESULT_SECONDS + 1) * 1000);
+    }, (RESULT_ERROR_SECONDS + 1) * 1000);
   }
 
   function authHeaders(json) {
@@ -49,6 +86,74 @@ const Kiosk = (() => {
   }
 
   // One shared AudioContext for the life of the page (browsers cap how many can exist).
+
+  function playSuccessSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+
+      // Note 1: 587.33 Hz (D5)
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0.18, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+
+      // Note 2: 880 Hz (A5)
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, now + 0.12);
+      gain2.gain.setValueAtTime(0.22, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.4);
+    } catch (e) {
+      console.warn('Audio not available:', e);
+    }
+  }
+
+  function playErrorSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+
+      // Tone 1: 220 Hz (A3)
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(220, now);
+      gain1.gain.setValueAtTime(0.22, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.16);
+
+      // Tone 2: 196 Hz (G3)
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(196, now + 0.18);
+      gain2.gain.setValueAtTime(0.24, now + 0.18);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now + 0.18);
+      osc2.stop(now + 0.4);
+    } catch (e) {
+      console.warn('Audio not available:', e);
+    }
+  }
   function playBeep() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -211,7 +316,9 @@ const Kiosk = (() => {
       }
       if (pill) {
         pill.style.display = 'inline-flex';
-        pill.innerHTML = '<span class="kiosk-spinner"></span> Looking up reservation for <strong>' + cardno + '</strong>...';
+        pill.innerHTML = '<span class="kiosk-spinner"></span> Looking up reservation for <strong></strong>...';
+        const strong = pill.querySelector('strong');
+        if (strong) strong.textContent = cardno;
       }
     } else {
       if (btn) {
@@ -224,12 +331,22 @@ const Kiosk = (() => {
     }
   }
 
+  function isTouchDevice() {
+    return Boolean(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  }
+
+  function focusManualInput() {
+    if (isTouchDevice()) return;
+    const manual = document.getElementById('manualCardNo');
+    if (manual) manual.focus();
+  }
+
   function release() {
     setLoading(false);
     const manual = document.getElementById('manualCardNo');
     if (manual) {
       manual.value = '';
-      manual.focus();
+      focusManualInput();
     }
     lastReleaseAt = Date.now();
     isProcessing = false;
@@ -281,16 +398,43 @@ const Kiosk = (() => {
       }
     }
 
-    overlay.style.display = 'flex';
-    progressFill.style.width = '100%';
-    setTimeout(() => { progressFill.style.width = '0%'; }, 50);
+    // Play distinct audio cue
+    if (isSuccess) {
+      playSuccessSound();
+    } else {
+      playErrorSound();
+    }
 
-    let seconds = RESULT_SECONDS;
-    document.getElementById('countdown').innerText = seconds;
+    const totalSeconds = isSuccess ? RESULT_SUCCESS_SECONDS : RESULT_ERROR_SECONDS;
+    let seconds = totalSeconds;
+    const countdownEl = document.getElementById('countdown');
+    if (countdownEl) countdownEl.innerText = seconds;
+
+    const doneBtn = document.getElementById('resultDoneBtn');
+    if (doneBtn) {
+      doneBtn.innerText = isSuccess ? 'Done / Next Guest' : 'Dismiss / Scan Next';
+      doneBtn.className = `btn-result-done ${isSuccess ? 'btn-done-success' : 'btn-done-error'}`;
+      doneBtn.onclick = () => {
+        if (autoResetTimer) clearInterval(autoResetTimer);
+        overlay.style.display = 'none';
+        release();
+      };
+    }
+
+    overlay.style.display = 'flex';
+
+    if (progressFill) {
+      progressFill.style.transition = 'none';
+      progressFill.style.width = '100%';
+      void progressFill.offsetWidth;
+      progressFill.style.transition = `width ${totalSeconds}s linear`;
+      progressFill.style.width = '0%';
+    }
+
     if (autoResetTimer) clearInterval(autoResetTimer);
     autoResetTimer = setInterval(() => {
       seconds--;
-      document.getElementById('countdown').innerText = seconds;
+      if (countdownEl) countdownEl.innerText = seconds;
       if (seconds <= 0) {
         clearInterval(autoResetTimer);
         overlay.style.display = 'none';
@@ -331,6 +475,9 @@ const Kiosk = (() => {
             <div class="confirm-actions">
               <button type="button" id="confirmCancelBtn" class="btn-kiosk-cancel">Cancel</button>
               <button type="button" id="confirmOkBtn" class="btn-kiosk-confirm"></button>
+            </div>
+            <div class="confirm-progress-container">
+              <div id="confirmProgressFill" class="confirm-progress-fill"></div>
             </div>
             <div>
               <div class="confirm-countdown-badge">⏱ Cancels automatically in <span id="confirmCountdown"></span>s</div>
@@ -381,11 +528,22 @@ const Kiosk = (() => {
       cancelBtn.onclick = () => done(false);
 
       let seconds = CONFIRM_TIMEOUT_SECONDS;
-      document.getElementById('confirmCountdown').innerText = seconds;
+      const countdownEl = document.getElementById('confirmCountdown');
+      if (countdownEl) countdownEl.innerText = seconds;
+
+      const confirmProgressFill = document.getElementById('confirmProgressFill');
+      if (confirmProgressFill) {
+        confirmProgressFill.style.transition = 'none';
+        confirmProgressFill.style.width = '100%';
+        void confirmProgressFill.offsetWidth;
+        confirmProgressFill.style.transition = `width ${CONFIRM_TIMEOUT_SECONDS}s linear`;
+        confirmProgressFill.style.width = '0%';
+      }
+
       clearInterval(confirmTimer);
       confirmTimer = setInterval(() => {
         seconds--;
-        document.getElementById('confirmCountdown').innerText = seconds;
+        if (countdownEl) countdownEl.innerText = seconds;
         if (seconds <= 0) done(false);
       }, 1000);
       overlay.style.display = 'flex';
@@ -471,6 +629,40 @@ const Kiosk = (() => {
     startCamera(camerasList[cameraIndex].id);
   }
 
+  function setupFullscreen() {
+    const btn = document.getElementById('fullscreenToggleBtn');
+    if (!btn) return;
+    const iconExpand = document.getElementById('fullscreenIconExpand');
+    const iconCompress = document.getElementById('fullscreenIconCompress');
+
+    const updateIcons = () => {
+      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      if (iconExpand) iconExpand.style.display = isFs ? 'none' : 'block';
+      if (iconCompress) iconCompress.style.display = isFs ? 'block' : 'none';
+    };
+
+    btn.addEventListener('click', () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+      }
+    });
+
+    document.addEventListener('fullscreenchange', updateIcons);
+    document.addEventListener('webkitfullscreenchange', updateIcons);
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) || e.key === 'F11') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  }
+
   function start(opts = {}) {
     settings = {
       ...settings,
@@ -479,18 +671,20 @@ const Kiosk = (() => {
     };
     const handleCard = opts.handleCard;
     document.addEventListener('DOMContentLoaded', () => {
-      if (!token()) {
-        window.location.href = '/admin/index.html';
-        return;
+      setupFullscreen();
+      checkSessionStatus();
+      if (!token() || tokenExpired()) {
+        checkSessionStatus();
       }
       cardHandler = handleCard;
       initCameraScanner();
       document.getElementById('switchCamBtn').addEventListener('click', switchCamera);
 
       const manual = document.getElementById('manualCardNo');
-      if (manual) manual.focus();
+      focusManualInput();
 
       let keyStrokes = [];
+      let prevLen = 0;
       let autoSubmitTimer = null;
 
       manual.addEventListener('input', () => {
@@ -503,12 +697,14 @@ const Kiosk = (() => {
         clearTimeout(autoSubmitTimer);
 
         const raw = manual.value.trim();
+        const added = raw.length - prevLen;
+        prevLen = raw.length;
         if (!raw) return;
 
         const count = keyStrokes.length;
         const duration = count > 1 ? now - keyStrokes[0] : 0;
-        // USB barcode/QR scanner transmits characters in a rapid burst (< 75ms average interval, or all at once)
-        const isScannerBurst = (count >= 3 && duration < 500 && (duration / count) < 75) || (count === 1 && raw.length >= 4);
+        // USB barcode/QR scanner transmits characters in a rapid burst (< 75ms average interval, or >= 4 characters inserted in a single event)
+        const isScannerBurst = (count >= 3 && duration < 500 && (duration / count) < 75) || added >= 4;
 
         if (isScannerBurst) {
           // Scanner finished typing characters; auto-submit 100ms after last character (handles scanners that don't send Enter)
@@ -516,6 +712,7 @@ const Kiosk = (() => {
             const cardno = manual.value.trim();
             if (cardno && !isProcessing) {
               keyStrokes = [];
+              prevLen = 0;
               run(handleCard, cardno, false, true);
             }
           }, 100);
@@ -526,6 +723,7 @@ const Kiosk = (() => {
         clearTimeout(autoSubmitTimer);
         const cardno = manual.value.trim();
         keyStrokes = [];
+        prevLen = 0;
         if (cardno) run(handleCard, cardno, false, false);
       });
 
@@ -541,18 +739,19 @@ const Kiosk = (() => {
           const duration = count > 1 ? now - keyStrokes[0] : 999;
           const isScanner = (count >= 2 && duration < 500 && (duration / count) < 75) || (count === 1 && cardno.length >= 4);
           keyStrokes = [];
+          prevLen = 0;
           run(handleCard, cardno, false, isScanner);
         }
       });
 
-      // Keep cursor focused in the input field by default for USB scanner
+      // Keep cursor focused in the input field by default for USB scanner (non-touch devices only)
       document.addEventListener('click', (e) => {
         if (!isProcessing && !e.target.closest('button, a, input, select, textarea, .overlay-result')) {
-          if (manual) manual.focus();
+          focusManualInput();
         }
       });
       window.addEventListener('focus', () => {
-        if (!isProcessing && manual) manual.focus();
+        if (!isProcessing) focusManualInput();
       });
 
       // USB barcode scanner fallback: fast keystrokes ending in Enter if unfocused
