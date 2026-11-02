@@ -49,14 +49,18 @@ function login(event) {
         'smilesAdmin',
         'adhyayanAdminReadOnly',
         'utsavAdminRaj',
-        'satshrutAdmin'
+        'satshrutAdmin',
+        'kioskAdmin'
       ];
 
       const hasValidRole = roles.some((role) => validRoles.includes(role));
 
       if (hasValidRole) {
+        const kioskOnly = roles.every((role) => role === 'kioskAdmin');
         // Always redirect to admin home for multi-role support
-        window.location.href = '/admin/adminhome.html';
+        window.location.href = kioskOnly
+          ? '/admin/room/selfCheckin.html'
+          : '/admin/adminhome.html';
       } else {
         // ❌ No recognized roles
         alert(

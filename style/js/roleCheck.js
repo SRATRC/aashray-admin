@@ -65,6 +65,11 @@ function checkRoleAccess(allowedRoles) {
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
   if (!hasAccess) {
+    if (roles.length > 0 && roles.every((role) => role === 'kioskAdmin')) {
+      window.location.href = '/admin/room/selfCheckin.html';
+      return;
+    }
+
     // Check if user has any valid admin roles
     const validRoles = [
       'superAdmin',

@@ -58,10 +58,25 @@ document.addEventListener("DOMContentLoaded", () => {
         actionBtn = `<button type="button" class="btn btn-success btn-sm" onclick="toggleRevoke(${row.id},'cash pending')">Restore</button>`;
       }
 
+      if (payment_type === "overdue_checkouts") {
+        actionBtn = `<button type="button" class="btn btn-warning btn-sm" onclick="checkoutOverdueBooking(this, '${row.bookingid}', ${!!row.is_flat})">Check Out</button>`;
+      }
+
+      let feeDisplay = `₹${row.amount || 0}`;
+      if (row.is_overdue) {
+        if (row.est_late_fee) {
+          feeDisplay = `₹${row.est_late_fee} (Est.)`;
+        } else if (row.days_overdue > 0) {
+          feeDisplay = `${row.days_overdue}d overdue`;
+        } else {
+          feeDisplay = 'Overdue';
+        }
+      }
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td>
-        <td>₹${row.amount || 0}</td>
+        <td>${feeDisplay}</td>
         <td>${actionBtn}</td>
         <td>${row.bookingid || '-'}</td>
         <td>${row.guest_name || '-'}</td>
@@ -77,6 +92,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     enhanceTable("reportTable", "tableSearch");
   }
+
+  window.checkoutOverdueBooking = async (btn, bookingId, isFlat) => {
+    if (!confirm(`Are you sure you want to check out ${isFlat ? 'Flat' : 'Room'} booking ${bookingId}? Any applicable late fees will be calculated.`)) {
+      return;
+    }
+
+    if (btn) btn.disabled = true;
+
+    try {
+      const endpoint = isFlat ? `/stay/flat_checkout/${bookingId}` : `/stay/checkout/${bookingId}`;
+      const res = await fetch(`${CONFIG.basePath}${endpoint}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`
+        }
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        alert(json.message || "Guest checked out successfully!");
+        loadReport();
+      } else {
+        if (btn) btn.disabled = false;
+        alert(json.message || "Failed to check out guest");
+      }
+    } catch (error) {
+      if (btn) btn.disabled = false;
+      console.error("Error checking out booking:", error);
+      alert("An error occurred during check out. Please check console.");
+    }
+  };
 
   window.toggleRevoke = async (transactionId, status) => {
     console.log(`toggleRevoke called with: transactionId=${transactionId}, status=${status}`);
