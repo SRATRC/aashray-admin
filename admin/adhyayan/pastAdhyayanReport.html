@@ -1,0 +1,1044 @@
+<script src="/style/js/roleCheck.js"></script>
+<script>
+  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin', 'adhyayanAdminReadOnly']);
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Past Adhyayan Attendance Report</title>
+
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Shared Styles & Scripts -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+  <script src="../../style/js/config.js"></script>
+  <script src="/sessionstorage.js"></script>
+
+  <style>
+    .filter-panel {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .filter-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .filter-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .preset-group {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 7px;
+      gap: 3px;
+    }
+
+    .preset-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .preset-btn:hover {
+      color: #0f172a;
+    }
+
+    .preset-btn.active {
+      background: #204060;
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .custom-range-inputs {
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .custom-range-inputs.show {
+      display: inline-flex;
+    }
+
+    .custom-range-inputs input[type="date"] {
+      width: 125px;
+      padding: 5px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #334155;
+    }
+
+    .btn-apply {
+      background: #204060;
+      color: #ffffff;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-apply:hover {
+      background: #315d86;
+    }
+
+    .btn-export {
+      background: #166534;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+
+    .btn-export:hover {
+      background: #15803d;
+    }
+
+    .btn-export:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .search-input {
+      width: 190px;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #204060;
+      box-shadow: 0 0 0 2px rgba(32, 64, 96, 0.15);
+    }
+
+    .report-container {
+      width: 96% !important;
+      max-width: 1560px !important;
+      margin: 0 auto;
+    }
+
+    .whitesec .inner-padding {
+      padding: 20px 18px;
+    }
+
+    .table-container {
+      width: 100%;
+      max-height: 650px;
+      overflow-x: auto;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .report-table th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #204060;
+      color: #ffffff;
+      font-weight: 600;
+      padding: 9px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .report-table td {
+      padding: 8px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* Wrap the topic column ONLY */
+    .report-table th.col-topic,
+    .report-table td.col-topic {
+      white-space: normal !important;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: 280px;
+    }
+
+    .topic-wrapper {
+      max-width: 280px;
+      white-space: normal !important;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.35;
+    }
+
+    .report-table tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Interactive Count Badges */
+    .badge-count {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .badge-count:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+
+    .badge-registered {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .badge-attended {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .badge-partial {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .badge-absent {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .badge-na {
+      color: #94a3b8;
+      font-weight: 500;
+      cursor: default;
+    }
+
+    .badge-na:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-row-export {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-row-export:hover {
+      background: #166534;
+      color: #ffffff;
+      border-color: #166534;
+    }
+
+    .btn-row-export:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      cursor: not-allowed;
+    }
+
+    .btn-edit-sessions {
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #64748b;
+      margin-left: 5px;
+      transition: all 0.15s ease;
+      vertical-align: middle;
+    }
+
+    .btn-edit-sessions:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+
+    .btn-remove-session {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-remove-session:hover {
+      background: #b91c1c;
+      color: #ffffff;
+      border-color: #b91c1c;
+    }
+
+    .btn-remove-session:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      cursor: not-allowed;
+    }
+
+    /* KPI Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* All Absentees Button */
+    .btn-absentees {
+      background: #7c2d12;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+
+    .btn-absentees:hover {
+      background: #9a3412;
+    }
+
+    /* WhatsApp Button */
+    .btn-wa {
+      background: #25d366;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-wa:hover {
+      background: #128c7e;
+      color: #ffffff !important;
+    }
+
+    /* Print Button */
+    .btn-print {
+      background: #334155;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+
+    .btn-print:hover {
+      background: #1e293b;
+    }
+
+    /* Speaker Select Dropdown */
+    .speaker-select {
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #334155;
+      background: #ffffff;
+      outline: none;
+      cursor: pointer;
+      max-width: 160px;
+    }
+
+    .speaker-select:focus {
+      border-color: #204060;
+    }
+
+    /* Repeat Absentee Tag */
+    .badge-repeat-noshow {
+      display: inline-block;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-top: 3px;
+      white-space: nowrap;
+    }
+
+    /* Visual Session Dots in Drilldown Modal */
+    .session-dots-wrapper {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .session-dot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 18px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .session-dot.dot-present {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .session-dot.dot-absent {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    /* Print-Friendly Styles */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 8mm 6mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .header,
+      .logout,
+      .filter-panel,
+      .modal-backdrop,
+      .btn-edit-sessions,
+      .btn-row-export,
+      .btn-wa,
+      .sort-icon,
+      .col-action {
+        display: none !important;
+      }
+
+      .report-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .whitesec {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+      }
+
+      .whitesec .inner-padding {
+        padding: 0 !important;
+      }
+
+      .frm-head {
+        margin-bottom: 10px !important;
+      }
+
+      .frm-head h1 {
+        font-size: 17px !important;
+        margin: 0 0 2px 0 !important;
+      }
+
+      .frm-head p {
+        font-size: 11px !important;
+        margin: 0 !important;
+      }
+
+      .kpi-strip {
+        display: flex !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+      }
+
+      .kpi-card {
+        border: 1px solid #cbd5e1 !important;
+        padding: 6px 10px !important;
+        flex: 1 !important;
+        box-shadow: none !important;
+        border-radius: 6px !important;
+      }
+
+      .kpi-label {
+        font-size: 9px !important;
+        margin-bottom: 2px !important;
+      }
+
+      .kpi-value {
+        font-size: 16px !important;
+      }
+
+      .table-container {
+        max-height: none !important;
+        overflow: visible !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+      }
+
+      .report-table {
+        width: 100% !important;
+        table-layout: auto !important;
+        border-collapse: collapse !important;
+        font-size: 9.5px !important;
+      }
+
+      .report-table th, 
+      .report-table td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 4px 6px !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+      }
+
+      .report-table th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-size: 9.5px !important;
+        font-weight: 700 !important;
+      }
+
+      /* Wrap the topic column ONLY */
+      .report-table th.col-topic,
+      .report-table td.col-topic {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        min-width: 130px !important;
+      }
+
+      .report-table th.col-action,
+      .report-table td.col-action,
+      .report-table th:last-child,
+      .report-table td:last-child {
+        display: none !important;
+      }
+
+      .badge-count {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 10px !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+    }
+
+    /* Restore Sessions Button */
+    .btn-restore-sessions {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-restore-sessions:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    /* Sortable Headers */
+    .report-table th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .report-table th.sortable:hover {
+      background: #2b547e;
+    }
+
+    .sort-icon {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 10px;
+      opacity: 0.6;
+    }
+
+    .badge-locked {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* Modal Backdrop & Container */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 950px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .modal-box-header {
+      padding: 16px 24px;
+      background: #f8fafc;
+      border-bottom: 2px solid #204060;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-box-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #204060;
+    }
+
+    .modal-box-header p {
+      margin: 4px 0 0 0;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      color: #64748b;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-close-btn:hover {
+      color: #0f172a;
+    }
+
+    .modal-box-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 40px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .summary-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #334155;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="container report-container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="middlecontent">
+    <div class="container report-container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head" style="margin-bottom: 20px;">
+            <h1>Past Adhyayan Attendance Report</h1>
+            <p style="margin: 4px 0 0 0; color: #64748b; font-size: 13px;">Research Centre • Attendance Analytics for Past Shibirs</p>
+          </div>
+
+          <!-- Filter Panel -->
+          <div class="filter-panel">
+            <div class="filter-left">
+              <span style="font-weight: 600; font-size: 12px; color: #334155; white-space: nowrap;">Time Range:</span>
+              <div class="preset-group">
+                <button type="button" class="preset-btn active" data-range="3m">Last 3 Months</button>
+                <button type="button" class="preset-btn" data-range="6m">Last 6 Months</button>
+                <button type="button" class="preset-btn" data-range="custom">Custom Range</button>
+              </div>
+
+              <div id="customDateContainer" class="custom-range-inputs">
+                <input type="date" id="customStartDate" />
+                <span style="font-size: 11px; color: #64748b;">to</span>
+                <input type="date" id="customEndDate" />
+                <button type="button" id="btnApplyCustom" class="btn-apply">Apply</button>
+              </div>
+
+              <select id="speakerFilter" class="speaker-select" title="Filter by Speaker">
+                <option value="">All Speakers</option>
+              </select>
+            </div>
+
+            <div class="filter-right">
+              <input type="text" id="summarySearch" class="search-input" placeholder="Search topic or speaker..." />
+              <button type="button" id="btnExportSummary" class="btn-export">
+                <span>&#128190;</span> Export to Excel
+              </button>
+              <button type="button" id="btnOpenAllAbsentees" class="btn-absentees" title="View all absentees across all shibirs in this range">
+                <span>&#128203;</span> All Absentees
+              </button>
+              <button type="button" id="btnPrintReport" class="btn-print" title="Print this Report">
+                <span>&#128438;</span> Print
+              </button>
+            </div>
+          </div>
+
+          <!-- Top KPI Strip -->
+          <div class="kpi-strip">
+            <div class="kpi-card">
+              <div class="kpi-label">Total Shibirs</div>
+              <div class="kpi-value" id="kpiTotalShibirs">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Total Registered</div>
+              <div class="kpi-value" id="kpiTotalRegistered">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Full Attended</div>
+              <div class="kpi-value" style="color: #15803d;" id="kpiFullAttended">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Total Absent</div>
+              <div class="kpi-value" style="color: #b91c1c;" id="kpiTotalAbsent">0</div>
+            </div>
+          </div>
+
+          <!-- Main Summary Table -->
+          <div class="table-container">
+            <table class="report-table" id="summaryTable">
+              <thead>
+                <tr>
+                  <th style="width: 32px; text-align: center;">#</th>
+                  <th class="sortable col-dates" data-sort="start_date" style="white-space: nowrap;">Dates <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-days" data-sort="no_of_days">Days <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th class="sortable col-topic" data-sort="name" style="width: 260px; max-width: 280px;">Topic <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th class="sortable col-speaker" data-sort="speaker">Speaker <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-sessions" data-sort="total_regular_sessions" title="Regular Sessions">Sessions <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-registered" data-sort="total_registered">Registered <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-full" data-sort="total_attended">Full <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-partial" data-sort="total_partial">Partial <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-absent" data-sort="total_absent">Absent <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody id="summaryTableBody">
+                <tr>
+                  <td colspan="11" class="loading-state">Loading past Adhyayans...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drilldown Participants Modal -->
+  <div id="participantModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-box-header">
+        <div>
+          <h2 id="modalTitle">Participant List</h2>
+          <p id="modalSubtitle">Shibir Details</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="modalCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-box-body">
+        <div class="modal-toolbar">
+          <input type="text" id="participantSearch" class="search-input" placeholder="Search participant by name, card, mobile..." />
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="participantCountBadge" style="font-size: 13px; font-weight: 600; color: #475569;">0 participants</span>
+            <button type="button" id="btnExportParticipants" class="btn-export">
+              <span>&#128190;</span> Export List
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height: 480px;">
+          <table class="report-table" id="participantTable">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>Card No</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Center</th>
+                <th>Gender</th>
+                <th>Resident Status</th>
+                <th style="text-align: center;">Attendance Summary</th>
+                <th style="text-align: center; width: 90px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="participantTableBody">
+              <tr>
+                <td colspan="9" class="loading-state">Loading participants...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Regular Sessions Modal -->
+  <div id="sessionManageModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 620px;">
+      <div class="modal-box-header">
+        <div>
+          <h2>Manage Regular Sessions</h2>
+          <p id="sessionModalSubtitle" style="margin: 4px 0 0 0; color: #64748b; font-size: 13px;">Shibir details</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="sessionModalCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-box-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px;">
+          <p style="font-size: 13px; color: #475569; margin: 0;">
+            Sessions with <strong>0 attendance</strong> can be removed. Locked sessions have recorded attendance.
+          </p>
+          <button type="button" id="btnRestoreSessions" class="btn-restore-sessions" title="Restore default sessions for this Adhyayan">
+            <span>&#8635;</span> Restore Default Sessions
+          </button>
+        </div>
+
+        <div class="table-container" style="max-height: 380px;">
+          <table class="report-table" id="sessionManageTable">
+            <thead>
+              <tr>
+                <th style="width: 70px; text-align: center;">Session</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th style="text-align: center;">Attendance</th>
+                <th style="text-align: center; width: 110px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sessionManageTableBody">
+              <tr>
+                <td colspan="5" class="loading-state">Loading sessions...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Absentees Modal (Date Range Wide) -->
+  <div id="allAbsenteesModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 980px;">
+      <div class="modal-box-header">
+        <div>
+          <h2>All Absentees (Date Range Overview)</h2>
+          <p id="allAbsenteesSubtitle" style="margin: 4px 0 0 0; color: #64748b; font-size: 13px;">Confirmed participants who missed all regular sessions</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="allAbsenteesCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-box-body">
+        <div class="modal-toolbar">
+          <input type="text" id="allAbsenteesSearch" class="search-input" placeholder="Search by name, card, topic, mobile..." />
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="allAbsenteesCountBadge" style="font-size: 13px; font-weight: 600; color: #475569;">0 absentees</span>
+            <button type="button" id="btnExportAllAbsentees" class="btn-export">
+              <span>&#128190;</span> Export Absentees Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height: 480px;">
+          <table class="report-table" id="allAbsenteesTable">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>Adhyayan Topic</th>
+                <th>Dates</th>
+                <th>Card No</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Center</th>
+                <th>Resident Status</th>
+                <th style="text-align: center; width: 90px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="allAbsenteesTableBody">
+              <tr>
+                <td colspan="9" class="loading-state">Loading all absentees...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="pastAdhyayanReport.js"></script>
+</body>
+</html>
+
