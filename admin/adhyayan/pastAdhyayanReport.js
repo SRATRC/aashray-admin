@@ -195,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
       populateSpeakerDropdown(summaryData);
       renderSummaryTable(summaryData);
     } catch (err) {
+      if (reqId !== summaryRequestSeq) return; // Stale failure discarded
       console.error('Error loading summary report:', err);
       summaryTableBody.innerHTML = `
         <tr>
@@ -382,6 +383,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (range === 'custom') {
         customDateContainer.classList.add('show');
+        currentCustomStart = customStartDate.value;
+        currentCustomEnd = customEndDate.value;
+        currentRange = 'custom';
+        loadSummaryReport();
       } else {
         customDateContainer.classList.remove('show');
         currentRange = range;
@@ -831,6 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       renderAllAbsenteesTable(allAbsenteesData);
     } catch (err) {
+      if (reqId !== absenteesRequestSeq) return; // Stale failure discarded
       console.error('Error loading all absentees:', err);
       allAbsenteesTableBody.innerHTML = `
         <tr>
