@@ -165,16 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
       </tr>
     `;
 
+    const reqId = ++summaryRequestSeq;
     let url = `${CONFIG.basePath}/adhyayan/reports/past-attendance?range=${currentRange}`;
+
     if (currentRange === 'custom') {
-      if (!currentCustomStart || !currentCustomEnd) {
-        alert('Please select both start date and end date.');
+      const invalidMsg = (!currentCustomStart || !currentCustomEnd)
+        ? 'Please select both start date and end date.'
+        : (currentCustomStart > currentCustomEnd)
+          ? 'Start date cannot be after end date.'
+          : null;
+
+      if (invalidMsg) {
+        alert(invalidMsg);
+        summaryTableBody.innerHTML = `
+          <tr>
+            <td colspan="11" class="loading-state" style="color: #ef4444;">${escapeHtml(invalidMsg)}</td>
+          </tr>
+        `;
         return;
       }
       url += `&start_date=${currentCustomStart}&end_date=${currentCustomEnd}`;
     }
-
-    const reqId = ++summaryRequestSeq;
 
     try {
       const res = await fetch(url, { headers: getAuthHeaders() });
@@ -805,12 +816,26 @@ document.addEventListener('DOMContentLoaded', () => {
       </tr>
     `;
 
+    const reqId = ++absenteesRequestSeq;
     let url = `${CONFIG.basePath}/adhyayan/reports/all-absentees?range=${currentRange}`;
+
     if (currentRange === 'custom') {
+      const invalidMsg = (!currentCustomStart || !currentCustomEnd)
+        ? 'Please select both start date and end date.'
+        : (currentCustomStart > currentCustomEnd)
+          ? 'Start date cannot be after end date.'
+          : null;
+
+      if (invalidMsg) {
+        allAbsenteesTableBody.innerHTML = `
+          <tr>
+            <td colspan="9" class="loading-state" style="color: #ef4444;">${escapeHtml(invalidMsg)}</td>
+          </tr>
+        `;
+        return;
+      }
       url += `&start_date=${currentCustomStart}&end_date=${currentCustomEnd}`;
     }
-
-    const reqId = ++absenteesRequestSeq;
 
     try {
       const res = await fetch(url, { headers: getAuthHeaders() });
