@@ -54,6 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSortColumn = 'start_date';
   let currentSortDirection = 'desc';
 
+  // Request sequence trackers to guard against stale responses on fast filtering
+  let summaryRequestSeq = 0;
+  let absenteesRequestSeq = 0;
+
   // HTML Escaping Helper to prevent XSS and attribute breaking
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -63,6 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  // Format WhatsApp Link Helper (normalizes 10-digit Indian numbers and overseas numbers)
+  function formatWhatsAppUrl(mobno) {
+    if (!mobno) return '';
+    const digits = String(mobno).replace(/\D/g, '');
+    if (!digits) return '';
+    const waNumber = digits.length === 10 ? `91${digits}` : digits.replace(/^0+/, '');
+    return `https://wa.me/${waNumber}`;
   }
 
   // Check read-only role access
@@ -161,9 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
       url += `&start_date=${currentCustomStart}&end_date=${currentCustomEnd}`;
     }
 
+    const reqId = ++summaryRequestSeq;
+
     try {
       const res = await fetch(url, { headers: getAuthHeaders() });
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
+
+      if (reqId !== summaryRequestSeq) return; // Stale response discarded
 
       if (!res.ok) {
         summaryTableBody.innerHTML = `
@@ -380,6 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Please select both start date and end date.');
       return;
     }
+    if (currentCustomStart > currentCustomEnd) {
+      alert('Start date cannot be after end date.');
+      return;
+    }
     currentRange = 'custom';
     loadSummaryReport();
   });
@@ -473,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
     participantCountBadge.innerText = 'Loading...';
     participantTableBody.innerHTML = `
       <tr>
-        <td colspan="8" class="loading-state">Loading participants...</td>
+        <td colspan="9" class="loading-state">Loading participants...</td>
       </tr>
     `;
 
@@ -482,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const url = `${CONFIG.basePath}/adhyayan/reports/${shibirId}/participants?type=${type}`;
       const res = await fetch(url, { headers: getAuthHeaders() });
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
 
       // Guard against race conditions when user switches modals quickly
       if (currentModalShibirId !== shibirId || currentModalType !== type) return;
@@ -490,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) {
         participantTableBody.innerHTML = `
           <tr>
-            <td colspan="8" class="loading-state" style="color: #ef4444;">${escapeHtml(result.message || 'Failed to load participants')}</td>
+            <td colspan="9" class="loading-state" style="color: #ef4444;">${escapeHtml(result.message || 'Failed to load participants')}</td>
           </tr>
         `;
         return;
@@ -509,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching participants:', err);
       participantTableBody.innerHTML = `
         <tr>
-          <td colspan="8" class="loading-state" style="color: #ef4444;">Error loading participants.</td>
+          <td colspan="9" class="loading-state" style="color: #ef4444;">Error loading participants.</td>
         </tr>
       `;
     }
@@ -547,9 +568,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     participantTableBody.innerHTML = filtered.map((p, idx) => {
       let actionHtml = '-';
-      if (p.mobno) {
+      const waUrl = formatWhatsAppUrl(p.mobno);
+      if (waUrl) {
         actionHtml = `
-          <a href="https://wa.me/91${encodeURIComponent(p.mobno)}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
+          <a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
             <span>&#128172;</span> WhatsApp
           </a>
         `;
@@ -697,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
       if (!res.ok) {
         alert(result.message || 'Failed to remove session');
         removeBtn.disabled = false;
@@ -734,11 +756,9 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: getAuthHeaders()
       });
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
       if (!res.ok) {
         alert(result.message || 'Failed to restore sessions');
-        btnRestoreSessions.disabled = false;
-        btnRestoreSessions.innerHTML = '<span>&#8635;</span> Restore Default Sessions';
         return;
       }
 
@@ -785,9 +805,14 @@ document.addEventListener('DOMContentLoaded', () => {
       url += `&start_date=${currentCustomStart}&end_date=${currentCustomEnd}`;
     }
 
+    const reqId = ++absenteesRequestSeq;
+
     try {
       const res = await fetch(url, { headers: getAuthHeaders() });
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
+
+      if (reqId !== absenteesRequestSeq) return; // Stale response discarded
+
       if (!res.ok) {
         throw new Error(result.message || 'Failed to load absentees');
       }
@@ -848,8 +873,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     allAbsenteesTableBody.innerHTML = filtered.map((a, idx) => {
       const datesDisplay = `${formatDateDisplay(a.start_date)} - ${formatDateDisplay(a.end_date)}`;
-      const waHtml = a.mobno
-        ? `<a href="https://wa.me/91${encodeURIComponent(a.mobno)}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
+      const waUrl = formatWhatsAppUrl(a.mobno);
+      const waHtml = waUrl
+        ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
              <span>&#128172;</span> WhatsApp
            </a>`
         : '-';
