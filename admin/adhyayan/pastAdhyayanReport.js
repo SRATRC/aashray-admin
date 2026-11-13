@@ -66,8 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Check read-only role access
-  const userRole = sessionStorage.getItem('role') || '';
-  const isReadOnly = userRole === 'adhyayanAdminReadOnly';
+  let userRoles = [];
+  try {
+    userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+  } catch (e) {
+    userRoles = [];
+  }
+  const isReadOnly = userRoles.includes('adhyayanAdminReadOnly') &&
+    !userRoles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
 
   if (isReadOnly && btnRestoreSessions) {
     btnRestoreSessions.style.display = 'none';
