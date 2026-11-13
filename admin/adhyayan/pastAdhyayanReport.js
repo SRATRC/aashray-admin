@@ -54,18 +54,38 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSortColumn = 'start_date';
   let currentSortDirection = 'desc';
 
-  // Set default dates for custom inputs (today and 3 months ago)
+  // HTML Escaping Helper to prevent XSS and attribute breaking
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Check read-only role access
+  const userRole = sessionStorage.getItem('role') || '';
+  const isReadOnly = userRole === 'adhyayanAdminReadOnly';
+
+  if (isReadOnly && btnRestoreSessions) {
+    btnRestoreSessions.style.display = 'none';
+  }
+
+  // Set default dates for custom inputs using local date parts (avoids UTC offset shifts in IST)
   const today = new Date();
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(today.getMonth() - 3);
 
-  const formatDateYMD = (d) => d.toISOString().split('T')[0];
+  const formatDateYMD = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   customEndDate.value = formatDateYMD(today);
   customStartDate.value = formatDateYMD(threeMonthsAgo);
 
-  // Helper for auth headers
+  // Helper for auth headers (strictly sessionStorage per codebase convention)
   function getAuthHeaders() {
-    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     return {
       Authorization: `Bearer ${token}`
     };
@@ -75,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function formatDateDisplay(dateStr) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
+    if (isNaN(date.getTime())) return escapeHtml(dateStr);
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const d = String(date.getDate()).padStart(2, '0');
     const m = months[date.getMonth()];
@@ -122,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadSummaryReport() {
     summaryTableBody.innerHTML = `
       <tr>
-        <td colspan="10" class="loading-state">Loading past Adhyayans...</td>
+        <td colspan="11" class="loading-state">Loading past Adhyayans...</td>
       </tr>
     `;
 
@@ -142,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) {
         summaryTableBody.innerHTML = `
           <tr>
-            <td colspan="10" class="loading-state" style="color: #ef4444;">${result.message || 'Failed to load report'}</td>
+            <td colspan="11" class="loading-state" style="color: #ef4444;">${escapeHtml(result.message || 'Failed to load report')}</td>
           </tr>
         `;
         return;
@@ -269,13 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     summaryTableBody.innerHTML = filtered.map((item, idx) => {
       const datesDisplay = `${formatDateDisplay(item.start_date)} - ${formatDateDisplay(item.end_date)}`;
+      const editBtnHtml = (!isReadOnly && item.has_attendance_data)
+        ? `<button type="button" class="btn-edit-sessions" data-shibir-id="${escapeHtml(item.shibir_id)}" data-shibir-name="${escapeHtml(item.name || '')}" title="Manage Regular Sessions">&#9998;</button>`
+        : '';
       const sessionsDisplay = item.has_attendance_data
-        ? `<span style="font-weight: 600;">${item.total_regular_sessions}</span>
-           <button type="button" class="btn-edit-sessions" data-shibir-id="${item.shibir_id}" data-shibir-name="${item.name || ''}" title="Manage Regular Sessions">&#9998;</button>`
+        ? `<span style="font-weight: 600;">${escapeHtml(item.total_regular_sessions)}</span> ${editBtnHtml}`
         : '<span class="badge-na">N/A</span>';
 
       const registeredHtml = item.total_registered > 0
-        ? `<button type="button" class="badge-count badge-registered" data-shibir-id="${item.shibir_id}" data-type="registered">${item.total_registered}</button>`
+        ? `<button type="button" class="badge-count badge-registered" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="registered">${escapeHtml(item.total_registered)}</button>`
         : `<span class="badge-na">0</span>`;
 
       let attendedHtml;
@@ -288,15 +310,15 @@ document.addEventListener('DOMContentLoaded', () => {
         absentHtml = '<span class="badge-na">N/A</span>';
       } else {
         attendedHtml = item.total_attended > 0
-          ? `<button type="button" class="badge-count badge-attended" data-shibir-id="${item.shibir_id}" data-type="attended">${item.total_attended}</button>`
+          ? `<button type="button" class="badge-count badge-attended" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="attended">${escapeHtml(item.total_attended)}</button>`
           : `<span class="badge-na">0</span>`;
 
         partialHtml = item.total_partial > 0
-          ? `<button type="button" class="badge-count badge-partial" data-shibir-id="${item.shibir_id}" data-type="partial">${item.total_partial}</button>`
+          ? `<button type="button" class="badge-count badge-partial" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="partial">${escapeHtml(item.total_partial)}</button>`
           : `<span class="badge-na">0</span>`;
 
         absentHtml = item.total_absent > 0
-          ? `<button type="button" class="badge-count badge-absent" data-shibir-id="${item.shibir_id}" data-type="absent">${item.total_absent}</button>`
+          ? `<button type="button" class="badge-count badge-absent" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="absent">${escapeHtml(item.total_absent)}</button>`
           : `<span class="badge-na">0</span>`;
       }
 
@@ -304,9 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
           <td class="col-dates" style="font-size: 11.5px; font-weight: 500;">${datesDisplay}</td>
-          <td class="col-days" style="text-align: center;">${item.no_of_days}</td>
-          <td class="col-topic"><div class="topic-wrapper" style="font-weight: 600; color: #1e293b;">${item.name || ''}</div></td>
-          <td class="col-speaker" style="color: #475569;">${item.speaker || ''}</td>
+          <td class="col-days" style="text-align: center;">${escapeHtml(item.no_of_days)}</td>
+          <td class="col-topic"><div class="topic-wrapper" style="font-weight: 600; color: #1e293b;">${escapeHtml(item.name || '')}</div></td>
+          <td class="col-speaker" style="color: #475569;">${escapeHtml(item.speaker || '')}</td>
           <td class="col-sessions" style="text-align: center;">${sessionsDisplay}</td>
           <td class="col-registered" style="text-align: center;">${registeredHtml}</td>
           <td class="col-full" style="text-align: center;">${attendedHtml}</td>
@@ -316,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button 
               type="button" 
               class="btn-row-export" 
-              data-shibir-id="${item.shibir_id}"
+              data-shibir-id="${escapeHtml(item.shibir_id)}"
               title="Download Complete Excel Report (All 4 Categories)"
             >
               <span>&#128190;</span> Excel
@@ -334,12 +356,12 @@ document.addEventListener('DOMContentLoaded', () => {
       e.target.classList.add('active');
 
       const range = e.target.getAttribute('data-range');
-      currentRange = range;
 
       if (range === 'custom') {
         customDateContainer.classList.add('show');
       } else {
         customDateContainer.classList.remove('show');
+        currentRange = range;
         loadSummaryReport();
       }
     });
@@ -352,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Please select both start date and end date.');
       return;
     }
+    currentRange = 'custom';
     loadSummaryReport();
   });
 
@@ -455,10 +478,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(url, { headers: getAuthHeaders() });
       const result = await res.json();
 
+      // Guard against race conditions when user switches modals quickly
+      if (currentModalShibirId !== shibirId || currentModalType !== type) return;
+
       if (!res.ok) {
         participantTableBody.innerHTML = `
           <tr>
-            <td colspan="8" class="loading-state" style="color: #ef4444;">${result.message || 'Failed to load participants'}</td>
+            <td colspan="8" class="loading-state" style="color: #ef4444;">${escapeHtml(result.message || 'Failed to load participants')}</td>
           </tr>
         `;
         return;
@@ -517,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let actionHtml = '-';
       if (p.mobno) {
         actionHtml = `
-          <a href="https://wa.me/91${p.mobno}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
+          <a href="https://wa.me/91${encodeURIComponent(p.mobno)}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
             <span>&#128172;</span> WhatsApp
           </a>
         `;
@@ -527,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<div class="session-dots-wrapper">
             ${currentModalSessions.map((s) => {
               const isPresent = (p.attended_session_numbers || []).includes(s.session_number);
-              return `<span class="session-dot ${isPresent ? 'dot-present' : 'dot-absent'}" title="Session ${s.session_number}: ${isPresent ? 'Present' : 'Absent'}">S${s.session_number}</span>`;
+              return `<span class="session-dot ${isPresent ? 'dot-present' : 'dot-absent'}" title="Session ${escapeHtml(s.session_number)}: ${isPresent ? 'Present' : 'Absent'}">S${escapeHtml(s.session_number)}</span>`;
             }).join('')}
           </div>`
         : '';
@@ -535,14 +561,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <tr>
           <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
-          <td style="font-weight: 600; font-family: monospace;">${p.cardno || ''}</td>
-          <td style="font-weight: 500; color: #1e293b;">${p.name || ''}</td>
-          <td style="color: #475569;">${p.mobno || ''}</td>
-          <td style="color: #475569;">${p.center || ''}</td>
-          <td>${p.gender || ''}</td>
-          <td><span class="summary-badge">${p.res_status || 'Mumukshu'}</span></td>
+          <td style="font-weight: 600; font-family: monospace;">${escapeHtml(p.cardno || '')}</td>
+          <td style="font-weight: 500; color: #1e293b;">${escapeHtml(p.name || '')}</td>
+          <td style="color: #475569;">${escapeHtml(p.mobno || '')}</td>
+          <td style="color: #475569;">${escapeHtml(p.center || '')}</td>
+          <td>${escapeHtml(p.gender || '')}</td>
+          <td><span class="summary-badge">${escapeHtml(p.res_status || 'Mumukshu')}</span></td>
           <td style="text-align: center;">
-            <div style="font-weight: 600; color: #204060;">${p.attendance_summary || ''}</div>
+            <div style="font-weight: 600; color: #204060;">${escapeHtml(p.attendance_summary || '')}</div>
             ${sessionDotsHtml}
           </td>
           <td style="text-align: center;">${actionHtml}</td>
@@ -575,12 +601,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   participantModal.addEventListener('click', (e) => {
     if (e.target === participantModal) {
-      closeModal();
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && participantModal.classList.contains('show')) {
       closeModal();
     }
   });
@@ -622,18 +642,18 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionManageTableBody.innerHTML = sessions.map((s) => {
         const dateStr = formatDateDisplay(s.date);
         const timeStr = s.start_time ? s.start_time.substring(0, 5) : '';
-        const actionHtml = s.can_remove
-          ? `<button type="button" class="btn-remove-session" data-shibir-id="${shibirId}" data-session-number="${s.session_number}">&#128465; Remove</button>`
+        const actionHtml = (s.can_remove && !isReadOnly)
+          ? `<button type="button" class="btn-remove-session" data-shibir-id="${escapeHtml(shibirId)}" data-session-number="${escapeHtml(s.session_number)}">&#128465; Remove</button>`
           : `<span class="badge-locked">&#128274; Locked</span>`;
 
         return `
           <tr>
-            <td style="text-align: center; font-weight: 700;">#${s.session_number}</td>
+            <td style="text-align: center; font-weight: 700;">#${escapeHtml(s.session_number)}</td>
             <td style="white-space: nowrap;">${dateStr}</td>
-            <td>${timeStr}</td>
+            <td>${escapeHtml(timeStr)}</td>
             <td style="text-align: center;">
               <span style="font-weight: 600; color: ${s.attendance_count > 0 ? '#15803d' : '#94a3b8'};">
-                ${s.attendance_count} attendees
+                ${escapeHtml(s.attendance_count)} attendees
               </span>
             </td>
             <td style="text-align: center;">${actionHtml}</td>
@@ -823,7 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
     allAbsenteesTableBody.innerHTML = filtered.map((a, idx) => {
       const datesDisplay = `${formatDateDisplay(a.start_date)} - ${formatDateDisplay(a.end_date)}`;
       const waHtml = a.mobno
-        ? `<a href="https://wa.me/91${a.mobno}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
+        ? `<a href="https://wa.me/91${encodeURIComponent(a.mobno)}" target="_blank" rel="noopener noreferrer" class="btn-wa" title="Open WhatsApp chat">
              <span>&#128172;</span> WhatsApp
            </a>`
         : '-';
@@ -837,16 +857,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <tr>
           <td style="text-align: center; color: #94a3b8;">${idx + 1}</td>
-          <td class="col-topic"><div class="topic-wrapper" style="font-weight: 600; color: #1e293b;">${a.shibir_name || ''}</div></td>
+          <td class="col-topic"><div class="topic-wrapper" style="font-weight: 600; color: #1e293b;">${escapeHtml(a.shibir_name || '')}</div></td>
           <td style="white-space: nowrap; font-size: 12px; color: #475569;">${datesDisplay}</td>
-          <td style="font-weight: 600; font-family: monospace;">${a.cardno || ''}</td>
+          <td style="font-weight: 600; font-family: monospace;">${escapeHtml(a.cardno || '')}</td>
           <td>
-            <div style="font-weight: 500; color: #1e293b;">${a.name || ''}</div>
+            <div style="font-weight: 500; color: #1e293b;">${escapeHtml(a.name || '')}</div>
             ${repeatBadge}
           </td>
-          <td style="color: #475569;">${a.mobno || ''}</td>
-          <td style="color: #475569;">${a.center || ''}</td>
-          <td><span class="summary-badge">${a.res_status || 'Mumukshu'}</span></td>
+          <td style="color: #475569;">${escapeHtml(a.mobno || '')}</td>
+          <td style="color: #475569;">${escapeHtml(a.center || '')}</td>
+          <td><span class="summary-badge">${escapeHtml(a.res_status || 'Mumukshu')}</span></td>
           <td style="text-align: center;">${waHtml}</td>
         </tr>
       `;
