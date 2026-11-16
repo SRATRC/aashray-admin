@@ -57,15 +57,18 @@ async function handleUnified(cardno, fromScan = false) {
       guestName,
       roomNo: currentUnit,
       choices: [
-        { id: 'checkout', label: `Check Out of ${currentUnit || 'Current Stay'}`, theme: 'blue' },
-        { id: 'checkin', label: `Check In to ${nextUnit || 'Next Stay'}`, theme: 'emerald' }
+        { id: 'switch', label: `Check Out of ${currentUnit || 'Old Stay'} & Check In to ${nextUnit || 'Next Stay'}`, theme: 'emerald' },
+        { id: 'checkout', label: `Check Out of ${currentUnit || 'Current Stay'} Only`, theme: 'blue' }
       ]
     });
 
-    if (choice === 'checkout') {
+    if (choice === 'switch') {
+      const checkoutOk = await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false, suppressSuccessScreen: true });
+      if (checkoutOk) {
+        await executeCheckinFlow({ targetRoomBooking: targetRoomCheckin, targetFlatBooking: targetFlatCheckin, guestName, cardno });
+      }
+    } else if (choice === 'checkout') {
       await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false });
-    } else if (choice === 'checkin') {
-      await executeCheckinFlow({ targetRoomBooking: targetRoomCheckin, targetFlatBooking: targetFlatCheckin, guestName, cardno });
     }
     return;
   }
@@ -123,8 +126,13 @@ async function handleUnified(cardno, fromScan = false) {
         autoCloseSeconds: 10,
         doneBtnLabel: 'Done',
         secondaryBtnLabel: 'Request Early Check-Out',
-        onSecondaryBtn: () => {
-          executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: true });
+        onSecondaryBtn: async () => {
+          try {
+            await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: true });
+          } catch (err) {
+            console.error('Early check-out error:', err);
+            Kiosk.showResult(false, 'Check-Out Error', err.message || 'Unable to connect to server.');
+          }
         }
       });
       return;
@@ -147,7 +155,40 @@ async function handleUnified(cardno, fromScan = false) {
   // BRANCH 4: No Current Active Stay or Eligible Check-In
   // -------------------------------------------------------------
 
-  // Scenario A: Future confirmed booking (early arrival)
+  // Scenario A: Unpaid reservation starting today or overdue
+  const todayOrPastUnpaidFlat = flat_booking.find(
+    (b) => (b.has_unpaid_payment || b.status === 'pending' || b.status === 'payment_pending') && b.checkin <= today && b.checkout >= today
+  );
+  const todayOrPastUnpaidRoom = room_booking.find(
+    (b) => (b.has_unpaid_payment || b.status === 'pending' || b.status === 'payment_pending') && b.checkin <= today && b.checkout >= today
+  );
+
+  if (todayOrPastUnpaidFlat) {
+    const flatNo = todayOrPastUnpaidFlat.flatno ? `Flat ${todayOrPastUnpaidFlat.flatno}` : 'Flat';
+    const ownerName = todayOrPastUnpaidFlat.owner_name || todayOrPastUnpaidFlat.booker_name;
+    const isOwner = Boolean(todayOrPastUnpaidFlat.is_owner);
+
+    let msg;
+    if (isOwner) {
+      msg = `Welcome, ${guestName}! Payment for ${flatNo} is pending. Please complete the payment in the Aashray App or visit the reception office before checking in.`;
+    } else {
+      const ownerSuffix = ownerName ? ` (Flat Owner: ${ownerName})` : '';
+      msg = `Your stay at ${flatNo}${ownerSuffix} is pending payment. Flat charges must be settled by the flat owner in the Aashray App or at the reception office before check-in.`;
+    }
+    Kiosk.showResult(false, 'Payment Incomplete', msg);
+    return;
+  }
+
+  if (todayOrPastUnpaidRoom) {
+    const bookerName = todayOrPastUnpaidRoom.booker_name;
+    const msg = bookerName
+      ? `Welcome, ${guestName}! Your room reservation booked by ${bookerName} is pending payment. Please ask them to complete the payment in the Aashray App, or visit the reception office before checking in.`
+      : `Welcome, ${guestName}! Your room reservation is pending payment. Please complete the payment in the Aashray App or visit the reception office before checking in.`;
+    Kiosk.showResult(false, 'Payment Incomplete', msg);
+    return;
+  }
+
+  // Scenario B: Future confirmed booking (early arrival)
   if (futurePending) {
     Kiosk.showResult(
       false,
@@ -157,7 +198,7 @@ async function handleUnified(cardno, fromScan = false) {
     return;
   }
 
-  // Scenario B: Unpaid reservation
+  // Scenario C: Future unpaid reservation (if any)
   if (unpaidFlat) {
     const flatNo = unpaidFlat.flatno ? `Flat ${unpaidFlat.flatno}` : 'Flat';
     const ownerName = unpaidFlat.owner_name || unpaidFlat.booker_name;
@@ -183,7 +224,7 @@ async function handleUnified(cardno, fromScan = false) {
     return;
   }
 
-  // Scenario C: No reservation found today
+  // Scenario D: No reservation found today
   Kiosk.showResult(
     false,
     'No Active Reservation',
@@ -256,7 +297,7 @@ async function executeCheckinFlow({ targetRoomBooking, targetFlatBooking, guestN
 // -----------------------------------------------------------------
 // Check-Out Flow Execution
 // -----------------------------------------------------------------
-async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly = false }) {
+async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly = false, suppressSuccessScreen = false }) {
   const units = [checkedinRoom && (checkedinRoom.roomno || 'Room'), checkedinFlat && (checkedinFlat.flatno || 'Flat')]
     .filter(Boolean)
     .join(' & ');
@@ -312,7 +353,7 @@ async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, to
     confirmLabel,
     theme
   });
-  if (!ok) return;
+  if (!ok) return false;
 
   const checkedOutUnits = [];
   const failures = [];
@@ -330,7 +371,11 @@ async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, to
 
   if (checkedOutUnits.length === 0) {
     Kiosk.showResult(false, 'Check-Out Failed', failures.join(' '));
-    return;
+    return false;
+  }
+
+  if (suppressSuccessScreen) {
+    return true;
   }
 
   const hasRoom = Boolean(checkedinRoom);
@@ -349,6 +394,7 @@ async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, to
   }
 
   Kiosk.showResult(true, 'Check-Out Successful!', message, guestName, checkedOutUnits.join(' & '), null, badgeLabel);
+  return true;
 }
 
 // Start kiosk with neutral mid-range tone (740 Hz) for initial scan acknowledgement

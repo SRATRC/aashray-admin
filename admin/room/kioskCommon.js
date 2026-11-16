@@ -7,6 +7,34 @@ const Kiosk = (() => {
   const RESULT_SUCCESS_SECONDS = 5;
   const RESULT_ERROR_SECONDS = 10;
   const RESCAN_COOLDOWN_MS = 2500;
+  const CAMERA_RESCAN_COOLDOWN_MS = 8000;
+
+  const THEME_STYLES = {
+    emerald: {
+      bg: '#ecfdf5',
+      color: '#059669',
+      btn: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      shadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
+    },
+    amber: {
+      bg: '#fffbeb',
+      color: '#d97706',
+      btn: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      shadow: '0 4px 14px rgba(217, 119, 6, 0.35)'
+    },
+    indigo: {
+      bg: '#eef2ff',
+      color: '#4f46e5',
+      btn: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+      shadow: '0 4px 14px rgba(79, 70, 229, 0.35)'
+    },
+    blue: {
+      bg: '#eff6ff',
+      color: '#2563eb',
+      btn: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      shadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
+    }
+  };
 
   let html5QrcodeScanner = null;
   let camerasList = [];
@@ -218,9 +246,14 @@ const Kiosk = (() => {
 
   function currentCheckedIn(bookings, today) {
     const checkedIn = bookings.filter((b) => b.status === 'checkedin');
+    if (!checkedIn.length) return null;
+    // Stays due for checkout today or overdue take absolute precedence so they are never stranded
+    const dueOrOverdue = checkedIn.filter((b) => b.checkout <= today);
+    if (dueOrOverdue.length) {
+      return dueOrOverdue.sort((a, b) => String(a.checkout).localeCompare(String(b.checkout)))[0];
+    }
     const covering = checkedIn.filter((b) => b.checkin <= today && b.checkout >= today);
-    const started = checkedIn.filter((b) => b.checkin <= today);
-    const pool = covering.length ? covering : started;
+    const pool = covering.length ? covering : checkedIn;
     return pool.sort((a, b) => String(b.checkin).localeCompare(String(a.checkin)))[0];
   }
 
@@ -394,8 +427,9 @@ const Kiosk = (() => {
       }
     }
 
+    const isCheckinSuccess = isSuccess && String(roomLabel || '').toLowerCase().includes('assigned');
     if (singleDayBox) {
-      singleDayBox.style.display = isSuccess && isSingleDay ? 'block' : 'none';
+      singleDayBox.style.display = isCheckinSuccess && isSingleDay ? 'block' : 'none';
     }
     document.getElementById('resultMessage').innerText = message || '';
 
@@ -522,13 +556,7 @@ const Kiosk = (() => {
       okBtn.innerText = confirmLabel;
 
       const iconBox = document.getElementById('confirmIconBox');
-      const themeColors = {
-        emerald: { bg: '#ecfdf5', color: '#059669', btn: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', shadow: '0 4px 14px rgba(16, 185, 129, 0.35)' },
-        amber: { bg: '#fffbeb', color: '#d97706', btn: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', shadow: '0 4px 14px rgba(217, 119, 6, 0.35)' },
-        indigo: { bg: '#eef2ff', color: '#4f46e5', btn: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', shadow: '0 4px 14px rgba(79, 70, 229, 0.35)' },
-        blue: { bg: '#eff6ff', color: '#2563eb', btn: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', shadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }
-      };
-      const tStyle = themeColors[theme] || themeColors.blue;
+      const tStyle = THEME_STYLES[theme] || THEME_STYLES.blue;
       if (iconBox) {
         iconBox.style.background = tStyle.bg;
         iconBox.style.color = tStyle.color;
@@ -791,19 +819,9 @@ const Kiosk = (() => {
         btn.style.width = '100%';
         btn.style.padding = '12px 18px';
         btn.style.fontSize = '1rem';
-        if (c.theme === 'emerald') {
-          btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-          btn.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.35)';
-        } else if (c.theme === 'amber') {
-          btn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-          btn.style.boxShadow = '0 4px 14px rgba(217, 119, 6, 0.35)';
-        } else if (c.theme === 'indigo') {
-          btn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
-          btn.style.boxShadow = '0 4px 14px rgba(79, 70, 229, 0.35)';
-        } else {
-          btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
-          btn.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.35)';
-        }
+        const tStyle = THEME_STYLES[c.theme] || THEME_STYLES.blue;
+        btn.style.background = tStyle.btn;
+        btn.style.boxShadow = tStyle.shadow;
         btn.innerText = c.label;
         btn.onclick = () => done(c.id);
         container.appendChild(btn);
@@ -830,8 +848,9 @@ const Kiosk = (() => {
     if (isProcessing) return;
     const cardno = extractCardNo(rawScannedText);
     if (!cardno) return;
+    const cooldown = fromCamera ? CAMERA_RESCAN_COOLDOWN_MS : RESCAN_COOLDOWN_MS;
     const isHardwareScan = Boolean(fromCamera || fromScan);
-    if (isHardwareScan && cardno === lastCard && Date.now() - lastReleaseAt < RESCAN_COOLDOWN_MS) return;
+    if (isHardwareScan && cardno === lastCard && Date.now() - lastReleaseAt < cooldown) return;
     lastCard = cardno;
     isProcessing = true;
     playBeep();
