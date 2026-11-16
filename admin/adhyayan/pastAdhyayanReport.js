@@ -3,11 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentCustomStart = '';
   let currentCustomEnd = '';
   let summaryData = [];
+  let currentMode = 'regular'; // 'regular' | 'mv' | 'combined'
 
   let currentModalShibirId = null;
   let currentModalType = null;
   let currentModalParticipants = [];
   let currentModalSessions = [];
+  let currentModalRegularSessions = [];
+  let currentModalMvSessions = [];
 
   const summaryTableBody = document.getElementById('summaryTableBody');
   const summarySearch = document.getElementById('summarySearch');
@@ -39,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const kpiTotalRegistered = document.getElementById('kpiTotalRegistered');
   const kpiFullAttended = document.getElementById('kpiFullAttended');
   const kpiTotalAbsent = document.getElementById('kpiTotalAbsent');
+  const kpiFullLabel = document.getElementById('kpiFullLabel');
+  const kpiAbsentLabel = document.getElementById('kpiAbsentLabel');
+  const thSessions = document.getElementById('thSessions');
 
   const btnOpenAllAbsentees = document.getElementById('btnOpenAllAbsentees');
   const allAbsenteesModal = document.getElementById('allAbsenteesModal');
@@ -250,25 +256,68 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalAbsent = 0;
 
     list.forEach((item) => {
+      const modeData = currentMode === 'regular'
+        ? (item.regular || item)
+        : (item[currentMode] || {});
       totalRegistered += Number(item.total_registered) || 0;
-      totalFullAttended += Number(item.total_attended) || 0;
-      totalAbsent += Number(item.total_absent) || 0;
+      totalFullAttended += Number(modeData.total_attended) || 0;
+      totalAbsent += Number(modeData.total_absent) || 0;
     });
 
     if (kpiTotalShibirs) kpiTotalShibirs.textContent = totalShibirs;
     if (kpiTotalRegistered) kpiTotalRegistered.textContent = totalRegistered;
     if (kpiFullAttended) kpiFullAttended.textContent = totalFullAttended;
     if (kpiTotalAbsent) kpiTotalAbsent.textContent = totalAbsent;
+
+    // Update labels and column headers based on current view mode
+    if (kpiFullLabel) {
+      if (currentMode === 'mv') kpiFullLabel.textContent = 'Full Attended (MV)';
+      else if (currentMode === 'combined') kpiFullLabel.textContent = '100% Full (All)';
+      else kpiFullLabel.textContent = 'Full Attended (Reg)';
+    }
+    if (kpiAbsentLabel) {
+      if (currentMode === 'mv') kpiAbsentLabel.textContent = 'Total Absent (MV)';
+      else if (currentMode === 'combined') kpiAbsentLabel.textContent = 'Total Absent (All)';
+      else kpiAbsentLabel.textContent = 'Total Absent (Reg)';
+    }
+    if (thSessions) {
+      const labelNode = thSessions.firstChild;
+      if (currentMode === 'mv') {
+        if (labelNode) labelNode.nodeValue = 'MV Days ';
+        thSessions.title = 'Morning Vanchan Sessions (4:30 AM)';
+      } else if (currentMode === 'combined') {
+        if (labelNode) labelNode.nodeValue = 'All Sess ';
+        thSessions.title = 'Total Combined Sessions (Lectures + MV)';
+      } else {
+        if (labelNode) labelNode.nodeValue = 'Sessions ';
+        thSessions.title = 'Regular Sessions (10am & 3:45pm)';
+      }
+    }
   }
 
   // Sorter for summary data
   function sortSummaryData(list) {
     const sorted = [...list];
     sorted.sort((a, b) => {
+      const dataA = currentMode === 'regular' ? (a.regular || a) : (a[currentMode] || {});
+      const dataB = currentMode === 'regular' ? (b.regular || b) : (b[currentMode] || {});
+
       let valA = a[currentSortColumn];
       let valB = b[currentSortColumn];
 
-      if (['no_of_days', 'total_regular_sessions', 'total_registered', 'total_attended', 'total_partial', 'total_absent'].includes(currentSortColumn)) {
+      if (currentSortColumn === 'total_regular_sessions') {
+        valA = Number(dataA.total_sessions ?? a.total_regular_sessions) || 0;
+        valB = Number(dataB.total_sessions ?? b.total_regular_sessions) || 0;
+        return currentSortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+
+      if (['total_attended', 'total_partial', 'total_absent'].includes(currentSortColumn)) {
+        valA = Number(dataA[currentSortColumn]) || 0;
+        valB = Number(dataB[currentSortColumn]) || 0;
+        return currentSortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+
+      if (['no_of_days', 'total_registered'].includes(currentSortColumn)) {
         valA = Number(valA) || 0;
         valB = Number(valB) || 0;
         return currentSortDirection === 'asc' ? valA - valB : valB - valA;
@@ -324,11 +373,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     summaryTableBody.innerHTML = filtered.map((item, idx) => {
       const datesDisplay = `${formatDateDisplay(item.start_date)} - ${formatDateDisplay(item.end_date)}`;
-      const editBtnHtml = (!isReadOnly && item.has_attendance_data)
+      const modeData = currentMode === 'regular'
+        ? (item.regular || item)
+        : (item[currentMode] || null);
+      const totalSessions = modeData ? (modeData.total_sessions ?? item.total_regular_sessions) : 0;
+      const hasData = modeData ? Boolean(modeData.has_attendance_data) : false;
+      const totalAttended = modeData ? (modeData.total_attended ?? 0) : 0;
+      const totalPartial = modeData ? (modeData.total_partial ?? 0) : 0;
+      const totalAbsent = modeData ? (modeData.total_absent ?? 0) : 0;
+
+      const editBtnHtml = (!isReadOnly && hasData && currentMode === 'regular')
         ? `<button type="button" class="btn-edit-sessions" data-shibir-id="${escapeHtml(item.shibir_id)}" data-shibir-name="${escapeHtml(item.name || '')}" title="Manage Regular Sessions">&#9998;</button>`
         : '';
-      const sessionsDisplay = item.has_attendance_data
-        ? `<span style="font-weight: 600;">${escapeHtml(item.total_regular_sessions)}</span> ${editBtnHtml}`
+      const sessionsDisplay = hasData
+        ? `<span style="font-weight: 600;">${escapeHtml(totalSessions)}</span> ${editBtnHtml}`
         : '<span class="badge-na">N/A</span>';
 
       const registeredHtml = item.total_registered > 0
@@ -339,21 +397,21 @@ document.addEventListener('DOMContentLoaded', () => {
       let partialHtml;
       let absentHtml;
 
-      if (!item.has_attendance_data) {
+      if (!hasData) {
         attendedHtml = '<span class="badge-na">N/A</span>';
         partialHtml = '<span class="badge-na">N/A</span>';
         absentHtml = '<span class="badge-na">N/A</span>';
       } else {
-        attendedHtml = item.total_attended > 0
-          ? `<button type="button" class="badge-count badge-attended" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="attended">${escapeHtml(item.total_attended)}</button>`
+        attendedHtml = totalAttended > 0
+          ? `<button type="button" class="badge-count badge-attended" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="attended">${escapeHtml(totalAttended)}</button>`
           : `<span class="badge-na">0</span>`;
 
-        partialHtml = item.total_partial > 0
-          ? `<button type="button" class="badge-count badge-partial" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="partial">${escapeHtml(item.total_partial)}</button>`
+        partialHtml = totalPartial > 0
+          ? `<button type="button" class="badge-count badge-partial" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="partial">${escapeHtml(totalPartial)}</button>`
           : `<span class="badge-na">0</span>`;
 
-        absentHtml = item.total_absent > 0
-          ? `<button type="button" class="badge-count badge-absent" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="absent">${escapeHtml(item.total_absent)}</button>`
+        absentHtml = totalAbsent > 0
+          ? `<button type="button" class="badge-count badge-absent" data-shibir-id="${escapeHtml(item.shibir_id)}" data-type="absent">${escapeHtml(totalAbsent)}</button>`
           : `<span class="badge-na">0</span>`;
       }
 
@@ -385,12 +443,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 2. Range Filter Presets Handlers
-  document.querySelectorAll('.preset-btn').forEach((btn) => {
+  document.querySelectorAll('.preset-btn[data-range]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.preset-btn').forEach((b) => b.classList.remove('active'));
-      e.target.classList.add('active');
+      document.querySelectorAll('.preset-btn[data-range]').forEach((b) => b.classList.remove('active'));
+      e.currentTarget.classList.add('active');
 
-      const range = e.target.getAttribute('data-range');
+      const range = e.currentTarget.getAttribute('data-range');
 
       if (range === 'custom') {
         customDateContainer.classList.add('show');
@@ -403,6 +461,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRange = range;
         loadSummaryReport();
       }
+    });
+  });
+
+  // 2B. View Mode Presets Handlers (Regular / MV / Combined)
+  document.querySelectorAll('.mode-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.mode-btn').forEach((b) => b.classList.remove('active'));
+      const target = e.currentTarget;
+      target.classList.add('active');
+      currentMode = target.getAttribute('data-mode') || 'regular';
+      renderSummaryTable(summaryData);
     });
   });
 
@@ -517,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
     participantModal.classList.add('show');
 
     try {
-      const url = `${CONFIG.basePath}/adhyayan/reports/${shibirId}/participants?type=${type}`;
+      const url = `${CONFIG.basePath}/adhyayan/reports/${shibirId}/participants?type=${type}&session_type=${currentMode}`;
       const res = await fetch(url, { headers: getAuthHeaders() });
       const result = await res.json().catch(() => ({}));
 
@@ -535,10 +604,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const shibir = result.data?.shibir || {};
       const datesDisplay = `${formatDateDisplay(shibir.start_date)} - ${formatDateDisplay(shibir.end_date)}`;
-      modalSubtitle.textContent = `${shibir.name || 'Adhyayan'} • ${shibir.speaker || ''} • ${datesDisplay} (${shibir.total_regular_sessions || 0} Regular Sessions)`;
+      const modeLabel = currentMode === 'mv' ? 'Morning Vanchan' : currentMode === 'combined' ? 'Combined View' : 'Regular Lectures';
+      modalSubtitle.textContent = `${shibir.name || 'Adhyayan'} • ${shibir.speaker || ''} • ${datesDisplay} (${shibir.total_regular_sessions || 0} Regular, ${shibir.total_mv_sessions || 0} MV) • [${modeLabel}]`;
 
       currentModalParticipants = result.data?.participants || [];
-      currentModalSessions = result.data?.regular_sessions || [];
+      currentModalRegularSessions = result.data?.regular_sessions || result.data?.regularSessions || [];
+      currentModalMvSessions = result.data?.mv_sessions || result.data?.mvSessions || [];
       participantCountBadge.innerText = `${currentModalParticipants.length} participant(s)`;
 
       renderParticipantTable(currentModalParticipants);
@@ -593,14 +664,31 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
-      const sessionDotsHtml = currentModalSessions.length > 0
-        ? `<div class="session-dots-wrapper">
-            ${currentModalSessions.map((s) => {
-              const isPresent = (p.attended_session_numbers || []).includes(s.session_number);
-              return `<span class="session-dot ${isPresent ? 'dot-present' : 'dot-absent'}" title="Session ${escapeHtml(s.session_number)}: ${isPresent ? 'Present' : 'Absent'}">S${escapeHtml(s.session_number)}</span>`;
-            }).join('')}
-          </div>`
-        : '';
+      const regDots = (currentModalRegularSessions || []).map((s) => {
+        const isPresent = (p.attended_session_numbers || []).includes(s.session_number);
+        return `<span class="session-dot ${isPresent ? 'dot-present' : 'dot-absent'}" title="Lecture Session ${escapeHtml(s.session_number)}: ${isPresent ? 'Present' : 'Absent'}">S${escapeHtml(s.session_number)}</span>`;
+      }).join('');
+
+      const mvDots = (currentModalMvSessions || []).map((s) => {
+        const isPresent = (p.attended_mv_session_numbers || []).includes(s.session_number);
+        return `<span class="session-dot ${isPresent ? 'dot-mv-present' : 'dot-absent'}" title="Morning Vanchan Day ${escapeHtml(s.display_number)}: ${isPresent ? 'Present' : 'Absent'}">MV${escapeHtml(s.display_number)}</span>`;
+      }).join('');
+
+      let sessionDotsHtml = '';
+      if (currentMode === 'regular') {
+        if (regDots) {
+          sessionDotsHtml = `<div class="session-dots-wrapper">${regDots}</div>`;
+        }
+      } else if (currentMode === 'mv') {
+        if (mvDots) {
+          sessionDotsHtml = `<div class="session-dots-wrapper">${mvDots}</div>`;
+        }
+      } else {
+        // Combined mode: show both regular and mv pills side-by-side
+        if (regDots || mvDots) {
+          sessionDotsHtml = `<div class="session-dots-wrapper">${regDots}${regDots && mvDots ? `<span style="color:#94a3b8; font-size:10px; margin: 0 4px;">|</span>` : ''}${mvDots}</div>`;
+        }
+      }
 
       return `
         <tr>
@@ -628,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Export Participant Drilldown Excel
   btnExportParticipants.addEventListener('click', () => {
     if (!currentModalShibirId || !currentModalType) return;
-    const url = `${CONFIG.basePath}/adhyayan/reports/${currentModalShibirId}/participants?type=${currentModalType}&export=excel`;
+    const url = `${CONFIG.basePath}/adhyayan/reports/${currentModalShibirId}/participants?type=${currentModalType}&session_type=${currentMode}&export=excel`;
     downloadExcelBlob(url, `shibir_${currentModalShibirId}_${currentModalType}_participants.xlsx`);
   });
 
@@ -639,6 +727,8 @@ document.addEventListener('DOMContentLoaded', () => {
     currentModalType = null;
     currentModalParticipants = [];
     currentModalSessions = [];
+    currentModalRegularSessions = [];
+    currentModalMvSessions = [];
   }
 
   modalCloseBtn.addEventListener('click', closeModal);
@@ -817,7 +907,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     const reqId = ++absenteesRequestSeq;
-    let url = `${CONFIG.basePath}/adhyayan/reports/all-absentees?range=${currentRange}`;
+    let url = `${CONFIG.basePath}/adhyayan/reports/all-absentees?range=${currentRange}&session_type=${currentMode}`;
 
     if (currentRange === 'custom') {
       const invalidMsg = (!currentCustomStart || !currentCustomEnd)
@@ -848,7 +938,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       allAbsenteesData = result.data?.absentees || [];
-      allAbsenteesCountBadge.textContent = `${allAbsenteesData.length} absentees`;
+      const modeLabel = currentMode === 'mv' ? 'Morning Vanchan' : currentMode === 'combined' ? 'Combined View' : 'Regular Lectures';
+      allAbsenteesCountBadge.textContent = `${allAbsenteesData.length} absentees (${modeLabel})`;
 
       // Calculate absentee frequency across date range to identify repeat absentees
       absenteeFrequency = {};
@@ -941,11 +1032,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnExportAllAbsentees.addEventListener('click', () => {
-    let url = `${CONFIG.basePath}/adhyayan/reports/all-absentees?export=excel&range=${currentRange}`;
+    let url = `${CONFIG.basePath}/adhyayan/reports/all-absentees?export=excel&range=${currentRange}&session_type=${currentMode}`;
     if (currentRange === 'custom') {
       url += `&start_date=${currentCustomStart}&end_date=${currentCustomEnd}`;
     }
-    downloadExcelBlob(url, 'all_past_adhyayan_absentees.xlsx');
+    downloadExcelBlob(url, `all_past_adhyayan_absentees_${currentMode}.xlsx`);
   });
 
   allAbsenteesCloseBtn.addEventListener('click', () => {

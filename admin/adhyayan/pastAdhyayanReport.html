@@ -498,10 +498,26 @@
       border: 1px solid #bbf7d0;
     }
 
+    .session-dot.dot-mv-present {
+      background: #f3e8ff;
+      color: #6b21a8;
+      border: 1px solid #e9d5ff;
+    }
+
     .session-dot.dot-absent {
       background: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fecaca;
+    }
+
+    .preset-btn.mode-btn.active[data-mode="mv"] {
+      background: #581c87;
+      color: #ffffff;
+    }
+
+    .preset-btn.mode-btn.active[data-mode="combined"] {
+      background: #0f766e;
+      color: #ffffff;
     }
 
     /* Print-Friendly Styles */
@@ -832,6 +848,14 @@
               <select id="speakerFilter" class="speaker-select" title="Filter by Speaker">
                 <option value="">All Speakers</option>
               </select>
+
+              <!-- Session Mode Toggle Switcher -->
+              <span style="font-weight: 600; font-size: 12px; color: #334155; white-space: nowrap; margin-left: 6px;">View:</span>
+              <div class="preset-group mode-group" id="modeGroup">
+                <button type="button" class="preset-btn mode-btn active" data-mode="regular" title="Daytime Sessions (10:00 & 15:45)">Regular Lectures</button>
+                <button type="button" class="preset-btn mode-btn" data-mode="mv" title="Morning Vanchan Sessions (04:30 AM)">Morning Vanchan</button>
+                <button type="button" class="preset-btn mode-btn" data-mode="combined" title="Regular Lectures + Morning Vanchan Combined">Combined</button>
+              </div>
             </div>
 
             <div class="filter-right">
@@ -859,11 +883,11 @@
               <div class="kpi-value" id="kpiTotalRegistered">0</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-label">Full Attended</div>
+              <div class="kpi-label" id="kpiFullLabel">Full Attended</div>
               <div class="kpi-value" style="color: #15803d;" id="kpiFullAttended">0</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-label">Total Absent</div>
+              <div class="kpi-label" id="kpiAbsentLabel">Total Absent</div>
               <div class="kpi-value" style="color: #b91c1c;" id="kpiTotalAbsent">0</div>
             </div>
           </div>
@@ -878,7 +902,7 @@
                   <th style="text-align: center;" class="sortable col-days" data-sort="no_of_days">Days <span class="sort-icon">&#9650;&#9660;</span></th>
                   <th class="sortable col-topic" data-sort="name" style="width: 260px; max-width: 280px;">Topic <span class="sort-icon">&#9650;&#9660;</span></th>
                   <th class="sortable col-speaker" data-sort="speaker">Speaker <span class="sort-icon">&#9650;&#9660;</span></th>
-                  <th style="text-align: center;" class="sortable col-sessions" data-sort="total_regular_sessions" title="Regular Sessions">Sessions <span class="sort-icon">&#9650;&#9660;</span></th>
+                  <th style="text-align: center;" class="sortable col-sessions" id="thSessions" data-sort="total_regular_sessions" title="Sessions">Sessions <span class="sort-icon">&#9650;&#9660;</span></th>
                   <th style="text-align: center;" class="sortable col-registered" data-sort="total_registered">Registered <span class="sort-icon">&#9650;&#9660;</span></th>
                   <th style="text-align: center;" class="sortable col-full" data-sort="total_attended">Full <span class="sort-icon">&#9650;&#9660;</span></th>
                   <th style="text-align: center;" class="sortable col-partial" data-sort="total_partial">Partial <span class="sort-icon">&#9650;&#9660;</span></th>
