@@ -61,14 +61,18 @@ async function handleUnified(cardno, fromScan = false) {
     });
     if (!ok) return;
 
-    const currentUnit = [checkedinRoom?.roomno && `Room ${checkedinRoom.roomno}`, checkedinFlat?.flatno && `Flat ${checkedinFlat.flatno}`]
+    // Only pass units whose checkout is due today (checkout <= today) to avoid checking out multi-day stays early
+    const dueRoom = (checkedinRoom && checkedinRoom.checkout <= today) ? checkedinRoom : null;
+    const dueFlat = (checkedinFlat && checkedinFlat.checkout <= today) ? checkedinFlat : null;
+
+    const currentUnit = [dueRoom?.roomno && `Room ${dueRoom.roomno}`, dueFlat?.flatno && `Flat ${dueFlat.flatno}`]
       .filter(Boolean)
       .join(' & ');
     const nextUnit = [targetRoomCheckin?.roomno && `Room ${targetRoomCheckin.roomno}`, targetFlatCheckin?.flatno && `Flat ${targetFlatCheckin.flatno}`]
       .filter(Boolean)
       .join(' & ');
 
-    const previews = [checkedinRoom, checkedinFlat].map((b) => b && b.checkout_preview).filter(Boolean);
+    const previews = [dueRoom, dueFlat].map((b) => b && b.checkout_preview).filter(Boolean);
     const lateFee = previews.reduce((sum, p) => sum + (Number(p.late_fee) || 0), 0);
     const lateFeeNote = lateFee > 0 ? `Late check-out fee: ₹${lateFee}, to be paid in the Aashray App.` : '';
     const switchLabel = lateFee > 0
@@ -88,15 +92,17 @@ async function handleUnified(cardno, fromScan = false) {
 
     if (choice === 'switch') {
       await executeRoomSwitchFlow({
-        checkedinRoom,
-        checkedinFlat,
+        checkedinRoom: dueRoom,
+        checkedinFlat: dueFlat,
         targetRoomBooking: targetRoomCheckin,
         targetFlatBooking: targetFlatCheckin,
         guestName,
-        cardno
+        cardno,
+        today,
+        isEarly: false
       });
     } else if (choice === 'checkout') {
-      await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false });
+      await executeCheckoutFlow({ checkedinRoom: dueRoom, checkedinFlat: dueFlat, guestName, today, isEarly: false });
     }
     return;
   }
@@ -121,9 +127,16 @@ async function handleUnified(cardno, fromScan = false) {
     });
     if (!ok) return;
 
+    const previews = [checkedinRoom, checkedinFlat].map((b) => b && b.checkout_preview).filter(Boolean);
+    const totalCredit = previews.filter((p) => Number(p.credit) > 0).reduce((sum, p) => sum + Number(p.credit), 0);
+    const earlyNote = totalCredit > 0
+      ? `Note: Early check-out from ${currentUnit} will add ₹${totalCredit} in credits.`
+      : '';
+
     const choice = await Kiosk.confirmWithChoice({
       question: `You have an active stay (${currentUnit}) and a new reservation today. What would you like to do?`,
       guestName,
+      note: earlyNote,
       choices: [
         { id: 'checkin', label: `Check In to ${nextUnit || 'New Stay'} (Keep ${currentUnit || 'Current Stay'})`, theme: 'emerald' },
         { id: 'switch', label: `Check Out of ${currentUnit || 'Current Stay'} Early & Check In to ${nextUnit || 'New Stay'}`, theme: 'indigo' }
@@ -139,7 +152,9 @@ async function handleUnified(cardno, fromScan = false) {
         targetRoomBooking: targetRoomCheckin,
         targetFlatBooking: targetFlatCheckin,
         guestName,
-        cardno
+        cardno,
+        today,
+        isEarly: true
       });
     }
     return;
@@ -227,7 +242,10 @@ async function handleUnified(cardno, fromScan = false) {
     }
 
     // On scheduled checkout day (or overstay): Proceed with standard checkout flow
-    await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false });
+    // Only pass units whose checkout is due today (checkout <= today) so multi-stay bookings are not cut short
+    const dueRoom = (checkedinRoom && checkedinRoom.checkout <= today) ? checkedinRoom : null;
+    const dueFlat = (checkedinFlat && checkedinFlat.checkout <= today) ? checkedinFlat : null;
+    await executeCheckoutFlow({ checkedinRoom: dueRoom, checkedinFlat: dueFlat, guestName, today, isEarly: false });
     return;
   }
 
@@ -368,7 +386,9 @@ async function executeRoomSwitchFlow({
   targetRoomBooking,
   targetFlatBooking,
   guestName,
-  cardno
+  cardno,
+  today,
+  isEarly = false
 }) {
   const currentUnits = [checkedinRoom && (checkedinRoom.roomno || 'Room'), checkedinFlat && (checkedinFlat.flatno || 'Flat')]
     .filter(Boolean)
@@ -376,7 +396,16 @@ async function executeRoomSwitchFlow({
 
   const previews = [checkedinRoom, checkedinFlat].map((b) => b && b.checkout_preview).filter(Boolean);
   const lateFee = previews.reduce((sum, p) => sum + (Number(p.late_fee) || 0), 0);
-  const note = lateFee > 0 ? `Late check-out fee: ₹${lateFee}, to be paid in the Aashray App.` : '';
+
+  const creditItems = [];
+  const creditPreviews = previews.filter((p) => Number(p.credit) > 0);
+  if (creditPreviews.length > 0 && isEarly) {
+    const totalCredit = creditPreviews.reduce((sum, p) => sum + Number(p.credit), 0);
+    creditItems.push(`Early check-out: ₹${totalCredit} added to credits.`);
+  }
+
+  const feeNote = lateFee > 0 ? `Late check-out fee: ₹${lateFee}, to be paid in the Aashray App.` : '';
+  const note = [feeNote, ...creditItems].filter(Boolean).join('\n');
 
   // 1. Execute check-out of old stay
   const { checkedOutUnits, failures: checkoutFailures } = await doCheckout(checkedinRoom, checkedinFlat);
@@ -416,9 +445,13 @@ async function executeRoomSwitchFlow({
 
   const badgeLabel = hasRoom && hasFlat ? 'Assigned Room & Flat' : hasFlat ? 'Assigned Flat' : 'Assigned Room';
 
+  const actionText = isEarly
+    ? `Checked out early from ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}.`
+    : `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}.`;
+
   const message = notes.length
-    ? `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}. Note: ${notes.join(' ')}`
-    : `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}. Welcome!`;
+    ? `${actionText} Note: ${notes.join(' ')}`
+    : `${actionText} Welcome!`;
 
   Kiosk.showResult(true, 'Room Switch Successful!', message, guestName, newUnits, wifiCode, badgeLabel);
 }

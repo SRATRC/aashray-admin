@@ -377,7 +377,24 @@ const Kiosk = (() => {
     if (manual) manual.focus();
   }
 
+  function hideAllModals() {
+    ['confirmOverlay', 'choiceOverlay', 'infoOverlay', 'resultOverlay'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    if (okBtn) {
+      okBtn.disabled = false;
+      okBtn.innerHTML = 'Confirm';
+    }
+    if (cancelBtn) cancelBtn.disabled = false;
+    const choiceCancelBtn = document.getElementById('choiceCancelBtn');
+    if (choiceCancelBtn) choiceCancelBtn.disabled = false;
+  }
+
   function release() {
+    hideAllModals();
     setLoading(false);
     const manual = document.getElementById('manualCardNo');
     if (manual) {
@@ -390,14 +407,7 @@ const Kiosk = (() => {
 
   function showResult(isSuccess, title, message, guestName = '', roomNo = '', wifiCode = null, roomLabel = '') {
     setLoading(false);
-    const confirmOverlay = document.getElementById('confirmOverlay');
-    if (confirmOverlay) {
-      confirmOverlay.style.display = 'none';
-      const okBtn = document.getElementById('confirmOkBtn');
-      const cancelBtn = document.getElementById('confirmCancelBtn');
-      if (okBtn) okBtn.disabled = false;
-      if (cancelBtn) cancelBtn.disabled = false;
-    }
+    hideAllModals();
     const overlay = document.getElementById('resultOverlay');
     const icon = document.getElementById('resultIcon');
     const titleEl = document.getElementById('resultTitle');
@@ -491,6 +501,7 @@ const Kiosk = (() => {
   // Cancel releases the scanner; nothing is sent to the server.
   function confirm({ question, guestName, roomNo, note, bookerName, confirmLabel, theme = 'blue' }) {
     setLoading(false);
+    hideAllModals();
     return new Promise((resolve) => {
       let overlay = document.getElementById('confirmOverlay');
       if (!overlay) {
@@ -624,8 +635,7 @@ const Kiosk = (() => {
     doneBtnLabel = 'Done'
   }) {
     setLoading(false);
-    const confirmOverlay = document.getElementById('confirmOverlay');
-    if (confirmOverlay) confirmOverlay.style.display = 'none';
+    hideAllModals();
 
     let overlay = document.getElementById('infoOverlay');
     if (!overlay) {
@@ -763,6 +773,7 @@ const Kiosk = (() => {
   // Resolves the selected choice id or null if cancelled/timed out.
   function confirmWithChoice({ question, guestName, roomNo, note, choices = [] }) {
     setLoading(false);
+    hideAllModals();
     return new Promise((resolve) => {
       let overlay = document.getElementById('choiceOverlay');
       if (!overlay) {
@@ -832,10 +843,8 @@ const Kiosk = (() => {
         btn.innerText = c.label;
         btn.onclick = () => {
           clearInterval(timer);
-          btn.innerHTML = '<span class="kiosk-spinner"></span> Processing...';
-          Array.from(container.children).forEach((b) => (b.disabled = true));
-          const cancelBtn = document.getElementById('choiceCancelBtn');
-          if (cancelBtn) cancelBtn.disabled = true;
+          overlay.style.display = 'none';
+          setLoading(true);
           resolve(c.id);
         };
         container.appendChild(btn);
