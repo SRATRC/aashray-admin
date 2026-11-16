@@ -256,7 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalAbsent = 0;
 
     list.forEach((item) => {
-      const modeData = item[currentMode] || item;
+      const modeData = currentMode === 'regular'
+        ? (item.regular || item)
+        : (item[currentMode] || {});
       totalRegistered += Number(item.total_registered) || 0;
       totalFullAttended += Number(modeData.total_attended) || 0;
       totalAbsent += Number(modeData.total_absent) || 0;
@@ -279,14 +281,15 @@ document.addEventListener('DOMContentLoaded', () => {
       else kpiAbsentLabel.textContent = 'Total Absent (Reg)';
     }
     if (thSessions) {
+      const labelNode = thSessions.firstChild;
       if (currentMode === 'mv') {
-        thSessions.innerHTML = `MV Days <span class="sort-icon">&#9650;&#9660;</span>`;
+        if (labelNode) labelNode.nodeValue = 'MV Days ';
         thSessions.title = 'Morning Vanchan Sessions (4:30 AM)';
       } else if (currentMode === 'combined') {
-        thSessions.innerHTML = `All Sess <span class="sort-icon">&#9650;&#9660;</span>`;
+        if (labelNode) labelNode.nodeValue = 'All Sess ';
         thSessions.title = 'Total Combined Sessions (Lectures + MV)';
       } else {
-        thSessions.innerHTML = `Sessions <span class="sort-icon">&#9650;&#9660;</span>`;
+        if (labelNode) labelNode.nodeValue = 'Sessions ';
         thSessions.title = 'Regular Sessions (10am & 3:45pm)';
       }
     }
@@ -296,8 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function sortSummaryData(list) {
     const sorted = [...list];
     sorted.sort((a, b) => {
-      const dataA = a[currentMode] || a;
-      const dataB = b[currentMode] || b;
+      const dataA = currentMode === 'regular' ? (a.regular || a) : (a[currentMode] || {});
+      const dataB = currentMode === 'regular' ? (b.regular || b) : (b[currentMode] || {});
 
       let valA = a[currentSortColumn];
       let valB = b[currentSortColumn];
@@ -370,12 +373,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     summaryTableBody.innerHTML = filtered.map((item, idx) => {
       const datesDisplay = `${formatDateDisplay(item.start_date)} - ${formatDateDisplay(item.end_date)}`;
-      const modeData = item[currentMode] || item;
-      const totalSessions = modeData.total_sessions ?? item.total_regular_sessions;
-      const hasData = modeData.has_attendance_data ?? item.has_attendance_data;
-      const totalAttended = modeData.total_attended ?? item.total_attended;
-      const totalPartial = modeData.total_partial ?? item.total_partial;
-      const totalAbsent = modeData.total_absent ?? item.total_absent;
+      const modeData = currentMode === 'regular'
+        ? (item.regular || item)
+        : (item[currentMode] || null);
+      const totalSessions = modeData ? (modeData.total_sessions ?? item.total_regular_sessions) : 0;
+      const hasData = modeData ? Boolean(modeData.has_attendance_data) : false;
+      const totalAttended = modeData ? (modeData.total_attended ?? 0) : 0;
+      const totalPartial = modeData ? (modeData.total_partial ?? 0) : 0;
+      const totalAbsent = modeData ? (modeData.total_absent ?? 0) : 0;
 
       const editBtnHtml = (!isReadOnly && hasData && currentMode === 'regular')
         ? `<button type="button" class="btn-edit-sessions" data-shibir-id="${escapeHtml(item.shibir_id)}" data-shibir-name="${escapeHtml(item.name || '')}" title="Manage Regular Sessions">&#9998;</button>`
@@ -466,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const target = e.currentTarget;
       target.classList.add('active');
       currentMode = target.getAttribute('data-mode') || 'regular';
-      updateKPIStrip(summaryData);
       renderSummaryTable(summaryData);
     });
   });
