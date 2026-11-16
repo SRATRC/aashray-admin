@@ -63,10 +63,14 @@ async function handleUnified(cardno, fromScan = false) {
     });
 
     if (choice === 'switch') {
-      const checkoutOk = await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false, suppressSuccessScreen: true });
-      if (checkoutOk) {
-        await executeCheckinFlow({ targetRoomBooking: targetRoomCheckin, targetFlatBooking: targetFlatCheckin, guestName, cardno });
-      }
+      await executeRoomSwitchFlow({
+        checkedinRoom,
+        checkedinFlat,
+        targetRoomBooking: targetRoomCheckin,
+        targetFlatBooking: targetFlatCheckin,
+        guestName,
+        cardno
+      });
     } else if (choice === 'checkout') {
       await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false });
     }
@@ -85,6 +89,14 @@ async function handleUnified(cardno, fromScan = false) {
     const isWithin15MinGrace = updatedAtMs > 0 && Date.now() - updatedAtMs < 15 * 60 * 1000;
 
     if (isWithin15MinGrace) {
+      const ok = await Kiosk.confirm({
+        question: 'Already checked in. Is this you?',
+        guestName,
+        confirmLabel: 'View Stay Details',
+        theme: 'blue'
+      });
+      if (!ok) return;
+
       const unitNum = [checkedinRoom?.roomno, checkedinFlat?.flatno].filter(Boolean).join(' & ');
       let wifiCode = null;
       if (checkedinRoom) {
@@ -110,6 +122,14 @@ async function handleUnified(cardno, fromScan = false) {
     const isScheduledCheckoutDay = today >= activeStay.checkout;
 
     if (!isScheduledCheckoutDay) {
+      const ok = await Kiosk.confirm({
+        question: 'Current stay active. Is this you?',
+        guestName,
+        confirmLabel: 'View Stay Details',
+        theme: 'blue'
+      });
+      if (!ok) return;
+
       const unitNum = [checkedinRoom?.roomno, checkedinFlat?.flatno].filter(Boolean).join(' & ');
       let wifiCode = null;
       if (checkedinRoom) {
@@ -233,6 +253,90 @@ async function handleUnified(cardno, fromScan = false) {
 }
 
 // -----------------------------------------------------------------
+// Room Switch Flow Execution (Check-Out & Check-In in one unified action)
+// -----------------------------------------------------------------
+async function executeRoomSwitchFlow({
+  checkedinRoom,
+  checkedinFlat,
+  targetRoomBooking,
+  targetFlatBooking,
+  guestName,
+  cardno
+}) {
+  const currentUnits = [checkedinRoom && (checkedinRoom.roomno || 'Room'), checkedinFlat && (checkedinFlat.flatno || 'Flat')]
+    .filter(Boolean)
+    .join(' & ');
+
+  const previews = [checkedinRoom, checkedinFlat].map((b) => b && b.checkout_preview).filter(Boolean);
+  const lateFee = previews.reduce((sum, p) => sum + (Number(p.late_fee) || 0), 0);
+  const note = lateFee > 0 ? `Late check-out fee: ₹${lateFee}, to be paid in the Aashray App.` : '';
+
+  // 1. Execute check-out of old stay
+  const checkedOutUnits = [];
+  const checkoutFailures = [];
+
+  if (checkedinRoom) {
+    const r = await Kiosk.put(`/stay/checkout/${checkedinRoom.bookingid}`);
+    if (r.ok) checkedOutUnits.push(checkedinRoom.roomno || 'Room');
+    else checkoutFailures.push(r.message || 'Room check-out failed.');
+  }
+  if (checkedinFlat) {
+    const r = await Kiosk.put(`/stay/flat_checkout/${checkedinFlat.bookingid}`);
+    if (r.ok) checkedOutUnits.push(checkedinFlat.flatno || 'Flat');
+    else checkoutFailures.push(r.message || 'Flat check-out failed.');
+  }
+
+  if (checkedOutUnits.length === 0) {
+    Kiosk.showResult(false, 'Check-Out Failed', `Unable to check out of ${currentUnits}: ${checkoutFailures.join(' ')}`);
+    return;
+  }
+
+  // 2. Execute check-in to next stay
+  const checkedInUnits = [];
+  const checkinFailures = [];
+
+  if (targetRoomBooking) {
+    const r = await Kiosk.put(`/stay/checkin/${targetRoomBooking.bookingid}`);
+    if (r.ok) checkedInUnits.push({ type: 'room', no: targetRoomBooking.roomno || 'Room' });
+    else checkinFailures.push(r.message || 'Room check-in failed.');
+  }
+  if (targetFlatBooking) {
+    const r = await Kiosk.put(`/stay/flat_checkin/${targetFlatBooking.bookingid}`);
+    if (r.ok) checkedInUnits.push({ type: 'flat', no: targetFlatBooking.flatno || 'Flat' });
+    else checkinFailures.push(r.message || 'Flat check-in failed.');
+  }
+
+  if (checkedInUnits.length === 0) {
+    Kiosk.showResult(
+      false,
+      'Check-In Pending',
+      `Checked out of ${checkedOutUnits.join(' & ')}, but check-in to next stay failed: ${checkinFailures.join(' ')}. Please visit the reception office.`
+    );
+    return;
+  }
+
+  const hasRoom = checkedInUnits.some((u) => u.type === 'room');
+  const hasFlat = checkedInUnits.some((u) => u.type === 'flat');
+  const newUnits = checkedInUnits.map((u) => u.no).join(' & ');
+
+  let wifiCode = null;
+  if (hasRoom) {
+    wifiCode = await Kiosk.fetchWifiCode(cardno);
+  }
+
+  const badgeLabel = hasRoom && hasFlat ? 'Assigned Room & Flat' : hasFlat ? 'Assigned Flat' : 'Assigned Room';
+
+  const notes = [...checkoutFailures, ...checkinFailures];
+  if (note) notes.push(note);
+
+  const message = notes.length
+    ? `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}. Note: ${notes.join(' ')}`
+    : `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}. Welcome!`;
+
+  Kiosk.showResult(true, 'Room Switch Successful!', message, guestName, newUnits, wifiCode, badgeLabel);
+}
+
+// -----------------------------------------------------------------
 // Check-In Flow Execution
 // -----------------------------------------------------------------
 async function executeCheckinFlow({ targetRoomBooking, targetFlatBooking, guestName, cardno }) {
@@ -297,7 +401,7 @@ async function executeCheckinFlow({ targetRoomBooking, targetFlatBooking, guestN
 // -----------------------------------------------------------------
 // Check-Out Flow Execution
 // -----------------------------------------------------------------
-async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly = false, suppressSuccessScreen = false }) {
+async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly = false }) {
   const units = [checkedinRoom && (checkedinRoom.roomno || 'Room'), checkedinFlat && (checkedinFlat.flatno || 'Flat')]
     .filter(Boolean)
     .join(' & ');
@@ -372,10 +476,6 @@ async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, to
   if (checkedOutUnits.length === 0) {
     Kiosk.showResult(false, 'Check-Out Failed', failures.join(' '));
     return false;
-  }
-
-  if (suppressSuccessScreen) {
-    return true;
   }
 
   const hasRoom = Boolean(checkedinRoom);

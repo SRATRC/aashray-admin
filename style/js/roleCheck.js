@@ -66,7 +66,7 @@ function checkRoleAccess(allowedRoles) {
 
   if (!hasAccess) {
     if (roles.length > 0 && roles.every((role) => role === 'kioskAdmin')) {
-      window.location.href = '/admin/room/selfCheckin.html';
+      window.location.href = '/admin/room/selfKiosk.html';
       return;
     }
 

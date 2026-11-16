@@ -247,10 +247,10 @@ const Kiosk = (() => {
   function currentCheckedIn(bookings, today) {
     const checkedIn = bookings.filter((b) => b.status === 'checkedin');
     if (!checkedIn.length) return null;
-    // Stays due for checkout today or overdue take absolute precedence so they are never stranded
-    const dueOrOverdue = checkedIn.filter((b) => b.checkout <= today);
-    if (dueOrOverdue.length) {
-      return dueOrOverdue.sort((a, b) => String(a.checkout).localeCompare(String(b.checkout)))[0];
+    // Room-change priority: if a stay is scheduled for checkout today, it takes precedence over stays extending past today
+    const checkoutToday = checkedIn.filter((b) => b.checkout === today);
+    if (checkoutToday.length) {
+      return checkoutToday.sort((a, b) => String(b.checkin).localeCompare(String(a.checkin)))[0];
     }
     const covering = checkedIn.filter((b) => b.checkin <= today && b.checkout >= today);
     const pool = covering.length ? covering : checkedIn;
@@ -553,6 +553,8 @@ const Kiosk = (() => {
       }
       const okBtn = document.getElementById('confirmOkBtn');
       const cancelBtn = document.getElementById('confirmCancelBtn');
+      okBtn.disabled = false;
+      cancelBtn.disabled = false;
       okBtn.innerText = confirmLabel;
 
       const iconBox = document.getElementById('confirmIconBox');
