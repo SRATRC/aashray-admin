@@ -167,9 +167,11 @@ async function handleUnified(cardno, fromScan = false) {
     const activeStay = checkedinRoom || checkedinFlat;
 
     // Layer 2 Safeguard: Just Checked-In Grace Period (15 minutes)
-    // Prevents an accidental immediate re-scan or double-tap from flipping to check-out
+    // Prevents an accidental immediate re-scan or double-tap from flipping to check-out.
+    // Scoped to checkin === today so admin edits on long-running stays do not trigger a false grace period.
+    const isCheckedInToday = activeStay.checkin === today;
     const updatedAtMs = activeStay.updatedAt ? new Date(activeStay.updatedAt).getTime() : 0;
-    const isWithin15MinGrace = updatedAtMs > 0 && Date.now() - updatedAtMs < 15 * 60 * 1000;
+    const isWithin15MinGrace = isCheckedInToday && updatedAtMs > 0 && Date.now() - updatedAtMs < 15 * 60 * 1000;
 
     if (isWithin15MinGrace) {
       const ok = await Kiosk.confirm({
@@ -185,6 +187,11 @@ async function handleUnified(cardno, fromScan = false) {
       if (checkedinRoom) {
         wifiCode = await Kiosk.fetchWifiCode(cardno);
       }
+      const isDueToday = Boolean(
+        (checkedinRoom && checkedinRoom.checkout <= today) ||
+        (checkedinFlat && checkedinFlat.checkout <= today)
+      );
+
       Kiosk.showInfo({
         title: 'Welcome to Research Centre!',
         guestName,
@@ -194,7 +201,22 @@ async function handleUnified(cardno, fromScan = false) {
         message: 'You checked in a few moments ago. Have a peaceful stay!',
         wifiCode,
         autoCloseSeconds: 8,
-        doneBtnLabel: 'Done'
+        doneBtnLabel: 'Done',
+        secondaryBtnLabel: isDueToday ? 'Check Out' : 'Request Early Check-Out',
+        onSecondaryBtn: async () => {
+          try {
+            await executeCheckoutFlow({
+              checkedinRoom: isDueToday ? (checkedinRoom && checkedinRoom.checkout <= today ? checkedinRoom : null) : checkedinRoom,
+              checkedinFlat: isDueToday ? (checkedinFlat && checkedinFlat.checkout <= today ? checkedinFlat : null) : checkedinFlat,
+              guestName,
+              today,
+              isEarly: !isDueToday
+            });
+          } catch (err) {
+            console.error('Check-out error:', err);
+            Kiosk.showResult(false, 'Check-Out Error', err.message || 'Unable to connect to server.');
+          }
+        }
       });
       return;
     }
@@ -349,12 +371,12 @@ async function doCheckout(checkedinRoom, checkedinFlat) {
 
   if (checkedinRoom) {
     const r = await Kiosk.put(`/stay/checkout/${checkedinRoom.bookingid}`);
-    if (r.ok) checkedOutUnits.push(checkedinRoom.roomno || 'Room');
+    if (r.ok) checkedOutUnits.push({ type: 'room', no: checkedinRoom.roomno || 'Room' });
     else failures.push(r.message || 'Room check-out failed.');
   }
   if (checkedinFlat) {
     const r = await Kiosk.put(`/stay/flat_checkout/${checkedinFlat.bookingid}`);
-    if (r.ok) checkedOutUnits.push(checkedinFlat.flatno || 'Flat');
+    if (r.ok) checkedOutUnits.push({ type: 'flat', no: checkedinFlat.flatno || 'Flat' });
     else failures.push(r.message || 'Flat check-out failed.');
   }
 
@@ -412,8 +434,9 @@ async function executeRoomSwitchFlow({
   // 1. Execute check-out of old stay
   const { checkedOutUnits, failures: checkoutFailures } = await doCheckout(checkedinRoom, checkedinFlat);
 
-  if (checkedOutUnits.length === 0) {
-    Kiosk.showResult(false, 'Check-Out Failed', `Unable to check out of ${currentUnits}: ${checkoutFailures.join(' ')}`);
+  if (checkoutFailures.length > 0) {
+    const partial = checkedOutUnits.length ? ` Checked out of ${checkedOutUnits.map((u) => u.no).join(' & ')} only.` : '';
+    Kiosk.showResult(false, 'Check-Out Failed', `Unable to check out of ${currentUnits}: ${checkoutFailures.join(' ')}${partial} Please visit the reception office.`);
     return;
   }
 
@@ -424,7 +447,7 @@ async function executeRoomSwitchFlow({
     Kiosk.showResult(
       false,
       'Check-In Pending',
-      `Checked out of ${checkedOutUnits.join(' & ')}, but check-in to next stay failed: ${checkinFailures.join(' ')}. Please visit the reception office.`
+      `Checked out of ${checkedOutUnits.map((u) => u.no).join(' & ')}, but check-in to next stay failed: ${checkinFailures.join(' ')}. Please visit the reception office.`
     );
     return;
   }
@@ -578,22 +601,23 @@ async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, to
     return false;
   }
 
-  const hasRoom = Boolean(checkedinRoom);
-  const hasFlat = Boolean(checkedinFlat);
+  const hasRoom = checkedOutUnits.some((u) => u.type === 'room');
+  const hasFlat = checkedOutUnits.some((u) => u.type === 'flat');
   const badgeLabel = hasRoom && hasFlat
     ? 'Checked Out Room & Flat'
     : hasFlat
       ? 'Checked Out Flat'
       : 'Checked Out Room';
 
+  const unitNumbers = checkedOutUnits.map((u) => u.no).join(' & ');
   let message = failures.length
-    ? `Checked out of ${checkedOutUnits.join(' & ')}. Note: ${failures.join(' ')}`
+    ? `Checked out of ${unitNumbers}. Note: ${failures.join(' ')}`
     : `Thank you for visiting, ${guestName}! Have a safe journey.`;
   if (note) {
     message += `\n\n${note}`;
   }
 
-  Kiosk.showResult(true, 'Check-Out Successful!', message, guestName, checkedOutUnits.join(' & '), null, badgeLabel);
+  Kiosk.showResult(true, 'Check-Out Successful!', message, guestName, unitNumbers, null, badgeLabel);
   return true;
 }
 
