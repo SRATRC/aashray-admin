@@ -202,7 +202,9 @@ async function handleUnified(cardno, fromScan = false) {
     // Layer 3 Safeguard: Scheduled Checkout Date Guard (Mid-Stay)
     // If today is BEFORE the scheduled checkout date, default to a safe info screen.
     // Early checkout requires clicking the secondary "Request Early Check-Out" button.
-    const isScheduledCheckoutDay = today >= activeStay.checkout;
+    const isScheduledCheckoutDay =
+      Boolean(checkedinRoom && checkedinRoom.checkout <= today) ||
+      Boolean(checkedinFlat && checkedinFlat.checkout <= today);
 
     if (!isScheduledCheckoutDay) {
       const ok = await Kiosk.confirm({
