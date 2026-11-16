@@ -306,8 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let valB = b[currentSortColumn];
 
       if (currentSortColumn === 'total_regular_sessions') {
-        valA = Number(dataA.total_sessions ?? a.total_regular_sessions) || 0;
-        valB = Number(dataB.total_sessions ?? b.total_regular_sessions) || 0;
+        valA = Number(dataA.total_sessions ?? (currentMode === 'regular' ? a.total_regular_sessions : 0)) || 0;
+        valB = Number(dataB.total_sessions ?? (currentMode === 'regular' ? b.total_regular_sessions : 0)) || 0;
         return currentSortDirection === 'asc' ? valA - valB : valB - valA;
       }
 
@@ -376,8 +376,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const modeData = currentMode === 'regular'
         ? (item.regular || item)
         : (item[currentMode] || null);
-      const totalSessions = modeData ? (modeData.total_sessions ?? item.total_regular_sessions) : 0;
-      const hasData = modeData ? Boolean(modeData.has_attendance_data) : false;
+      const totalSessions = modeData
+        ? (modeData.total_sessions ?? (currentMode === 'regular' ? item.total_regular_sessions : 0))
+        : 0;
+      const hasData = modeData
+        ? Boolean(modeData.has_attendance_data ?? (currentMode === 'regular' ? item.has_attendance_data : false))
+        : false;
       const totalAttended = modeData ? (modeData.total_attended ?? 0) : 0;
       const totalPartial = modeData ? (modeData.total_partial ?? 0) : 0;
       const totalAbsent = modeData ? (modeData.total_absent ?? 0) : 0;
@@ -508,11 +512,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Export Summary Excel
   btnExportSummary.addEventListener('click', () => {
-    let url = `${CONFIG.basePath}/adhyayan/reports/past-attendance?export=excel&range=${currentRange}`;
+    let url = `${CONFIG.basePath}/adhyayan/reports/past-attendance?export=excel&range=${currentRange}&session_type=${currentMode}`;
     if (currentRange === 'custom') {
       url += `&start_date=${currentCustomStart}&end_date=${currentCustomEnd}`;
     }
-    downloadExcelBlob(url, 'past_adhyayan_attendance_summary.xlsx');
+    downloadExcelBlob(url, `past_adhyayan_attendance_summary_${currentMode}.xlsx`);
   });
 
   // 3. Main Table Handlers (Drilldown Modal & Per-Adhyayan Complete Export)

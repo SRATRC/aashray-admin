@@ -470,9 +470,10 @@ async function executeRoomSwitchFlow({
 
   const badgeLabel = hasRoom && hasFlat ? 'Assigned Room & Flat' : hasFlat ? 'Assigned Flat' : 'Assigned Room';
 
+  const oldUnits = checkedOutUnits.map((u) => u.no).join(' & ');
   const actionText = isEarly
-    ? `Checked out early from ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}.`
-    : `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}.`;
+    ? `Checked out early from ${oldUnits} and checked in to ${newUnits}.`
+    : `Checked out of ${oldUnits} and checked in to ${newUnits}.`;
 
   const message = notes.length
     ? `${actionText} Note: ${notes.join(' ')}`
