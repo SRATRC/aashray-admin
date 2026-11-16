@@ -57,9 +57,9 @@ function login(event) {
 
       if (hasValidRole) {
         const kioskOnly = roles.every((role) => role === 'kioskAdmin');
-        // Always redirect to admin home for multi-role support
+        // Redirect kioskAdmin directly to the unified kiosk
         window.location.href = kioskOnly
-          ? '/admin/room/selfCheckin.html'
+          ? '/admin/room/selfKiosk.html'
           : '/admin/adminhome.html';
       } else {
         // ❌ No recognized roles

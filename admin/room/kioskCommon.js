@@ -6,7 +6,7 @@ const Kiosk = (() => {
   const CONFIRM_TIMEOUT_SECONDS = 20;
   const RESULT_SUCCESS_SECONDS = 5;
   const RESULT_ERROR_SECONDS = 10;
-  const RESCAN_COOLDOWN_MS = 8000;
+  const RESCAN_COOLDOWN_MS = 2500;
 
   let html5QrcodeScanner = null;
   let camerasList = [];
@@ -136,6 +136,27 @@ const Kiosk = (() => {
       console.warn('Audio not available:', e);
     }
   }
+
+  function playInfoSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.32);
+    } catch (e) {
+      console.warn('Audio not available:', e);
+    }
+  }
+
   function playBeep() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -357,8 +378,11 @@ const Kiosk = (() => {
     titleEl.innerText = title;
     document.getElementById('resultGuestName').innerText = guestName || '';
     
+    const isSingleDay = !roomNo || String(roomNo).trim().toUpperCase() === 'NA';
+    const singleDayBox = document.getElementById('singleDayNoticeBox');
+
     if (roomContainer) {
-      if (roomNo) {
+      if (roomNo && !isSingleDay) {
         roomContainer.style.display = 'block';
         document.getElementById('resultRoomNo').innerText = roomNo;
         if (roomLabel) {
@@ -368,6 +392,10 @@ const Kiosk = (() => {
       } else {
         roomContainer.style.display = 'none';
       }
+    }
+
+    if (singleDayBox) {
+      singleDayBox.style.display = isSuccess && isSingleDay ? 'block' : 'none';
     }
     document.getElementById('resultMessage').innerText = message || '';
 
@@ -427,7 +455,7 @@ const Kiosk = (() => {
 
   // guest. Resolves true on Confirm, false on Cancel or when nobody answers in time.
   // Cancel releases the scanner; nothing is sent to the server.
-  function confirm({ question, guestName, roomNo, note, bookerName, confirmLabel }) {
+  function confirm({ question, guestName, roomNo, note, bookerName, confirmLabel, theme = 'blue' }) {
     setLoading(false);
     return new Promise((resolve) => {
       let overlay = document.getElementById('confirmOverlay');
@@ -437,7 +465,7 @@ const Kiosk = (() => {
         overlay.className = 'overlay-result';
         overlay.innerHTML = `
           <div class="result-card">
-            <div style="width:58px;height:58px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;margin:0 auto 14px auto;">
+            <div id="confirmIconBox" style="width:58px;height:58px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;margin:0 auto 14px auto;">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -479,7 +507,8 @@ const Kiosk = (() => {
           bookerBox.style.display = 'none';
         }
       }
-      document.getElementById('confirmRoomBox').style.display = roomNo ? 'block' : 'none';
+      const isSingleDay = !roomNo || String(roomNo).trim().toUpperCase() === 'NA';
+      document.getElementById('confirmRoomBox').style.display = (roomNo && !isSingleDay) ? 'block' : 'none';
       document.getElementById('confirmRoomNo').innerText = roomNo || '--';
       const noteEl = document.getElementById('confirmNote');
       if (note) {
@@ -491,6 +520,23 @@ const Kiosk = (() => {
       const okBtn = document.getElementById('confirmOkBtn');
       const cancelBtn = document.getElementById('confirmCancelBtn');
       okBtn.innerText = confirmLabel;
+
+      const iconBox = document.getElementById('confirmIconBox');
+      const themeColors = {
+        emerald: { bg: '#ecfdf5', color: '#059669', btn: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', shadow: '0 4px 14px rgba(16, 185, 129, 0.35)' },
+        amber: { bg: '#fffbeb', color: '#d97706', btn: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', shadow: '0 4px 14px rgba(217, 119, 6, 0.35)' },
+        indigo: { bg: '#eef2ff', color: '#4f46e5', btn: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', shadow: '0 4px 14px rgba(79, 70, 229, 0.35)' },
+        blue: { bg: '#eff6ff', color: '#2563eb', btn: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', shadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }
+      };
+      const tStyle = themeColors[theme] || themeColors.blue;
+      if (iconBox) {
+        iconBox.style.background = tStyle.bg;
+        iconBox.style.color = tStyle.color;
+      }
+      if (okBtn) {
+        okBtn.style.background = tStyle.btn;
+        okBtn.style.boxShadow = tStyle.shadow;
+      }
 
       const done = (answer) => {
         clearInterval(confirmTimer);
@@ -532,11 +578,260 @@ const Kiosk = (() => {
     });
   }
 
+  // Shows an informational modal (e.g. recent check-in grace period or mid-stay active stay details)
+  // with an optional secondary action (such as "Check Out Early") and prominent Wi-Fi voucher box.
+  function showInfo({
+    title,
+    message,
+    guestName = '',
+    bookerName = '',
+    roomNo = '',
+    roomLabel = 'Assigned Room',
+    wifiCode = null,
+    autoCloseSeconds = 10,
+    secondaryBtnLabel = '',
+    onSecondaryBtn = null,
+    doneBtnLabel = 'Done'
+  }) {
+    setLoading(false);
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    if (confirmOverlay) confirmOverlay.style.display = 'none';
+
+    let overlay = document.getElementById('infoOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'infoOverlay';
+      overlay.className = 'overlay-result';
+      overlay.innerHTML = `
+        <div class="result-card">
+          <div style="width:58px;height:58px;border-radius:50%;background:#f1f5f9;color:#475569;display:flex;align-items:center;justify-content:center;margin:0 auto 14px auto;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <div id="infoTitle" class="result-title" style="color:#0f172a;"></div>
+          <div id="infoGuestName" class="result-guest" style="margin-bottom:6px;"></div>
+          <div id="infoBookerBox" style="font-size:0.92rem;color:#64748b;margin-bottom:14px;display:none;">
+            Booked by: <strong id="infoBookerName" style="color:#1e293b;"></strong>
+          </div>
+          <div id="infoRoomContainer" class="room-badge-card" style="display:none;">
+            <div class="room-badge-label"></div>
+            <div id="infoRoomNo" class="room-badge-number">--</div>
+          </div>
+          <div id="infoSingleDayBox" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 16px;margin:12px 0;display:none;text-align:center;">
+            <div style="font-weight:700;color:#334155;font-size:0.95rem;margin-bottom:3px;">Single Day Visit</div>
+            <div style="font-size:0.88rem;color:#64748b;line-height:1.4;">Rooms are not assigned for single day visits.<br>If a room is needed, please contact the office.</div>
+          </div>
+          <div id="infoWifiBox" class="wifi-voucher-card" style="display:none;margin-top:14px;margin-bottom:14px;">
+            <div class="wifi-voucher-tag">📶 Temporary Guest Wi-Fi</div>
+            <div>
+              <span id="infoWifiCode" class="wifi-voucher-code">--</span>
+            </div>
+            <div class="wifi-voucher-hint">Connect to Wi-Fi and use this password</div>
+          </div>
+          <div id="infoMessage" class="result-message" style="margin-top:12px;white-space:pre-line;"></div>
+          <div class="confirm-actions" style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+            <button type="button" id="infoSecondaryBtn" class="btn-kiosk-cancel" style="display:none;"></button>
+            <button type="button" id="infoDoneBtn" class="btn-result-done btn-done-success" style="padding:12px 28px;font-size:1rem;margin:0;"></button>
+          </div>
+          <div class="countdown-text" style="margin-top:14px;">Closing in <span id="infoCountdown"></span>s...</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    document.getElementById('infoTitle').innerText = title || 'Stay Information';
+    document.getElementById('infoGuestName').innerText = guestName || '';
+    document.getElementById('infoMessage').innerText = message || '';
+
+    const bookerBox = document.getElementById('infoBookerBox');
+    const bookerEl = document.getElementById('infoBookerName');
+    if (bookerBox && bookerEl) {
+      if (bookerName) {
+        bookerBox.style.display = 'block';
+        bookerEl.innerText = bookerName;
+      } else {
+        bookerBox.style.display = 'none';
+      }
+    }
+
+    const isSingleDay = !roomNo || String(roomNo).trim().toUpperCase() === 'NA';
+    const roomBox = document.getElementById('infoRoomContainer');
+    const singleDayBox = document.getElementById('infoSingleDayBox');
+
+    if (roomBox) {
+      if (roomNo && !isSingleDay) {
+        roomBox.style.display = 'block';
+        document.getElementById('infoRoomNo').innerText = roomNo;
+        const lbl = roomBox.querySelector('.room-badge-label');
+        if (lbl) lbl.innerText = roomLabel || 'Assigned Room';
+      } else {
+        roomBox.style.display = 'none';
+      }
+    }
+
+    if (singleDayBox) {
+      singleDayBox.style.display = isSingleDay ? 'block' : 'none';
+    }
+
+    const wifiBox = document.getElementById('infoWifiBox');
+    if (wifiBox) {
+      if (wifiCode) {
+        wifiBox.style.display = 'block';
+        document.getElementById('infoWifiCode').innerText = wifiCode;
+      } else {
+        wifiBox.style.display = 'none';
+      }
+    }
+
+    playInfoSound();
+
+    const secBtn = document.getElementById('infoSecondaryBtn');
+    const doneBtn = document.getElementById('infoDoneBtn');
+    doneBtn.innerText = doneBtnLabel || 'Done';
+
+    let timer = null;
+    const cleanup = () => {
+      if (timer) clearInterval(timer);
+      overlay.style.display = 'none';
+      release();
+    };
+
+    doneBtn.onclick = cleanup;
+
+    if (secondaryBtnLabel && typeof onSecondaryBtn === 'function') {
+      secBtn.style.display = 'inline-block';
+      secBtn.innerText = secondaryBtnLabel;
+      secBtn.onclick = () => {
+        if (timer) clearInterval(timer);
+        overlay.style.display = 'none';
+        onSecondaryBtn();
+      };
+    } else {
+      secBtn.style.display = 'none';
+      secBtn.onclick = null;
+    }
+
+    let seconds = autoCloseSeconds || 10;
+    const countdownEl = document.getElementById('infoCountdown');
+    if (countdownEl) countdownEl.innerText = seconds;
+
+    overlay.style.display = 'flex';
+
+    timer = setInterval(() => {
+      seconds--;
+      if (countdownEl) countdownEl.innerText = seconds;
+      if (seconds <= 0) {
+        cleanup();
+      }
+    }, 1000);
+  }
+
+  // Shows a multi-choice modal for back-to-back stay room change day.
+  // Resolves the selected choice id or null if cancelled/timed out.
+  function confirmWithChoice({ question, guestName, roomNo, choices = [] }) {
+    setLoading(false);
+    return new Promise((resolve) => {
+      let overlay = document.getElementById('choiceOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'choiceOverlay';
+        overlay.className = 'overlay-result';
+        overlay.innerHTML = `
+          <div class="result-card">
+            <div style="width:58px;height:58px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;margin:0 auto 14px auto;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M16 12l-4-4-4 4M12 8v8"></path>
+              </svg>
+            </div>
+            <div id="choiceQuestion" class="result-title" style="color:#0f172a;"></div>
+            <div id="choiceGuestName" class="result-guest" style="margin-bottom:6px;">--</div>
+            <div id="choiceRoomBox" class="room-badge-card" style="display:none;">
+              <div class="room-badge-label">Room / Flat</div>
+              <div id="choiceRoomNo" class="room-badge-number">--</div>
+            </div>
+            <div id="choiceButtonsContainer" style="display:flex;flex-direction:column;gap:10px;margin-top:20px;"></div>
+            <div style="margin-top:14px;">
+              <button type="button" id="choiceCancelBtn" class="btn-kiosk-cancel" style="width:100%;">Cancel</button>
+            </div>
+            <div class="confirm-countdown-badge" style="margin-top:12px;">⏱ Cancels automatically in <span id="choiceCountdown">20</span>s</div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+
+      document.getElementById('choiceQuestion').innerText = question;
+      document.getElementById('choiceGuestName').innerText = guestName || '';
+      const rBox = document.getElementById('choiceRoomBox');
+      if (roomNo) {
+        rBox.style.display = 'block';
+        document.getElementById('choiceRoomNo').innerText = roomNo;
+      } else {
+        rBox.style.display = 'none';
+      }
+
+      const container = document.getElementById('choiceButtonsContainer');
+      container.innerHTML = '';
+
+      let timer = null;
+      const done = (choiceId) => {
+        clearInterval(timer);
+        overlay.style.display = 'none';
+        if (!choiceId) release();
+        resolve(choiceId);
+      };
+
+      choices.forEach((c) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-kiosk-confirm';
+        btn.style.width = '100%';
+        btn.style.padding = '12px 18px';
+        btn.style.fontSize = '1rem';
+        if (c.theme === 'emerald') {
+          btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+          btn.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.35)';
+        } else if (c.theme === 'amber') {
+          btn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+          btn.style.boxShadow = '0 4px 14px rgba(217, 119, 6, 0.35)';
+        } else if (c.theme === 'indigo') {
+          btn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+          btn.style.boxShadow = '0 4px 14px rgba(79, 70, 229, 0.35)';
+        } else {
+          btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+          btn.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.35)';
+        }
+        btn.innerText = c.label;
+        btn.onclick = () => done(c.id);
+        container.appendChild(btn);
+      });
+
+      document.getElementById('choiceCancelBtn').onclick = () => done(null);
+
+      let seconds = CONFIRM_TIMEOUT_SECONDS;
+      const countdownEl = document.getElementById('choiceCountdown');
+      if (countdownEl) countdownEl.innerText = seconds;
+
+      clearInterval(timer);
+      timer = setInterval(() => {
+        seconds--;
+        if (countdownEl) countdownEl.innerText = seconds;
+        if (seconds <= 0) done(null);
+      }, 1000);
+
+      overlay.style.display = 'flex';
+    });
+  }
+
   async function run(handleCard, rawScannedText, fromCamera = false, fromScan = false) {
     if (isProcessing) return;
     const cardno = extractCardNo(rawScannedText);
     if (!cardno) return;
-    if (fromCamera && cardno === lastCard && Date.now() - lastReleaseAt < RESCAN_COOLDOWN_MS) return;
+    const isHardwareScan = Boolean(fromCamera || fromScan);
+    if (isHardwareScan && cardno === lastCard && Date.now() - lastReleaseAt < RESCAN_COOLDOWN_MS) return;
     lastCard = cardno;
     isProcessing = true;
     playBeep();
@@ -752,5 +1047,17 @@ const Kiosk = (() => {
     });
   }
 
-  return { start, showResult, confirm, fetchBookings, currentCheckedIn, todayIST, put, fetchWifiCode };
+  return {
+    start,
+    showResult,
+    showInfo,
+    confirm,
+    confirmWithChoice,
+    playInfoSound,
+    fetchBookings,
+    currentCheckedIn,
+    todayIST,
+    put,
+    fetchWifiCode
+  };
 })();
