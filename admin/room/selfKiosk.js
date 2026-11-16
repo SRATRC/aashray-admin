@@ -18,6 +18,14 @@ async function handleUnified(cardno, fromScan = false) {
   const checkedinFlat = Kiosk.currentCheckedIn(flat_booking, today);
   const hasCheckedInStay = Boolean(checkedinRoom || checkedinFlat);
 
+  // Active stay whose scheduled checkout is today (or overdue)
+  const currentEndingStay =
+    (checkedinRoom && checkedinRoom.checkout <= today)
+      ? checkedinRoom
+      : (checkedinFlat && checkedinFlat.checkout <= today)
+        ? checkedinFlat
+        : null;
+
   // Pending check-ins eligible today (checkin <= today <= checkout) where payment is fully settled
   const targetRoomCheckin = room_booking.find(
     (b) => b.status === 'pending checkin' && !b.has_unpaid_payment && b.checkin <= today && b.checkout >= today
@@ -41,10 +49,18 @@ async function handleUnified(cardno, fromScan = false) {
   );
 
   // -------------------------------------------------------------
-  // BRANCH 1: Back-to-Back Stay / Room Change Day
-  // Guest has an active in-house stay AND a pending check-in today
+  // BRANCH 1A: True Room Change Day
+  // Guest has an active in-house stay ENDING TODAY AND a pending check-in today
   // -------------------------------------------------------------
-  if (hasCheckedInStay && hasPendingCheckinToday) {
+  if (currentEndingStay && hasPendingCheckinToday) {
+    const ok = await Kiosk.confirm({
+      question: 'Room Change Detected: Is this you?',
+      guestName,
+      confirmLabel: 'Continue',
+      theme: 'blue'
+    });
+    if (!ok) return;
+
     const currentUnit = [checkedinRoom?.roomno && `Room ${checkedinRoom.roomno}`, checkedinFlat?.flatno && `Flat ${checkedinFlat.flatno}`]
       .filter(Boolean)
       .join(' & ');
@@ -52,12 +68,20 @@ async function handleUnified(cardno, fromScan = false) {
       .filter(Boolean)
       .join(' & ');
 
+    const previews = [checkedinRoom, checkedinFlat].map((b) => b && b.checkout_preview).filter(Boolean);
+    const lateFee = previews.reduce((sum, p) => sum + (Number(p.late_fee) || 0), 0);
+    const lateFeeNote = lateFee > 0 ? `Late check-out fee: ₹${lateFee}, to be paid in the Aashray App.` : '';
+    const switchLabel = lateFee > 0
+      ? `Switch to ${nextUnit || 'Next Stay'} (Late Fee: ₹${lateFee})`
+      : `Check Out of ${currentUnit || 'Old Stay'} & Check In to ${nextUnit || 'Next Stay'}`;
+
     const choice = await Kiosk.confirmWithChoice({
       question: 'Room Change Detected: What would you like to do?',
       guestName,
       roomNo: currentUnit,
+      note: lateFeeNote,
       choices: [
-        { id: 'switch', label: `Check Out of ${currentUnit || 'Old Stay'} & Check In to ${nextUnit || 'Next Stay'}`, theme: 'emerald' },
+        { id: 'switch', label: switchLabel, theme: 'emerald' },
         { id: 'checkout', label: `Check Out of ${currentUnit || 'Current Stay'} Only`, theme: 'blue' }
       ]
     });
@@ -73,6 +97,50 @@ async function handleUnified(cardno, fromScan = false) {
       });
     } else if (choice === 'checkout') {
       await executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, today, isEarly: false });
+    }
+    return;
+  }
+
+  // -------------------------------------------------------------
+  // BRANCH 1B: Overlapping Stay (Mid-Stay + New Check-In Today)
+  // Current stay continues past today (checkout > today) AND guest has another booking starting today
+  // -------------------------------------------------------------
+  if (hasCheckedInStay && hasPendingCheckinToday && !currentEndingStay) {
+    const currentUnit = [checkedinRoom?.roomno && `Room ${checkedinRoom.roomno}`, checkedinFlat?.flatno && `Flat ${checkedinFlat.flatno}`]
+      .filter(Boolean)
+      .join(' & ');
+    const nextUnit = [targetRoomCheckin?.roomno && `Room ${targetRoomCheckin.roomno}`, targetFlatCheckin?.flatno && `Flat ${targetFlatCheckin.flatno}`]
+      .filter(Boolean)
+      .join(' & ');
+
+    const ok = await Kiosk.confirm({
+      question: 'Check-In for Today: Is this you?',
+      guestName,
+      confirmLabel: 'Continue',
+      theme: 'emerald'
+    });
+    if (!ok) return;
+
+    const choice = await Kiosk.confirmWithChoice({
+      question: `You have an active stay (${currentUnit}) and a new reservation today. What would you like to do?`,
+      guestName,
+      choices: [
+        { id: 'checkin', label: `Check In to ${nextUnit || 'New Stay'} (Keep ${currentUnit || 'Current Stay'})`, theme: 'emerald' },
+        { id: 'switch', label: `Check Out of ${currentUnit || 'Current Stay'} Early & Check In to ${nextUnit || 'New Stay'}`, theme: 'indigo' }
+      ]
+    });
+
+    if (choice === 'checkin') {
+      await executeCheckinFlow({ targetRoomBooking: targetRoomCheckin, targetFlatBooking: targetFlatCheckin, guestName, cardno, skipConfirm: true });
+    } else if (choice === 'switch') {
+      await executeRoomSwitchFlow({
+        checkedinRoom,
+        checkedinFlat,
+        targetRoomBooking: targetRoomCheckin,
+        targetFlatBooking: targetFlatCheckin,
+        guestName,
+        cardno
+      });
     }
     return;
   }
@@ -253,6 +321,45 @@ async function handleUnified(cardno, fromScan = false) {
 }
 
 // -----------------------------------------------------------------
+// Low-Level Action Helpers
+// -----------------------------------------------------------------
+async function doCheckout(checkedinRoom, checkedinFlat) {
+  const checkedOutUnits = [];
+  const failures = [];
+
+  if (checkedinRoom) {
+    const r = await Kiosk.put(`/stay/checkout/${checkedinRoom.bookingid}`);
+    if (r.ok) checkedOutUnits.push(checkedinRoom.roomno || 'Room');
+    else failures.push(r.message || 'Room check-out failed.');
+  }
+  if (checkedinFlat) {
+    const r = await Kiosk.put(`/stay/flat_checkout/${checkedinFlat.bookingid}`);
+    if (r.ok) checkedOutUnits.push(checkedinFlat.flatno || 'Flat');
+    else failures.push(r.message || 'Flat check-out failed.');
+  }
+
+  return { checkedOutUnits, failures };
+}
+
+async function doCheckin(targetRoomBooking, targetFlatBooking) {
+  const checkedInUnits = [];
+  const failures = [];
+
+  if (targetRoomBooking) {
+    const r = await Kiosk.put(`/stay/checkin/${targetRoomBooking.bookingid}`);
+    if (r.ok) checkedInUnits.push({ type: 'room', no: targetRoomBooking.roomno || 'Room' });
+    else failures.push(r.message || 'Room check-in failed.');
+  }
+  if (targetFlatBooking) {
+    const r = await Kiosk.put(`/stay/flat_checkin/${targetFlatBooking.bookingid}`);
+    if (r.ok) checkedInUnits.push({ type: 'flat', no: targetFlatBooking.flatno || 'Flat' });
+    else failures.push(r.message || 'Flat check-in failed.');
+  }
+
+  return { checkedInUnits, failures };
+}
+
+// -----------------------------------------------------------------
 // Room Switch Flow Execution (Check-Out & Check-In in one unified action)
 // -----------------------------------------------------------------
 async function executeRoomSwitchFlow({
@@ -272,19 +379,7 @@ async function executeRoomSwitchFlow({
   const note = lateFee > 0 ? `Late check-out fee: ₹${lateFee}, to be paid in the Aashray App.` : '';
 
   // 1. Execute check-out of old stay
-  const checkedOutUnits = [];
-  const checkoutFailures = [];
-
-  if (checkedinRoom) {
-    const r = await Kiosk.put(`/stay/checkout/${checkedinRoom.bookingid}`);
-    if (r.ok) checkedOutUnits.push(checkedinRoom.roomno || 'Room');
-    else checkoutFailures.push(r.message || 'Room check-out failed.');
-  }
-  if (checkedinFlat) {
-    const r = await Kiosk.put(`/stay/flat_checkout/${checkedinFlat.bookingid}`);
-    if (r.ok) checkedOutUnits.push(checkedinFlat.flatno || 'Flat');
-    else checkoutFailures.push(r.message || 'Flat check-out failed.');
-  }
+  const { checkedOutUnits, failures: checkoutFailures } = await doCheckout(checkedinRoom, checkedinFlat);
 
   if (checkedOutUnits.length === 0) {
     Kiosk.showResult(false, 'Check-Out Failed', `Unable to check out of ${currentUnits}: ${checkoutFailures.join(' ')}`);
@@ -292,19 +387,7 @@ async function executeRoomSwitchFlow({
   }
 
   // 2. Execute check-in to next stay
-  const checkedInUnits = [];
-  const checkinFailures = [];
-
-  if (targetRoomBooking) {
-    const r = await Kiosk.put(`/stay/checkin/${targetRoomBooking.bookingid}`);
-    if (r.ok) checkedInUnits.push({ type: 'room', no: targetRoomBooking.roomno || 'Room' });
-    else checkinFailures.push(r.message || 'Room check-in failed.');
-  }
-  if (targetFlatBooking) {
-    const r = await Kiosk.put(`/stay/flat_checkin/${targetFlatBooking.bookingid}`);
-    if (r.ok) checkedInUnits.push({ type: 'flat', no: targetFlatBooking.flatno || 'Flat' });
-    else checkinFailures.push(r.message || 'Flat check-in failed.');
-  }
+  const { checkedInUnits, failures: checkinFailures } = await doCheckin(targetRoomBooking, targetFlatBooking);
 
   if (checkedInUnits.length === 0) {
     Kiosk.showResult(
@@ -320,14 +403,18 @@ async function executeRoomSwitchFlow({
   const newUnits = checkedInUnits.map((u) => u.no).join(' & ');
 
   let wifiCode = null;
+  const notes = [...checkoutFailures, ...checkinFailures];
+
   if (hasRoom) {
     wifiCode = await Kiosk.fetchWifiCode(cardno);
+    if (!wifiCode) {
+      notes.push('A Wi-Fi code could not be issued. Please ask staff.');
+    }
   }
 
-  const badgeLabel = hasRoom && hasFlat ? 'Assigned Room & Flat' : hasFlat ? 'Assigned Flat' : 'Assigned Room';
-
-  const notes = [...checkoutFailures, ...checkinFailures];
   if (note) notes.push(note);
+
+  const badgeLabel = hasRoom && hasFlat ? 'Assigned Room & Flat' : hasFlat ? 'Assigned Flat' : 'Assigned Room';
 
   const message = notes.length
     ? `Checked out of ${checkedOutUnits.join(' & ')} and checked in to ${newUnits}. Note: ${notes.join(' ')}`
@@ -339,32 +426,22 @@ async function executeRoomSwitchFlow({
 // -----------------------------------------------------------------
 // Check-In Flow Execution
 // -----------------------------------------------------------------
-async function executeCheckinFlow({ targetRoomBooking, targetFlatBooking, guestName, cardno }) {
+async function executeCheckinFlow({ targetRoomBooking, targetFlatBooking, guestName, cardno, skipConfirm = false }) {
   const bookerName = targetRoomBooking?.booker_name || targetFlatBooking?.booker_name;
 
-  // Do not expose room numbers before check-in confirmation
-  const ok = await Kiosk.confirm({
-    question: 'Check in?',
-    guestName,
-    bookerName,
-    confirmLabel: 'Confirm Check-In',
-    theme: 'emerald'
-  });
-  if (!ok) return;
-
-  const checkedInUnits = [];
-  const failures = [];
-
-  if (targetRoomBooking) {
-    const r = await Kiosk.put(`/stay/checkin/${targetRoomBooking.bookingid}`);
-    if (r.ok) checkedInUnits.push({ type: 'room', no: targetRoomBooking.roomno || 'Room' });
-    else failures.push(r.message || 'Room check-in failed.');
+  if (!skipConfirm) {
+    // Do not expose room numbers before check-in confirmation
+    const ok = await Kiosk.confirm({
+      question: 'Check in?',
+      guestName,
+      bookerName,
+      confirmLabel: 'Confirm Check-In',
+      theme: 'emerald'
+    });
+    if (!ok) return;
   }
-  if (targetFlatBooking) {
-    const r = await Kiosk.put(`/stay/flat_checkin/${targetFlatBooking.bookingid}`);
-    if (r.ok) checkedInUnits.push({ type: 'flat', no: targetFlatBooking.flatno || 'Flat' });
-    else failures.push(r.message || 'Flat check-in failed.');
-  }
+
+  const { checkedInUnits, failures } = await doCheckin(targetRoomBooking, targetFlatBooking);
 
   if (checkedInUnits.length === 0) {
     Kiosk.showResult(false, 'Check-In Failed', failures.join(' '));
@@ -459,19 +536,7 @@ async function executeCheckoutFlow({ checkedinRoom, checkedinFlat, guestName, to
   });
   if (!ok) return false;
 
-  const checkedOutUnits = [];
-  const failures = [];
-
-  if (checkedinRoom) {
-    const r = await Kiosk.put(`/stay/checkout/${checkedinRoom.bookingid}`);
-    if (r.ok) checkedOutUnits.push(checkedinRoom.roomno || 'Room');
-    else failures.push(r.message || 'Room check-out failed.');
-  }
-  if (checkedinFlat) {
-    const r = await Kiosk.put(`/stay/flat_checkout/${checkedinFlat.bookingid}`);
-    if (r.ok) checkedOutUnits.push(checkedinFlat.flatno || 'Flat');
-    else failures.push(r.message || 'Flat check-out failed.');
-  }
+  const { checkedOutUnits, failures } = await doCheckout(checkedinRoom, checkedinFlat);
 
   if (checkedOutUnits.length === 0) {
     Kiosk.showResult(false, 'Check-Out Failed', failures.join(' '));

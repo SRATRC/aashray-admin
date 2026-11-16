@@ -761,7 +761,7 @@ const Kiosk = (() => {
 
   // Shows a multi-choice modal for back-to-back stay room change day.
   // Resolves the selected choice id or null if cancelled/timed out.
-  function confirmWithChoice({ question, guestName, roomNo, choices = [] }) {
+  function confirmWithChoice({ question, guestName, roomNo, note, choices = [] }) {
     setLoading(false);
     return new Promise((resolve) => {
       let overlay = document.getElementById('choiceOverlay');
@@ -783,6 +783,7 @@ const Kiosk = (() => {
               <div class="room-badge-label">Room / Flat</div>
               <div id="choiceRoomNo" class="room-badge-number">--</div>
             </div>
+            <div id="choiceNote" class="confirm-note" style="display:none;margin-top:10px;"></div>
             <div id="choiceButtonsContainer" style="display:flex;flex-direction:column;gap:10px;margin-top:20px;"></div>
             <div style="margin-top:14px;">
               <button type="button" id="choiceCancelBtn" class="btn-kiosk-cancel" style="width:100%;">Cancel</button>
@@ -803,16 +804,20 @@ const Kiosk = (() => {
         rBox.style.display = 'none';
       }
 
+      const noteEl = document.getElementById('choiceNote');
+      if (noteEl) {
+        if (note) {
+          noteEl.style.display = 'block';
+          noteEl.innerText = note;
+        } else {
+          noteEl.style.display = 'none';
+        }
+      }
+
       const container = document.getElementById('choiceButtonsContainer');
       container.innerHTML = '';
 
       let timer = null;
-      const done = (choiceId) => {
-        clearInterval(timer);
-        overlay.style.display = 'none';
-        if (!choiceId) release();
-        resolve(choiceId);
-      };
 
       choices.forEach((c) => {
         const btn = document.createElement('button');
@@ -825,11 +830,25 @@ const Kiosk = (() => {
         btn.style.background = tStyle.btn;
         btn.style.boxShadow = tStyle.shadow;
         btn.innerText = c.label;
-        btn.onclick = () => done(c.id);
+        btn.onclick = () => {
+          clearInterval(timer);
+          btn.innerHTML = '<span class="kiosk-spinner"></span> Processing...';
+          Array.from(container.children).forEach((b) => (b.disabled = true));
+          const cancelBtn = document.getElementById('choiceCancelBtn');
+          if (cancelBtn) cancelBtn.disabled = true;
+          resolve(c.id);
+        };
         container.appendChild(btn);
       });
 
-      document.getElementById('choiceCancelBtn').onclick = () => done(null);
+      const cancelBtn = document.getElementById('choiceCancelBtn');
+      cancelBtn.disabled = false;
+      cancelBtn.onclick = () => {
+        clearInterval(timer);
+        overlay.style.display = 'none';
+        release();
+        resolve(null);
+      };
 
       let seconds = CONFIRM_TIMEOUT_SECONDS;
       const countdownEl = document.getElementById('choiceCountdown');
@@ -839,7 +858,12 @@ const Kiosk = (() => {
       timer = setInterval(() => {
         seconds--;
         if (countdownEl) countdownEl.innerText = seconds;
-        if (seconds <= 0) done(null);
+        if (seconds <= 0) {
+          clearInterval(timer);
+          overlay.style.display = 'none';
+          release();
+          resolve(null);
+        }
       }, 1000);
 
       overlay.style.display = 'flex';
