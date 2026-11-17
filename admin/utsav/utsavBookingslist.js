@@ -348,6 +348,18 @@ function updatePackageChangePreview() {
     return;
   }
 
+  if (!oldPkg) {
+    previewContent.innerHTML = `
+      <div class="impact-section">
+        <div class="impact-details">
+          ⚠️ Details for the current package could not be loaded, so a preview is not available. The server will calculate the financial and meal changes when you submit.
+        </div>
+      </div>
+    `;
+    previewBox.style.display = 'block';
+    return;
+  }
+
   const oldAmount = Number(oldPkg?.amount || 0);
   const newAmount = Number(newPkg?.amount || 0);
   const diff = newAmount - oldAmount;
@@ -389,7 +401,7 @@ function updatePackageChangePreview() {
   }
   const balanceDue = Math.max(0, diff - walletCredits);
   const pendingPrefix = isPending
-    ? '<div style="margin-bottom:6px; color:#b45309; font-weight:600;">ℹ️ Current booking has a pending balance. Any previous payments will be credited towards the new package:</div>'
+    ? '<div style="margin-bottom:6px; color:#b45309; font-weight:600;">ℹ️ This booking currently has an unpaid balance. The figures below assume the current package was fully paid. Only the amount actually paid will be credited, and the server will calculate the real balance due.</div>'
     : '';
 
   let financialHtml = '';
