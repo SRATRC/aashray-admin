@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin', 'adhyayanAdminReadOnly']); // customize allowed roles per page
 </script>
 
 <!DOCTYPE html>
@@ -9,6 +9,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title> Adhyayan Registration Report</title>
+
+    <script>
+      (function() {
+        let roles = [];
+        try {
+          roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+        } catch (e) {
+          roles = [];
+        }
+        const isReadOnly =
+          roles.includes('adhyayanAdminReadOnly') &&
+          !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
+
+        if (isReadOnly) {
+          document.write(
+            '<style>#btnKolkata, #btnRajnandgaon, #btnDhule, #btnMumbai, #btnPgs { display: none !important; }</style>'
+          );
+        }
+      })();
+    </script>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -48,18 +68,39 @@
 
             <div class="admin-menu">
               <div class="menu-grid">
-                <a class="menu-btn" href="adhyayanReport.html?location=Research%20Centre">RC Adhyayan Summary Report</a>
-                <a class="menu-btn" href="adhyayanReport.html?location=Kolkata">Kolkata Adhyayan Summary Report</a>
-                <a class="menu-btn" href="adhyayanReport.html?location=Rajnandgaon">Rajnandgaon Adhyayan Summary Report</a>
-                <a class="menu-btn" href="adhyayanReport.html?location=Dhule">Dhule Adhyayan Summary Report</a>
-                <a class="menu-btn" href="adhyayanReport.html?location=Mumbai">Mumbai Adhyayan Summary Report</a>
-                <a class="menu-btn" href="pgsReport.html">PGS Summary Report</a>
-                </div>
+                <a class="menu-btn" href="adhyayanReport.html?location=Research%20Centre" id="btnRc">RC Adhyayan Summary Report</a>
+                <a class="menu-btn" href="adhyayanReport.html?location=Kolkata" id="btnKolkata">Kolkata Adhyayan Summary Report</a>
+                <a class="menu-btn" href="adhyayanReport.html?location=Rajnandgaon" id="btnRajnandgaon">Rajnandgaon Adhyayan Summary Report</a>
+                <a class="menu-btn" href="adhyayanReport.html?location=Dhule" id="btnDhule">Dhule Adhyayan Summary Report</a>
+                <a class="menu-btn" href="adhyayanReport.html?location=Mumbai" id="btnMumbai">Mumbai Adhyayan Summary Report</a>
+                <a class="menu-btn" href="pgsReport.html" id="btnPgs">PGS Summary Report</a>
+              </div>
             </div>
             
           </div>
         </div>
       </div>
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        let roles = [];
+        try {
+          roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+        } catch (e) {
+          roles = [];
+        }
+        const isReadOnly =
+          roles.includes('adhyayanAdminReadOnly') &&
+          !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
+
+        if (isReadOnly) {
+          ['btnKolkata', 'btnRajnandgaon', 'btnDhule', 'btnMumbai', 'btnPgs'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+        }
+      });
+    </script>
   </body>
 </html>

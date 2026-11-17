@@ -1,64 +1,119 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin', 'adhyayanAdminReadOnly']); // customize allowed roles per page
 </script>
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Adhyayan Management</title>
 
-    <!-- Load jQuery first -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adhyayan Management</title>
 
-    <!-- Additional Scripts -->
-    <script src="../../style/js/plugin.js"></script>
-    <script src="../../style/js/bootstrap-datepicker.min.js"></script>
-    <script src="../../style/js/clockpicker.js"></script>
-    <script src="../../style/js/custom.js"></script>
-    <script src="../../style/js/config.js"></script>
-    <script src="../../sessionstorage.js"></script>
+  <script>
+    (function() {
+      let roles = [];
+      try {
+        roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+      } catch (e) {
+        roles = [];
+      }
+      const isReadOnly =
+        roles.includes('adhyayanAdminReadOnly') &&
+        !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
 
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="../../style/css/styles.css" />
-  </head>
+      if (isReadOnly) {
+        document.write(
+          '<style>#btnCreateAdhyayan, #btnEditAdhyayan, #btnStatusUpdate { display: none !important; }</style>'
+        );
+      }
+    })();
+  </script>
 
-  <body>
-    <div class="header">
-      <div class="container">
-        <div class="logout">
-          <a href="javascript:void(0);" onclick="history.back()">Back</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="goToHome()">Home</a>
-          &nbsp; | &nbsp;
-          <a href="javascript:void(0);" onclick="logout()">Logout</a>
-        </div>
+  <!-- Load jQuery first -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+  <!-- Additional Scripts -->
+  <script src="../../style/js/plugin.js"></script>
+  <script src="../../style/js/bootstrap-datepicker.min.js"></script>
+  <script src="../../style/js/clockpicker.js"></script>
+  <script src="../../style/js/custom.js"></script>
+  <script src="../../style/js/config.js"></script>
+  <script src="../../sessionstorage.js"></script>
+
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="../../style/css/styles.css" />
+</head>
+
+<body>
+  <div class="header">
+    <div class="container">
+      <div class="logout">
+        <a href="javascript:void(0);" onclick="history.back()">Back</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="goToHome()">Home</a>
+        &nbsp; | &nbsp;
+        <a href="javascript:void(0);" onclick="logout()">Logout</a>
       </div>
     </div>
+  </div>
 
-    <div class="middlecontent">
-      <div class="container">
-        <div class="whitesec">
-          <div class="inner-padding">
-            <div class="frm-head">
-              <h1>Adhyayan Management</h1>
-            </div>
-
-            <div class="admin-menu">
-              <div class="menu-grid">
-                <a class="menu-btn" href="createAdhyayan.html">Add New Adhyayan</a>
-                <a class="menu-btn" href="fetchAllAdhyayan.html">Edit Existing Adhyayan</a>
-                <a class="menu-btn" href="adhyayanCentre.html">Adhyayan Summary Report</a>
-                <a class="menu-btn" href="adhyayanStatusUpdate.html">Adhyayan Status Update</a>
-                <a class="menu-btn" href="pastAdhyayanReport.html">Past Adhyayan Report</a>
-              </div>
-            </div>
-            
+  <div class="middlecontent">
+    <div class="container">
+      <div class="whitesec">
+        <div class="inner-padding">
+          <div class="frm-head">
+            <h1>Adhyayan Management</h1>
           </div>
+
+          <div class="admin-menu">
+            <div class="menu-grid">
+              <a class="menu-btn" href="createAdhyayan.html" id="btnCreateAdhyayan">Add New Adhyayan</a>
+              <a class="menu-btn" href="fetchAllAdhyayan.html" id="btnEditAdhyayan">Edit Existing Adhyayan</a>
+              <a class="menu-btn" href="adhyayanCentre.html" id="btnAdhyayanReport">Adhyayan Summary Report</a>
+              <a class="menu-btn" href="adhyayanStatusUpdate.html" id="btnStatusUpdate">Adhyayan Status Update</a>
+              <a class="menu-btn" href="pastAdhyayanReport.html" id="btnPastReport">Past Adhyayan Report</a>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
-  </body>
+  </div>
+
+  <script>
+    function applyReadOnlyView() {
+      let roles = [];
+      try {
+        roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+      } catch (e) {
+        roles = [];
+      }
+      const isReadOnly =
+        roles.includes('adhyayanAdminReadOnly') &&
+        !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
+
+      if (isReadOnly) {
+        ['btnCreateAdhyayan', 'btnEditAdhyayan', 'btnStatusUpdate'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+
+        const reportBtn = document.getElementById('btnAdhyayanReport');
+        if (reportBtn) {
+          reportBtn.href = 'adhyayanReport.html?location=Research%20Centre';
+          reportBtn.textContent = 'RC Adhyayan Summary Report';
+        }
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyReadOnlyView);
+    } else {
+      applyReadOnlyView();
+    }
+  </script>
+</body>
+
 </html>
