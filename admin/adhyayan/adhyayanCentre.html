@@ -11,23 +11,11 @@
     <title> Adhyayan Registration Report</title>
 
     <script>
-      (function() {
-        let roles = [];
-        try {
-          roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-        } catch (e) {
-          roles = [];
-        }
-        const isReadOnly =
-          roles.includes('adhyayanAdminReadOnly') &&
-          !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
-
-        if (isReadOnly) {
-          document.write(
-            '<style>#btnKolkata, #btnRajnandgaon, #btnDhule, #btnMumbai, #btnPgs { display: none !important; }</style>'
-          );
-        }
-      })();
+      if (typeof isAdhyayanReadOnly === 'function' && isAdhyayanReadOnly()) {
+        document.write(
+          '<style>#btnKolkata, #btnRajnandgaon, #btnDhule, #btnMumbai, #btnPgs { display: none !important; }</style>'
+        );
+      }
     </script>
 
     <!-- Load jQuery first -->
@@ -82,25 +70,5 @@
       </div>
     </div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        let roles = [];
-        try {
-          roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-        } catch (e) {
-          roles = [];
-        }
-        const isReadOnly =
-          roles.includes('adhyayanAdminReadOnly') &&
-          !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r));
-
-        if (isReadOnly) {
-          ['btnKolkata', 'btnRajnandgaon', 'btnDhule', 'btnMumbai', 'btnPgs'].forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-          });
-        }
-      });
-    </script>
   </body>
 </html>
