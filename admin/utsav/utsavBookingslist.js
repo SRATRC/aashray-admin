@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
   const storedScroll = sessionStorage.getItem('utsavScrollTop');
+  sessionStorage.removeItem('utsavPackageFilter');
+  sessionStorage.removeItem('utsavScrollTop');
 
   try {
     const response = await fetch(`${CONFIG.basePath}/utsav/bookings?utsavid=${utsavid}&status=${status}`,{
@@ -48,7 +50,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     if(!utsavbookings.length){ tableContainer.innerHTML='<p>No bookings available.</p>'; return; }
 
     populatePackageDropdown();
-    if(storedFilter) packageFilter.value = storedFilter;
+    if(storedFilter && packageFilter.querySelector(`option[value="${storedFilter}"]`)) {
+      packageFilter.value = storedFilter;
+    }
     renderFilteredTable();
 
     if(storedScroll) setTimeout(()=>window.scrollTo(0, parseInt(storedScroll)), 50);
@@ -249,22 +253,23 @@ function initStatusModal(){
   };
 }
 
-let utsavPackagesCache = null;
+const utsavPackagesCache = {};
 async function fetchUtsavPackages(utsavid) {
-  if (utsavPackagesCache) return utsavPackagesCache;
+  if (utsavPackagesCache[utsavid]) return utsavPackagesCache[utsavid];
   try {
     const res = await fetch(`${CONFIG.basePath}/utsav/fetchPackagesByUtsav?utsavid=${utsavid}`, {
       headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
     });
     if (res.ok) {
       const data = await res.json();
-      utsavPackagesCache = data.data || [];
-      return utsavPackagesCache;
+      utsavPackagesCache[utsavid] = data.data || [];
+      return utsavPackagesCache[utsavid];
     }
+    return null;
   } catch (e) {
     console.error('Error fetching utsav packages:', e);
+    return null;
   }
-  return [];
 }
 
 function initChangePackageModal() {
@@ -295,21 +300,31 @@ function initChangePackageModal() {
       modal.style.display = 'block';
 
       const packages = await fetchUtsavPackages(utsavid);
+      if (packages === null) {
+        newPkgSelect.innerHTML = '<option value="">Failed to load packages (please try again)</option>';
+        return;
+      }
+
+      const otherPackages = packages.filter(pkg => String(pkg.id) !== String(currentPkgId));
+      if (otherPackages.length === 0) {
+        newPkgSelect.innerHTML = '<option value="">No other packages available</option>';
+        return;
+      }
+
       newPkgSelect.innerHTML = '<option value="">-- Select New Package --</option>';
-      packages.forEach(pkg => {
-        if (String(pkg.id) !== String(currentPkgId)) {
-          const amtStr = Number(pkg.amount) === 0 ? 'Free (₹0)' : `₹${pkg.amount}`;
-          const dateStr = (pkg.start_date && pkg.end_date) ? ` [${pkg.start_date} to ${pkg.end_date}]` : '';
-          newPkgSelect.innerHTML += `<option value="${pkg.id}">${pkg.name || `Package #${pkg.id}`} (${amtStr})${dateStr}</option>`;
-        }
+      otherPackages.forEach(pkg => {
+        const amtStr = Number(pkg.amount) === 0 ? 'Free (₹0)' : `₹${pkg.amount}`;
+        const dateStr = (pkg.start_date && pkg.end_date) ? ` [${pkg.start_date} to ${pkg.end_date}]` : '';
+        const label = `${pkg.name || `Package #${pkg.id}`} (${amtStr})${dateStr}`;
+        newPkgSelect.appendChild(new Option(label, pkg.id));
       });
     };
   });
 
   closeBtn.onclick = () => { modal.style.display = 'none'; };
-  window.addEventListener('click', (e) => {
+  modal.onclick = (e) => {
     if (e.target === modal) modal.style.display = 'none';
-  });
+  };
 
   form.onsubmit = async (e) => {
     e.preventDefault();
