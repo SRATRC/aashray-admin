@@ -145,6 +145,11 @@
               <option value="">-- Select New Package --</option>
             </select>
           </div>
+          <!-- Impact Preview Box -->
+          <div id="cpImpactPreviewBox" class="impact-preview-box" style="display:none;">
+            <div class="impact-header">⚡ Package Change Impact Preview</div>
+            <div id="cpImpactContent"></div>
+          </div>
           <div class="form-group">
             <label>Room No (optional):</label>
             <input type="text" id="cpModalRoomNo" class="form-control" placeholder="Enter room number or leave blank" />
@@ -162,7 +167,7 @@
   <style>
     .modal {position: fixed; z-index: 999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color: rgba(0,0,0,0.4);}
     .modal-content {max-width: 600px; margin:5% auto; padding:20px; background:white; border-radius:10px; position:relative;}
-    .modal-content span {position:absolute; top:10px; right:20px; font-size:24px; cursor:pointer;}
+    .modal-content span.close {position:absolute; top:10px; right:20px; font-size:24px; cursor:pointer;}
     #centerSummaryTableContainer table {width:100%; border-collapse:collapse;}
     #centerSummaryTableContainer th, #centerSummaryTableContainer td {border:1px solid #ccc; padding:8px; text-align:center;}
     #centerSummaryTableContainer th {
@@ -234,6 +239,70 @@
     }
     .btn-action:active {
       transform: translateY(0);
+    }
+
+    /* Impact Preview Box */
+    .impact-preview-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      color: #334155;
+    }
+    .impact-header {
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+      font-size: 12.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 5px;
+    }
+    .impact-section {
+      margin-bottom: 8px;
+    }
+    .impact-section:last-child {
+      margin-bottom: 0;
+    }
+    .impact-section-title {
+      font-weight: 600;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 3px;
+    }
+    .impact-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+    .impact-badge-due {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .impact-badge-surplus {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    .impact-badge-equal {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    .impact-details {
+      padding-left: 18px;
+      color: #475569;
+      line-height: 1.45;
     }
 
   </style>
