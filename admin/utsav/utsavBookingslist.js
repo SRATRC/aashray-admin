@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const storedFilter = sessionStorage.getItem('utsavPackageFilter');
   const storedScroll = sessionStorage.getItem('utsavScrollTop');
+  sessionStorage.removeItem('utsavPackageFilter');
+  sessionStorage.removeItem('utsavScrollTop');
 
   try {
     const response = await fetch(`${CONFIG.basePath}/utsav/bookings?utsavid=${utsavid}&status=${status}`,{
@@ -48,7 +50,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     if(!utsavbookings.length){ tableContainer.innerHTML='<p>No bookings available.</p>'; return; }
 
     populatePackageDropdown();
-    if(storedFilter) packageFilter.value = storedFilter;
+    if(storedFilter && packageFilter.querySelector(`option[value="${storedFilter}"]`)) {
+      packageFilter.value = storedFilter;
+    }
     renderFilteredTable();
 
     if(storedScroll) setTimeout(()=>window.scrollTo(0, parseInt(storedScroll)), 50);
@@ -123,7 +127,7 @@ function renderFilteredTable(){
         <th>Booking Status</th>
         <th>Transaction Status</th>
         <th>Booked By</th>
-        <th>Action</th>
+        <th class="action-th">Action</th>
       </tr>
     </thead>
     <tbody>
@@ -141,7 +145,36 @@ function renderFilteredTable(){
           <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
           <td>${item.center}</td><td>${item.res_status}</td>
           <td>${item.status}</td><td>${item.transaction_status}</td><td>${item.bookedby}</td>
-          <td>${!isReadOnly ? `<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>` : '-'}</td>
+          <td class="action-td">${!isReadOnly ? `
+            <div class="action-btn-group">
+              <button type="button" class="btn-action btn-action-status update-status-link"
+                data-bookingid="${item.bookingid}"
+                data-utsavid="${item.utsavid}"
+                data-status="${item.status}"
+                title="Update Booking Status">
+                ✏️ Update Status
+              </button>
+              ${['cancelled', 'admin cancelled'].includes((item.status || '').toLowerCase()) ? '' : `
+                <button type="button" class="btn-action btn-action-package change-package-link"
+                  data-bookingid="${item.bookingid}"
+                  data-packageid="${item.packageid}"
+                  data-packagename="${item.package_name || ''}"
+                  data-cardno="${item.cardno}"
+                  data-name="${item.issuedto || ''}"
+                  data-roomno="${item.roomno || ''}"
+                  data-status="${item.status}"
+                  data-utsavid="${item.utsavid}"
+                  data-bookedby="${item.bookedby || ''}"
+                  data-bookername="${item.booker_name || ''}"
+                  data-location="${item.location || ''}"
+                  data-attendeecredits="${encodeURIComponent(typeof item.attendee_credits === 'object' ? JSON.stringify(item.attendee_credits) : (item.attendee_credits || ''))}"
+                  data-bookercredits="${encodeURIComponent(typeof item.booker_credits === 'object' ? JSON.stringify(item.booker_credits) : (item.booker_credits || ''))}"
+                  title="Change Utsav Package">
+                  🔄 Change Package
+                </button>
+              `}
+            </div>
+          ` : '<span style="color:#94a3b8;">-</span>'}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -154,7 +187,7 @@ function renderFilteredTable(){
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); },50);
+  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); initChangePackageModal(); },50);
 }
 
 
@@ -222,6 +255,504 @@ function initStatusModal(){
       modal.style.display='none';
       renderFilteredTable();
     }catch(err){console.error(err); alert('Failed to update status'); modal.style.display='none'; renderFilteredTable();}
+  };
+}
+
+const utsavPackagesCache = {};
+const utsavHasCustomFormsCache = {};
+async function fetchUtsavPackages(utsavid) {
+  if (utsavPackagesCache[utsavid]) return utsavPackagesCache[utsavid];
+  try {
+    const res = await fetch(`${CONFIG.basePath}/utsav/fetchPackagesByUtsav?utsavid=${utsavid}`, {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      utsavPackagesCache[utsavid] = data.data || [];
+      utsavHasCustomFormsCache[utsavid] = Boolean(data.has_custom_forms);
+      return utsavPackagesCache[utsavid];
+    }
+    return null;
+  } catch (e) {
+    console.error('Error fetching utsav packages:', e);
+    return null;
+  }
+}
+
+function getDatesInRange(startDate, endDate) {
+  if (!startDate || !endDate) return [];
+  const dates = [];
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  const [ey, em, ed] = endDate.split('-').map(Number);
+  let cur = new Date(Date.UTC(sy, sm - 1, sd));
+  const end = new Date(Date.UTC(ey, em - 1, ed));
+  while (cur <= end) {
+    dates.push(cur.toISOString().slice(0, 10));
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${parseInt(d, 10)}-${months[parseInt(m, 10) - 1]} ${y}`;
+  }
+  return dateStr;
+}
+
+function parseMealList(meals) {
+  if (!meals) return ['breakfast', 'lunch', 'dinner'];
+  if (Array.isArray(meals)) return meals.map(m => String(m).toLowerCase().trim());
+  if (typeof meals === 'string') {
+    try {
+      const parsed = JSON.parse(meals);
+      if (Array.isArray(parsed)) return parsed.map(m => String(m).toLowerCase().trim());
+    } catch (e) {}
+    return meals.split(',').map(m => m.toLowerCase().trim()).filter(Boolean);
+  }
+  return ['breakfast', 'lunch', 'dinner'];
+}
+
+function formatMealNames(meals) {
+  if (!meals || meals.length === 0) return 'No meals';
+  if (meals.length === 3) return 'All 3 meals (Breakfast, Lunch, Dinner)';
+  const cap = meals.map(m => m.charAt(0).toUpperCase() + m.slice(1));
+  return cap.join(' & ');
+}
+
+function updatePackageChangePreview() {
+  const modal = document.getElementById('changePackageModal');
+  const previewBox = document.getElementById('cpImpactPreviewBox');
+  const previewContent = document.getElementById('cpImpactContent');
+  const newPkgSelect = document.getElementById('cpModalNewPackage');
+
+  if (!modal || !previewBox || !previewContent || !newPkgSelect) return;
+
+  const newPkgId = newPkgSelect.value;
+  if (!newPkgId) {
+    previewBox.style.display = 'none';
+    previewContent.innerHTML = '';
+    return;
+  }
+
+  const booking = modal._currentBooking;
+  const oldPkg = modal._oldPkg;
+  const packages = utsavPackagesCache[modal._utsavid] || [];
+  const newPkg = packages.find(p => String(p.id) === String(newPkgId));
+
+  if (!newPkg) {
+    previewBox.style.display = 'none';
+    return;
+  }
+
+  const oldAmount = Number(oldPkg?.amount || 0);
+  const newAmount = Number(newPkg?.amount || 0);
+  const diff = newAmount - oldAmount;
+  const isWaiting = (booking?.status || '').toLowerCase() === 'waiting';
+  const isCheckedIn = (booking?.status || '').toLowerCase() === 'checkedin';
+
+  // Booker distinction: when booked for someone else
+  const isDifferentBooker = Boolean(
+    booking?.bookedby &&
+    String(booking.bookedby).trim() !== '' &&
+    String(booking.bookedby).trim() !== String(booking.cardno).trim()
+  );
+  const bookerDisplayName = booking?.booker_name
+    ? `${booking.booker_name} (${booking.bookedby})`
+    : (booking?.bookedby ? `Card #${booking.bookedby}` : '');
+  const payerDisplay = isDifferentBooker
+    ? `booker: <b>${bookerDisplayName}</b>`
+    : `member's card wallet`;
+
+  // Pre-calculate wallet credits (for attendee or booker) and effective balance due
+  const rawCredits = isDifferentBooker ? booking?.booker_credits : (booking?.attendee_credits || booking?.credits);
+  let walletCredits = 0;
+  if (rawCredits) {
+    try {
+      const decoded = typeof rawCredits === 'string' && rawCredits.includes('%') ? decodeURIComponent(rawCredits) : rawCredits;
+      const parsed = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
+      walletCredits = Number(parsed?.utsav || 0);
+    } catch (e) {
+      try {
+        const parsed = typeof rawCredits === 'string' ? JSON.parse(rawCredits) : rawCredits;
+        walletCredits = Number(parsed?.utsav || 0);
+      } catch (e2) {}
+    }
+  }
+  const balanceDue = Math.max(0, diff - walletCredits);
+
+  let financialHtml = '';
+  if (isWaiting) {
+    financialHtml = `
+      <div class="impact-section">
+        <div class="impact-section-title">💰 Financial Impact</div>
+        <div class="impact-details">
+          Participant is on waiting list. <b>₹0 charged now</b>. Transaction will be generated only when seat is confirmed.
+        </div>
+      </div>
+    `;
+  } else if (newAmount === 0) {
+    financialHtml = `
+      <div class="impact-section">
+        <div class="impact-section-title">💰 Financial Impact</div>
+        <div class="impact-details">
+          Package cost: <b>₹0</b>. Full previous amount of <b>₹${oldAmount.toLocaleString('en-IN')}</b> will be credited back to ${payerDisplay}.
+        </div>
+      </div>
+    `;
+  } else if (diff > 0) {
+    if (walletCredits >= diff) {
+      const remainingWalletCredits = walletCredits - diff;
+      financialHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">💰 Financial Impact</div>
+          <div class="impact-details">
+            Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
+            Old ₹${oldAmount.toLocaleString('en-IN')} credit + <b>₹${diff.toLocaleString('en-IN')} available wallet credits</b> will fully cover this upgrade.<br/>
+            <b>Balance due: ₹0</b>. Booking will <b>remain Confirmed</b>.${remainingWalletCredits > 0 ? ` (Remaining wallet credits: ₹${remainingWalletCredits.toLocaleString('en-IN')})` : ''}
+          </div>
+        </div>
+      `;
+    } else if (walletCredits > 0) {
+      const remainingDue = diff - walletCredits;
+      financialHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">💰 Financial Impact</div>
+          <div class="impact-details">
+            Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
+            Old ₹${oldAmount.toLocaleString('en-IN')} credit + <b>₹${walletCredits.toLocaleString('en-IN')} available wallet credits</b> will be auto-applied.<br/>
+            ${isDifferentBooker ? `Booker <b>${bookerDisplayName}</b>` : `Member`} will have a <b>pending balance of ₹${remainingDue.toLocaleString('en-IN')}</b>.
+          </div>
+        </div>
+      `;
+    } else {
+      financialHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">💰 Financial Impact</div>
+          <div class="impact-details">
+            Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
+            Old ₹${oldAmount.toLocaleString('en-IN')} credit will be auto-applied. ${isDifferentBooker ? `Booker <b>${bookerDisplayName}</b>` : `Member`} will have a <b>pending balance of ₹${diff.toLocaleString('en-IN')}</b>.
+          </div>
+        </div>
+      `;
+    }
+  } else if (diff < 0) {
+    const surplus = Math.abs(diff);
+    financialHtml = `
+      <div class="impact-section">
+        <div class="impact-section-title">💰 Financial Impact</div>
+        <div class="impact-details">
+          Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
+          New package is fully covered. <b>₹${surplus.toLocaleString('en-IN')} surplus credit</b> will be deposited back to ${payerDisplay}.
+        </div>
+      </div>
+    `;
+  } else {
+    financialHtml = `
+      <div class="impact-section">
+        <div class="impact-section-title">💰 Financial Impact</div>
+        <div class="impact-details">
+          Both packages cost <b>₹${newAmount.toLocaleString('en-IN')}</b>. Previous credit fully covers this change. Balance due: ₹0.
+        </div>
+      </div>
+    `;
+  }
+
+  // Food Management Impact
+  let foodHtml = '';
+  const isRC = (booking?.location || '').toLowerCase().includes('research centre');
+  if (isRC) {
+    const oldDates = (oldPkg && oldPkg.start_date && oldPkg.end_date) ? getDatesInRange(oldPkg.start_date, oldPkg.end_date) : [];
+    const newDates = (newPkg && newPkg.start_date && newPkg.end_date) ? getDatesInRange(newPkg.start_date, newPkg.end_date) : [];
+    const addedDates = newDates.filter(d => !oldDates.includes(d));
+    const droppedDates = oldDates.filter(d => !newDates.includes(d));
+    const overlapDates = newDates.filter(d => oldDates.includes(d));
+
+    const oldStartMeals = parseMealList(oldPkg?.starting_meal);
+    const newStartMeals = parseMealList(newPkg?.starting_meal);
+    const oldEndMeals = parseMealList(oldPkg?.ending_meal);
+    const newEndMeals = parseMealList(newPkg?.ending_meal);
+
+    let foodDetails = [];
+
+    // Start date meal comparison
+    if (oldPkg?.start_date && newPkg?.start_date) {
+      if (oldPkg.start_date === newPkg.start_date) {
+        const addedStart = newStartMeals.filter(m => !oldStartMeals.includes(m));
+        const droppedStart = oldStartMeals.filter(m => !newStartMeals.includes(m));
+        if (addedStart.length > 0 || droppedStart.length > 0) {
+          const notes = [];
+          if (addedStart.length > 0) notes.push(`+${formatMealNames(addedStart)} added`);
+          if (droppedStart.length > 0) notes.push(`-${formatMealNames(droppedStart)} cancelled`);
+          foodDetails.push(`• <b>Start Date (${formatDateDisplay(newPkg.start_date)})</b>: ${notes.join(', ')}.`);
+        }
+      } else if (newPkg.start_date < oldPkg.start_date) {
+        foodDetails.push(`• <b>New Start Date (${formatDateDisplay(newPkg.start_date)})</b>: Starts from ${formatMealNames(newStartMeals)}.`);
+        const missingOnOldStart = ['breakfast', 'lunch', 'dinner'].filter(m => !oldStartMeals.includes(m));
+        if (missingOnOldStart.length > 0) {
+          foodDetails.push(`• <b>Previous Start Date (${formatDateDisplay(oldPkg.start_date)})</b>: Now a full middle day (+${formatMealNames(missingOnOldStart)} added).`);
+        }
+      }
+    }
+
+    if (addedDates.length > 0) {
+      foodDetails.push(`• <b>+${addedDates.length} days added</b> (${formatDateDisplay(addedDates[0])} to ${formatDateDisplay(addedDates[addedDates.length - 1])}): Meals will be <b>auto-booked</b>.`);
+    }
+
+    // End date meal comparison
+    if (oldPkg?.end_date && newPkg?.end_date) {
+      if (oldPkg.end_date === newPkg.end_date) {
+        const addedEnd = newEndMeals.filter(m => !oldEndMeals.includes(m));
+        const droppedEnd = oldEndMeals.filter(m => !newEndMeals.includes(m));
+        if (addedEnd.length > 0 || droppedEnd.length > 0) {
+          const notes = [];
+          if (addedEnd.length > 0) notes.push(`+${formatMealNames(addedEnd)} added`);
+          if (droppedEnd.length > 0) notes.push(`-${formatMealNames(droppedEnd)} cancelled`);
+          foodDetails.push(`• <b>End Date (${formatDateDisplay(newPkg.end_date)})</b>: ${notes.join(', ')}.`);
+        }
+      } else if (newPkg.end_date > oldPkg.end_date) {
+        const missingOnOldEnd = ['breakfast', 'lunch', 'dinner'].filter(m => !oldEndMeals.includes(m));
+        if (missingOnOldEnd.length > 0) {
+          foodDetails.push(`• <b>Previous End Date (${formatDateDisplay(oldPkg.end_date)})</b>: Extended to full day (+${formatMealNames(missingOnOldEnd)} added).`);
+        }
+        if (newEndMeals.length < 3) {
+          foodDetails.push(`• <b>New End Date (${formatDateDisplay(newPkg.end_date)})</b>: Ends after ${formatMealNames(newEndMeals)}.`);
+        }
+      } else if (newPkg.end_date < oldPkg.end_date) {
+        const droppedOnNewEnd = ['breakfast', 'lunch', 'dinner'].filter(m => !newEndMeals.includes(m));
+        if (droppedOnNewEnd.length > 0) {
+          foodDetails.push(`• <b>New End Date (${formatDateDisplay(newPkg.end_date)})</b>: Adjusted to ending meal (${formatMealNames(newEndMeals)} only; -${formatMealNames(droppedOnNewEnd)} cancelled).`);
+        }
+      }
+    }
+
+    if (droppedDates.length > 0) {
+      foodDetails.push(`• <b>-${droppedDates.length} days dropped</b> (${formatDateDisplay(droppedDates[0])} to ${formatDateDisplay(droppedDates[droppedDates.length - 1])}): Meals will be <b>cancelled</b>.`);
+    }
+
+    if (overlapDates.length > 0) {
+      foodDetails.push(`• <b>${overlapDates.length} overlapping days</b>: Existing daily meals preserved.`);
+    }
+
+    if (foodDetails.length === 0) {
+      foodDetails.push(`• Package dates and meal schedules are identical. Meals unchanged.`);
+    }
+
+    foodHtml = `
+      <div class="impact-section">
+        <div class="impact-section-title">🍽️ Food Bookings (Research Centre)</div>
+        <div class="impact-details">${foodDetails.join('<br/>')}</div>
+      </div>
+    `;
+
+    // Tapascharya / Custom Forms only if this Utsav actually has active custom forms
+    const hasCustomForms = Boolean(utsavHasCustomFormsCache[modal._utsavid]);
+    if (droppedDates.length > 0 && hasCustomForms) {
+      foodHtml += `
+        <div class="impact-section">
+          <div class="impact-section-title" style="color: #b45309;">⚠️ Custom Forms / Tapascharya</div>
+          <div class="impact-details">
+            Any custom form or fasting (Upvaas/Aayambil) choices submitted for the <b>${droppedDates.length} dropped dates</b> will be automatically pruned.
+          </div>
+        </div>
+      `;
+    }
+
+    // Informational note for travel arrangements
+    if (droppedDates.length > 0 || addedDates.length > 0) {
+      foodHtml += `
+        <div class="impact-section">
+          <div class="impact-section-title" style="color: #64748b;">ℹ️ Travel & Pickup</div>
+          <div class="impact-details">
+            Travel/pickup arrangements (if any) are <b>not automatically rescheduled</b>.
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Check-In Status Continuity
+  let checkinHtml = '';
+  if (isCheckedIn) {
+    if (balanceDue > 0) {
+      checkinHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">ℹ️ Check-In Continuity</div>
+          <div class="impact-details">
+            Participant is currently <b>Checked In</b>. Status will temporarily show as <i>Payment Pending</i> (internally tagged with Checked-In) and automatically restore to <b>Checked In</b> as soon as the balance is paid.
+          </div>
+        </div>
+      `;
+    } else {
+      checkinHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">✅ Check-In Continuity</div>
+          <div class="impact-details">
+            Participant is currently <b>Checked In</b> and will <b>remain Checked In</b>.
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  previewContent.innerHTML = financialHtml + foodHtml + checkinHtml;
+  previewBox.style.display = 'block';
+}
+
+function initChangePackageModal() {
+  const modal = document.getElementById('changePackageModal');
+  if (!modal) return;
+  const form = document.getElementById('changePackageForm');
+  const closeBtn = document.getElementById('closeChangePackageModal');
+  const newPkgSelect = document.getElementById('cpModalNewPackage');
+
+  if (newPkgSelect) {
+    newPkgSelect.onchange = () => {
+      updatePackageChangePreview();
+    };
+  }
+
+  document.querySelectorAll('.change-package-link').forEach(link => {
+    link.onclick = async (e) => {
+      e.preventDefault();
+      const bookingid = link.dataset.bookingid;
+      const currentPkgId = link.dataset.packageid;
+      const currentPkgName = link.dataset.packagename;
+      const cardno = link.dataset.cardno;
+      const name = link.dataset.name;
+      const roomno = link.dataset.roomno;
+      const status = link.dataset.status || '';
+      const utsavid = link.dataset.utsavid;
+      const bookedby = link.dataset.bookedby || '';
+      const booker_name = link.dataset.bookername || '';
+      const location = link.dataset.location || '';
+      const attendee_credits = link.dataset.attendeecredits || '';
+      const booker_credits = link.dataset.bookercredits || '';
+
+      const matchedBooking = utsavbookings.find(b => String(b.bookingid) === String(bookingid));
+      const booking = matchedBooking ? Object.assign({}, matchedBooking) : {
+        bookingid,
+        packageid: currentPkgId,
+        package_name: currentPkgName,
+        cardno,
+        issuedto: name,
+        roomno,
+        status,
+        utsavid,
+        bookedby,
+        booker_name,
+        location,
+        attendee_credits,
+        booker_credits
+      };
+
+      if (!booking.status && status) booking.status = status;
+      if (!booking.bookedby && bookedby) booking.bookedby = bookedby;
+      if (!booking.booker_name && booker_name) booking.booker_name = booker_name;
+      if (!booking.location && location) booking.location = location;
+      if (!booking.attendee_credits && attendee_credits) booking.attendee_credits = attendee_credits;
+      if (!booking.booker_credits && booker_credits) booking.booker_credits = booker_credits;
+
+      modal._currentBooking = booking;
+      modal._utsavid = utsavid;
+
+      // Hide preview box on initial open
+      const previewBox = document.getElementById('cpImpactPreviewBox');
+      const previewContent = document.getElementById('cpImpactContent');
+      if (previewBox) previewBox.style.display = 'none';
+      if (previewContent) previewContent.innerHTML = '';
+
+      document.getElementById('cpModalBookingId').value = bookingid;
+      document.getElementById('cpModalCardAndName').value = `${cardno} - ${name || ''}`;
+      document.getElementById('cpModalCurrentPackage').value = currentPkgName || `Package #${currentPkgId}`;
+      document.getElementById('cpModalRoomNo').value = roomno || '';
+      document.getElementById('cpModalDescription').value = '';
+
+      newPkgSelect.innerHTML = '<option value="">Loading packages...</option>';
+      modal.style.display = 'block';
+
+      const packages = await fetchUtsavPackages(utsavid);
+      if (packages === null) {
+        newPkgSelect.innerHTML = '<option value="">Failed to load packages (please try again)</option>';
+        return;
+      }
+
+      const oldPkg = packages.find(p => String(p.id) === String(currentPkgId));
+      modal._oldPkg = oldPkg;
+
+      const otherPackages = packages.filter(pkg => String(pkg.id) !== String(currentPkgId));
+      if (otherPackages.length === 0) {
+        newPkgSelect.innerHTML = '<option value="">No other packages available</option>';
+        return;
+      }
+
+      newPkgSelect.innerHTML = '<option value="">-- Select New Package --</option>';
+      otherPackages.forEach(pkg => {
+        const amtStr = Number(pkg.amount) === 0 ? 'Free (₹0)' : `₹${pkg.amount}`;
+        const dateStr = (pkg.start_date && pkg.end_date) ? ` [${pkg.start_date} to ${pkg.end_date}]` : '';
+        const label = `${pkg.name || `Package #${pkg.id}`} (${amtStr})${dateStr}`;
+        newPkgSelect.appendChild(new Option(label, pkg.id));
+      });
+    };
+  });
+
+  closeBtn.onclick = () => { modal.style.display = 'none'; };
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  };
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const bookingid = document.getElementById('cpModalBookingId').value;
+    const newPackageId = document.getElementById('cpModalNewPackage').value;
+    const newRoomNo = document.getElementById('cpModalRoomNo').value;
+    const description = document.getElementById('cpModalDescription').value;
+
+    if (!newPackageId) {
+      alert('Please select a new package.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('cpModalSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Updating...';
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/utsav/changePackage`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          bookingid,
+          newPackageId: Number(newPackageId),
+          newRoomNo: newRoomNo.trim(),
+          description: description.trim() || undefined
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Package changed successfully!');
+        modal.style.display = 'none';
+        sessionStorage.setItem('utsavPackageFilter', document.getElementById('packageFilter').value);
+        sessionStorage.setItem('utsavScrollTop', window.scrollY);
+        window.location.reload();
+      } else {
+        alert(`Error: ${data.message || 'Failed to change package'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to change package. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Change Package';
+    }
   };
 }
 
