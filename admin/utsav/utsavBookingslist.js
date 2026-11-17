@@ -361,11 +361,12 @@ function updatePackageChangePreview() {
     String(booking.bookedby).trim() !== '' &&
     String(booking.bookedby).trim() !== String(booking.cardno).trim()
   );
-  const bookerDisplayName = booking?.booker_name
+  const rawBookerName = booking?.booker_name
     ? `${booking.booker_name} (${booking.bookedby})`
     : (booking?.bookedby ? `Card #${booking.bookedby}` : '');
+  const bookerDisplayName = escapeHtml(rawBookerName);
   const payerDisplay = isDifferentBooker
-    ? `booker: <b>${escapeHtml(bookerDisplayName)}</b>`
+    ? `booker: <b>${bookerDisplayName}</b>`
     : `member's card wallet`;
 
   // Pre-calculate wallet credits (for attendee or booker) and effective balance due
@@ -387,6 +388,9 @@ function updatePackageChangePreview() {
     }
   }
   const balanceDue = Math.max(0, diff - walletCredits);
+  const pendingPrefix = isPending
+    ? '<div style="margin-bottom:6px; color:#b45309; font-weight:600;">ℹ️ Current booking has a pending balance. Any previous payments will be credited towards the new package:</div>'
+    : '';
 
   let financialHtml = '';
   if (isWaiting) {
@@ -398,34 +402,12 @@ function updatePackageChangePreview() {
         </div>
       </div>
     `;
-  } else if (isPending) {
-    if (newAmount === 0) {
-      financialHtml = `
-        <div class="impact-section">
-          <div class="impact-section-title">💰 Financial Impact</div>
-          <div class="impact-details">
-            Current booking is unpaid (Payment Pending). New package is <b>free (₹0)</b>. Pending balance will be updated to <b>₹0</b>.
-          </div>
-        </div>
-      `;
-    } else {
-      const remainingDue = Math.max(0, newAmount - walletCredits);
-      financialHtml = `
-        <div class="impact-section">
-          <div class="impact-section-title">💰 Financial Impact</div>
-          <div class="impact-details">
-            Current booking is unpaid (Payment Pending).<br/>
-            New package cost: <b>₹${newAmount.toLocaleString('en-IN')}</b>.${walletCredits > 0 ? `<br/><b>₹${Math.min(walletCredits, newAmount).toLocaleString('en-IN')} wallet credits</b> will be auto-applied.` : ''}
-            <br/>Updated pending balance: <b>₹${remainingDue.toLocaleString('en-IN')}</b>.
-          </div>
-        </div>
-      `;
-    }
   } else if (newAmount === 0) {
     financialHtml = `
       <div class="impact-section">
         <div class="impact-section-title">💰 Financial Impact</div>
         <div class="impact-details">
+          ${pendingPrefix}
           Package cost: <b>₹0</b>. Full previous amount of <b>₹${oldAmount.toLocaleString('en-IN')}</b> will be credited back to ${payerDisplay}.
         </div>
       </div>
@@ -437,6 +419,7 @@ function updatePackageChangePreview() {
         <div class="impact-section">
           <div class="impact-section-title">💰 Financial Impact</div>
           <div class="impact-details">
+            ${pendingPrefix}
             Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
             Old ₹${oldAmount.toLocaleString('en-IN')} credit + <b>₹${diff.toLocaleString('en-IN')} available wallet credits</b> will fully cover this upgrade.<br/>
             <b>Balance due: ₹0</b>. Booking will <b>remain Confirmed</b>.${remainingWalletCredits > 0 ? ` (Remaining wallet credits: ₹${remainingWalletCredits.toLocaleString('en-IN')})` : ''}
@@ -449,6 +432,7 @@ function updatePackageChangePreview() {
         <div class="impact-section">
           <div class="impact-section-title">💰 Financial Impact</div>
           <div class="impact-details">
+            ${pendingPrefix}
             Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
             Old ₹${oldAmount.toLocaleString('en-IN')} credit + <b>₹${walletCredits.toLocaleString('en-IN')} available wallet credits</b> will be auto-applied.<br/>
             ${isDifferentBooker ? `Booker <b>${bookerDisplayName}</b>` : `Member`} will have a <b>pending balance of ₹${remainingDue.toLocaleString('en-IN')}</b>.
@@ -460,6 +444,7 @@ function updatePackageChangePreview() {
         <div class="impact-section">
           <div class="impact-section-title">💰 Financial Impact</div>
           <div class="impact-details">
+            ${pendingPrefix}
             Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
             Old ₹${oldAmount.toLocaleString('en-IN')} credit will be auto-applied. ${isDifferentBooker ? `Booker <b>${bookerDisplayName}</b>` : `Member`} will have a <b>pending balance of ₹${diff.toLocaleString('en-IN')}</b>.
           </div>
@@ -472,6 +457,7 @@ function updatePackageChangePreview() {
       <div class="impact-section">
         <div class="impact-section-title">💰 Financial Impact</div>
         <div class="impact-details">
+          ${pendingPrefix}
           Current: ₹${oldAmount.toLocaleString('en-IN')} ➔ New: ₹${newAmount.toLocaleString('en-IN')}.<br/>
           New package is fully covered. <b>₹${surplus.toLocaleString('en-IN')} surplus credit</b> will be deposited back to ${payerDisplay}.
         </div>
@@ -482,7 +468,8 @@ function updatePackageChangePreview() {
       <div class="impact-section">
         <div class="impact-section-title">💰 Financial Impact</div>
         <div class="impact-details">
-          Both packages cost <b>₹${newAmount.toLocaleString('en-IN')}</b>. Previous credit fully covers this change. Balance due: ₹0.
+          ${pendingPrefix}
+          Same package amount (<b>₹${newAmount.toLocaleString('en-IN')}</b>). No additional payment required.
         </div>
       </div>
     `;
