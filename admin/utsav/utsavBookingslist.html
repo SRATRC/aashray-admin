@@ -120,6 +120,45 @@
     </div>
   </div>
 
+  <!-- Change Package Modal -->
+  <div id="changePackageModal" class="modal" style="display:none;">
+    <div class="modal-content whitesec">
+      <span class="close" id="closeChangePackageModal">&times;</span>
+      <div class="inner-padding">
+        <div class="frm-head"><h3>Change Utsav Package</h3></div>
+        <form id="changePackageForm" class="form">
+          <div class="form-group">
+            <label>Booking ID:</label>
+            <input type="text" id="cpModalBookingId" class="form-control" readonly />
+          </div>
+          <div class="form-group">
+            <label>Card No / Name:</label>
+            <input type="text" id="cpModalCardAndName" class="form-control" readonly />
+          </div>
+          <div class="form-group">
+            <label>Current Package:</label>
+            <input type="text" id="cpModalCurrentPackage" class="form-control" readonly />
+          </div>
+          <div class="form-group">
+            <label>New Package:</label>
+            <select id="cpModalNewPackage" class="form-control" required>
+              <option value="">-- Select New Package --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Room No (optional):</label>
+            <input type="text" id="cpModalRoomNo" class="form-control" placeholder="Enter room number or leave blank" />
+          </div>
+          <div class="form-group">
+            <label>Remarks / Description (optional):</label>
+            <textarea id="cpModalDescription" rows="3" class="form-control" placeholder="Reason for package change..."></textarea>
+          </div>
+          <button type="submit" id="cpModalSubmitBtn" class="btn btn-primary">Change Package</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <style>
     .modal {position: fixed; z-index: 999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color: rgba(0,0,0,0.4);}
     .modal-content {max-width: 600px; margin:5% auto; padding:20px; background:white; border-radius:10px; position:relative;}
@@ -131,6 +170,71 @@
   color: #ffffff;
   font-weight: bold;
 }
+
+    /* Action Column & Buttons */
+    th.action-th, td.action-td {
+      min-width: 140px;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap !important;
+    }
+    .action-btn-group {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: stretch;
+      width: 100%;
+      max-width: 145px;
+      margin: 0 auto;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 5px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.2;
+      border-radius: 5px;
+      text-decoration: none !important;
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease-in-out;
+      box-sizing: border-box;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .btn-action:focus {
+      outline: none;
+    }
+    .btn-action-status {
+      background-color: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    .btn-action-status:hover {
+      background-color: #1d4ed8;
+      color: #ffffff;
+      border-color: #1d4ed8;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+      transform: translateY(-1px);
+    }
+    .btn-action-package {
+      background-color: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+    .btn-action-package:hover {
+      background-color: #047857;
+      color: #ffffff;
+      border-color: #047857;
+      box-shadow: 0 2px 6px rgba(4, 120, 87, 0.25);
+      transform: translateY(-1px);
+    }
+    .btn-action:active {
+      transform: translateY(0);
+    }
 
   </style>
 </body>

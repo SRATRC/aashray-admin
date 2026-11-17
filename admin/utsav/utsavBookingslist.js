@@ -123,7 +123,7 @@ function renderFilteredTable(){
         <th>Booking Status</th>
         <th>Transaction Status</th>
         <th>Booked By</th>
-        <th>Action</th>
+        <th class="action-th">Action</th>
       </tr>
     </thead>
     <tbody>
@@ -141,7 +141,31 @@ function renderFilteredTable(){
           <td>${item.other}</td><td>${item.comments}</td><td>${item.mobno}</td><td>${item.gender}</td>
           <td>${item.center}</td><td>${item.res_status}</td>
           <td>${item.status}</td><td>${item.transaction_status}</td><td>${item.bookedby}</td>
-          <td>${!isReadOnly ? `<a href="#" class="update-status-link" data-bookingid="${item.bookingid}" data-utsavid="${item.utsavid}" data-status="${item.status}">Update Booking Status</a>` : '-'}</td>
+          <td class="action-td">${!isReadOnly ? `
+            <div class="action-btn-group">
+              <button type="button" class="btn-action btn-action-status update-status-link"
+                data-bookingid="${item.bookingid}"
+                data-utsavid="${item.utsavid}"
+                data-status="${item.status}"
+                title="Update Booking Status">
+                ✏️ Update Status
+              </button>
+              ${['cancelled', 'admin cancelled'].includes((item.status || '').toLowerCase()) ? '' : `
+                <button type="button" class="btn-action btn-action-package change-package-link"
+                  data-bookingid="${item.bookingid}"
+                  data-packageid="${item.packageid}"
+                  data-packagename="${item.package_name || ''}"
+                  data-cardno="${item.cardno}"
+                  data-name="${item.issuedto || ''}"
+                  data-roomno="${item.roomno || ''}"
+                  data-status="${item.status}"
+                  data-utsavid="${item.utsavid}"
+                  title="Change Utsav Package">
+                  🔄 Change Package
+                </button>
+              `}
+            </div>
+          ` : '<span style="color:#94a3b8;">-</span>'}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -154,7 +178,7 @@ function renderFilteredTable(){
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); },50);
+  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); initChangePackageModal(); },50);
 }
 
 
@@ -222,6 +246,119 @@ function initStatusModal(){
       modal.style.display='none';
       renderFilteredTable();
     }catch(err){console.error(err); alert('Failed to update status'); modal.style.display='none'; renderFilteredTable();}
+  };
+}
+
+let utsavPackagesCache = null;
+async function fetchUtsavPackages(utsavid) {
+  if (utsavPackagesCache) return utsavPackagesCache;
+  try {
+    const res = await fetch(`${CONFIG.basePath}/utsav/fetchPackagesByUtsav?utsavid=${utsavid}`, {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      utsavPackagesCache = data.data || [];
+      return utsavPackagesCache;
+    }
+  } catch (e) {
+    console.error('Error fetching utsav packages:', e);
+  }
+  return [];
+}
+
+function initChangePackageModal() {
+  const modal = document.getElementById('changePackageModal');
+  if (!modal) return;
+  const form = document.getElementById('changePackageForm');
+  const closeBtn = document.getElementById('closeChangePackageModal');
+
+  document.querySelectorAll('.change-package-link').forEach(link => {
+    link.onclick = async (e) => {
+      e.preventDefault();
+      const bookingid = link.dataset.bookingid;
+      const currentPkgId = link.dataset.packageid;
+      const currentPkgName = link.dataset.packagename;
+      const cardno = link.dataset.cardno;
+      const name = link.dataset.name;
+      const roomno = link.dataset.roomno;
+      const utsavid = link.dataset.utsavid;
+
+      document.getElementById('cpModalBookingId').value = bookingid;
+      document.getElementById('cpModalCardAndName').value = `${cardno} - ${name || ''}`;
+      document.getElementById('cpModalCurrentPackage').value = currentPkgName || `Package #${currentPkgId}`;
+      document.getElementById('cpModalRoomNo').value = roomno || '';
+      document.getElementById('cpModalDescription').value = '';
+
+      const newPkgSelect = document.getElementById('cpModalNewPackage');
+      newPkgSelect.innerHTML = '<option value="">Loading packages...</option>';
+      modal.style.display = 'block';
+
+      const packages = await fetchUtsavPackages(utsavid);
+      newPkgSelect.innerHTML = '<option value="">-- Select New Package --</option>';
+      packages.forEach(pkg => {
+        if (String(pkg.id) !== String(currentPkgId)) {
+          const amtStr = Number(pkg.amount) === 0 ? 'Free (₹0)' : `₹${pkg.amount}`;
+          const dateStr = (pkg.start_date && pkg.end_date) ? ` [${pkg.start_date} to ${pkg.end_date}]` : '';
+          newPkgSelect.innerHTML += `<option value="${pkg.id}">${pkg.name || `Package #${pkg.id}`} (${amtStr})${dateStr}</option>`;
+        }
+      });
+    };
+  });
+
+  closeBtn.onclick = () => { modal.style.display = 'none'; };
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const bookingid = document.getElementById('cpModalBookingId').value;
+    const newPackageId = document.getElementById('cpModalNewPackage').value;
+    const newRoomNo = document.getElementById('cpModalRoomNo').value;
+    const description = document.getElementById('cpModalDescription').value;
+
+    if (!newPackageId) {
+      alert('Please select a new package.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('cpModalSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Updating...';
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/utsav/changePackage`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          bookingid,
+          newPackageId: Number(newPackageId),
+          newRoomNo: newRoomNo.trim(),
+          description: description.trim() || undefined
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Package changed successfully!');
+        modal.style.display = 'none';
+        sessionStorage.setItem('utsavPackageFilter', document.getElementById('packageFilter').value);
+        sessionStorage.setItem('utsavScrollTop', window.scrollY);
+        window.location.reload();
+      } else {
+        alert(`Error: ${data.message || 'Failed to change package'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to change package. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Change Package';
+    }
   };
 }
 
