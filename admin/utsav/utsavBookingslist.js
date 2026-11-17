@@ -368,6 +368,23 @@ function updatePackageChangePreview() {
     ? `booker: <b>${bookerDisplayName}</b>`
     : `member's card wallet`;
 
+  // Pre-calculate wallet credits (for attendee or booker) and effective balance due
+  const rawCredits = isDifferentBooker ? booking?.booker_credits : (booking?.attendee_credits || booking?.credits);
+  let walletCredits = 0;
+  if (rawCredits) {
+    try {
+      const decoded = typeof rawCredits === 'string' && rawCredits.includes('%') ? decodeURIComponent(rawCredits) : rawCredits;
+      const parsed = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
+      walletCredits = Number(parsed?.utsav || 0);
+    } catch (e) {
+      try {
+        const parsed = typeof rawCredits === 'string' ? JSON.parse(rawCredits) : rawCredits;
+        walletCredits = Number(parsed?.utsav || 0);
+      } catch (e2) {}
+    }
+  }
+  const balanceDue = Math.max(0, diff - walletCredits);
+
   let financialHtml = '';
   if (isWaiting) {
     financialHtml = `
@@ -388,21 +405,6 @@ function updatePackageChangePreview() {
       </div>
     `;
   } else if (diff > 0) {
-    const rawCredits = isDifferentBooker ? booking?.booker_credits : (booking?.attendee_credits || booking?.credits);
-    let walletCredits = 0;
-    if (rawCredits) {
-      try {
-        const decoded = typeof rawCredits === 'string' && rawCredits.includes('%') ? decodeURIComponent(rawCredits) : rawCredits;
-        const parsed = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
-        walletCredits = Number(parsed?.utsav || 0);
-      } catch (e) {
-        try {
-          const parsed = typeof rawCredits === 'string' ? JSON.parse(rawCredits) : rawCredits;
-          walletCredits = Number(parsed?.utsav || 0);
-        } catch (e2) {}
-      }
-    }
-
     if (walletCredits >= diff) {
       const remainingWalletCredits = walletCredits - diff;
       financialHtml = `
@@ -576,7 +578,7 @@ function updatePackageChangePreview() {
   // Check-In Status Continuity
   let checkinHtml = '';
   if (isCheckedIn) {
-    if (diff > 0) {
+    if (balanceDue > 0) {
       checkinHtml = `
         <div class="impact-section">
           <div class="impact-section-title">ℹ️ Check-In Continuity</div>
@@ -623,6 +625,7 @@ function initChangePackageModal() {
       const cardno = link.dataset.cardno;
       const name = link.dataset.name;
       const roomno = link.dataset.roomno;
+      const status = link.dataset.status || '';
       const utsavid = link.dataset.utsavid;
       const bookedby = link.dataset.bookedby || '';
       const booker_name = link.dataset.bookername || '';
@@ -630,7 +633,7 @@ function initChangePackageModal() {
       const attendee_credits = link.dataset.attendeecredits || '';
       const booker_credits = link.dataset.bookercredits || '';
 
-      const matchedBooking = utsavbookings.find(b => b.bookingid === bookingid);
+      const matchedBooking = utsavbookings.find(b => String(b.bookingid) === String(bookingid));
       const booking = matchedBooking ? Object.assign({}, matchedBooking) : {
         bookingid,
         packageid: currentPkgId,
@@ -638,6 +641,7 @@ function initChangePackageModal() {
         cardno,
         issuedto: name,
         roomno,
+        status,
         utsavid,
         bookedby,
         booker_name,
@@ -646,6 +650,7 @@ function initChangePackageModal() {
         booker_credits
       };
 
+      if (!booking.status && status) booking.status = status;
       if (!booking.bookedby && bookedby) booking.bookedby = bookedby;
       if (!booking.booker_name && booker_name) booking.booker_name = booker_name;
       if (!booking.location && location) booking.location = location;
