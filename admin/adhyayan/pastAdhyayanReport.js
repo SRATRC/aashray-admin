@@ -532,8 +532,8 @@ document.addEventListener('DOMContentLoaded', () => {
       exportBtn.innerHTML = '<span>&#8987;</span> Exporting...';
 
       try {
-        const url = `${CONFIG.basePath}/adhyayan/reports/${shibirId}/participants?type=complete&export=excel`;
-        await downloadExcelBlob(url, `shibir_${shibirId}_attendance_report.xlsx`);
+        const url = `${CONFIG.basePath}/adhyayan/reports/${shibirId}/participants?type=complete&session_type=${currentMode}&export=excel`;
+        await downloadExcelBlob(url, `shibir_${shibirId}_attendance_report_${currentMode}.xlsx`);
       } catch (err) {
         console.error('Export per-adhyayan report error:', err);
         alert('Failed to download Adhyayan report. Please try again.');

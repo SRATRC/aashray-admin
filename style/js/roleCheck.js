@@ -178,3 +178,15 @@ function goToHome() {
     logout();
   }
 }
+
+function isAdhyayanReadOnly() {
+  try {
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    return (
+      roles.includes('adhyayanAdminReadOnly') &&
+      !roles.some((r) => ['adhyayanAdmin', 'officeAdmin', 'superAdmin'].includes(r))
+    );
+  } catch (e) {
+    return false;
+  }
+}
