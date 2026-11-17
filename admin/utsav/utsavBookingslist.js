@@ -4,6 +4,16 @@ const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
 const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
   const utsavid = urlParams.get('utsavId');
@@ -148,27 +158,16 @@ function renderFilteredTable(){
           <td class="action-td">${!isReadOnly ? `
             <div class="action-btn-group">
               <button type="button" class="btn-action btn-action-status update-status-link"
-                data-bookingid="${item.bookingid}"
-                data-utsavid="${item.utsavid}"
-                data-status="${item.status}"
+                data-bookingid="${escapeHtml(item.bookingid)}"
+                data-utsavid="${escapeHtml(item.utsavid)}"
+                data-status="${escapeHtml(item.status)}"
                 title="Update Booking Status">
                 ✏️ Update Status
               </button>
               ${['cancelled', 'admin cancelled'].includes((item.status || '').toLowerCase()) ? '' : `
                 <button type="button" class="btn-action btn-action-package change-package-link"
-                  data-bookingid="${item.bookingid}"
-                  data-packageid="${item.packageid}"
-                  data-packagename="${item.package_name || ''}"
-                  data-cardno="${item.cardno}"
-                  data-name="${item.issuedto || ''}"
-                  data-roomno="${item.roomno || ''}"
-                  data-status="${item.status}"
-                  data-utsavid="${item.utsavid}"
-                  data-bookedby="${item.bookedby || ''}"
-                  data-bookername="${item.booker_name || ''}"
-                  data-location="${item.location || ''}"
-                  data-attendeecredits="${encodeURIComponent(typeof item.attendee_credits === 'object' ? JSON.stringify(item.attendee_credits) : (item.attendee_credits || ''))}"
-                  data-bookercredits="${encodeURIComponent(typeof item.booker_credits === 'object' ? JSON.stringify(item.booker_credits) : (item.booker_credits || ''))}"
+                  data-bookingid="${escapeHtml(item.bookingid)}"
+                  data-utsavid="${escapeHtml(item.utsavid)}"
                   title="Change Utsav Package">
                   🔄 Change Package
                 </button>
@@ -354,6 +353,7 @@ function updatePackageChangePreview() {
   const diff = newAmount - oldAmount;
   const isWaiting = (booking?.status || '').toLowerCase() === 'waiting';
   const isCheckedIn = (booking?.status || '').toLowerCase() === 'checkedin';
+  const isPending = (booking?.status || '').toLowerCase().includes('pending');
 
   // Booker distinction: when booked for someone else
   const isDifferentBooker = Boolean(
@@ -365,22 +365,25 @@ function updatePackageChangePreview() {
     ? `${booking.booker_name} (${booking.bookedby})`
     : (booking?.bookedby ? `Card #${booking.bookedby}` : '');
   const payerDisplay = isDifferentBooker
-    ? `booker: <b>${bookerDisplayName}</b>`
+    ? `booker: <b>${escapeHtml(bookerDisplayName)}</b>`
     : `member's card wallet`;
 
   // Pre-calculate wallet credits (for attendee or booker) and effective balance due
   const rawCredits = isDifferentBooker ? booking?.booker_credits : (booking?.attendee_credits || booking?.credits);
   let walletCredits = 0;
   if (rawCredits) {
-    try {
-      const decoded = typeof rawCredits === 'string' && rawCredits.includes('%') ? decodeURIComponent(rawCredits) : rawCredits;
-      const parsed = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
-      walletCredits = Number(parsed?.utsav || 0);
-    } catch (e) {
+    if (typeof rawCredits === 'number') {
+      walletCredits = rawCredits;
+    } else if (typeof rawCredits === 'object') {
+      walletCredits = Number(rawCredits?.utsav || 0);
+    } else if (typeof rawCredits === 'string') {
       try {
-        const parsed = typeof rawCredits === 'string' ? JSON.parse(rawCredits) : rawCredits;
+        const decoded = rawCredits.includes('%') ? decodeURIComponent(rawCredits) : rawCredits;
+        const parsed = JSON.parse(decoded);
         walletCredits = Number(parsed?.utsav || 0);
-      } catch (e2) {}
+      } catch (e) {
+        walletCredits = Number(rawCredits) || 0;
+      }
     }
   }
   const balanceDue = Math.max(0, diff - walletCredits);
@@ -395,6 +398,29 @@ function updatePackageChangePreview() {
         </div>
       </div>
     `;
+  } else if (isPending) {
+    if (newAmount === 0) {
+      financialHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">💰 Financial Impact</div>
+          <div class="impact-details">
+            Current booking is unpaid (Payment Pending). New package is <b>free (₹0)</b>. Pending balance will be updated to <b>₹0</b>.
+          </div>
+        </div>
+      `;
+    } else {
+      const remainingDue = Math.max(0, newAmount - walletCredits);
+      financialHtml = `
+        <div class="impact-section">
+          <div class="impact-section-title">💰 Financial Impact</div>
+          <div class="impact-details">
+            Current booking is unpaid (Payment Pending).<br/>
+            New package cost: <b>₹${newAmount.toLocaleString('en-IN')}</b>.${walletCredits > 0 ? `<br/><b>₹${Math.min(walletCredits, newAmount).toLocaleString('en-IN')} wallet credits</b> will be auto-applied.` : ''}
+            <br/>Updated pending balance: <b>₹${remainingDue.toLocaleString('en-IN')}</b>.
+          </div>
+        </div>
+      `;
+    }
   } else if (newAmount === 0) {
     financialHtml = `
       <div class="impact-section">
@@ -495,6 +521,11 @@ function updatePackageChangePreview() {
         const missingOnOldStart = ['breakfast', 'lunch', 'dinner'].filter(m => !oldStartMeals.includes(m));
         if (missingOnOldStart.length > 0) {
           foodDetails.push(`• <b>Previous Start Date (${formatDateDisplay(oldPkg.start_date)})</b>: Now a full middle day (+${formatMealNames(missingOnOldStart)} added).`);
+        }
+      } else if (newPkg.start_date > oldPkg.start_date) {
+        const droppedOnNewStart = ['breakfast', 'lunch', 'dinner'].filter(m => !newStartMeals.includes(m));
+        if (droppedOnNewStart.length > 0) {
+          foodDetails.push(`• <b>New Start Date (${formatDateDisplay(newPkg.start_date)})</b>: Adjusted to starting meal (${formatMealNames(newStartMeals)} only; -${formatMealNames(droppedOnNewStart)} cancelled).`);
         }
       }
     }
@@ -620,45 +651,20 @@ function initChangePackageModal() {
     link.onclick = async (e) => {
       e.preventDefault();
       const bookingid = link.dataset.bookingid;
-      const currentPkgId = link.dataset.packageid;
-      const currentPkgName = link.dataset.packagename;
-      const cardno = link.dataset.cardno;
-      const name = link.dataset.name;
-      const roomno = link.dataset.roomno;
-      const status = link.dataset.status || '';
-      const utsavid = link.dataset.utsavid;
-      const bookedby = link.dataset.bookedby || '';
-      const booker_name = link.dataset.bookername || '';
-      const location = link.dataset.location || '';
-      const attendee_credits = link.dataset.attendeecredits || '';
-      const booker_credits = link.dataset.bookercredits || '';
-
       const matchedBooking = utsavbookings.find(b => String(b.bookingid) === String(bookingid));
-      const booking = matchedBooking ? Object.assign({}, matchedBooking) : {
-        bookingid,
-        packageid: currentPkgId,
-        package_name: currentPkgName,
-        cardno,
-        issuedto: name,
-        roomno,
-        status,
-        utsavid,
-        bookedby,
-        booker_name,
-        location,
-        attendee_credits,
-        booker_credits
-      };
+      if (!matchedBooking) return;
 
-      if (!booking.status && status) booking.status = status;
-      if (!booking.bookedby && bookedby) booking.bookedby = bookedby;
-      if (!booking.booker_name && booker_name) booking.booker_name = booker_name;
-      if (!booking.location && location) booking.location = location;
-      if (!booking.attendee_credits && attendee_credits) booking.attendee_credits = attendee_credits;
-      if (!booking.booker_credits && booker_credits) booking.booker_credits = booker_credits;
+      const booking = Object.assign({}, matchedBooking);
+      const currentPkgId = booking.packageid;
+      const currentPkgName = booking.package_name || '';
+      const cardno = booking.cardno;
+      const name = booking.issuedto || '';
+      const roomno = booking.roomno || '';
+      const utsavid = booking.utsavid || link.dataset.utsavid;
 
       modal._currentBooking = booking;
       modal._utsavid = utsavid;
+      modal._currentOpeningId = bookingid;
 
       // Hide preview box on initial open
       const previewBox = document.getElementById('cpImpactPreviewBox');
@@ -676,6 +682,10 @@ function initChangePackageModal() {
       modal.style.display = 'block';
 
       const packages = await fetchUtsavPackages(utsavid);
+      if (modal._currentOpeningId !== bookingid) {
+        return; // Stale response: admin already switched to another booking
+      }
+
       if (packages === null) {
         newPkgSelect.innerHTML = '<option value="">Failed to load packages (please try again)</option>';
         return;
