@@ -115,6 +115,11 @@ function renderFilteredTable(){
 
   filteredBookings=selectedPkg==='all'?utsavbookings:utsavbookings.filter(b=>b.packageid==selectedPkg);
 
+  const visibleIds = new Set(filteredBookings.map(b => String(b.bookingid)));
+  for (const id of selectedBookingIds) {
+    if (!visibleIds.has(id)) selectedBookingIds.delete(id);
+  }
+
   const table=document.createElement('table');
   table.className='table table-striped table-bordered';
   table.id='utsavTable';
@@ -293,8 +298,17 @@ function initBulkStatus() {
         alert('No bookings selected. Please check at least one booking.');
         return;
       }
+      const visibleOnScreen = new Set(
+        Array.from(document.querySelectorAll('#utsavTable tbody tr'))
+          .filter(r => r.style.display !== 'none')
+          .map(r => r.querySelector('.booking-select-cb')?.value)
+          .filter(Boolean)
+      );
+      const hiddenCount = Array.from(selectedBookingIds).filter(id => !visibleOnScreen.has(id)).length;
       if (summaryText) {
-        summaryText.textContent = `${selectedBookingIds.size} booking${selectedBookingIds.size > 1 ? 's' : ''} selected for bulk status update.`;
+        summaryText.textContent = hiddenCount > 0
+          ? `${selectedBookingIds.size} bookings selected (${hiddenCount} currently hidden by search/filter).`
+          : `${selectedBookingIds.size} booking${selectedBookingIds.size > 1 ? 's' : ''} selected for bulk status update.`;
       }
       if (statusSelect) statusSelect.value = '';
       if (creditsField) creditsField.style.display = 'none';
@@ -305,9 +319,9 @@ function initBulkStatus() {
   }
 
   if (closeBtn) closeBtn.onclick = () => { if (modal) modal.style.display = 'none'; };
-  window.addEventListener('click', (e) => {
-    if (modal && e.target === modal) modal.style.display = 'none';
-  });
+  if (modal) modal.onclick = (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  };
 
   if (statusSelect) {
     statusSelect.onchange = () => {
@@ -322,13 +336,8 @@ function initBulkStatus() {
     };
   }
 
-  const searchBox = document.getElementById('tableSearch');
-  if (searchBox && !searchBox._bulkListenerAttached) {
-    searchBox._bulkListenerAttached = true;
-    searchBox.addEventListener('input', () => {
-      setTimeout(updateBulkActionBar, 100);
-    });
-  }
+  const tableEl = document.getElementById('utsavTable');
+  if (tableEl) tableEl.addEventListener('tableFilterChanged', updateBulkActionBar);
 
   if (form) {
     form.onsubmit = async (e) => {
