@@ -51,10 +51,15 @@ const Kiosk = (() => {
   let settings = { beepHz: 880, beepSeconds: 0.15 };
 
   function token() {
-    return sessionStorage.getItem('token');
+    return sessionStorage.getItem('token') || (window.StationAuth && window.StationAuth.getToken()) || localStorage.getItem('token');
   }
 
   function checkSessionStatus() {
+    if (!navigator.onLine) {
+      const banner = document.getElementById('kioskSessionBanner');
+      if (banner) banner.style.display = 'none';
+      return;
+    }
     const t = token();
     const isExp = tokenExpired();
     const banner = document.getElementById('kioskSessionBanner');
@@ -221,27 +226,76 @@ const Kiosk = (() => {
     return str;
   }
 
+  function isNetworkError(err) {
+    return (
+      !navigator.onLine ||
+      err instanceof TypeError ||
+      err?.name === 'TypeError' ||
+      err?.message?.includes('Failed to fetch') ||
+      err?.message?.includes('NetworkError')
+    );
+  }
+
   // Fetches the card's bookings. Returns { data } on success, or { error: {title, message} }.
   async function fetchBookings(cardno) {
-    const res = await fetch(
-      `${CONFIG.basePath}/stay/kiosk/bookings/${encodeURIComponent(cardno)}`,
-      { headers: authHeaders() }
-    );
-    if (res.status === 401 || res.status === 403) {
-      sessionExpired();
-      return { handled: true };
+    if (!navigator.onLine) {
+      return fetchBookingsOffline(cardno);
     }
-    if (res.status === 404) {
-      return { error: { title: 'Card Not Found', message: `Card No: ${cardno} was not found.` } };
-    }
-    if (!res.ok) {
+
+    try {
+      const res = await fetch(
+        `${CONFIG.basePath}/stay/kiosk/bookings/${encodeURIComponent(cardno)}`,
+        { headers: authHeaders() }
+      );
+      if (res.status === 401 || res.status === 403) {
+        sessionExpired();
+        return { handled: true };
+      }
+      if (res.status === 404) {
+        return { error: { title: 'Card Not Found', message: `Card No: ${cardno} was not found.` } };
+      }
+      if (!res.ok) {
+        return { error: { title: 'System Error', message: 'Something went wrong. Please contact staff.' } };
+      }
+      const body = await res.json();
+      if (!body.data) {
+        return { error: { title: 'No Bookings Found', message: `No active bookings found for Card No: ${cardno}` } };
+      }
+      return { data: body.data };
+    } catch (err) {
+      if (isNetworkError(err)) {
+        return fetchBookingsOffline(cardno);
+      }
       return { error: { title: 'System Error', message: 'Something went wrong. Please contact staff.' } };
     }
-    const body = await res.json();
-    if (!body.data) {
-      return { error: { title: 'No Bookings Found', message: `No active bookings found for Card No: ${cardno}` } };
+  }
+
+  async function fetchBookingsOffline(cardno) {
+    if (!window.OfflineDB) {
+      return { error: { title: 'Offline Storage Error', message: 'Offline database is not available.' } };
     }
-    return { data: body.data };
+    const bookings = await window.OfflineDB.lookupKioskBooking(cardno);
+    if (!bookings || !bookings.length) {
+      return {
+        error: {
+          title: 'Card Not Found (Offline)',
+          message: `Card No: ${cardno} was not found in today's offline stay list. Please visit the reception desk.`
+        }
+      };
+    }
+
+    const room_booking = bookings.filter((b) => !b.isFlat);
+    const flat_booking = bookings.filter((b) => b.isFlat);
+    const guestName = bookings[0]?.name || cardno;
+
+    return {
+      data: {
+        room_booking,
+        flat_booking,
+        card_details: { issuedto: guestName },
+        isOffline: true
+      }
+    };
   }
 
   function currentCheckedIn(bookings, today) {
@@ -262,37 +316,120 @@ const Kiosk = (() => {
   }
 
   async function put(path) {
-    const res = await fetch(`${CONFIG.basePath}${path}`, { method: 'PUT', headers: authHeaders(true) });
-    let body = {};
-    try { body = await res.json(); } catch (e) {}
-    return { ok: res.ok, message: body.message };
+    if (!navigator.onLine) {
+      return handleOfflinePut(path);
+    }
+    try {
+      const res = await fetch(`${CONFIG.basePath}${path}`, { method: 'PUT', headers: authHeaders(true) });
+      let body = {};
+      try { body = await res.json(); } catch (e) {}
+      return { ok: res.ok, message: body.message };
+    } catch (err) {
+      if (isNetworkError(err)) {
+        return handleOfflinePut(path);
+      }
+      return { ok: false, message: 'Network error occurred.' };
+    }
+  }
+
+  async function handleOfflinePut(path) {
+    if (!window.OfflineDB) {
+      return { ok: false, message: 'Offline storage not available.' };
+    }
+
+    const isFlat = path.includes('flat');
+    const isCheckout = path.includes('checkout');
+    const parts = path.split('/');
+    const bookingid = parts[parts.length - 1];
+
+    const type = isCheckout ? 'checkout' : 'checkin';
+    const newStatus = isCheckout ? 'checkedout' : 'checkedin';
+
+    // Enqueue to kiosk-room-queue
+    await window.OfflineDB.enqueueScan('kiosk-room-queue', {
+      type,
+      bookingid,
+      isFlat,
+      scannedAt: new Date().toISOString()
+    });
+
+    // Mutate local state in room_bookings store
+    try {
+      const db = await window.OfflineDB.openDB();
+      const tx = db.transaction('room_bookings', 'readwrite');
+      const store = tx.objectStore('room_bookings');
+      const req = store.get(bookingid);
+      req.onsuccess = () => {
+        const rec = req.result;
+        if (rec) {
+          rec.status = newStatus;
+          store.put(rec);
+        }
+      };
+    } catch (e) {
+      console.warn('Failed to update local booking status:', e);
+    }
+
+    if (window.ScannerCommon) {
+      window.ScannerCommon.updateBadgeUI('kiosk-room-queue');
+    }
+
+    return { ok: true, message: isCheckout ? 'Checked out locally [Offline]' : 'Checked in locally [Offline]' };
   }
 
   // Reuse the guest's existing temporary code; only generate one when none exists,
   // so scanning the same card again never burns a new code.
-  async function fetchWifiCode(cardno) {
-    try {
-      const listRes = await fetch(
-        `${CONFIG.basePath}/stay/kiosk/wifi/fetch_temp_codes/${encodeURIComponent(cardno)}`,
-        { headers: authHeaders() }
-      );
-      if (listRes.ok) {
-        const list = await listRes.json();
-        if (list.data && list.data.length > 0) {
-          const sorted = [...list.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          return sorted[0].password;
+  async function fetchWifiCode(cardno, bookingid) {
+    if (navigator.onLine) {
+      try {
+        const listRes = await fetch(
+          `${CONFIG.basePath}/stay/kiosk/wifi/fetch_temp_codes/${encodeURIComponent(cardno)}`,
+          { headers: authHeaders() }
+        );
+        if (listRes.ok) {
+          const list = await listRes.json();
+          if (list.data && list.data.length > 0) {
+            const sorted = [...list.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            return sorted[0].password;
+          }
+        }
+        const genRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/generate_temp_code`, {
+          method: 'POST',
+          headers: authHeaders(true),
+          body: JSON.stringify({ cardno })
+        });
+        const gen = await genRes.json();
+        if (genRes.ok && gen.data) return gen.data;
+      } catch (e) {
+        if (!isNetworkError(e)) {
+          console.error('Error fetching WiFi code:', e);
         }
       }
-      const genRes = await fetch(`${CONFIG.basePath}/stay/kiosk/wifi/generate_temp_code`, {
-        method: 'POST',
-        headers: authHeaders(true),
-        body: JSON.stringify({ cardno })
-      });
-      const gen = await genRes.json();
-      if (genRes.ok && gen.data) return gen.data;
-    } catch (e) {
-      console.error('Error fetching WiFi code:', e);
     }
+
+    // Offline Wi-Fi voucher allocation from pre-fetched pool
+    if (window.OfflineDB) {
+      try {
+        const voucher = await window.OfflineDB.consumeWifiVoucher(cardno, bookingid);
+        if (voucher) {
+          await window.OfflineDB.enqueueScan('kiosk-room-queue', {
+            type: 'wifi',
+            pwd_id: voucher.pwd_id,
+            cardno,
+            bookingid,
+            password: voucher.password,
+            scannedAt: new Date().toISOString()
+          });
+          if (window.ScannerCommon) {
+            window.ScannerCommon.updateBadgeUI('kiosk-room-queue');
+          }
+          return voucher.password;
+        }
+      } catch (e) {
+        console.warn('Offline Wi-Fi voucher allocation error:', e);
+      }
+    }
+
     return null;
   }
 
@@ -895,7 +1032,7 @@ const Kiosk = (() => {
       manualEl.value = cardno;
       manualEl.blur();
     }
-    if (tokenExpired()) {
+    if (navigator.onLine && tokenExpired()) {
       sessionExpired();
       return;
     }
@@ -943,6 +1080,9 @@ const Kiosk = (() => {
     if (switchBtn) switchBtn.style.display = camerasList.length > 1 ? 'inline-block' : 'none';
 
     html5QrcodeScanner = new Html5Qrcode('reader');
+    if (window.ScannerCommon) {
+      window.ScannerCommon.setupBatterySaver(html5QrcodeScanner);
+    }
     html5QrcodeScanner.start(
       cameraId,
       { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -994,6 +1134,62 @@ const Kiosk = (() => {
     });
   }
 
+  async function downloadKioskData() {
+    const t = token();
+    if (!t) return;
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/admin/offline/kiosk/today`, {
+        headers: { Authorization: `Bearer ${t}` }
+      });
+      if (!res.ok) return;
+
+      const body = await res.json();
+      const payload = body.data || body;
+
+      if (payload && window.OfflineDB) {
+        await window.OfflineDB.storeKioskData(payload.bookings || [], payload.wifiPool || []);
+      }
+    } catch (e) {
+      console.warn('Failed to download kiosk offline snapshot:', e);
+    }
+  }
+
+  async function syncKioskQueue() {
+    if (!navigator.onLine || !window.OfflineDB) return;
+
+    const queue = await window.OfflineDB.getPendingScans('kiosk-room-queue');
+    if (!queue || !queue.length) return;
+
+    const t = token();
+    if (!t) return;
+
+    const checkins = queue.filter((q) => q.payload?.type === 'checkin').map((q) => q.payload);
+    const checkouts = queue.filter((q) => q.payload?.type === 'checkout').map((q) => q.payload);
+    const wifiAssignments = queue.filter((q) => q.payload?.type === 'wifi').map((q) => q.payload);
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/admin/offline/kiosk/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${t}`
+        },
+        body: JSON.stringify({ checkins, checkouts, wifiAssignments })
+      });
+
+      if (res.ok) {
+        const localIds = queue.map((q) => q.localId);
+        await window.OfflineDB.markScansSynced(localIds);
+        if (window.ScannerCommon) {
+          window.ScannerCommon.updateBadgeUI('kiosk-room-queue');
+        }
+      }
+    } catch (e) {
+      console.warn('Kiosk queue sync error:', e);
+    }
+  }
+
   function start(opts = {}) {
     settings = {
       ...settings,
@@ -1004,9 +1200,43 @@ const Kiosk = (() => {
     document.addEventListener('DOMContentLoaded', () => {
       setupFullscreen();
       checkSessionStatus();
-      if (!token() || tokenExpired()) {
+      if (navigator.onLine && (!token() || tokenExpired())) {
         checkSessionStatus();
       }
+
+      if (window.StationAuth) {
+        window.StationAuth.initStationAuth();
+      }
+
+      if (window.ScannerCommon) {
+        window.ScannerCommon.setupTopBar({
+          queueName: 'kiosk-room-queue',
+          onUpdateData: downloadKioskData
+        });
+      }
+
+      window.addEventListener('online', () => {
+        checkSessionStatus();
+        if (window.ScannerCommon) window.ScannerCommon.updateBadgeUI('kiosk-room-queue');
+        downloadKioskData();
+        syncKioskQueue();
+      });
+
+      window.addEventListener('offline', () => {
+        checkSessionStatus();
+        if (window.ScannerCommon) window.ScannerCommon.updateBadgeUI('kiosk-room-queue');
+      });
+
+      const syncNowBtn = document.getElementById('sync-now-btn');
+      if (syncNowBtn) {
+        syncNowBtn.addEventListener('click', syncKioskQueue);
+      }
+
+      if (navigator.onLine) {
+        downloadKioskData();
+        syncKioskQueue();
+      }
+
       cardHandler = handleCard;
       initCameraScanner();
       document.getElementById('switchCamBtn').addEventListener('click', switchCamera);

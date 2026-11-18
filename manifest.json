@@ -1,0 +1,22 @@
+{
+  "name": "Aashray Scanner",
+  "short_name": "Scanner",
+  "description": "Offline-capable scanner and kiosk for Aashray operations",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#319795",
+  "icons": [
+    {
+      "src": "/assets/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

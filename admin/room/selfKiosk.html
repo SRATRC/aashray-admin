@@ -5,12 +5,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Express Check-In & Check-Out | Research Centre Stay</title>
+  <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="../../style/css/style.css" />
   <script src="/style/js/html5-qrcode.min.js"></script>
   <script src="/style/js/roleCheck.js"></script>
   <script>
     checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin', 'kioskAdmin']);
   </script>
+
+  <!-- Offline PWA & Kiosk Layer -->
+  <script src="../../style/js/offline-db.js"></script>
+  <script src="../../style/js/stationAuth.js"></script>
+  <script src="../../style/js/scannerCommon.js"></script>
+  <script src="../../style/js/pwa-register.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -697,6 +704,16 @@
     <div class="kiosk-brand-badge">Research Centre Stay Self-Service</div>
     <h1>Express Check-In & Check-Out</h1>
     <p>Scan your QR Code to check in or check out</p>
+
+    <div class="network-badge-container" style="margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <span class="station-clock" style="font-size: 13px; color: #e2e8f0; font-weight: bold;">🕒 <span id="station-clock">--:--</span></span>
+      <span id="network-badge" class="network-badge online" style="padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; background: #e6fffa; color: #234e52;">🟢 Online</span>
+      <span id="queue-count" class="queue-count" style="font-size: 13px; color: #ffffff; font-weight: 600;">0 Pending Scans</span>
+      <button id="sync-now-btn" class="btn-sync" style="display: none; padding: 3px 10px; font-size: 12px; border-radius: 4px; background: #319795; color: white; border: none; cursor: pointer; font-weight: 600;">Sync Now</button>
+      <button id="update-data-btn" class="btn-topbar" style="padding: 3px 10px; font-size: 12px; border-radius: 4px; background: #319795; color: white; border: none; cursor: pointer; font-weight: 600;">⬇️ Update Data</button>
+      <button id="pwa-install-btn" class="btn-topbar" style="display: none; padding: 3px 10px; font-size: 12px; border-radius: 4px; background: #2b6cb0; color: white; border: none; cursor: pointer; font-weight: 600;">📲 Install App</button>
+      <button id="reset-station-btn" class="btn-topbar" style="padding: 3px 10px; font-size: 12px; border-radius: 4px; background: #4a5568; color: white; border: none; cursor: pointer; font-weight: 600;" title="Reset local station cache">🗑️ Reset Station</button>
+    </div>
   </div>
 
   <div class="kiosk-container">

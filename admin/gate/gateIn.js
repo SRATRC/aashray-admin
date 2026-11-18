@@ -1,25 +1,38 @@
 document.addEventListener('DOMContentLoaded', function () {
   const qrStatus = document.getElementById('qr-status');
-  const scanAgainBtn = document.getElementById('scan-again-btn');
   const alertDiv = document.getElementById('alert');
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
+  const scanAgainBtn = document.getElementById('scan-again-btn');
 
-  const QUEUE_STORAGE_KEY = 'gate_in_offline_queue';
-  const COOLDOWN_MS = 5 * 60 * 1000;
+  const QUEUE_NAME = 'gate-in-scan-queue';
+  const SCAN_DELAY_MS = 1500;
 
   let html5QrCode = null;
-  let isScanning = false;
+  let isProcessing = false;
   let isSyncing = false;
+  let batterySaver = null;
+
+  // 1. Station Auth
+  if (window.StationAuth) {
+    window.StationAuth.initStationAuth();
+  }
+
+  // 2. Setup Top Bar
+  if (window.ScannerCommon) {
+    window.ScannerCommon.setupTopBar({
+      queueName: QUEUE_NAME,
+      onUpdateData: downloadGateData
+    });
+  }
 
   updateNetworkUI();
   startQRScanner();
 
-  scanAgainBtn.addEventListener('click', startQRScanner);
-
   window.addEventListener('online', () => {
     updateNetworkUI();
+    downloadGateData();
     syncPendingScans();
   });
 
@@ -33,113 +46,124 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  if (scanAgainBtn) {
+    scanAgainBtn.addEventListener('click', () => {
+      scanAgainBtn.style.display = 'none';
+      resumeScanning(0);
+    });
+  }
+
   if (navigator.onLine) {
+    downloadGateData();
     syncPendingScans();
   }
 
   function startQRScanner() {
-    if (isScanning) return;
-
-    scanAgainBtn.style.display = 'none';
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
-
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode('reader');
     }
+
+    qrStatus.className = 'scanning-status';
+    qrStatus.innerText = 'Initializing scanner...';
 
     html5QrCode
       .start(
         { facingMode: 'environment' },
         {
           fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          qrbox: { width: 250, height: 250 }
         },
         onScanSuccess,
         onScanFailure
       )
       .then(() => {
-        isScanning = true;
-        qrStatus.innerText = 'Ready to scan...';
+        qrStatus.className = 'scanning-status';
+        qrStatus.innerText = 'Point camera at QR code';
+        if (window.ScannerCommon) {
+          batterySaver = window.ScannerCommon.setupCameraBatterySaver(html5QrCode, 'reader');
+        }
       })
       .catch((err) => {
         qrStatus.className = 'error-status';
-        qrStatus.innerText = '❌ Scanner initialization failed: ' + err.message;
-        console.error('QR Scanner Error:', err);
+        qrStatus.innerText = 'Unable to start camera: ' + (err.message || err);
       });
   }
 
-  function stopQRScanner() {
-    if (html5QrCode && isScanning) {
-      html5QrCode
-        .stop()
-        .then(() => {
-          isScanning = false;
-        })
-        .catch((err) => {
-          console.error('Error stopping scanner:', err);
-        });
-    }
-  }
-
   async function onScanSuccess(decodedText) {
-    stopQRScanner();
+    if (isProcessing) return;
+    isProcessing = true;
+
+    if (batterySaver) batterySaver.resetIdleTimer();
 
     const cardno = processScannedText(decodedText);
-    const scannedAt = new Date().toISOString();
-
     if (!cardno) {
-      showErrorMessage('Invalid QR Code');
-      scanAgainBtn.style.display = 'inline-block';
+      showMessage('Invalid QR code format', 'danger');
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('error');
+      resumeScanning(SCAN_DELAY_MS);
       return;
     }
 
-    scanAgainBtn.style.display = 'inline-block';
+    const scannedAt = new Date().toISOString();
 
     if (navigator.onLine) {
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = `Processing check-in for ${cardno}...`;
-
       try {
         await sendCheckinRequest(cardno, scannedAt);
       } catch (err) {
         if (isNetworkError(err)) {
-          handleOfflineScan(cardno, scannedAt);
+          await handleOfflineScan(cardno, scannedAt);
         }
       }
     } else {
-      handleOfflineScan(cardno, scannedAt);
+      await handleOfflineScan(cardno, scannedAt);
     }
+
+    resumeScanning(SCAN_DELAY_MS);
   }
 
-  function handleOfflineScan(cardno, scannedAt) {
-    const result = enqueueScan(cardno, scannedAt);
+  async function handleOfflineScan(cardno, scannedAt) {
+    let cardholderName = '';
+    let resStatus = '';
 
-    if (result.success) {
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = `📦 Saved Offline: ${cardno}`;
-      showInfoMessage(`Check-in for ${cardno} saved to offline sync queue.`);
-    } else if (result.reason === 'duplicate') {
-      qrStatus.className = 'error-status';
-      qrStatus.innerText = `⚠️ Already Queued: ${cardno}`;
-      showErrorMessage(`Card ${cardno} was already scanned offline recently.`);
+    if (window.OfflineDB) {
+      const card = await window.OfflineDB.getAttendee('gate', cardno);
+      if (card && card.data) {
+        cardholderName = card.data.name || card.name;
+        resStatus = card.data.res_status ? ` [${card.data.res_status}]` : '';
+      }
+
+      await window.OfflineDB.enqueueScan(QUEUE_NAME, {
+        cardno,
+        name: cardholderName,
+        scannedAt
+      });
     }
 
+    const displayName = cardholderName ? `${cardholderName}${resStatus}` : cardno;
+    showMessage(`📦 Welcome, ${displayName}! Gate entry recorded [Offline]`, 'success');
     updateNetworkUI();
   }
 
-  function onScanFailure(error) {
-    if (Math.random() < 0.1) {
+  function resumeScanning(delayMs = SCAN_DELAY_MS) {
+    setTimeout(() => {
+      isProcessing = false;
+      resetAlert();
       qrStatus.className = 'scanning-status';
-      qrStatus.innerText = 'Scanning...';
-    }
+      qrStatus.innerText = 'Point camera at QR code';
+    }, delayMs);
+  }
+
+  function onScanFailure() {
+    // Noise ignored
   }
 
   function processScannedText(text) {
-    let cardno = text ? text.trim() : '';
-    if (cardno.toLowerCase().startsWith('cardnumber=')) {
-      cardno = cardno.split('=')[1].trim();
+    if (!text) return null;
+    let cardno = text.trim();
+    if (cardno.startsWith('{') && cardno.endsWith('}')) {
+      try {
+        const obj = JSON.parse(cardno);
+        cardno = obj.cardno || obj.cardNo || cardno;
+      } catch (e) {}
     }
     return cardno;
   }
@@ -149,60 +173,14 @@ document.addEventListener('DOMContentLoaded', function () {
       !navigator.onLine ||
       err instanceof TypeError ||
       err?.name === 'TypeError' ||
+      err?.name === 'AbortError' ||
       err?.message?.includes('Failed to fetch') ||
       err?.message?.includes('NetworkError')
     );
   }
 
-  /* -------------------- OFFLINE QUEUE MANAGER -------------------- */
-
-  function getOfflineQueue() {
-    try {
-      const data = localStorage.getItem(QUEUE_STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error('Failed to read scan queue from localStorage', e);
-      return [];
-    }
-  }
-
-  function saveOfflineQueue(queue) {
-    try {
-      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-    } catch (e) {
-      console.error('Failed to save scan queue to localStorage', e);
-    }
-  }
-
-  function enqueueScan(cardno, scannedAt) {
-    const queue = getOfflineQueue();
-    const now = Date.now();
-
-    const recentDuplicate = queue.find(
-      item => item.cardno === cardno && now - item.timestampMs < COOLDOWN_MS
-    );
-
-    if (recentDuplicate) {
-      return { success: false, reason: 'duplicate' };
-    }
-
-    const newItem = {
-      id: `${cardno}_${now}`,
-      cardno,
-      scannedAt,
-      timestampMs: now,
-      status: 'pending'
-    };
-
-    queue.push(newItem);
-    saveOfflineQueue(queue);
-    return { success: true, item: newItem };
-  }
-
   function updateNetworkUI() {
     const isOnline = navigator.onLine;
-    const queue = getOfflineQueue();
-    const pendingCount = queue.filter(item => item.status === 'pending').length;
 
     if (networkBadge) {
       if (isOnline) {
@@ -214,35 +192,49 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    if (queueCount) {
-      queueCount.innerText = `${pendingCount} Pending ${pendingCount === 1 ? 'Scan' : 'Scans'}`;
-    }
-
-    if (syncNowBtn) {
-      if (isOnline && pendingCount > 0) {
-        syncNowBtn.style.display = 'inline-block';
-        syncNowBtn.disabled = isSyncing;
-        syncNowBtn.innerText = isSyncing ? 'Syncing...' : 'Sync Now';
-      } else {
-        syncNowBtn.style.display = 'none';
-      }
+    if (window.OfflineDB) {
+      window.OfflineDB.getPendingScans(QUEUE_NAME).then((items) => {
+        const count = items.length;
+        if (queueCount) {
+          queueCount.innerText = `${count} Pending ${count === 1 ? 'Scan' : 'Scans'}`;
+        }
+        if (syncNowBtn) {
+          syncNowBtn.style.display = isOnline && count > 0 ? 'inline-block' : 'none';
+        }
+      });
     }
   }
 
-  /* -------------------- API & BATCH SYNC -------------------- */
+  async function downloadGateData() {
+    if (!navigator.onLine) return;
+    const token = window.StationAuth ? window.StationAuth.getToken() : localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${CONFIG.basePath}/offline/gate/cards`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.data && window.OfflineDB) {
+          await window.OfflineDB.storeAttendees('gate', body.data);
+          console.log(`[OfflineDB] Cached ${body.data.length} gate cards.`);
+        }
+      }
+    } catch (e) {
+      console.warn('[OfflineDB] Failed to download gate cards:', e.message);
+    }
+  }
 
   async function sendCheckinRequest(cardno, scannedAt) {
-    resetAlert();
-
-    const token = sessionStorage.getItem('token');
-    if (!token || token.split('.').length !== 3) {
-      showErrorMessage('⚠️ Not authenticated. Please log in.');
+    const token = window.StationAuth ? window.StationAuth.getToken() : localStorage.getItem('token');
+    if (!token) {
+      showMessage('Not authenticated. Please log in.', 'danger');
       throw new Error('Not authenticated');
     }
 
-    showInfoMessage('Processing check-in...');
-
-    const payload = { cardno, scannedAt: scannedAt || new Date().toISOString() };
+    qrStatus.className = 'info-status';
+    qrStatus.innerText = 'Checking in...';
 
     let response;
     try {
@@ -252,120 +244,82 @@ document.addEventListener('DOMContentLoaded', function () {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          cardno,
+          scannedAt: scannedAt || new Date().toISOString()
+        })
       });
-    } catch (fetchErr) {
-      throw fetchErr;
+    } catch (err) {
+      showMessage('⚡ Network connection issue. Switching to offline queue...', 'info');
+      throw err;
     }
 
     const data = await response.json();
 
-    if (!response.ok) {
-      showErrorMessage(data.message || 'Failed to check-in.');
-      throw data;
-    }
-
-    if (data.cardno && data.issuedto) {
-      qrStatus.className = 'success-status';
-      qrStatus.innerText = `✅ QR Code Scanned: ${data.cardno} (${data.issuedto})`;
-    }
-
-    if (data.success || data.message === 'Success') {
-      showSuccessMessage(data.message || 'Check-in successful.');
+    if (response.ok) {
+      showMessage(`Welcome, ${data.issuedto || cardno}!`, 'success');
     } else {
-      showErrorMessage(data.message || 'Failed to check-in.');
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('error');
+      showMessage(`Error checking in: ${data.message || 'Unknown error'}`, 'danger');
+      throw new Error(data.message || 'Error checking in');
     }
-
-    return data;
   }
 
   async function syncPendingScans() {
     if (isSyncing || !navigator.onLine) return;
-
-    let queue = getOfflineQueue();
-    const pendingItems = queue.filter(item => item.status === 'pending');
-
-    if (pendingItems.length === 0) return;
-
     isSyncing = true;
     updateNetworkUI();
 
-    showInfoMessage(`Syncing ${pendingItems.length} offline gate check-ins...`);
-
-    let syncedCount = 0;
-    let warningCount = 0;
-
-    for (let i = 0; i < pendingItems.length; i++) {
-      const item = pendingItems[i];
-
-      if (!navigator.onLine) {
-        showErrorMessage(`Network lost during sync. ${syncedCount} synced, ${pendingItems.length - syncedCount} remaining.`);
-        break;
-      }
-
-      try {
-        await sendCheckinRequest(item.cardno, item.scannedAt);
-        syncedCount++;
-
-        queue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(queue);
+    await window.ScannerCommon.runBatchSync({
+      queueName: QUEUE_NAME,
+      syncItemFn: async (payload, token, signal) => {
+        const res = await fetch(`${CONFIG.basePath}/gate/entry`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            cardno: payload.cardno,
+            scannedAt: payload.scannedAt
+          }),
+          signal
+        });
+        const body = await res.json();
+        return {
+          ok: res.ok,
+          status: res.status,
+          message: body.message
+        };
+      },
+      onStart: (count) => {
+        showMessage(`Syncing ${count} offline gate check-ins...`, 'info');
+      },
+      onFinish: ({ successCount }) => {
+        isSyncing = false;
         updateNetworkUI();
-
-      } catch (err) {
-        if (isNetworkError(err)) {
-          showErrorMessage(`Network error during sync. ${syncedCount} synced, ${pendingItems.length - syncedCount} pending.`);
-          break;
-        } else {
-          warningCount++;
-          queue = getOfflineQueue().filter(q => q.id !== item.id);
-          saveOfflineQueue(queue);
-          updateNetworkUI();
-        }
+        showMessage(`Sync Complete: Successfully synced ${successCount} offline check-ins.`, 'success');
+        setTimeout(resetAlert, 2000);
       }
-    }
-
-    isSyncing = false;
-    updateNetworkUI();
-
-    if (syncedCount > 0) {
-      showSuccessMessage(`Batch sync completed! ${syncedCount} gate check-ins synced successfully.${warningCount > 0 ? ` (${warningCount} failed)` : ''}`);
-    } else if (warningCount > 0) {
-      showErrorMessage(`Sync failed: ${warningCount} item(s) could not be submitted.`);
-    }
+    });
   }
-
-  /* -------------------- ALERTS -------------------- */
-
-  let alertTimeout = null;
 
   function showMessage(message, type) {
+    if (!alertDiv) return;
     alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
+    alertDiv.innerText = message;
     alertDiv.style.display = 'block';
 
-    if (alertTimeout) clearTimeout(alertTimeout);
-    alertTimeout = setTimeout(resetAlert, 1500);
-  }
-
-  function showSuccessMessage(message) {
-    showMessage(message, 'success');
-  }
-
-  function showErrorMessage(message) {
-    showMessage(message, 'danger');
-  }
-
-  function showInfoMessage(message) {
-    showMessage(message, 'info');
+    if (qrStatus) {
+      qrStatus.className = `${type}-status`;
+      qrStatus.innerText = message;
+    }
   }
 
   function resetAlert() {
-    alertDiv.style.display = 'none';
-    alertDiv.className = 'alert';
-    alertDiv.textContent = '';
+    if (alertDiv) {
+      alertDiv.style.display = 'none';
+      alertDiv.innerText = '';
+    }
   }
-
-  window.addEventListener('beforeunload', () => {
-    stopQRScanner();
-  });
 });

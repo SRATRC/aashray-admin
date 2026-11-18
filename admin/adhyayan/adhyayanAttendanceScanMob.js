@@ -1,27 +1,53 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
-  const sessionNumber = params.get("session") || 1;
+  let shibirId = params.get('shibir_id');
+  let selectedSession = params.get('session') || '1';
 
-  document.title = `Adhyayan Attendance Scanner for Session ${sessionNumber}`;
-
-  const heading = document.getElementById("scanner-heading");
-  if (heading) {
-    heading.innerText = `Adhyayan Attendance Scanner for Session ${sessionNumber}`;
-  }
-
+  const heading = document.getElementById('scanner-heading');
+  const sessionSelect = document.getElementById('session-select');
+  const qrStatus = document.getElementById('qr-status');
+  const scanAgainBtn = document.getElementById('scan-again-btn');
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
 
-  const QUEUE_STORAGE_KEY = 'adhyayan_attendance_mob_offline_queue';
-  const COOLDOWN_MS = 5 * 60 * 1000;
-
+  const QUEUE_NAME = 'adhyayan-scan-queue';
+  let isProcessing = false;
   let isSyncing = false;
+  let activeShibir = null;
+  let html5QrCode = null;
 
+  // 1. Station Auth & Inactivity Tracker
+  if (window.StationAuth) {
+    window.StationAuth.initStationAuth();
+    window.StationAuth.initInactivityTracker();
+  }
+
+  // 2. Setup Top Bar
+  if (window.ScannerCommon) {
+    window.ScannerCommon.setupTopBar({
+      queueName: QUEUE_NAME,
+      onUpdateData: downloadAdhyayanData
+    });
+  }
+
+  // 3. Populate cached session list if available
+  await loadCachedSessions();
+
+  if (sessionSelect) {
+    sessionSelect.addEventListener('change', () => {
+      selectedSession = sessionSelect.value;
+      updateHeading();
+    });
+  }
+
+  updateHeading();
   updateNetworkUI();
 
+  // Network event listeners
   window.addEventListener('online', () => {
     updateNetworkUI();
+    downloadAdhyayanData();
     syncPendingScans();
   });
 
@@ -36,68 +62,303 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (navigator.onLine) {
+    downloadAdhyayanData();
     syncPendingScans();
   }
 
-  function isNetworkError(err) {
-    return (
-      !navigator.onLine ||
-      err instanceof TypeError ||
-      err?.name === 'TypeError' ||
-      err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
-    );
+  if (scanAgainBtn) {
+    scanAgainBtn.addEventListener('click', () => {
+      scanAgainBtn.style.display = 'none';
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = 'Ready to scan...';
+      isProcessing = false;
+    });
   }
 
-  function getOfflineQueue() {
+  // 4. Start QR Scanner & Battery Saver
+  startScanner();
+
+  function startScanner() {
+    if (!window.Html5Qrcode) {
+      if (qrStatus) {
+        qrStatus.className = 'error-status';
+        qrStatus.innerText = 'QR scanner library not loaded.';
+      }
+      return;
+    }
+
+    html5QrCode = new Html5Qrcode('reader');
+
+    if (window.ScannerCommon) {
+      window.ScannerCommon.setupBatterySaver(html5QrCode);
+    }
+
+    html5QrCode
+      .start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        () => {}
+      )
+      .then(() => {
+        if (qrStatus) {
+          qrStatus.className = 'scanning-status';
+          qrStatus.innerText = 'Ready to scan...';
+        }
+      })
+      .catch((err) => {
+        console.error('Camera start error:', err);
+        if (qrStatus) {
+          qrStatus.className = 'error-status';
+          qrStatus.innerText = 'Camera access error. Please grant permissions.';
+        }
+      });
+  }
+
+  function updateHeading() {
+    const sessionLabel = sessionSelect && sessionSelect.selectedOptions[0] ? sessionSelect.selectedOptions[0].text : `Session ${selectedSession}`;
+    const shibirName = activeShibir?.name ? ` - ${activeShibir.name}` : '';
+    if (heading) {
+      heading.innerText = `Adhyayan Attendance (${sessionLabel}${shibirName})`;
+    }
+    document.title = `Adhyayan Attendance (${sessionLabel})`;
+  }
+
+  async function loadCachedSessions() {
+    if (!window.OfflineDB) return;
+    const config = await window.OfflineDB.getConfig('adhyayan_config');
+    if (config) {
+      if (config.shibir) {
+        activeShibir = config.shibir;
+        if (!shibirId) shibirId = config.shibir.id;
+      }
+      if (config.sessions && config.sessions.length > 0) {
+        renderSessionOptions(config.sessions);
+      }
+    }
+  }
+
+  function renderSessionOptions(sessions) {
+    if (!sessionSelect) return;
+    const currentVal = sessionSelect.value || selectedSession;
+    sessionSelect.innerHTML = '';
+
+    sessions.forEach((s) => {
+      const opt = document.createElement('option');
+      const val = s.session_type === 'mv' ? 'mv' : String(s.session_number);
+      opt.value = val;
+      opt.text = s.name || (s.session_type === 'mv' ? 'Morning Vanchan' : `Session ${s.session_number}`);
+      sessionSelect.appendChild(opt);
+    });
+
+    if (currentVal && Array.from(sessionSelect.options).some((o) => o.value === String(currentVal))) {
+      sessionSelect.value = String(currentVal);
+    } else if (sessionSelect.options.length > 0) {
+      sessionSelect.value = sessionSelect.options[0].value;
+    }
+    selectedSession = sessionSelect.value;
+    updateHeading();
+  }
+
+  async function downloadAdhyayanData() {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    if (!token) return;
+
     try {
-      const data = localStorage.getItem(QUEUE_STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
+      const targetParam = shibirId || 'today';
+      const res = await fetch(`${CONFIG.basePath}/admin/offline/adhyayan/${targetParam}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+
+      const body = await res.json();
+      const payload = body.data || body;
+
+      if (payload && window.OfflineDB) {
+        if (payload.shibir) {
+          activeShibir = payload.shibir;
+          shibirId = payload.shibir.id;
+        }
+
+        await window.OfflineDB.storeConfig('adhyayan_config', {
+          shibir: payload.shibir,
+          sessions: payload.sessions
+        });
+
+        if (payload.participants && payload.participants.length > 0) {
+          await window.OfflineDB.storeAttendees('adhyayan', payload.participants);
+        }
+
+        if (payload.sessions && payload.sessions.length > 0) {
+          renderSessionOptions(payload.sessions);
+        }
+      }
     } catch (e) {
-      console.error('Failed to read scan queue from localStorage', e);
-      return [];
+      console.warn('Adhyayan offline data update failed:', e);
     }
   }
 
-  function saveOfflineQueue(queue) {
+  async function onScanSuccess(decodedText) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    const cardno = (decodedText || '').replace(/^cardnumber=/i, '').trim();
+    if (!cardno) {
+      isProcessing = false;
+      return;
+    }
+
+    const scannedAt = new Date().toISOString();
+    const currentSession = sessionSelect ? sessionSelect.value : selectedSession;
+    const targetShibirId = shibirId || activeShibir?.id;
+
+    if (qrStatus) {
+      qrStatus.className = 'scanning-status';
+      qrStatus.innerText = 'Processing attendance...';
+    }
+
+    if (navigator.onLine && targetShibirId) {
+      try {
+        await sendAttendanceRequest(targetShibirId, currentSession, cardno, scannedAt);
+      } catch (err) {
+        if (isNetworkError(err)) {
+          await handleOfflineScan(targetShibirId, currentSession, cardno, scannedAt);
+        }
+      }
+    } else {
+      await handleOfflineScan(targetShibirId, currentSession, cardno, scannedAt);
+    }
+
+    setTimeout(() => {
+      isProcessing = false;
+      if (qrStatus && qrStatus.className !== 'error-status') {
+        qrStatus.className = 'scanning-status';
+        qrStatus.innerText = 'Ready to scan...';
+      }
+    }, 1500);
+  }
+
+  async function sendAttendanceRequest(sId, sNo, cardno, scannedAt) {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    let response;
+
     try {
-      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-    } catch (e) {
-      console.error('Failed to save scan queue to localStorage', e);
+      response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${cardno}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ scannedAt })
+      });
+    } catch (err) {
+      throw err;
+    }
+
+    const data = await response.json().catch(() => ({}));
+    const msg = (data.message || '').toLowerCase();
+
+    if (response.ok) {
+      qrStatus.className = 'success-status';
+      qrStatus.innerText = `✔ Attendance marked for ${data.participantName || cardno}`;
+    } else if (msg.includes('already')) {
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('warning');
+      qrStatus.className = 'warning-status';
+      qrStatus.innerText = `⚠️ ${data.message}`;
+    } else {
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('error');
+      qrStatus.className = 'error-status';
+      qrStatus.innerText = `✖ ${data.message || 'Error marking attendance'}`;
     }
   }
 
-  function enqueueScan(shibir_id, session_no, cardno, scannedAt) {
-    const queue = getOfflineQueue();
-    const now = Date.now();
+  async function handleOfflineScan(sId, sNo, cardno, scannedAt) {
+    let validation = { valid: true, name: cardno };
 
-    const recentDuplicate = queue.find(
-      item => item.cardno === cardno && item.shibir_id === shibir_id && String(item.session_no) === String(session_no) && now - item.timestampMs < COOLDOWN_MS
-    );
+    if (window.OfflineDB) {
+      validation = await window.OfflineDB.lookupAndMarkAttendance(cardno, sNo);
 
-    if (recentDuplicate) {
-      return { success: false, reason: 'duplicate' };
+      if (!validation.valid) {
+        if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('warning');
+        qrStatus.className = 'warning-status';
+        qrStatus.innerText = validation.message;
+        return;
+      }
+
+      await window.OfflineDB.enqueueScan(QUEUE_NAME, {
+        shibir_id: sId || 'unknown',
+        session_no: sNo,
+        cardno,
+        name: validation.name,
+        scannedAt
+      });
     }
 
-    const newItem = {
-      id: `${shibir_id}_${session_no}_${cardno}_${now}`,
-      shibir_id,
-      session_no,
-      cardno,
-      scannedAt,
-      timestampMs: now,
-      status: 'pending'
-    };
+    const sessionLabel = sessionSelect && sessionSelect.selectedOptions[0] ? sessionSelect.selectedOptions[0].text : `Session ${sNo}`;
+    qrStatus.className = 'warning-status';
+    qrStatus.innerText = `📦 Attendance marked for ${validation.name} (${sessionLabel}) [Offline]`;
 
-    queue.push(newItem);
-    saveOfflineQueue(queue);
-    return { success: true, item: newItem };
+    updateNetworkUI();
   }
 
-  function updateNetworkUI() {
+  async function syncPendingScans() {
+    if (isSyncing || !navigator.onLine) return;
+    if (!window.ScannerCommon) return;
+
+    isSyncing = true;
+    updateNetworkUI();
+
+    await window.ScannerCommon.runBatchSync({
+      queueName: QUEUE_NAME,
+      syncItemFn: async (item, token) => {
+        const sId = item.shibir_id || shibirId || activeShibir?.id;
+        const sNo = item.session_no;
+        const response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${item.cardno}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ scannedAt: item.scannedAt })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+          throw new Error(data.message || 'Sync failed');
+        }
+        return { success: true, message: data.message };
+      },
+      onStart: (count) => {
+        if (qrStatus) {
+          qrStatus.className = 'scanning-status';
+          qrStatus.innerText = `Syncing ${count} offline attendance records...`;
+        }
+      },
+      onFinish: (results) => {
+        isSyncing = false;
+        updateNetworkUI();
+        if (qrStatus) {
+          if (results.synced > 0) {
+            qrStatus.className = 'success-status';
+            qrStatus.innerText = `Sync Complete: Marked ${results.synced} offline attendance records.`;
+          } else {
+            qrStatus.className = 'scanning-status';
+            qrStatus.innerText = 'Ready to scan...';
+          }
+        }
+      }
+    });
+
+    isSyncing = false;
+    updateNetworkUI();
+  }
+
+  async function updateNetworkUI() {
     const isOnline = navigator.onLine;
-    const queue = getOfflineQueue();
-    const pendingCount = queue.filter(item => item.status === 'pending').length;
+    let pendingCount = 0;
+
+    if (window.OfflineDB) {
+      pendingCount = await window.OfflineDB.getPendingCount(QUEUE_NAME);
+    }
 
     if (networkBadge) {
       if (isOnline) {
@@ -124,155 +385,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function markAttendanceRequest(shibirId, sessionNo, cardno, scannedAt) {
-    const token = sessionStorage.getItem('token');
-    const payload = { scannedAt: scannedAt || new Date().toISOString() };
-
-    let response;
-    try {
-      response = await fetch(
-        `${CONFIG.basePath}/adhyayan/attendance/${shibirId}/${sessionNo}/${cardno}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        }
-      );
-    } catch (fetchErr) {
-      throw fetchErr;
-    }
-
-    const data = await response.json();
-    const msg = data.message?.toLowerCase() || '';
-
-    if (response.ok) {
-      qrStatus.className = 'success-status';
-      qrStatus.innerText = `✔ Attendance marked for ${data.participantName || cardno}`;
-    } else if (msg.includes('already')) {
-      qrStatus.className = 'warning-status';
-      qrStatus.innerText = `⚠ ${data.message}`;
-    } else {
-      qrStatus.className = 'error-status';
-      qrStatus.innerText = `✖ ${data.message || 'Something went wrong'}`;
-      throw data;
-    }
-
-    return data;
+  function isNetworkError(err) {
+    return (
+      !navigator.onLine ||
+      err instanceof TypeError ||
+      err?.name === 'TypeError' ||
+      err?.message?.includes('Failed to fetch') ||
+      err?.message?.includes('NetworkError')
+    );
   }
-
-  async function syncPendingScans() {
-    if (isSyncing || !navigator.onLine) return;
-
-    let queue = getOfflineQueue();
-    const pendingItems = queue.filter(item => item.status === 'pending');
-
-    if (pendingItems.length === 0) return;
-
-    isSyncing = true;
-    updateNetworkUI();
-
-    let syncedCount = 0;
-    let warningCount = 0;
-
-    for (let i = 0; i < pendingItems.length; i++) {
-      const item = pendingItems[i];
-
-      if (!navigator.onLine) break;
-
-      try {
-        await markAttendanceRequest(item.shibir_id, item.session_no, item.cardno, item.scannedAt);
-        syncedCount++;
-
-        queue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(queue);
-        updateNetworkUI();
-
-      } catch (err) {
-        if (isNetworkError(err)) {
-          break;
-        } else {
-          warningCount++;
-          queue = getOfflineQueue().filter(q => q.id !== item.id);
-          saveOfflineQueue(queue);
-          updateNetworkUI();
-        }
-      }
-    }
-
-    isSyncing = false;
-    updateNetworkUI();
-  }
-
-  window.handleOfflineScan = function(shibir_id, session_no, cardno, scannedAt) {
-    const result = enqueueScan(shibir_id, session_no, cardno, scannedAt);
-
-    if (result.success) {
-      qrStatus.className = 'warning-status';
-      qrStatus.innerText = `📦 Saved Offline (${cardno})`;
-    } else if (result.reason === 'duplicate') {
-      qrStatus.className = 'warning-status';
-      qrStatus.innerText = `⚠️ Already Queued (${cardno})`;
-    }
-
-    updateNetworkUI();
-  };
-
-  window.markAttendanceRequest = markAttendanceRequest;
-  window.isNetworkError = isNetworkError;
 });
-
-const params = new URLSearchParams(window.location.search);
-const shibirId = params.get('shibir_id');
-const sessionNo = params.get('session');
-
-const qrStatus = document.getElementById('qr-status');
-
-let html5QrCode;
-let isProcessing = false; // 🔒 scan lock
-
-startScanner();
-
-function startScanner() {
-  if (!html5QrCode) {
-    html5QrCode = new Html5Qrcode('reader');
-  }
-
-  html5QrCode.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: 250 },
-    onScanSuccess
-  );
-}
-
-async function onScanSuccess(decodedText) {
-  if (isProcessing) return;
-  isProcessing = true;
-
-  const cardno = decodedText.replace('cardnumber=', '').trim();
-  const scannedAt = new Date().toISOString();
-
-  qrStatus.className = 'scanning-status';
-  qrStatus.innerText = 'Marking attendance...';
-
-  if (navigator.onLine) {
-    try {
-      await window.markAttendanceRequest(shibirId, sessionNo, cardno, scannedAt);
-    } catch (err) {
-      if (window.isNetworkError && window.isNetworkError(err)) {
-        window.handleOfflineScan(shibirId, sessionNo, cardno, scannedAt);
-      }
-    }
-  } else {
-    window.handleOfflineScan(shibirId, sessionNo, cardno, scannedAt);
-  }
-
-  setTimeout(() => {
-    isProcessing = false;
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Ready to scan...';
-  }, 1500);
-}
-

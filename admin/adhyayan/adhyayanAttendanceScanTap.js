@@ -1,25 +1,54 @@
-const params = new URLSearchParams(window.location.search);
-const shibirId = params.get("shibir_id");
-const sessionNo = params.get("session") || 1;
+document.addEventListener('DOMContentLoaded', async function () {
+  const params = new URLSearchParams(window.location.search);
+  let shibirId = params.get('shibir_id');
+  let selectedSession = params.get('session') || '1';
 
-const QUEUE_STORAGE_KEY = 'adhyayan_attendance_offline_queue';
-const COOLDOWN_MS = 5 * 60 * 1000;
+  const heading = document.getElementById('scanner-heading');
+  const cardInput = document.getElementById('cardno');
+  const alertBox = document.getElementById('alert');
+  const sessionSelect = document.getElementById('session-select');
+  const networkBadge = document.getElementById('network-badge');
+  const queueCount = document.getElementById('queue-count');
+  const syncNowBtn = document.getElementById('sync-now-btn');
 
-let isProcessing = false;
-let isSyncing = false;
-let focusInterval;
-let submitTimer;
+  const QUEUE_NAME = 'adhyayan-tap-queue';
+  let isProcessing = false;
+  let isSyncing = false;
+  let submitTimer;
+  let activeShibir = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const heading = document.getElementById("scanner-heading");
-  const cardInput = document.getElementById("cardno");
+  // 1. Station Auth & Inactivity Tracker
+  if (window.StationAuth) {
+    window.StationAuth.initStationAuth();
+    window.StationAuth.initInactivityTracker();
+  }
 
-  heading.innerText = `Tap card for Adhyayan Attendance (Session ${sessionNo})`;
+  // 2. Setup Top Bar
+  if (window.ScannerCommon) {
+    window.ScannerCommon.setupTopBar({
+      queueName: QUEUE_NAME,
+      onUpdateData: downloadAdhyayanData
+    });
+  }
 
+  // 3. Populate cached session list if available
+  await loadCachedSessions();
+
+  if (sessionSelect) {
+    sessionSelect.addEventListener('change', () => {
+      selectedSession = sessionSelect.value;
+      updateHeading();
+      if (cardInput) cardInput.focus();
+    });
+  }
+
+  updateHeading();
   updateNetworkUI();
 
+  // Network event listeners
   window.addEventListener('online', () => {
     updateNetworkUI();
+    downloadAdhyayanData();
     syncPendingScans();
   });
 
@@ -27,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateNetworkUI();
   });
 
-  const syncNowBtn = document.getElementById("sync-now-btn");
   if (syncNowBtn) {
     syncNowBtn.addEventListener('click', () => {
       syncPendingScans();
@@ -35,27 +63,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (navigator.onLine) {
+    downloadAdhyayanData();
     syncPendingScans();
   }
 
-  // Focus after load
+  // Auto-focus input
   setTimeout(() => {
-    cardInput.focus();
+    if (cardInput) cardInput.focus();
   }, 300);
 
-  // Keep focus on scanner input
-  focusInterval = setInterval(() => {
-    if (document.activeElement !== cardInput) {
+  setInterval(() => {
+    if (cardInput && document.activeElement !== cardInput && !isProcessing && !isSyncing) {
       cardInput.focus();
     }
-  }, 500);
+  }, 1000);
 
-  // Main path: scanner sends Enter after scan
-  cardInput.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
+  // Scanner keyboard Enter handler
+  cardInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(submitTimer);
-
       submitTimer = setTimeout(() => {
         const cardno = normalizeCardno(cardInput.value);
         if (cardno && !isProcessing) {
@@ -65,10 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Fallback path: auto-submit after typing stops briefly
-  cardInput.addEventListener("input", function () {
+  // Fallback typing input
+  cardInput.addEventListener('input', function () {
     clearTimeout(submitTimer);
-
     submitTimer = setTimeout(() => {
       const cardno = normalizeCardno(cardInput.value);
       if (cardno && !isProcessing) {
@@ -76,286 +102,316 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }, 120);
   });
-});
 
-async function processAttendanceScan(cardno) {
-  const scannedAt = new Date().toISOString();
+  function updateHeading() {
+    const sessionLabel = sessionSelect && sessionSelect.selectedOptions[0] ? sessionSelect.selectedOptions[0].text : `Session ${selectedSession}`;
+    const shibirName = activeShibir?.name ? ` - ${activeShibir.name}` : '';
+    if (heading) {
+      heading.innerText = `Tap card for Adhyayan Attendance (${sessionLabel}${shibirName})`;
+    }
+    document.title = `Adhyayan Attendance (${sessionLabel})`;
+  }
 
-  if (navigator.onLine) {
+  async function loadCachedSessions() {
+    if (!window.OfflineDB) return;
+    const config = await window.OfflineDB.getConfig('adhyayan_config');
+    if (config) {
+      if (config.shibir) {
+        activeShibir = config.shibir;
+        if (!shibirId) shibirId = config.shibir.id;
+      }
+      if (config.sessions && config.sessions.length > 0) {
+        renderSessionOptions(config.sessions);
+      }
+    }
+  }
+
+  function renderSessionOptions(sessions) {
+    if (!sessionSelect) return;
+    const currentVal = sessionSelect.value || selectedSession;
+    sessionSelect.innerHTML = '';
+
+    sessions.forEach((s) => {
+      const opt = document.createElement('option');
+      const val = s.session_type === 'mv' ? 'mv' : String(s.session_number);
+      opt.value = val;
+      opt.text = s.name || (s.session_type === 'mv' ? 'Morning Vanchan' : `Session ${s.session_number}`);
+      sessionSelect.appendChild(opt);
+    });
+
+    if (currentVal && Array.from(sessionSelect.options).some((o) => o.value === String(currentVal))) {
+      sessionSelect.value = String(currentVal);
+    } else if (sessionSelect.options.length > 0) {
+      sessionSelect.value = sessionSelect.options[0].value;
+    }
+    selectedSession = sessionSelect.value;
+    updateHeading();
+  }
+
+  async function downloadAdhyayanData() {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    if (!token) return;
+
     try {
-      await markAttendance(cardno, scannedAt);
-    } catch (err) {
-      if (isNetworkError(err)) {
-        handleOfflineScan(shibirId, sessionNo, cardno, scannedAt);
+      const targetParam = shibirId || 'today';
+      const res = await fetch(`${CONFIG.basePath}/admin/offline/adhyayan/${targetParam}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+
+      const body = await res.json();
+      const payload = body.data || body;
+
+      if (payload && window.OfflineDB) {
+        if (payload.shibir) {
+          activeShibir = payload.shibir;
+          shibirId = payload.shibir.id;
+        }
+
+        await window.OfflineDB.storeConfig('adhyayan_config', {
+          shibir: payload.shibir,
+          sessions: payload.sessions
+        });
+
+        if (payload.participants && payload.participants.length > 0) {
+          await window.OfflineDB.storeAttendees('adhyayan', payload.participants);
+        }
+
+        if (payload.sessions && payload.sessions.length > 0) {
+          renderSessionOptions(payload.sessions);
+        }
       }
+    } catch (e) {
+      console.warn('Adhyayan offline data update failed:', e);
     }
-  } else {
-    handleOfflineScan(shibirId, sessionNo, cardno, scannedAt);
-  }
-}
-
-function handleOfflineScan(sId, sNo, cardno, scannedAt) {
-  if (isProcessing) return;
-  isProcessing = true;
-
-  const cardInput = document.getElementById("cardno");
-  const alertBox = document.getElementById("alert");
-  const formWrapper = document.getElementById("formWrapper");
-
-  const result = enqueueScan(sId, sNo, cardno, scannedAt);
-  formWrapper.style.display = "none";
-
-  if (result.success) {
-    showAlert(alertBox, `📦 Saved Offline: Attendance for ${cardno} queued (Session ${sNo}).`, "info");
-  } else if (result.reason === "duplicate") {
-    showAlert(alertBox, `⚠️ Card ${cardno} was already scanned offline recently.`, "warning");
   }
 
-  updateNetworkUI();
+  async function processAttendanceScan(cardno) {
+    const scannedAt = new Date().toISOString();
+    const currentSession = sessionSelect ? sessionSelect.value : selectedSession;
+    const targetShibirId = shibirId || activeShibir?.id;
 
-  setTimeout(() => {
-    cardInput.value = "";
+    if (navigator.onLine && targetShibirId) {
+      try {
+        await sendAttendanceRequest(targetShibirId, currentSession, cardno, scannedAt);
+      } catch (err) {
+        if (isNetworkError(err)) {
+          await handleOfflineScan(targetShibirId, currentSession, cardno, scannedAt);
+        }
+      }
+    } else {
+      await handleOfflineScan(targetShibirId, currentSession, cardno, scannedAt);
+    }
+  }
+
+  async function sendAttendanceRequest(sId, sNo, cardno, scannedAt) {
+    if (isProcessing) return;
+    isProcessing = true;
+
     resetAlert();
-    cardInput.focus();
-    isProcessing = false;
-  }, 1200);
-}
+    const formWrapper = document.getElementById('formWrapper');
+    if (formWrapper) formWrapper.style.display = 'none';
 
-function isNetworkError(err) {
-  return (
-    !navigator.onLine ||
-    err instanceof TypeError ||
-    err?.name === 'TypeError' ||
-    err?.message?.includes('Failed to fetch') ||
-    err?.message?.includes('NetworkError')
-  );
-}
+    showAlert('Processing attendance...', 'info');
 
-/* -------------------- OFFLINE QUEUE MANAGER -------------------- */
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    let response;
 
-function getOfflineQueue() {
-  try {
-    const data = localStorage.getItem(QUEUE_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error('Failed to read scan queue from localStorage', e);
-    return [];
-  }
-}
-
-function saveOfflineQueue(queue) {
-  try {
-    localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-  } catch (e) {
-    console.error('Failed to save scan queue to localStorage', e);
-  }
-}
-
-function enqueueScan(shibir_id, session_no, cardno, scannedAt) {
-  const queue = getOfflineQueue();
-  const now = Date.now();
-
-  const recentDuplicate = queue.find(
-    item => item.cardno === cardno && item.shibir_id === shibir_id && String(item.session_no) === String(session_no) && now - item.timestampMs < COOLDOWN_MS
-  );
-
-  if (recentDuplicate) {
-    return { success: false, reason: 'duplicate' };
-  }
-
-  const newItem = {
-    id: `${shibir_id}_${session_no}_${cardno}_${now}`,
-    shibir_id,
-    session_no,
-    cardno,
-    scannedAt,
-    timestampMs: now,
-    status: 'pending'
-  };
-
-  queue.push(newItem);
-  saveOfflineQueue(queue);
-  return { success: true, item: newItem };
-}
-
-function updateNetworkUI() {
-  const isOnline = navigator.onLine;
-  const queue = getOfflineQueue();
-  const pendingCount = queue.filter(item => item.status === 'pending').length;
-  const networkBadge = document.getElementById("network-badge");
-  const queueCount = document.getElementById("queue-count");
-  const syncNowBtn = document.getElementById("sync-now-btn");
-
-  if (networkBadge) {
-    if (isOnline) {
-      networkBadge.className = 'network-badge online';
-      networkBadge.innerText = '🟢 Online';
-    } else {
-      networkBadge.className = 'network-badge offline';
-      networkBadge.innerText = '🟠 Offline Mode';
-    }
-  }
-
-  if (queueCount) {
-    queueCount.innerText = `${pendingCount} Pending ${pendingCount === 1 ? 'Scan' : 'Scans'}`;
-  }
-
-  if (syncNowBtn) {
-    if (isOnline && pendingCount > 0) {
-      syncNowBtn.style.display = 'inline-block';
-      syncNowBtn.disabled = isSyncing;
-      syncNowBtn.innerText = isSyncing ? 'Syncing...' : 'Sync Now';
-    } else {
-      syncNowBtn.style.display = 'none';
-    }
-  }
-}
-
-/* -------------------- API & BATCH SYNC -------------------- */
-
-async function markAttendance(cardno, scannedAt) {
-  if (isProcessing) return;
-  isProcessing = true;
-
-  resetAlert();
-
-  const alertBox = document.getElementById("alert");
-  const formWrapper = document.getElementById("formWrapper");
-  const cardInput = document.getElementById("cardno");
-
-  let response;
-  try {
-    formWrapper.style.display = "none";
-    showAlert(alertBox, "Processing attendance...", "info");
-
-    response = await fetch(
-      `${CONFIG.basePath}/adhyayan/attendance/${shibirId}/${sessionNo}/${cardno}`,
-      {
-        method: "POST",
+    try {
+      response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${cardno}`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ scannedAt: scannedAt || new Date().toISOString() })
-      }
-    );
-  } catch (err) {
-    showAlert(alertBox, "⚡ Network connection issue. Switching to offline queue...", "info");
-    isProcessing = false;
-    throw err;
-  }
-
-  const data = await response.json();
-  const msg = data.message?.toLowerCase() || "";
-
-  try {
-    if (response.ok) {
-      showAlert(alertBox, `Attendance marked for ${data.participantName || cardno}`, "success");
-    } else if (msg.includes("already")) {
-      showAlert(alertBox, data.message, "warning");
-    } else {
-      showAlert(alertBox, data.message || "Error marking attendance", "danger");
-      throw new Error(data.message || "Error marking attendance");
+        body: JSON.stringify({ scannedAt })
+      });
+    } catch (err) {
+      isProcessing = false;
+      throw err;
     }
-  } finally {
+
+    const data = await response.json().catch(() => ({}));
+    const msg = (data.message || '').toLowerCase();
+
+    if (response.ok) {
+      showAlert(`✔ Attendance marked for ${data.participantName || cardno}`, 'success');
+    } else if (msg.includes('already')) {
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('warning');
+      showAlert(`⚠️ ${data.message}`, 'warning');
+    } else {
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('error');
+      showAlert(`✖ ${data.message || 'Error marking attendance'}`, 'danger');
+    }
+
     setTimeout(() => {
-      cardInput.value = "";
+      cardInput.value = '';
       resetAlert();
+      if (formWrapper) formWrapper.style.display = 'block';
       cardInput.focus();
       isProcessing = false;
     }, 1500);
   }
-}
 
-async function syncPendingScans() {
-  if (isSyncing || !navigator.onLine) return;
+  async function handleOfflineScan(sId, sNo, cardno, scannedAt) {
+    if (isProcessing) return;
+    isProcessing = true;
 
-  const queue = getOfflineQueue();
-  const pendingItems = queue.filter(item => item.status === 'pending');
+    resetAlert();
+    const formWrapper = document.getElementById('formWrapper');
+    if (formWrapper) formWrapper.style.display = 'none';
 
-  if (pendingItems.length === 0) {
+    let validation = { valid: true, name: cardno };
+
+    if (window.OfflineDB) {
+      validation = await window.OfflineDB.lookupAndMarkAttendance(cardno, sNo);
+
+      if (!validation.valid) {
+        if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('warning');
+        showAlert(validation.message, 'warning');
+
+        setTimeout(() => {
+          cardInput.value = '';
+          resetAlert();
+          if (formWrapper) formWrapper.style.display = 'block';
+          cardInput.focus();
+          isProcessing = false;
+        }, 1800);
+        return;
+      }
+
+      await window.OfflineDB.enqueueScan(QUEUE_NAME, {
+        shibir_id: sId || 'unknown',
+        session_no: sNo,
+        cardno,
+        name: validation.name,
+        scannedAt
+      });
+    }
+
+    const sessionLabel = sessionSelect && sessionSelect.selectedOptions[0] ? sessionSelect.selectedOptions[0].text : `Session ${sNo}`;
+    showAlert(`📦 Attendance marked for ${validation.name} (${sessionLabel}) [Offline]`, 'success');
+
     updateNetworkUI();
-    return;
+
+    setTimeout(() => {
+      cardInput.value = '';
+      resetAlert();
+      if (formWrapper) formWrapper.style.display = 'block';
+      cardInput.focus();
+      isProcessing = false;
+    }, 1200);
   }
 
-  isSyncing = true;
-  updateNetworkUI();
+  async function syncPendingScans() {
+    if (isSyncing || !navigator.onLine) return;
 
-  const alertBox = document.getElementById("alert");
-  const formWrapper = document.getElementById("formWrapper");
-  formWrapper.style.display = "none";
-  showAlert(alertBox, `Syncing ${pendingItems.length} offline attendance scans...`, "info");
+    if (!window.ScannerCommon) {
+      return;
+    }
 
-  let successCount = 0;
-  let failCount = 0;
+    isSyncing = true;
+    updateNetworkUI();
 
-  for (const item of pendingItems) {
-    try {
-      const response = await fetch(
-        `${CONFIG.basePath}/adhyayan/attendance/${item.shibir_id}/${item.session_no}/${item.cardno}`,
-        {
-          method: "POST",
+    await window.ScannerCommon.runBatchSync({
+      queueName: QUEUE_NAME,
+      syncItemFn: async (item, token) => {
+        const sId = item.shibir_id || shibirId || activeShibir?.id;
+        const sNo = item.session_no;
+        const response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${item.cardno}`, {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({ scannedAt: item.scannedAt })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+          throw new Error(data.message || 'Sync failed');
         }
-      );
+        return { success: true, message: data.message };
+      },
+      onStart: (count) => {
+        showAlert(`Syncing ${count} offline attendance records...`, 'info');
+      },
+      onFinish: (results) => {
+        isSyncing = false;
+        updateNetworkUI();
+        if (results.synced > 0) {
+          showAlert(`Sync Complete: Marked ${results.synced} offline attendance records.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
+          setTimeout(() => resetAlert(), 1800);
+        } else {
+          resetAlert();
+        }
+      }
+    });
 
-      const data = await response.json();
-      if (response.ok || (data.message && data.message.toLowerCase().includes("already"))) {
-        successCount++;
-        let currentQueue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(currentQueue);
-      } else {
-        failCount++;
-        let currentQueue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(currentQueue);
-      }
-    } catch (err) {
-      if (isNetworkError(err)) {
-        console.warn('Network interrupted during batch sync. Stopping sync loop.');
-        break;
-      } else {
-        failCount++;
-        let currentQueue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(currentQueue);
-      }
-    }
+    isSyncing = false;
     updateNetworkUI();
   }
 
-  isSyncing = false;
-  updateNetworkUI();
+  async function updateNetworkUI() {
+    const isOnline = navigator.onLine;
+    let pendingCount = 0;
 
-  if (successCount > 0) {
-    showAlert(alertBox, `Sync Complete: Marked ${successCount} offline attendance records.${failCount > 0 ? ` (${failCount} failed)` : ''}`, "success");
-    setTimeout(() => {
-      resetAlert();
-    }, 1500);
+    if (window.OfflineDB) {
+      pendingCount = await window.OfflineDB.getPendingCount(QUEUE_NAME);
+    }
+
+    if (networkBadge) {
+      if (isOnline) {
+        networkBadge.className = 'network-badge online';
+        networkBadge.innerText = '🟢 Online';
+      } else {
+        networkBadge.className = 'network-badge offline';
+        networkBadge.innerText = '🟠 Offline Mode';
+      }
+    }
+
+    if (queueCount) {
+      queueCount.innerText = `${pendingCount} Pending ${pendingCount === 1 ? 'Scan' : 'Scans'}`;
+    }
+
+    if (syncNowBtn) {
+      if (isOnline && pendingCount > 0) {
+        syncNowBtn.style.display = 'inline-block';
+        syncNowBtn.disabled = isSyncing;
+        syncNowBtn.innerText = isSyncing ? 'Syncing...' : 'Sync Now';
+      } else {
+        syncNowBtn.style.display = 'none';
+      }
+    }
   }
-}
 
-function normalizeCardno(value) {
-  let cardno = (value || "").trim();
-  cardno = cardno.replace(/^cardnumber=/i, "");
-  cardno = cardno.replace(/[\r\n]+/g, "");
-  return cardno;
-}
+  function normalizeCardno(value) {
+    let cardno = (value || '').trim();
+    cardno = cardno.replace(/^cardnumber=/i, '');
+    cardno = cardno.replace(/[\r\n]+/g, '');
+    return cardno;
+  }
 
-function showAlert(element, message, type) {
-  element.className = `big-alert alert-${type}`;
-  element.textContent = message;
-  element.style.display = "block";
-}
+  function isNetworkError(err) {
+    return (
+      !navigator.onLine ||
+      err instanceof TypeError ||
+      err?.name === 'TypeError' ||
+      err?.message?.includes('Failed to fetch') ||
+      err?.message?.includes('NetworkError')
+    );
+  }
 
-function resetAlert() {
-  const alertBox = document.getElementById("alert");
-  const formWrapper = document.getElementById("formWrapper");
+  function showAlert(message, type) {
+    if (!alertBox) return;
+    alertBox.className = `big-alert alert-${type}`;
+    alertBox.textContent = message;
+    alertBox.style.display = 'block';
+  }
 
-  alertBox.style.display = "none";
-  alertBox.textContent = "";
-  alertBox.className = "big-alert";
-  formWrapper.style.display = "block";
-}
+  function resetAlert() {
+    if (!alertBox) return;
+    alertBox.style.display = 'none';
+    alertBox.textContent = '';
+    alertBox.className = 'big-alert';
+  }
+});

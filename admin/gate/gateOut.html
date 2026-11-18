@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Check-out</title>
+    <title>Gate Check-Out (Camera QR)</title>
+
+    <link rel="manifest" href="/manifest.json" />
 
     <script src="../../style/js/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"><\/script>')</script>
@@ -15,6 +17,12 @@
     <script src="../../sessionstorage.js"></script>
     <script src="../../style/js/html5-qrcode.min.js"></script>
     <script>window.Html5Qrcode || document.write('<script src="https://unpkg.com/html5-qrcode"><\/script>')</script>
+
+    <script src="/style/js/roleCheck.js"></script>
+    <script src="../../style/js/offline-db.js"></script>
+    <script src="../../style/js/stationAuth.js"></script>
+    <script src="../../style/js/scannerCommon.js"></script>
+    <script src="../../style/js/pwa-register.js"></script>
     <script src="gateOut.js"></script>
   
     <link rel="stylesheet" href="../../style/css/styles.css">
@@ -23,6 +31,7 @@
         #qr-scanner-section {
             text-align: center;
             margin-bottom: 20px;
+            position: relative;
         }
         
         #qr-status {
@@ -40,6 +49,8 @@
             border-radius: 6px;
             padding: 8px 14px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .network-badge {
@@ -55,14 +66,15 @@
         }
 
         .network-badge.offline {
-            background-color: #fff3cd;
-            color: #856404;
+            background-color: #fffaf0;
+            color: #7b341e;
         }
 
         .sync-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .queue-count {
@@ -91,21 +103,26 @@
             cursor: not-allowed;
             opacity: 0.65;
         }
-        
+
         .success-status {
             color: green;
         }
-        
+
+        .warning-status {
+            color: #8a6d3b;
+        }
+
+        .info-status {
+            color: #31708f;
+        }
+
+        .danger-status,
         .error-status {
             color: red;
         }
-        
+
         .scanning-status {
             color: #666;
-        }
-        
-        #scan-again-btn {
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -113,9 +130,14 @@
     <div class="header">
         <div class="container">
             <div class="logout">
+                <span style="color: #cbd5e0; font-weight: bold; margin-right: 12px;">🕒 <span id="station-clock">--:--</span></span>
+                <button id="update-data-btn" class="sync-btn" style="background: #319795;">⬇️ Update Data</button>
+                <button id="pwa-install-btn" class="sync-btn" style="display: none; background: #2b6cb0;">📲 Install App</button>
+                <button id="reset-station-btn" class="sync-btn" style="background: #4a5568;" title="Reset local station cache">🗑️ Reset Station</button>
+                &nbsp; | &nbsp;
                 <a href="javascript:void(0);" onclick="history.back()">Back</a>
-                &nbsp; | &nbsp; 
-                <a href="javascript:void(0);" onclick="goToHome()">Home</a> 
+                &nbsp; | &nbsp;
+                <a href="javascript:void(0);" onclick="goToHome()">Home</a>
                 &nbsp; | &nbsp;
                 <a href="javascript:void(0);" onclick="logout()">Logout</a>
             </div>
@@ -152,7 +174,6 @@
         </div>
     </div>
 
-    <script src="/style/js/roleCheck.js"></script>
     <script>
         checkRoleAccess(['gateAdmin', 'superAdmin']);
     </script>
