@@ -3,6 +3,8 @@ const StationAuth = (() => {
   const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes auto-lock
   let inactivityTimer = null;
   let isLocked = false;
+  let failedAttempts = 0;
+  let lockUntil = 0;
 
   // SHA-256 helper for client-side PIN hashing
   async function sha256(str) {
@@ -38,18 +40,17 @@ const StationAuth = (() => {
 
   // Station PIN Verification
   async function verifyStationPin(enteredPin) {
-    const enteredHash = await sha256(enteredPin);
     let storedHash = null;
 
     if (window.OfflineDB) {
       storedHash = await window.OfflineDB.getConfig('station_pin_hash');
     }
 
-    // Default to '1234' hash if none stored
-    const defaultHash = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // sha256 of 1234
-    const targetHash = storedHash || defaultHash;
+    // Fail closed: a station must have synced its PIN hash while online at least once
+    if (!storedHash) return false;
 
-    return enteredHash === targetHash;
+    const enteredHash = await sha256(enteredPin);
+    return enteredHash === storedHash;
   }
 
   // Fetch latest PIN hash from backend when online
@@ -130,6 +131,12 @@ const StationAuth = (() => {
 
     modal.querySelectorAll('.pin-btn').forEach((btn) => {
       btn.onclick = async () => {
+        if (Date.now() < lockUntil) {
+          const waitSec = Math.ceil((lockUntil - Date.now()) / 1000);
+          errorEl.innerText = `Too many attempts. Wait ${waitSec}s`;
+          return;
+        }
+
         errorEl.innerText = '';
         const val = btn.dataset.val;
 
@@ -139,23 +146,35 @@ const StationAuth = (() => {
           return;
         }
 
-        if (val === 'enter') {
-          if (currentPin.length !== 4) {
-            errorEl.innerText = 'Enter 4 digits';
-            return;
-          }
-          const valid = await verifyStationPin(currentPin);
+        async function handlePinSubmit(pin) {
+          const valid = await verifyStationPin(pin);
           if (valid) {
+            failedAttempts = 0;
+            lockUntil = 0;
             sessionStorage.setItem('station_unlocked', 'true');
             isLocked = false;
             modal.remove();
             resetInactivityTimer();
             if (onSuccess) onSuccess();
           } else {
-            errorEl.innerText = 'Incorrect PIN. Try again.';
+            failedAttempts++;
+            if (failedAttempts >= 5) {
+              lockUntil = Date.now() + 30000; // 30-second backoff
+              errorEl.innerText = 'Too many attempts. Locked for 30s';
+            } else {
+              errorEl.innerText = `Incorrect PIN (${5 - failedAttempts} left)`;
+            }
             currentPin = '';
-            updateDisplay();
+            setTimeout(updateDisplay, 400);
           }
+        }
+
+        if (val === 'enter') {
+          if (currentPin.length !== 4) {
+            errorEl.innerText = 'Enter 4 digits';
+            return;
+          }
+          await handlePinSubmit(currentPin);
           return;
         }
 
@@ -164,18 +183,7 @@ const StationAuth = (() => {
           updateDisplay();
           if (currentPin.length === 4) {
             // Auto submit on 4th digit
-            const valid = await verifyStationPin(currentPin);
-            if (valid) {
-              sessionStorage.setItem('station_unlocked', 'true');
-              isLocked = false;
-              modal.remove();
-              resetInactivityTimer();
-              if (onSuccess) onSuccess();
-            } else {
-              errorEl.innerText = 'Incorrect PIN';
-              currentPin = '';
-              setTimeout(updateDisplay, 400);
-            }
+            await handlePinSubmit(currentPin);
           }
         }
       };
@@ -202,7 +210,7 @@ const StationAuth = (() => {
   }
 
   // Coordinator Authorization Modal for Cloud Sync
-  function promptCoordinatorLogin(onSuccess) {
+  function promptCoordinatorLogin(onSuccess, onCancel) {
     if (document.getElementById('coordinator-auth-modal')) return;
 
     const modal = document.createElement('div');
@@ -238,7 +246,10 @@ const StationAuth = (() => {
 
     document.body.appendChild(modal);
 
-    document.getElementById('coord-cancel-btn').onclick = () => modal.remove();
+    document.getElementById('coord-cancel-btn').onclick = () => {
+      modal.remove();
+      if (onCancel) onCancel();
+    };
 
     document.getElementById('coordinator-login-form').onsubmit = async (e) => {
       e.preventDefault();

@@ -94,6 +94,7 @@ const ScannerCommon = (() => {
   }) {
     if (!navigator.onLine) {
       alert('Cannot sync while offline. Please connect to internet.');
+      if (onFinish) onFinish({ successCount: 0, rejectedList: [] });
       return;
     }
 
@@ -105,14 +106,22 @@ const ScannerCommon = (() => {
 
     if (isProtected && (!token || isExpired)) {
       if (window.StationAuth) {
-        window.StationAuth.promptCoordinatorLogin(() => {
-          runBatchSync({ queueName, syncItemFn, onStart, onProgress, onFinish });
-        });
+        window.StationAuth.promptCoordinatorLogin(
+          () => {
+            runBatchSync({ queueName, syncItemFn, onStart, onProgress, onFinish });
+          },
+          () => {
+            if (onFinish) onFinish({ successCount: 0, rejectedList: [] });
+          }
+        );
         return;
       }
     }
 
-    if (!window.OfflineDB) return;
+    if (!window.OfflineDB) {
+      if (onFinish) onFinish({ successCount: 0, rejectedList: [] });
+      return;
+    }
     const pendingItems = await window.OfflineDB.getPendingScans(queueName);
     if (!pendingItems.length) {
       if (onFinish) onFinish({ successCount: 0, rejectedList: [] });

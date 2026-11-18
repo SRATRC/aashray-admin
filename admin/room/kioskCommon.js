@@ -230,9 +230,13 @@ const Kiosk = (() => {
     return (
       !navigator.onLine ||
       err instanceof TypeError ||
+      err instanceof SyntaxError ||
       err?.name === 'TypeError' ||
+      err?.name === 'SyntaxError' ||
+      err?.status >= 500 ||
       err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
+      err?.message?.includes('NetworkError') ||
+      err?.message?.includes('JSON')
     );
   }
 
@@ -1139,7 +1143,7 @@ const Kiosk = (() => {
     if (!t) return;
 
     try {
-      const res = await fetch(`${CONFIG.basePath}/admin/offline/kiosk/today`, {
+      const res = await fetch(`${CONFIG.basePath}/offline/kiosk/today`, {
         headers: { Authorization: `Bearer ${t}` }
       });
       if (!res.ok) return;
@@ -1169,7 +1173,7 @@ const Kiosk = (() => {
     const wifiAssignments = queue.filter((q) => q.payload?.type === 'wifi').map((q) => q.payload);
 
     try {
-      const res = await fetch(`${CONFIG.basePath}/admin/offline/kiosk/sync`, {
+      const res = await fetch(`${CONFIG.basePath}/offline/kiosk/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const targetParam = shibirId || 'today';
-      const res = await fetch(`${CONFIG.basePath}/admin/offline/adhyayan/${targetParam}`, {
+      const res = await fetch(`${CONFIG.basePath}/offline/adhyayan/${targetParam}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       await window.OfflineDB.enqueueScan(QUEUE_NAME, {
-        shibir_id: sId || 'unknown',
+        shibir_id: sId || null,
         session_no: sNo,
         cardno,
         name: validation.name,
@@ -308,48 +308,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     isSyncing = true;
     updateNetworkUI();
 
-    await window.ScannerCommon.runBatchSync({
-      queueName: QUEUE_NAME,
-      syncItemFn: async (item, token) => {
-        const sId = item.shibir_id || shibirId || activeShibir?.id;
-        const sNo = item.session_no;
-        const response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${item.cardno}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ scannedAt: item.scannedAt })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
-          throw new Error(data.message || 'Sync failed');
-        }
-        return { success: true, message: data.message };
-      },
-      onStart: (count) => {
-        if (qrStatus) {
-          qrStatus.className = 'scanning-status';
-          qrStatus.innerText = `Syncing ${count} offline attendance records...`;
-        }
-      },
-      onFinish: (results) => {
-        isSyncing = false;
-        updateNetworkUI();
-        if (qrStatus) {
-          if (results.synced > 0) {
-            qrStatus.className = 'success-status';
-            qrStatus.innerText = `Sync Complete: Marked ${results.synced} offline attendance records.`;
-          } else {
+    try {
+      await window.ScannerCommon.runBatchSync({
+        queueName: QUEUE_NAME,
+        syncItemFn: async (item, token) => {
+          const sId = item.shibir_id || shibirId || activeShibir?.id;
+          const sNo = item.session_no;
+          const response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${item.cardno}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ scannedAt: item.scannedAt })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+            throw new Error(data.message || 'Sync failed');
+          }
+          return { success: true, message: data.message };
+        },
+        onStart: (count) => {
+          if (qrStatus) {
             qrStatus.className = 'scanning-status';
-            qrStatus.innerText = 'Ready to scan...';
+            qrStatus.innerText = `Syncing ${count} offline attendance records...`;
+          }
+        },
+        onFinish: (results) => {
+          isSyncing = false;
+          updateNetworkUI();
+          if (qrStatus) {
+            if (results.synced > 0) {
+              qrStatus.className = 'success-status';
+              qrStatus.innerText = `Sync Complete: Marked ${results.synced} offline attendance records.`;
+            } else {
+              qrStatus.className = 'scanning-status';
+              qrStatus.innerText = 'Ready to scan...';
+            }
           }
         }
-      }
-    });
-
-    isSyncing = false;
-    updateNetworkUI();
+      });
+    } finally {
+      isSyncing = false;
+      updateNetworkUI();
+    }
   }
 
   async function updateNetworkUI() {
@@ -389,9 +391,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     return (
       !navigator.onLine ||
       err instanceof TypeError ||
+      err instanceof SyntaxError ||
       err?.name === 'TypeError' ||
+      err?.name === 'SyntaxError' ||
+      err?.status >= 500 ||
       err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
+      err?.message?.includes('NetworkError') ||
+      err?.message?.includes('JSON')
     );
   }
 });

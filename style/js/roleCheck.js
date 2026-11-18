@@ -79,12 +79,15 @@ function checkRoleAccess(allowedRoles) {
     return;
   }
 
-  // Keep localStorage and sessionStorage in sync
+  // Only persist token to localStorage on scanner/kiosk pages, and never for temporary share tokens
+  const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
+  if (isScannerPage && !isShareToken && userToken) {
+    if (!localStorage.getItem('token')) {
+      localStorage.setItem('token', userToken);
+    }
+  }
   if (userToken && !sessionStorage.getItem('token')) {
     sessionStorage.setItem('token', userToken);
-  }
-  if (userToken && !localStorage.getItem('token')) {
-    localStorage.setItem('token', userToken);
   }
 
   const roles = JSON.parse(sessionStorage.getItem('roles') || localStorage.getItem('roles') || '[]');
@@ -155,6 +158,9 @@ function checkRoleAccess(allowedRoles) {
 
 function logout() {
   sessionStorage.clear();
+  localStorage.removeItem('token');
+  localStorage.removeItem('roles');
+  localStorage.removeItem('station_unlocked');
   window.location.href = '/admin/index.html'; // Login page
 }
 

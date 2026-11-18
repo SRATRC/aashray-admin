@@ -76,10 +76,41 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   const url = new URL(event.request.url);
 
   // Bypass API requests to live network
   if (url.pathname.includes('/api/v1/')) {
+    return;
+  }
+
+  // Restrict caching strictly to precached assets, style/asset bundles, and scanner pages
+  const isScannerPage = [
+    '/admin/food/issuePlate.html',
+    '/admin/food/issuePlateScan.html',
+    '/admin/gate/gateInTap.html',
+    '/admin/gate/gateOutTap.html',
+    '/admin/gate/gateIn.html',
+    '/admin/gate/gateOut.html',
+    '/admin/adhyayan/adhyayanAttendanceScanTap.html',
+    '/admin/adhyayan/adhyayanAttendanceScanMob.html',
+    '/admin/utsav/issuePlateScanUtsav.html',
+    '/admin/utsav/utsavCheckin.html',
+    '/admin/room/selfKiosk.html'
+  ].includes(url.pathname);
+
+  const isStaticResource =
+    STATIC_ASSETS.includes(url.pathname) ||
+    url.pathname.startsWith('/style/') ||
+    url.pathname.startsWith('/assets/') ||
+    url.pathname === '/manifest.json';
+
+  if (!isScannerPage && !isStaticResource) {
+    // Pass all general admin pages directly to network without caching
     return;
   }
 

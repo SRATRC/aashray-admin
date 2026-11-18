@@ -108,15 +108,51 @@ const OfflineDB = (() => {
 
       records.forEach((rec) => {
         const id = `${moduleName}_${rec.cardno}`;
-        store.put({
-          id,
-          module: moduleName,
-          cardno: rec.cardno,
-          name: rec.name || 'Member',
-          data: rec,
-          expirationDate: expiryDate || null,
-          updatedAt: Date.now()
-        });
+        const getReq = store.get(id);
+        getReq.onsuccess = () => {
+          const existing = getReq.result;
+          let mergedData = rec;
+          if (existing && existing.data) {
+            mergedData = { ...rec };
+            // Preserve local offline food plate issue state
+            if (moduleName === 'food') {
+              if (existing.data.breakfast_plate_issued) mergedData.breakfast_plate_issued = true;
+              if (existing.data.lunch_plate_issued) mergedData.lunch_plate_issued = true;
+              if (existing.data.dinner_plate_issued) mergedData.dinner_plate_issued = true;
+              if (existing.data.breakfast_issued_time) mergedData.breakfast_issued_time = existing.data.breakfast_issued_time;
+              if (existing.data.lunch_issued_time) mergedData.lunch_issued_time = existing.data.lunch_issued_time;
+              if (existing.data.dinner_issued_time) mergedData.dinner_issued_time = existing.data.dinner_issued_time;
+            }
+            // Preserve local offline utsav plate issue & checkin
+            if (moduleName === 'utsav') {
+              if (existing.data.issued_meals) {
+                mergedData.issued_meals = { ...(rec.issued_meals || {}), ...existing.data.issued_meals };
+              }
+              if (existing.data.checkedin || existing.data.status === 'checkedin') {
+                mergedData.checkedin = true;
+                mergedData.status = 'checkedin';
+              }
+            }
+            // Preserve local offline adhyayan attended sessions
+            if (moduleName === 'adhyayan') {
+              if (existing.data.attended_sessions) {
+                mergedData.attended_sessions = [
+                  ...new Set([...(rec.attended_sessions || []), ...existing.data.attended_sessions])
+                ];
+              }
+            }
+          }
+
+          store.put({
+            id,
+            module: moduleName,
+            cardno: rec.cardno,
+            name: rec.name || 'Member',
+            data: mergedData,
+            expirationDate: expiryDate || null,
+            updatedAt: Date.now()
+          });
+        };
       });
 
       tx.oncomplete = () => resolve();
@@ -148,6 +184,15 @@ const OfflineDB = (() => {
         const entry = req.result;
         if (!entry || !entry.data) {
           return resolve({ valid: false, reason: 'not_found', message: `Card ${cardno} not found in today's meal roster.` });
+        }
+
+        const todayIST = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+        if (entry.expirationDate && entry.expirationDate !== todayIST) {
+          return resolve({
+            valid: false,
+            reason: 'expired_roster',
+            message: `Food roster expired (${entry.expirationDate}). Please update data online.`
+          });
         }
 
         const booking = entry.data;
@@ -250,16 +295,19 @@ const OfflineDB = (() => {
         const normalizedMeal = (meal || 'lunch').toLowerCase();
         data.issued_meals = data.issued_meals || {};
 
-        if (data.issued_meals[normalizedMeal]) {
+        const todayIST = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+        const mealKey = `${todayIST}_${normalizedMeal}`;
+
+        if (data.issued_meals[mealKey]) {
           return resolve({
             valid: false,
             reason: 'already_issued',
-            message: `⚠️ Plate already issued for ${entry.name} (${normalizedMeal.toUpperCase()})`,
+            message: `⚠️ Plate already issued for ${entry.name} (${normalizedMeal.toUpperCase()}) today`,
             name: entry.name
           });
         }
 
-        data.issued_meals[normalizedMeal] = true;
+        data.issued_meals[mealKey] = true;
         entry.data = data;
         store.put(entry);
 
@@ -325,15 +373,31 @@ const OfflineDB = (() => {
       const roomStore = tx.objectStore('room_bookings');
       const wifiStore = tx.objectStore('wifi_pool');
 
-      bookings.forEach((b) => roomStore.put(b));
+      bookings.forEach((b) => {
+        const getReq = roomStore.get(b.bookingid);
+        getReq.onsuccess = () => {
+          const existing = getReq.result;
+          // Don't overwrite locally checked-in or checked-out bookings if they were processed offline
+          if (existing && (existing.status === 'checkedout' || (existing.status === 'checkedin' && b.status === 'pending_checkin'))) {
+            return;
+          }
+          roomStore.put(b);
+        };
+      });
+
       wifiPool.forEach((w) => {
-        wifiStore.put({
-          pwd_id: w.pwd_id,
-          password: w.password,
-          status: 'active',
-          assignedCardno: null,
-          assignedBookingid: null
-        });
+        const getReq = wifiStore.get(w.pwd_id);
+        getReq.onsuccess = () => {
+          // Don't resurrect vouchers that were handed out offline and not yet synced
+          if (getReq.result && getReq.result.status === 'assigned') return;
+          wifiStore.put({
+            pwd_id: w.pwd_id,
+            password: w.password,
+            status: 'active',
+            assignedCardno: null,
+            assignedBookingid: null
+          });
+        };
       });
 
       tx.oncomplete = () => resolve();

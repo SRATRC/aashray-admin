@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const targetParam = utsavid || 'today';
-      const res = await fetch(`${CONFIG.basePath}/admin/offline/utsav/${targetParam}`, {
+      const res = await fetch(`${CONFIG.basePath}/offline/utsav/${targetParam}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -290,9 +290,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     return (
       !navigator.onLine ||
       err instanceof TypeError ||
+      err instanceof SyntaxError ||
       err?.name === 'TypeError' ||
+      err?.name === 'SyntaxError' ||
+      err?.status >= 500 ||
       err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
+      err?.message?.includes('NetworkError') ||
+      err?.message?.includes('JSON')
     );
   }
 
@@ -303,43 +307,45 @@ document.addEventListener('DOMContentLoaded', async function () {
     isSyncing = true;
     updateNetworkUI();
 
-    await window.ScannerCommon.runBatchSync({
-      queueName: QUEUE_NAME,
-      syncItemFn: async (item, token) => {
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
+    try {
+      await window.ScannerCommon.runBatchSync({
+        queueName: QUEUE_NAME,
+        syncItemFn: async (item, token) => {
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const response = await fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            cardno: item.cardno,
-            utsavid: item.utsavid || utsavid || activeUtsav?.id,
-            scannedAt: item.scannedAt
-          })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
-          throw new Error(data.message || 'Sync failed');
+          const response = await fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              cardno: item.cardno,
+              utsavid: item.utsavid || utsavid || activeUtsav?.id,
+              scannedAt: item.scannedAt
+            })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+            throw new Error(data.message || 'Sync failed');
+          }
+          return { success: true, message: data.message };
+        },
+        onStart: (count) => {
+          showMessage(`Syncing ${count} offline check-ins...`, 'info');
+        },
+        onFinish: (results) => {
+          isSyncing = false;
+          updateNetworkUI();
+          if (results.synced > 0) {
+            showMessage(`Sync Complete: Checked in ${results.synced} offline participants.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
+          } else {
+            resetAlert();
+          }
         }
-        return { success: true, message: data.message };
-      },
-      onStart: (count) => {
-        showMessage(`Syncing ${count} offline check-ins...`, 'info');
-      },
-      onFinish: (results) => {
-        isSyncing = false;
-        updateNetworkUI();
-        if (results.synced > 0) {
-          showMessage(`Sync Complete: Checked in ${results.synced} offline participants.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
-        } else {
-          resetAlert();
-        }
-      }
-    });
-
-    isSyncing = false;
-    updateNetworkUI();
+      });
+    } finally {
+      isSyncing = false;
+      updateNetworkUI();
+    }
   }
 
   async function updateNetworkUI() {

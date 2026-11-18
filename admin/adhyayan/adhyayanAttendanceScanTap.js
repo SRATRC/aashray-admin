@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const targetParam = shibirId || 'today';
-      const res = await fetch(`${CONFIG.basePath}/admin/offline/adhyayan/${targetParam}`, {
+      const res = await fetch(`${CONFIG.basePath}/offline/adhyayan/${targetParam}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
 
       await window.OfflineDB.enqueueScan(QUEUE_NAME, {
-        shibir_id: sId || 'unknown',
+        shibir_id: sId || null,
         session_no: sNo,
         cardno,
         name: validation.name,
@@ -313,42 +313,44 @@ document.addEventListener('DOMContentLoaded', async function () {
     isSyncing = true;
     updateNetworkUI();
 
-    await window.ScannerCommon.runBatchSync({
-      queueName: QUEUE_NAME,
-      syncItemFn: async (item, token) => {
-        const sId = item.shibir_id || shibirId || activeShibir?.id;
-        const sNo = item.session_no;
-        const response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${item.cardno}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ scannedAt: item.scannedAt })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
-          throw new Error(data.message || 'Sync failed');
+    try {
+      await window.ScannerCommon.runBatchSync({
+        queueName: QUEUE_NAME,
+        syncItemFn: async (item, token) => {
+          const sId = item.shibir_id || shibirId || activeShibir?.id;
+          const sNo = item.session_no;
+          const response = await fetch(`${CONFIG.basePath}/adhyayan/attendance/${sId}/${sNo}/${item.cardno}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ scannedAt: item.scannedAt })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+            throw new Error(data.message || 'Sync failed');
+          }
+          return { success: true, message: data.message };
+        },
+        onStart: (count) => {
+          showAlert(`Syncing ${count} offline attendance records...`, 'info');
+        },
+        onFinish: (results) => {
+          isSyncing = false;
+          updateNetworkUI();
+          if (results.synced > 0) {
+            showAlert(`Sync Complete: Marked ${results.synced} offline attendance records.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
+            setTimeout(() => resetAlert(), 1800);
+          } else {
+            resetAlert();
+          }
         }
-        return { success: true, message: data.message };
-      },
-      onStart: (count) => {
-        showAlert(`Syncing ${count} offline attendance records...`, 'info');
-      },
-      onFinish: (results) => {
-        isSyncing = false;
-        updateNetworkUI();
-        if (results.synced > 0) {
-          showAlert(`Sync Complete: Marked ${results.synced} offline attendance records.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
-          setTimeout(() => resetAlert(), 1800);
-        } else {
-          resetAlert();
-        }
-      }
-    });
-
-    isSyncing = false;
-    updateNetworkUI();
+      });
+    } finally {
+      isSyncing = false;
+      updateNetworkUI();
+    }
   }
 
   async function updateNetworkUI() {
@@ -395,9 +397,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     return (
       !navigator.onLine ||
       err instanceof TypeError ||
+      err instanceof SyntaxError ||
       err?.name === 'TypeError' ||
+      err?.name === 'SyntaxError' ||
+      err?.status >= 500 ||
       err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
+      err?.message?.includes('NetworkError') ||
+      err?.message?.includes('JSON')
     );
   }
 
