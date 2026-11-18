@@ -364,7 +364,8 @@ function initBulkStatus() {
 
       const count = selectedBookingIds.size;
       const hiddenNow = getHiddenSelectionCount();
-      const confirmMsg = `Are you sure you want to update ${count} booking${count > 1 ? 's' : ''} to '${status}'?`
+      const statusLabel = statusSelect?.selectedOptions?.[0]?.text || status;
+      const confirmMsg = `Are you sure you want to update ${count} booking${count > 1 ? 's' : ''} to '${statusLabel}'?`
         + `${hiddenNow > 0 ? `\n(${hiddenNow} of these are currently hidden by search/filter.)` : ''}`
         + `${status === 'admin cancelled' ? (issueCredits ? '\nCredits will be issued.' : '\nNo credits will be refunded.') : ''}`;
 
