@@ -292,23 +292,28 @@ function initBulkStatus() {
     };
   }
 
+  const getHiddenSelectionCount = () => {
+    const visibleOnScreen = new Set(
+      Array.from(document.querySelectorAll('#utsavTable tbody tr'))
+        .filter(r => r.style.display !== 'none')
+        .map(r => r.querySelector('.booking-select-cb')?.value)
+        .filter(Boolean)
+    );
+    return Array.from(selectedBookingIds).filter(id => !visibleOnScreen.has(id)).length;
+  };
+
   if (openBtn) {
     openBtn.onclick = () => {
       if (selectedBookingIds.size === 0) {
         alert('No bookings selected. Please check at least one booking.');
         return;
       }
-      const visibleOnScreen = new Set(
-        Array.from(document.querySelectorAll('#utsavTable tbody tr'))
-          .filter(r => r.style.display !== 'none')
-          .map(r => r.querySelector('.booking-select-cb')?.value)
-          .filter(Boolean)
-      );
-      const hiddenCount = Array.from(selectedBookingIds).filter(id => !visibleOnScreen.has(id)).length;
+      const count = selectedBookingIds.size;
+      const hiddenCount = getHiddenSelectionCount();
       if (summaryText) {
         summaryText.textContent = hiddenCount > 0
-          ? `${selectedBookingIds.size} bookings selected (${hiddenCount} currently hidden by search/filter).`
-          : `${selectedBookingIds.size} booking${selectedBookingIds.size > 1 ? 's' : ''} selected for bulk status update.`;
+          ? `${count} booking${count > 1 ? 's' : ''} selected (${hiddenCount} currently hidden by search/filter).`
+          : `${count} booking${count > 1 ? 's' : ''} selected for bulk status update.`;
       }
       if (statusSelect) statusSelect.value = '';
       if (creditsField) creditsField.style.display = 'none';
@@ -358,7 +363,10 @@ function initBulkStatus() {
       const description = descriptionInput ? descriptionInput.value.trim() : '';
 
       const count = selectedBookingIds.size;
-      const confirmMsg = `Are you sure you want to update ${count} booking${count > 1 ? 's' : ''} to '${status}'?${status === 'admin cancelled' ? (issueCredits ? '\nCredits will be issued.' : '\nNo credits will be refunded.') : ''}`;
+      const hiddenNow = getHiddenSelectionCount();
+      const confirmMsg = `Are you sure you want to update ${count} booking${count > 1 ? 's' : ''} to '${status}'?`
+        + `${hiddenNow > 0 ? `\n(${hiddenNow} of these are currently hidden by search/filter.)` : ''}`
+        + `${status === 'admin cancelled' ? (issueCredits ? '\nCredits will be issued.' : '\nNo credits will be refunded.') : ''}`;
 
       if (!confirm(confirmMsg)) return;
 
