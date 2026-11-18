@@ -1,5 +1,7 @@
 let utsavbookings = [];
 let filteredBookings = [];
+const selectedBookingIds = new Set();
+let currentUtsavId = null;
 const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
 const userRoles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 const isReadOnly = isShareToken || userRoles.includes('utsavAdminReadOnly');
@@ -18,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const urlParams = new URLSearchParams(window.location.search);
   const utsavid = urlParams.get('utsavId');
   const status = urlParams.get('status');
+  currentUtsavId = utsavid;
 
   const packageFilter = document.getElementById('packageFilter');
   const downloadAllBtn = document.getElementById('downloadAll');
@@ -118,6 +121,7 @@ function renderFilteredTable(){
   table.innerHTML=`
     <thead>
       <tr>
+        ${!isReadOnly ? `<th style="width: 36px; text-align: center;"><input type="checkbox" id="selectAllBookings" title="Select All Visible" /></th>` : ''}
         <th>#</th><th>Booking ID</th>
         <th>Booked For</th>
         <th>Name</th>
@@ -143,6 +147,7 @@ function renderFilteredTable(){
     <tbody>
       ${filteredBookings.map((item,index)=>`
         <tr>
+          ${!isReadOnly ? `<td style="text-align: center;"><input type="checkbox" class="booking-select-cb" value="${escapeHtml(item.bookingid)}" ${selectedBookingIds.has(String(item.bookingid)) ? 'checked' : ''} /></td>` : ''}
           <td>${index+1}</td>
           <td>${item.bookingid}</td>
           <td>${item.cardno}</td>
@@ -186,7 +191,216 @@ function renderFilteredTable(){
   container.appendChild(summaryDiv);
   container.appendChild(table);
 
-  setTimeout(()=>{ if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch'); initStatusModal(); initChangePackageModal(); },50);
+  setTimeout(()=>{
+    if(typeof enhanceTable==='function') enhanceTable('utsavTable','tableSearch');
+    initStatusModal();
+    initChangePackageModal();
+    initBulkStatus();
+    updateBulkActionBar();
+  },50);
+}
+
+function updateBulkActionBar() {
+  if (isReadOnly) return;
+  const bar = document.getElementById('bulkActionBar');
+  const countSpan = document.getElementById('bulkSelectedCount');
+  const selectAllCb = document.getElementById('selectAllBookings');
+  if (!bar || !countSpan) return;
+
+  const count = selectedBookingIds.size;
+  if (count > 0) {
+    bar.style.display = 'flex';
+    countSpan.textContent = `${count} booking${count > 1 ? 's' : ''} selected`;
+  } else {
+    bar.style.display = 'none';
+    countSpan.textContent = '0 bookings selected';
+  }
+
+  if (selectAllCb) {
+    const visibleRowCbs = Array.from(document.querySelectorAll('#utsavTable tbody tr'))
+      .filter(r => r.style.display !== 'none')
+      .map(r => r.querySelector('.booking-select-cb'))
+      .filter(Boolean);
+
+    selectAllCb.checked = visibleRowCbs.length > 0 && visibleRowCbs.every(cb => cb.checked);
+  }
+}
+
+function initBulkStatus() {
+  if (isReadOnly) return;
+
+  const modal = document.getElementById('bulkStatusModal');
+  const form = document.getElementById('bulkStatusForm');
+  const closeBtn = document.getElementById('closeBulkStatusModal');
+  const openBtn = document.getElementById('openBulkStatusModalBtn');
+  const clearBtn = document.getElementById('clearBulkSelectionBtn');
+  const statusSelect = document.getElementById('bulkModalStatus');
+  const creditsField = document.getElementById('bulkIssueCreditsField');
+  const creditsSelect = document.getElementById('bulkIssueCredits');
+  const descriptionInput = document.getElementById('bulkModalDescription');
+  const summaryText = document.getElementById('bulkModalSelectionSummary');
+  const selectAllCb = document.getElementById('selectAllBookings');
+  const submitBtn = document.getElementById('submitBulkStatusBtn');
+
+  if (selectAllCb) {
+    selectAllCb.onchange = () => {
+      const isChecked = selectAllCb.checked;
+      const visibleRows = Array.from(document.querySelectorAll('#utsavTable tbody tr'))
+        .filter(r => r.style.display !== 'none');
+
+      visibleRows.forEach(row => {
+        const cb = row.querySelector('.booking-select-cb');
+        if (cb) {
+          cb.checked = isChecked;
+          if (isChecked) {
+            selectedBookingIds.add(cb.value);
+          } else {
+            selectedBookingIds.delete(cb.value);
+          }
+        }
+      });
+      updateBulkActionBar();
+    };
+  }
+
+  const table = document.getElementById('utsavTable');
+  if (table) {
+    table.onchange = (e) => {
+      if (e.target && e.target.classList.contains('booking-select-cb')) {
+        const val = e.target.value;
+        if (e.target.checked) {
+          selectedBookingIds.add(val);
+        } else {
+          selectedBookingIds.delete(val);
+        }
+        updateBulkActionBar();
+      }
+    };
+  }
+
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      selectedBookingIds.clear();
+      document.querySelectorAll('.booking-select-cb').forEach(cb => { cb.checked = false; });
+      if (selectAllCb) selectAllCb.checked = false;
+      updateBulkActionBar();
+    };
+  }
+
+  if (openBtn) {
+    openBtn.onclick = () => {
+      if (selectedBookingIds.size === 0) {
+        alert('No bookings selected. Please check at least one booking.');
+        return;
+      }
+      if (summaryText) {
+        summaryText.textContent = `${selectedBookingIds.size} booking${selectedBookingIds.size > 1 ? 's' : ''} selected for bulk status update.`;
+      }
+      if (statusSelect) statusSelect.value = '';
+      if (creditsField) creditsField.style.display = 'none';
+      if (creditsSelect) creditsSelect.value = 'no';
+      if (descriptionInput) descriptionInput.value = '';
+      if (modal) modal.style.display = 'block';
+    };
+  }
+
+  if (closeBtn) closeBtn.onclick = () => { if (modal) modal.style.display = 'none'; };
+  window.addEventListener('click', (e) => {
+    if (modal && e.target === modal) modal.style.display = 'none';
+  });
+
+  if (statusSelect) {
+    statusSelect.onchange = () => {
+      if (statusSelect.value === 'admin cancelled') {
+        if (creditsField) creditsField.style.display = 'block';
+      } else {
+        if (creditsField) {
+          creditsField.style.display = 'none';
+          if (creditsSelect) creditsSelect.value = 'no';
+        }
+      }
+    };
+  }
+
+  const searchBox = document.getElementById('tableSearch');
+  if (searchBox && !searchBox._bulkListenerAttached) {
+    searchBox._bulkListenerAttached = true;
+    searchBox.addEventListener('input', () => {
+      setTimeout(updateBulkActionBar, 100);
+    });
+  }
+
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      if (selectedBookingIds.size === 0) {
+        alert('No bookings selected.');
+        if (modal) modal.style.display = 'none';
+        return;
+      }
+
+      const status = statusSelect ? statusSelect.value : '';
+      if (!status) {
+        alert('Please select a target status.');
+        return;
+      }
+
+      const issueCredits = creditsSelect ? creditsSelect.value === 'yes' : false;
+      const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+      const count = selectedBookingIds.size;
+      const confirmMsg = `Are you sure you want to update ${count} booking${count > 1 ? 's' : ''} to '${status}'?${status === 'admin cancelled' ? (issueCredits ? '\nCredits will be issued.' : '\nNo credits will be refunded.') : ''}`;
+
+      if (!confirm(confirmMsg)) return;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Updating...';
+      }
+
+      try {
+        const res = await fetch(`${CONFIG.basePath}/utsav/booking/bulk-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            utsav_id: currentUtsavId,
+            bookingids: Array.from(selectedBookingIds),
+            status,
+            description: description || undefined,
+            issueCredits
+          })
+        });
+
+        const respData = await res.json();
+        if (res.ok) {
+          let summaryMsg = `Bulk status update completed!\nSuccessful: ${respData.data?.successCount || 0}\nFailed: ${respData.data?.failedCount || 0}`;
+          if (respData.data?.failures?.length) {
+            const sample = respData.data.failures.slice(0, 5).map(f => `• ${f.bookingid}: ${f.reason}`).join('\n');
+            summaryMsg += `\n\nFailed items:\n${sample}${respData.data.failures.length > 5 ? `\n...and ${respData.data.failures.length - 5} more` : ''}`;
+          }
+          alert(summaryMsg);
+          if (modal) modal.style.display = 'none';
+          selectedBookingIds.clear();
+          sessionStorage.setItem('utsavPackageFilter', document.getElementById('packageFilter').value);
+          sessionStorage.setItem('utsavScrollTop', window.scrollY);
+          window.location.reload();
+        } else {
+          alert(`Error: ${respData.message || 'Failed to update bookings'}`);
+        }
+      } catch (err) {
+        console.error('Error during bulk status update:', err);
+        alert('Failed to update booking statuses. Please check console for details.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Apply to Selected';
+        }
+      }
+    };
+  }
 }
 
 
