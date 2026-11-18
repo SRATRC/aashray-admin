@@ -55,6 +55,15 @@
             </div>
 
             <input type="text" id="tableSearch" class="form-control search-box" placeholder="Search...">
+            <div id="bulkActionBar" style="display: none; margin-bottom: 12px; padding: 10px 16px; background: #eef6fc; border: 1px solid #cce4f7; border-radius: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="bulkSelectedCount" style="font-weight: 600; color: #0b5ed7;">0 bookings selected</span>
+                <button type="button" id="clearBulkSelectionBtn" class="btn btn-sm btn-outline-secondary" style="font-size: 12px; padding: 3px 8px;">Clear Selection</button>
+              </div>
+              <button type="button" id="openBulkStatusModalBtn" class="btn btn-primary btn-sm" style="font-weight: 500;">
+                ⚡ Bulk Update Status
+              </button>
+            </div>
             <div class="table-responsive" id="tableContainer"></div>
           </div>
         </div>
@@ -115,6 +124,40 @@
           </div>
           <!-- Credits to be issued dropdown (added dynamically via JS) -->
           <button type="submit" class="btn btn-primary">Update Status</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Status Modal -->
+  <div id="bulkStatusModal" class="modal" style="display: none;">
+    <div class="modal-content whitesec">
+      <span class="close" id="closeBulkStatusModal">&times;</span>
+      <div class="inner-padding">
+        <div class="frm-head"><h3>Bulk Update Booking Status</h3></div>
+        <p id="bulkModalSelectionSummary" style="color: #64748b; font-size: 13px; margin-bottom: 15px;"></p>
+        <form id="bulkStatusForm" class="form">
+          <div class="form-group">
+            <label>New Status:</label>
+            <select id="bulkModalStatus" class="form-control" required>
+              <option value="">-- Select Status --</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="pending">Payment Pending</option>
+              <option value="admin cancelled">Admin Cancelled</option>
+            </select>
+          </div>
+          <div id="bulkIssueCreditsField" class="form-group" style="display: none;">
+            <label>Issue Credits? (for cancellations):</label>
+            <select id="bulkIssueCredits" class="form-control">
+              <option value="no" selected>No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Remarks / Description (optional):</label>
+            <textarea id="bulkModalDescription" rows="3" class="form-control" placeholder="Optional remark..."></textarea>
+          </div>
+          <button type="submit" id="submitBulkStatusBtn" class="btn btn-primary">Apply to Selected</button>
         </form>
       </div>
     </div>
