@@ -578,6 +578,13 @@
                       <option value="vendor">Vendor Registration</option>
                     </select>
                   </div>
+                  <div>
+                    <label for="formStatus">Form Status</label>
+                    <select id="formStatus" class="form-control">
+                      <option value="active">Active (Accepting Responses)</option>
+                      <option value="inactive">Inactive (Closed / Draft)</option>
+                    </select>
+                  </div>
                   <div style="display:flex; flex-direction:column; gap:0.5rem; justify-content:center; padding-top:1.2rem;">
                     <div style="display:flex; align-items:center; gap:0.5rem;">
                       <input type="checkbox" id="limitOneResponse" style="width:18px; height:18px; accent-color:#204060; cursor:pointer;" />
@@ -2186,7 +2193,8 @@
         }
 
         const requireOtp = document.getElementById('requireOtp').checked;
-                const formCategory = document.getElementById('formCategory').value;
+        const formCategory = document.getElementById('formCategory').value;
+        const status = document.getElementById('formStatus') ? document.getElementById('formStatus').value : 'active';
 
         let event_id = null;
         let event_ids = [];
@@ -2206,7 +2214,7 @@
         const secondary_depts = Array.from(document.querySelectorAll('input[name="secondary_dept"]:checked')).map(cb => cb.value);
 
         const body = { 
-          title, description, dept_name, secondary_depts, fields, isPublic, authType, slug, 
+          title, description, dept_name, secondary_depts, fields, isPublic, authType, slug, status,
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
           expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
           event_id, event_ids, event_name, event_type,
@@ -2322,6 +2330,7 @@
 
           const requireOtp = document.getElementById('requireOtp')?.checked || false;
           const formCategory = document.getElementById('formCategory')?.value || 'generic';
+          const status = document.getElementById('formStatus')?.value || 'active';
 
           let event_id = null;
           let event_ids = [];
@@ -2340,7 +2349,7 @@
 
           const previewData = { 
             id: editId ? parseInt(editId, 10) : undefined,
-            title, description, dept_name, fields, isPublic, authType, slug, 
+            title, description, dept_name, fields, isPublic, authType, slug, status,
             limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
             expiresAt, closeMessage, maxResponses, requireOtp, requireRegistration, formCategory,
             event_id, event_ids, event_name, event_type
@@ -2397,9 +2406,10 @@
         const fields = collectFields();
         const requireOtp = document.getElementById('requireOtp').checked;
         const formCategory = document.getElementById('formCategory').value;
+        const status = document.getElementById('formStatus')?.value || 'active';
 
         const draft = {
-          title, description, dept_name, isPublic, authType, accessVal,
+          title, description, dept_name, isPublic, authType, accessVal, status,
           limitOneResponse, allowEdit, showProgressBar, showSubmitAnother, confirmationMessage, section1Action, themeColor,
           expiresAt, closeMessage, maxResponses, requireOtp, formCategory, fields,
           timestamp: Date.now()
@@ -2879,6 +2889,10 @@
         const accessValNow = document.getElementById('formType').value;
         document.getElementById('requireOtpRow').style.display = (accessValNow === 'mobno' || accessValNow === 'reg_mobno') ? 'flex' : 'none';
         document.getElementById('formCategory').value = form.formCategory || 'generic';
+        const formStatusEl = document.getElementById('formStatus');
+        if (formStatusEl) {
+          formStatusEl.value = form.status || 'active';
+        }
 
         // Load allowlist
         window.stagedOtpAllowlist = form.otpAllowlist || [];
