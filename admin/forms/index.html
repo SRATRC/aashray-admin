@@ -60,6 +60,15 @@
         color: #dc3545;
         border: 1px solid #f5c6cb;
       }
+      .badge-clickable {
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+      .badge-clickable:hover {
+        opacity: 0.85;
+        transform: scale(1.05);
+      }
       .badge-public {
         background-color: #e8f4fd;
         color: #004085;
@@ -287,7 +296,9 @@
             <td><strong>${escapeHtml(form.title)}</strong></td>
             <td><span style="font-weight: 500; color:#495057;">${escapeHtml(form.dept_name)}</span></td>
             <td>
-              <span class="badge ${form.status === 'active' ? 'badge-active' : 'badge-inactive'}">
+              <span class="badge ${form.status === 'active' ? 'badge-active' : 'badge-inactive'} badge-clickable"
+                    onclick="toggleFormStatus(${form.id}, '${escapeHtml(form.status)}')"
+                    title="Click to toggle status (${form.status === 'active' ? 'Deactivate' : 'Activate'})">
                 <i class="fas ${form.status === 'active' ? 'fa-check-circle' : 'fa-times-circle'}"></i> ${form.status}
               </span>
             </td>
@@ -346,6 +357,35 @@
           }
         } catch (err) {
           showError('Error cloning form: ' + err.message);
+        }
+      }
+
+      async function toggleFormStatus(formId, currentStatus) {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        const actionVerb = newStatus === 'active' ? 'activate' : 'deactivate';
+        if (!confirm(`Are you sure you want to ${actionVerb} this form?`)) {
+          return;
+        }
+
+        try {
+          const res = await fetch(`${CONFIG.basePath}/forms/${formId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            showSuccess(`Form is now ${newStatus.toUpperCase()}`);
+            loadForms();
+          } else {
+            showError(data.message || 'Failed to update form status');
+          }
+        } catch (err) {
+          showError('Error updating form status: ' + err.message);
         }
       }
 
