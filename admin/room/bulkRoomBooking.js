@@ -115,7 +115,22 @@ document.addEventListener('DOMContentLoaded', function () {
           const c = json.data;
           cardInput.value = c.cardno || '';
           nameInput.value = c.issuedto || '';
-          genderInput.value = c.gender || '';
+          let genderDisplay = c.gender || '';
+          if (c.dob) {
+            const birthDate = new Date(c.dob);
+            if (!isNaN(birthDate.getTime())) {
+              const today = new Date();
+              let age = today.getFullYear() - birthDate.getFullYear();
+              const m = today.getMonth() - birthDate.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+              if (age >= 60) {
+                genderDisplay += ` (Senior - ${age})`;
+              }
+            }
+          }
+          genderInput.value = genderDisplay;
           centerInput.value = c.center || '';
           resStatusInput.value = c.res_status || '';
         } else {
