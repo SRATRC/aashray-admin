@@ -211,6 +211,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       if (bookingsRes.ok) {
         travelReport = data.data || [];
+        // Display text for the Excel export (it reads the raw field named by each column's data-key),
+        // so the Round Trip column exports "Round trip" / "-" instead of the raw trip id.
+        travelReport.forEach((b) => {
+          b.trip_group_label = b.trip_group_id ? 'Round trip' : '-';
+        });
         console.log("First booking:", travelReport[0]);
 
         setupDownloadButton();
@@ -349,6 +354,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   ${b.breakfast_booked === 'Yes'
     ? '<span style="color: #15803d; font-weight: 600;">Yes</span>'
     : '<span style="color: #6b7280;">No</span>'}
+</td>
+<td>
+  ${b.trip_group_id
+              ? '<span class="badge bg-info">Round trip</span>'
+              : '-'}
 </td>
 <td>
 
