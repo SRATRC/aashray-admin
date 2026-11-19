@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin']); // customize allowed roles per page
+  checkRoleAccess(['officeAdmin', 'adhyayanAdmin', 'superAdmin', 'adhyayanAdminReadOnly']); // customize allowed roles per page
 </script>
 
 <!DOCTYPE html>
@@ -9,6 +9,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Adhyayan Management</title>
+
+    <script>
+      if (typeof isAdhyayanReadOnly === 'function' && isAdhyayanReadOnly()) {
+        document.write(
+          '<style>#btnCreateAdhyayan, #btnEditAdhyayan, #btnStatusUpdate { display: none !important; }</style>'
+        );
+      }
+    </script>
 
     <!-- Load jQuery first -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -48,10 +56,11 @@
 
             <div class="admin-menu">
               <div class="menu-grid">
-                <a class="menu-btn" href="createAdhyayan.html">Add New Adhyayan</a>
-                <a class="menu-btn" href="fetchAllAdhyayan.html">Edit Existing Adhyayan</a>
-                <a class="menu-btn" href="adhyayanCentre.html">Adhyayan Summary Report</a>
-                <a class="menu-btn" href="adhyayanStatusUpdate.html">Adhyayan Status Update</a>
+                <a class="menu-btn" href="createAdhyayan.html" id="btnCreateAdhyayan">Add New Adhyayan</a>
+                <a class="menu-btn" href="fetchAllAdhyayan.html" id="btnEditAdhyayan">Edit Existing Adhyayan</a>
+                <a class="menu-btn" href="adhyayanCentre.html" id="btnAdhyayanReport">Adhyayan Summary Report</a>
+                <a class="menu-btn" href="adhyayanStatusUpdate.html" id="btnStatusUpdate">Adhyayan Status Update</a>
+                <a class="menu-btn" href="pastAdhyayanReport.html" id="btnPastReport">Past Adhyayan Report</a>
               </div>
             </div>
             
@@ -59,5 +68,15 @@
         </div>
       </div>
     </div>
+
+    <script>
+      if (typeof isAdhyayanReadOnly === 'function' && isAdhyayanReadOnly()) {
+        const reportBtn = document.getElementById('btnAdhyayanReport');
+        if (reportBtn) {
+          reportBtn.href = 'adhyayanReport.html?location=Research%20Centre';
+          reportBtn.textContent = 'RC Adhyayan Summary Report';
+        }
+      }
+    </script>
   </body>
 </html>
