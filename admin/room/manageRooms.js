@@ -58,7 +58,7 @@ function renderBlocks(blocks) {
       return `
         <div style="margin-bottom: 2px;">
           <span class="block-badge ${cls}">${label}${reason}</span>
-          <span class="cancel-block-link" data-action="cancel-block" data-block-id="${escapeHtml(b.id)}">✕</span>
+          <span class="cancel-block-link" data-action="cancel-block" data-block-id="${escapeHtml(String(b.id))}">✕</span>
         </div>`;
     })
     .join('');
@@ -541,7 +541,7 @@ function renderTable() {
         (bed.blocks || []).some((block) => block.isCurrent)
       ).length
     };
-  }).filter(group => group.beds.length > 0);
+  }).filter((group) => group && group.beds.length > 0);
 
   filteredGroups.forEach((group, index) => {
     const baseRoomNo = group.baseRoomNo;
