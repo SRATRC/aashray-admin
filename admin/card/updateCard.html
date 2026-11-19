@@ -20,6 +20,7 @@
   <script src="../../style/js/custom.js"></script>
   <script src="../../style/js/config.js"></script>
   <script src="/sessionstorage.js"></script>
+  <script src="refPhone.js"></script>
   <script src="updateCard.js" defer></script>
 
   <link rel="stylesheet" href="../../style/css/styles.css" />
@@ -180,11 +181,25 @@
                 </select>
               </div>
 
+              <!-- Shown only for Seva Kutir cards -->
+              <div class="form-group seva-kutir-only" style="display: none;">
+                <label for="department">Department:</label>
+                <select id="department" name="department" class="form-control">
+                  <option value="">Select Department</option>
+                </select>
+              </div>
+
               <!-- Shown only for guest cards -->
               <div class="form-group guest-only" style="display: none;">
                 <label for="referenceCardno">Reference Card Number:</label>
                 <input type="text" id="referenceCardno" name="referenceCardno" class="form-control" autocomplete="off" />
                 <small id="referenceHint" style="display: block; margin-top: 4px;"></small>
+              </div>
+
+              <div class="form-group guest-only" style="display: none;">
+                <label for="referencePhone">Or Reference Phone Number:</label>
+                <input type="text" id="referencePhone" name="referencePhone" class="form-control" maxlength="10" pattern="\d{10}" title="Enter a 10 digit phone number" autocomplete="off" placeholder="Used only when the card number is blank" />
+                <small id="refPhoneName" style="display: block; margin-top: 5px; font-weight: bold;"></small>
               </div>
 
               <div class="form-group guest-only" style="display: none;">
