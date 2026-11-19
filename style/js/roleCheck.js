@@ -52,19 +52,53 @@ function checkRoleAccess(allowedRoles) {
   } catch (e) {}
 
   // First check if user is logged in
+  const currentPage = window.location.pathname.split('/').pop();
+  const isScannerPage = [
+    'issuePlate.html',
+    'issuePlateScan.html',
+    'gateInTap.html',
+    'gateOutTap.html',
+    'gateIn.html',
+    'gateOut.html',
+    'adhyayanAttendanceScanTap.html',
+    'adhyayanAttendanceScanMob.html',
+    'issuePlateScanUtsav.html',
+    'utsavCheckin.html',
+    'selfKiosk.html'
+  ].includes(currentPage);
+
   const userToken =
     sessionStorage.getItem('token') || localStorage.getItem('token');
+
   if (!userToken) {
+    if (!navigator.onLine && isScannerPage) {
+      // Offline on scanner/kiosk page: bypass redirect so Station PIN / Kiosk auth can operate
+      return;
+    }
     window.location.href = '/admin/index.html'; // Login page
     return;
   }
 
-  const roles    = JSON.parse(sessionStorage.getItem('roles') || '[]');
-  const currentPage = window.location.pathname.split('/').pop();
+  // Only persist token to localStorage on scanner/kiosk pages, and never for temporary share tokens
+  const isShareToken = sessionStorage.getItem('isShareToken') === 'true';
+  if (isScannerPage && !isShareToken && userToken) {
+    if (!localStorage.getItem('token')) {
+      localStorage.setItem('token', userToken);
+    }
+  }
+  if (userToken && !sessionStorage.getItem('token')) {
+    sessionStorage.setItem('token', userToken);
+  }
+
+  const roles = JSON.parse(sessionStorage.getItem('roles') || localStorage.getItem('roles') || '[]');
 
   const hasAccess = roles.some((role) => allowedRoles.includes(role));
 
   if (!hasAccess) {
+    if (!navigator.onLine && isScannerPage) {
+      // Allow offline scanner operation
+      return;
+    }
     if (roles.length > 0 && roles.every((role) => role === 'kioskAdmin')) {
       window.location.href = '/admin/room/selfKiosk.html';
       return;
@@ -124,6 +158,9 @@ function checkRoleAccess(allowedRoles) {
 
 function logout() {
   sessionStorage.clear();
+  localStorage.removeItem('token');
+  localStorage.removeItem('roles');
+  localStorage.removeItem('station_unlocked');
   window.location.href = '/admin/index.html'; // Login page
 }
 

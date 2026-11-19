@@ -1,24 +1,44 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+  const params = new URLSearchParams(window.location.search);
+  let utsavId = params.get('utsavid');
+
   const qrStatus = document.getElementById('qr-status');
   const alertDiv = document.getElementById('alert');
+  const mealSelect = document.getElementById('meal-select');
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
 
-  const QUEUE_STORAGE_KEY = 'utsav_offline_scan_queue';
-  const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes duplicate protection
-
+  const QUEUE_NAME = 'utsav-plate-queue';
   let html5QrCode = null;
-  let isProcessing = false; // 🔒 scan lock
-  let isSyncing = false; // 🔒 sync lock
+  let isProcessing = false;
+  let isSyncing = false;
+  let activeUtsav = null;
 
-  // Initialize UI & Scanner
+  // 1. Station Auth & Inactivity Tracker
+  if (window.StationAuth) {
+    window.StationAuth.initStationAuth();
+    window.StationAuth.initInactivityTracker();
+  }
+
+  // 2. Setup Top Bar
+  if (window.ScannerCommon) {
+    window.ScannerCommon.setupTopBar({
+      queueName: QUEUE_NAME,
+      mealSelectId: 'meal-select',
+      onUpdateData: downloadUtsavData
+    });
+  }
+
+  // 3. Load cached Utsav config if present
+  await loadCachedUtsav();
+
   updateNetworkUI();
-  startQRScanner();
 
   // Network event listeners
   window.addEventListener('online', () => {
     updateNetworkUI();
+    downloadUtsavData();
     syncPendingScans();
   });
 
@@ -32,45 +52,97 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Attempt auto-sync on load if online
   if (navigator.onLine) {
+    downloadUtsavData();
     syncPendingScans();
   }
 
-  /* -------------------- SCANNER -------------------- */
+  // 4. Start Camera with Battery Saver
+  startQRScanner();
 
   function startQRScanner() {
-    if (!html5QrCode) {
-      html5QrCode = new Html5Qrcode('reader');
+    if (!window.Html5Qrcode) {
+      if (qrStatus) {
+        qrStatus.className = 'error-status';
+        qrStatus.innerText = 'QR scanner library not loaded.';
+      }
+      return;
     }
 
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
+    html5QrCode = new Html5Qrcode('reader');
+
+    if (window.ScannerCommon) {
+      window.ScannerCommon.setupBatterySaver(html5QrCode);
+    }
 
     html5QrCode
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
         onScanSuccess,
-        onScanFailure
+        () => {}
       )
       .then(() => {
-        qrStatus.innerText = 'Ready to scan...';
+        if (qrStatus) {
+          qrStatus.className = 'scanning-status';
+          qrStatus.innerText = 'Ready to scan...';
+        }
       })
       .catch((err) => {
-        qrStatus.className = 'danger-status';
-        qrStatus.innerText = '❌ Scanner initialization failed';
-        console.error('QR Scanner Error:', err);
+        console.error('Camera error:', err);
+        if (qrStatus) {
+          qrStatus.className = 'error-status';
+          qrStatus.innerText = 'Camera access error. Please grant permissions.';
+        }
       });
   }
 
+  async function loadCachedUtsav() {
+    if (!window.OfflineDB) return;
+    const utsav = await window.OfflineDB.getConfig('utsav_config');
+    if (utsav) {
+      activeUtsav = utsav;
+      if (!utsavId) utsavId = utsav.id;
+    }
+  }
+
+  async function downloadUtsavData() {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    if (!token) return;
+
+    try {
+      const targetParam = utsavId || 'today';
+      const res = await fetch(`${CONFIG.basePath}/offline/utsav/${targetParam}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+
+      const body = await res.json();
+      const payload = body.data || body;
+
+      if (payload && window.OfflineDB) {
+        if (payload.utsav) {
+          activeUtsav = payload.utsav;
+          utsavId = payload.utsav.id;
+          await window.OfflineDB.storeConfig('utsav_config', payload.utsav);
+        }
+
+        if (payload.participants && payload.participants.length > 0) {
+          await window.OfflineDB.storeAttendees('utsav', payload.participants);
+        }
+      }
+    } catch (e) {
+      console.warn('Utsav offline data update failed:', e);
+    }
+  }
+
   async function onScanSuccess(decodedText) {
-    // 🔒 Prevent multiple scans
     if (isProcessing) return;
     isProcessing = true;
 
     const cardno = processScannedText(decodedText);
     const scannedAt = new Date().toISOString();
+    const meal = mealSelect ? mealSelect.value : 'lunch';
 
     if (!cardno) {
       showMessage('Invalid QR Code scanned', 'danger');
@@ -78,38 +150,107 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Check if network is online
-    if (navigator.onLine) {
+    if (qrStatus) {
       qrStatus.className = 'scanning-status';
       qrStatus.innerText = `Issuing plate for ${cardno}...`;
+    }
 
+    if (navigator.onLine) {
       try {
-        await sendIssuePlateRequest(cardno, scannedAt);
+        await sendIssuePlateRequest(cardno, scannedAt, meal);
       } catch (err) {
-        // If network error occurred mid-fetch, fall back to offline queue
         if (isNetworkError(err)) {
-          handleOfflineScan(cardno, scannedAt);
+          await handleOfflineScan(cardno, scannedAt, meal);
         }
       }
     } else {
-      handleOfflineScan(cardno, scannedAt);
+      await handleOfflineScan(cardno, scannedAt, meal);
     }
 
     resumeScanning(1500);
   }
 
-  function handleOfflineScan(cardno, scannedAt) {
-    const result = enqueueScan(cardno, scannedAt);
+  async function sendIssuePlateRequest(cardno, scannedAt, meal) {
+    resetAlert();
+    showMessage('Issuing plate...', 'info');
 
-    if (result.success) {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const payload = { scannedAt: scannedAt || new Date().toISOString(), meal };
+
+    let response;
+    try {
+      response = await fetch(`${CONFIG.basePath}/utsav/issue/${cardno}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      });
+    } catch (fetchErr) {
+      throw fetchErr;
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const alertType = getAlertTypeFromMessage(data.message);
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic(alertType === 'warning' ? 'warning' : 'error');
+
+      if (qrStatus) {
+        qrStatus.className = `${alertType}-status`;
+        qrStatus.innerText = '❌ ' + (data.message || 'Failed to issue plate');
+      }
+      showMessage(data.message || 'Failed to issue plate', alertType);
+      throw data;
+    }
+
+    // Success
+    if (qrStatus) {
+      qrStatus.className = 'success-status';
+      if (data.auto_checkin && data.auto_checkin.performed) {
+        const roomStr = data.auto_checkin.roomno ? ` (Room: ${data.auto_checkin.roomno})` : '';
+        const utsavNameStr = data.auto_checkin.utsav_name || 'the event';
+        qrStatus.innerText = `✅ Plate issued to ${data.issuedto} • Checked in for ${utsavNameStr}!${roomStr}`;
+        showMessage(`Plate issued to ${data.issuedto}. Auto checked in for ${utsavNameStr}!${roomStr}`, 'success');
+      } else {
+        qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
+        showMessage(data.message || 'Plate issued successfully.', 'success');
+      }
+    }
+
+    return data;
+  }
+
+  async function handleOfflineScan(cardno, scannedAt, meal) {
+    let validation = { valid: true, name: cardno };
+
+    if (window.OfflineDB) {
+      validation = await window.OfflineDB.lookupAndMarkUtsavPlate(cardno, meal);
+
+      if (!validation.valid) {
+        if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('warning');
+        if (qrStatus) {
+          qrStatus.className = 'warning-status';
+          qrStatus.innerText = validation.message;
+        }
+        showMessage(validation.message, 'warning');
+        return;
+      }
+
+      await window.OfflineDB.enqueueScan(QUEUE_NAME, {
+        cardno,
+        name: validation.name,
+        meal,
+        scannedAt
+      });
+    }
+
+    if (qrStatus) {
       qrStatus.className = 'warning-status';
       qrStatus.innerText = `📦 Saved Offline (${cardno})`;
-      showMessage(`Scanned offline! Plate saved to sync queue for ${cardno}.`, 'warning');
-    } else if (result.reason === 'duplicate') {
-      qrStatus.className = 'warning-status';
-      qrStatus.innerText = `⚠️ Already Queued (${cardno})`;
-      showMessage(`Card ${cardno} was already scanned offline recently.`, 'warning');
     }
+    showMessage(`Plate issued to ${validation.name} (${meal.toUpperCase()}) [Offline]`, 'success');
 
     updateNetworkUI();
   }
@@ -117,16 +258,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function resumeScanning(delayMs = 1500) {
     setTimeout(() => {
       isProcessing = false;
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = 'Ready to scan...';
+      if (qrStatus) {
+        qrStatus.className = 'scanning-status';
+        qrStatus.innerText = 'Ready to scan...';
+      }
     }, delayMs);
   }
-
-  function onScanFailure() {
-    // silent (prevents flicker)
-  }
-
-  /* -------------------- HELPERS -------------------- */
 
   function processScannedText(text) {
     let cardno = text ? text.trim() : '';
@@ -138,11 +275,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getAlertTypeFromMessage(message = '') {
     const msg = message.toLowerCase();
-
-    if (msg.includes('already issued')) return 'warning';
-    if (msg.includes('invalid meal time')) return 'info';
-    if (msg.includes('booking not found')) return 'danger';
-
+    if (msg.includes('already issued') || msg.includes('already')) return 'warning';
+    if (msg.includes('invalid meal time')) return 'warning';
+    if (msg.includes('booking not found') || msg.includes('not found')) return 'danger';
     return 'danger';
   }
 
@@ -150,62 +285,67 @@ document.addEventListener('DOMContentLoaded', function () {
     return (
       !navigator.onLine ||
       err instanceof TypeError ||
+      err instanceof SyntaxError ||
       err?.name === 'TypeError' ||
+      err?.name === 'SyntaxError' ||
+      err?.status >= 500 ||
       err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
+      err?.message?.includes('NetworkError') ||
+      err?.message?.includes('JSON')
     );
   }
 
-  /* -------------------- OFFLINE QUEUE MANAGER -------------------- */
+  async function syncPendingScans() {
+    if (isSyncing || !navigator.onLine) return;
+    if (!window.ScannerCommon) return;
 
-  function getOfflineQueue() {
+    isSyncing = true;
+    updateNetworkUI();
+
     try {
-      const data = localStorage.getItem(QUEUE_STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error('Failed to read scan queue from localStorage', e);
-      return [];
+      await window.ScannerCommon.runBatchSync({
+        queueName: QUEUE_NAME,
+        syncItemFn: async (item, token) => {
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const response = await fetch(`${CONFIG.basePath}/utsav/issue/${item.cardno}`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ scannedAt: item.scannedAt, meal: item.meal })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+            throw new Error(data.message || 'Sync failed');
+          }
+          return { success: true, message: data.message };
+        },
+        onStart: (count) => {
+          showMessage(`Syncing ${count} offline plate scans...`, 'info');
+        },
+        onFinish: (results) => {
+          isSyncing = false;
+          updateNetworkUI();
+          if (results.synced > 0) {
+            showMessage(`Sync Complete: Issued ${results.synced} offline plates.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
+          } else {
+            resetAlert();
+          }
+        }
+      });
+    } finally {
+      isSyncing = false;
+      updateNetworkUI();
     }
   }
 
-  function saveOfflineQueue(queue) {
-    try {
-      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-    } catch (e) {
-      console.error('Failed to save scan queue to localStorage', e);
-    }
-  }
-
-  function enqueueScan(cardno, scannedAt) {
-    const queue = getOfflineQueue();
-    const now = Date.now();
-
-    // Check if same card was scanned recently within COOLDOWN_MS
-    const recentDuplicate = queue.find(
-      item => item.cardno === cardno && now - item.timestampMs < COOLDOWN_MS
-    );
-
-    if (recentDuplicate) {
-      return { success: false, reason: 'duplicate' };
-    }
-
-    const newItem = {
-      id: `${cardno}_${now}`,
-      cardno,
-      scannedAt,
-      timestampMs: now,
-      status: 'pending'
-    };
-
-    queue.push(newItem);
-    saveOfflineQueue(queue);
-    return { success: true, item: newItem };
-  }
-
-  function updateNetworkUI() {
+  async function updateNetworkUI() {
     const isOnline = navigator.onLine;
-    const queue = getOfflineQueue();
-    const pendingCount = queue.filter(item => item.status === 'pending').length;
+    let pendingCount = 0;
+
+    if (window.OfflineDB) {
+      pendingCount = await window.OfflineDB.getPendingCount(QUEUE_NAME);
+    }
 
     if (networkBadge) {
       if (isOnline) {
@@ -232,135 +372,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  /* -------------------- API & BATCH SYNC -------------------- */
-
-  async function sendIssuePlateRequest(cardno, scannedAt) {
-    resetAlert();
-    showMessage('Issuing plate...', 'info');
-
-    const payload = { scannedAt: scannedAt || new Date().toISOString() };
-
-    let response;
-    try {
-      response = await fetch(`${CONFIG.basePath}/utsav/issue/${cardno}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (fetchErr) {
-      throw fetchErr; // Network error
-    }
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const alertType = getAlertTypeFromMessage(data.message);
-
-      qrStatus.className = `${alertType}-status`;
-      qrStatus.innerText = '❌ ' + (data.message || 'Failed to issue plate');
-      showMessage(data.message || 'Failed to issue plate', alertType);
-
-      throw data;
-    }
-
-    // ✅ SUCCESS
-    qrStatus.className = 'success-status';
-    if (data.auto_checkin && data.auto_checkin.performed) {
-      const roomStr = data.auto_checkin.roomno ? ` (Room: ${data.auto_checkin.roomno})` : '';
-      const utsavNameStr = data.auto_checkin.utsav_name || 'the event';
-      qrStatus.innerText = `✅ Plate issued to ${data.issuedto} • Checked in for ${utsavNameStr}!${roomStr}`;
-      showMessage(`Plate issued to ${data.issuedto}. Auto checked in for ${utsavNameStr}!${roomStr}`, 'success');
-    } else {
-      qrStatus.innerText = `✅ Plate issued to ${data.issuedto}`;
-      showMessage(data.message || 'Plate issued successfully.', 'success');
-    }
-
-    return data;
-  }
-
-  async function syncPendingScans() {
-    if (isSyncing || !navigator.onLine) return;
-
-    let queue = getOfflineQueue();
-    const pendingItems = queue.filter(item => item.status === 'pending');
-
-    if (pendingItems.length === 0) return;
-
-    isSyncing = true;
-    updateNetworkUI();
-
-    showMessage(`Syncing ${pendingItems.length} offline scans...`, 'info');
-
-    let syncedCount = 0;
-    let warningCount = 0;
-
-    for (let i = 0; i < pendingItems.length; i++) {
-      const item = pendingItems[i];
-
-      // Refresh connection check
-      if (!navigator.onLine) {
-        showMessage(`Network lost during sync. ${syncedCount} scans synced, ${pendingItems.length - syncedCount} remaining.`, 'warning');
-        break;
-      }
-
-      try {
-        await sendIssuePlateRequest(item.cardno, item.scannedAt);
-        syncedCount++;
-
-        // Remove item from queue on success
-        queue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(queue);
-        updateNetworkUI();
-
-      } catch (err) {
-        if (isNetworkError(err)) {
-          // Network connection failed mid-sync; stop batch execution
-          showMessage(`Network error during sync. ${syncedCount} synced, ${pendingItems.length - syncedCount} pending.`, 'warning');
-          break;
-        } else {
-          // Server returned an explicit response (e.g. 400 Already Issued / Booking not found)
-          warningCount++;
-          // Remove from queue so it doesn't block future sync attempts endlessly
-          queue = getOfflineQueue().filter(q => q.id !== item.id);
-          saveOfflineQueue(queue);
-          updateNetworkUI();
-        }
-      }
-    }
-
-    isSyncing = false;
-    updateNetworkUI();
-
-    if (syncedCount > 0 || warningCount > 0) {
-      showMessage(`Batch sync completed! ${syncedCount} plates issued successfully (${warningCount} warnings/skipped).`, 'success');
-    }
-  }
-
-  /* -------------------- ALERTS -------------------- */
-
-  let alertTimeout = null;
-
-  function showMessage(message, type) {
+  function showMessage(msg, type = 'info') {
+    if (!alertDiv) return;
     alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
+    alertDiv.textContent = msg;
     alertDiv.style.display = 'block';
-
-    if (alertTimeout) clearTimeout(alertTimeout);
-    alertTimeout = setTimeout(resetAlert, 1500);
   }
 
   function resetAlert() {
+    if (!alertDiv) return;
     alertDiv.style.display = 'none';
-    alertDiv.className = 'alert';
     alertDiv.textContent = '';
   }
-
-  /* -------------------- CLEANUP -------------------- */
-
-  window.addEventListener('beforeunload', () => {
-    if (html5QrCode) {
-      html5QrCode.stop().catch(() => {});
-    }
-  });
 });
-

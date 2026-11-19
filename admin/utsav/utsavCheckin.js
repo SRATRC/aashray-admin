@@ -1,24 +1,44 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+  const params = new URLSearchParams(window.location.search);
+  let utsavid = params.get('utsavid');
+
+  const heading = document.getElementById('scanner-heading');
   const qrStatus = document.getElementById('qr-status');
   const alertDiv = document.getElementById('alert');
   const networkBadge = document.getElementById('network-badge');
   const queueCount = document.getElementById('queue-count');
   const syncNowBtn = document.getElementById('sync-now-btn');
 
-  const QUEUE_STORAGE_KEY = 'utsav_checkin_offline_queue';
-  const COOLDOWN_MS = 5 * 60 * 1000;
-
+  const QUEUE_NAME = 'utsav-checkin-queue';
   let html5QrCode = null;
   let isProcessing = false;
   let isSyncing = false;
+  let activeUtsav = null;
 
-  const utsavid = new URLSearchParams(window.location.search).get('utsavid');
+  // 1. Station Auth & Inactivity Tracker
+  if (window.StationAuth) {
+    window.StationAuth.initStationAuth();
+    window.StationAuth.initInactivityTracker();
+  }
 
+  // 2. Setup Top Bar
+  if (window.ScannerCommon) {
+    window.ScannerCommon.setupTopBar({
+      queueName: QUEUE_NAME,
+      onUpdateData: downloadUtsavData
+    });
+  }
+
+  // 3. Load cached Utsav config if available
+  await loadCachedUtsav();
+
+  updateHeading();
   updateNetworkUI();
-  startQRScanner();
 
+  // Network event listeners
   window.addEventListener('online', () => {
     updateNetworkUI();
+    downloadUtsavData();
     syncPendingScans();
   });
 
@@ -33,34 +53,96 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (navigator.onLine) {
+    downloadUtsavData();
     syncPendingScans();
   }
 
-  /* -------------------- SCANNER -------------------- */
+  // 4. Start Camera with Battery Saver
+  startQRScanner();
 
   function startQRScanner() {
-    if (!html5QrCode) {
-      html5QrCode = new Html5Qrcode('reader');
+    if (!window.Html5Qrcode) {
+      if (qrStatus) {
+        qrStatus.className = 'error-status';
+        qrStatus.innerText = 'QR scanner library not loaded.';
+      }
+      return;
     }
 
-    qrStatus.className = 'scanning-status';
-    qrStatus.innerText = 'Initializing scanner...';
+    html5QrCode = new Html5Qrcode('reader');
+
+    if (window.ScannerCommon) {
+      window.ScannerCommon.setupBatterySaver(html5QrCode);
+    }
 
     html5QrCode
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
         onScanSuccess,
-        onScanFailure
+        () => {}
       )
       .then(() => {
-        qrStatus.innerText = 'Ready to scan...';
+        if (qrStatus) {
+          qrStatus.className = 'scanning-status';
+          qrStatus.innerText = 'Ready to scan...';
+        }
       })
       .catch((err) => {
-        qrStatus.className = 'danger-status';
-        qrStatus.innerText = '❌ Scanner initialization failed';
-        console.error('QR Scanner Error:', err);
+        console.error('Camera error:', err);
+        if (qrStatus) {
+          qrStatus.className = 'error-status';
+          qrStatus.innerText = 'Camera access error. Please grant permissions.';
+        }
       });
+  }
+
+  function updateHeading() {
+    const utsavNameStr = activeUtsav?.name ? ` - ${activeUtsav.name}` : '';
+    if (heading) {
+      heading.innerText = `Utsav Check-in${utsavNameStr}`;
+    }
+    document.title = `Utsav Check-in${utsavNameStr}`;
+  }
+
+  async function loadCachedUtsav() {
+    if (!window.OfflineDB) return;
+    const utsav = await window.OfflineDB.getConfig('utsav_config');
+    if (utsav) {
+      activeUtsav = utsav;
+      if (!utsavid) utsavid = utsav.id;
+    }
+  }
+
+  async function downloadUtsavData() {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    if (!token) return;
+
+    try {
+      const targetParam = utsavid || 'today';
+      const res = await fetch(`${CONFIG.basePath}/offline/utsav/${targetParam}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+
+      const body = await res.json();
+      const payload = body.data || body;
+
+      if (payload && window.OfflineDB) {
+        if (payload.utsav) {
+          activeUtsav = payload.utsav;
+          utsavid = payload.utsav.id;
+          await window.OfflineDB.storeConfig('utsav_config', payload.utsav);
+          updateHeading();
+        }
+
+        if (payload.participants && payload.participants.length > 0) {
+          await window.OfflineDB.storeAttendees('utsav', payload.participants);
+        }
+      }
+    } catch (e) {
+      console.warn('Utsav offline data update failed:', e);
+    }
   }
 
   async function onScanSuccess(decodedText) {
@@ -76,36 +158,105 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    if (navigator.onLine) {
+    if (qrStatus) {
       qrStatus.className = 'scanning-status';
       qrStatus.innerText = `Processing check-in for ${cardno}...`;
+    }
 
+    const targetUtsavId = utsavid || activeUtsav?.id;
+
+    if (navigator.onLine) {
       try {
-        await sendCheckinRequest(cardno, scannedAt);
+        await sendCheckinRequest(cardno, scannedAt, targetUtsavId);
       } catch (err) {
         if (isNetworkError(err)) {
-          handleOfflineScan(cardno, scannedAt);
+          await handleOfflineScan(cardno, scannedAt, targetUtsavId);
         }
       }
     } else {
-      handleOfflineScan(cardno, scannedAt);
+      await handleOfflineScan(cardno, scannedAt, targetUtsavId);
     }
 
     resumeScanning(1500);
   }
 
-  function handleOfflineScan(cardno, scannedAt) {
-    const result = enqueueScan(cardno, scannedAt);
+  async function sendCheckinRequest(cardno, scannedAt, targetUtsavId) {
+    resetAlert();
+    showMessage('Processing check-in...', 'info');
 
-    if (result.success) {
+    const token = window.StationAuth ? window.StationAuth.getToken() : (sessionStorage.getItem('token') || localStorage.getItem('token'));
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const payload = {
+      cardno,
+      utsavid: targetUtsavId,
+      scannedAt: scannedAt || new Date().toISOString()
+    };
+
+    let response;
+    try {
+      response = await fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      });
+    } catch (fetchErr) {
+      throw fetchErr;
+    }
+
+    const data = await response.json().catch(() => ({}));
+    const alertType = getAlertTypeFromMessage(data.message);
+
+    if (!response.ok) {
+      if (window.ScannerCommon) window.ScannerCommon.triggerHaptic(alertType === 'warning' ? 'warning' : 'error');
+      if (qrStatus) {
+        qrStatus.className = `${alertType}-status`;
+        qrStatus.innerText = '❌ ' + (data.message || 'Check-in failed');
+      }
+      showMessage(data.message || 'Check-in failed', alertType);
+      throw data;
+    }
+
+    if (qrStatus) {
+      qrStatus.className = 'success-status';
+      qrStatus.innerText = `✅ ${data.message || 'Check-in recorded'}`;
+    }
+    showMessage(data.message || 'Check-in recorded', 'success');
+
+    return data;
+  }
+
+  async function handleOfflineScan(cardno, scannedAt, targetUtsavId) {
+    let validation = { valid: true, name: cardno };
+
+    if (window.OfflineDB) {
+      validation = await window.OfflineDB.lookupAndMarkUtsavCheckin(cardno);
+
+      if (!validation.valid) {
+        if (window.ScannerCommon) window.ScannerCommon.triggerHaptic('warning');
+        if (qrStatus) {
+          qrStatus.className = 'warning-status';
+          qrStatus.innerText = validation.message;
+        }
+        showMessage(validation.message, 'warning');
+        return;
+      }
+
+      await window.OfflineDB.enqueueScan(QUEUE_NAME, {
+        cardno,
+        name: validation.name,
+        bookingid: validation.bookingid,
+        utsavid: targetUtsavId,
+        scannedAt
+      });
+    }
+
+    if (qrStatus) {
       qrStatus.className = 'warning-status';
       qrStatus.innerText = `📦 Saved Offline (${cardno})`;
-      showMessage(`Scanned offline! Check-in saved to sync queue for ${cardno}.`, 'warning');
-    } else if (result.reason === 'duplicate') {
-      qrStatus.className = 'warning-status';
-      qrStatus.innerText = `⚠️ Already Queued (${cardno})`;
-      showMessage(`Card ${cardno} was already scanned offline recently.`, 'warning');
     }
+    showMessage(`Check-in recorded for ${validation.name} [Offline]`, 'success');
 
     updateNetworkUI();
   }
@@ -113,16 +264,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function resumeScanning(delayMs = 1500) {
     setTimeout(() => {
       isProcessing = false;
-      qrStatus.className = 'scanning-status';
-      qrStatus.innerText = 'Ready to scan...';
+      if (qrStatus) {
+        qrStatus.className = 'scanning-status';
+        qrStatus.innerText = 'Ready to scan...';
+      }
     }, delayMs);
   }
-
-  function onScanFailure() {
-    // silent
-  }
-
-  /* -------------------- HELPERS -------------------- */
 
   function processScannedText(text) {
     let cardno = text ? text.trim() : '';
@@ -134,10 +281,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getAlertTypeFromMessage(message = '') {
     const msg = message.toLowerCase();
-
-    if (msg.includes('already checked')) return 'info';
-    if (msg.includes('checkedin')) return 'success';
-
+    if (msg.includes('already checked') || msg.includes('already')) return 'warning';
+    if (msg.includes('checkedin') || msg.includes('success')) return 'success';
     return 'danger';
   }
 
@@ -145,61 +290,71 @@ document.addEventListener('DOMContentLoaded', function () {
     return (
       !navigator.onLine ||
       err instanceof TypeError ||
+      err instanceof SyntaxError ||
       err?.name === 'TypeError' ||
+      err?.name === 'SyntaxError' ||
+      err?.status >= 500 ||
       err?.message?.includes('Failed to fetch') ||
-      err?.message?.includes('NetworkError')
+      err?.message?.includes('NetworkError') ||
+      err?.message?.includes('JSON')
     );
   }
 
-  /* -------------------- OFFLINE QUEUE MANAGER -------------------- */
+  async function syncPendingScans() {
+    if (isSyncing || !navigator.onLine) return;
+    if (!window.ScannerCommon) return;
 
-  function getOfflineQueue() {
+    isSyncing = true;
+    updateNetworkUI();
+
     try {
-      const data = localStorage.getItem(QUEUE_STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error('Failed to read scan queue from localStorage', e);
-      return [];
+      await window.ScannerCommon.runBatchSync({
+        queueName: QUEUE_NAME,
+        syncItemFn: async (item, token) => {
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const response = await fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              cardno: item.cardno,
+              utsavid: item.utsavid || utsavid || activeUtsav?.id,
+              scannedAt: item.scannedAt
+            })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok && !(data.message && data.message.toLowerCase().includes('already'))) {
+            throw new Error(data.message || 'Sync failed');
+          }
+          return { success: true, message: data.message };
+        },
+        onStart: (count) => {
+          showMessage(`Syncing ${count} offline check-ins...`, 'info');
+        },
+        onFinish: (results) => {
+          isSyncing = false;
+          updateNetworkUI();
+          if (results.synced > 0) {
+            showMessage(`Sync Complete: Checked in ${results.synced} offline participants.${results.failed > 0 ? ` (${results.failed} failed)` : ''}`, 'success');
+          } else {
+            resetAlert();
+          }
+        }
+      });
+    } finally {
+      isSyncing = false;
+      updateNetworkUI();
     }
   }
 
-  function saveOfflineQueue(queue) {
-    try {
-      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-    } catch (e) {
-      console.error('Failed to save scan queue to localStorage', e);
-    }
-  }
-
-  function enqueueScan(cardno, scannedAt) {
-    const queue = getOfflineQueue();
-    const now = Date.now();
-
-    const recentDuplicate = queue.find(
-      item => item.cardno === cardno && now - item.timestampMs < COOLDOWN_MS
-    );
-
-    if (recentDuplicate) {
-      return { success: false, reason: 'duplicate' };
-    }
-
-    const newItem = {
-      id: `${cardno}_${now}`,
-      cardno,
-      scannedAt,
-      timestampMs: now,
-      status: 'pending'
-    };
-
-    queue.push(newItem);
-    saveOfflineQueue(queue);
-    return { success: true, item: newItem };
-  }
-
-  function updateNetworkUI() {
+  async function updateNetworkUI() {
     const isOnline = navigator.onLine;
-    const queue = getOfflineQueue();
-    const pendingCount = queue.filter(item => item.status === 'pending').length;
+    let pendingCount = 0;
+
+    if (window.OfflineDB) {
+      pendingCount = await window.OfflineDB.getPendingCount(QUEUE_NAME);
+    }
 
     if (networkBadge) {
       if (isOnline) {
@@ -226,123 +381,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  /* -------------------- API & BATCH SYNC -------------------- */
-
-  async function sendCheckinRequest(cardno, scannedAt) {
-    resetAlert();
-    showMessage('Processing check-in...', 'info');
-
-    const payload = { cardno, utsavid, scannedAt: scannedAt || new Date().toISOString() };
-
-    let response;
-    try {
-      response = await fetch(`${CONFIG.basePath}/utsav/utsavCheckin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-    } catch (fetchErr) {
-      throw fetchErr;
-    }
-
-    const data = await response.json();
-    const alertType = getAlertTypeFromMessage(data.message);
-
-    if (!response.ok) {
-      qrStatus.className = `${alertType}-status`;
-      qrStatus.innerText = '❌ ' + (data.message || 'Check-in failed');
-      showMessage(data.message || 'Check-in failed', alertType);
-      throw data;
-    }
-
-    qrStatus.className = `${alertType}-status`;
-    qrStatus.innerText = `✅ ${data.message}`;
-    showMessage(data.message, alertType);
-
-    return data;
-  }
-
-  async function syncPendingScans() {
-    if (isSyncing || !navigator.onLine) return;
-
-    let queue = getOfflineQueue();
-    const pendingItems = queue.filter(item => item.status === 'pending');
-
-    if (pendingItems.length === 0) return;
-
-    isSyncing = true;
-    updateNetworkUI();
-
-    showMessage(`Syncing ${pendingItems.length} offline Utsav check-ins...`, 'info');
-
-    let syncedCount = 0;
-    let warningCount = 0;
-
-    for (let i = 0; i < pendingItems.length; i++) {
-      const item = pendingItems[i];
-
-      if (!navigator.onLine) {
-        showMessage(`Network lost during sync. ${syncedCount} synced, ${pendingItems.length - syncedCount} remaining.`, 'warning');
-        break;
-      }
-
-      try {
-        await sendCheckinRequest(item.cardno, item.scannedAt);
-        syncedCount++;
-
-        queue = getOfflineQueue().filter(q => q.id !== item.id);
-        saveOfflineQueue(queue);
-        updateNetworkUI();
-
-      } catch (err) {
-        if (isNetworkError(err)) {
-          showMessage(`Network error during sync. ${syncedCount} synced, ${pendingItems.length - syncedCount} pending.`, 'warning');
-          break;
-        } else {
-          warningCount++;
-          queue = getOfflineQueue().filter(q => q.id !== item.id);
-          saveOfflineQueue(queue);
-          updateNetworkUI();
-        }
-      }
-    }
-
-    isSyncing = false;
-    updateNetworkUI();
-
-    if (syncedCount > 0) {
-      showMessage(`Batch sync completed! ${syncedCount} check-ins synced successfully.${warningCount > 0 ? ` (${warningCount} failed)` : ''}`, 'success');
-    } else if (warningCount > 0) {
-      showMessage(`Sync failed: ${warningCount} item(s) could not be submitted.`, 'danger');
-    }
-  }
-
-  /* -------------------- ALERTS -------------------- */
-
-  let alertTimeout = null;
-
-  function showMessage(message, type) {
+  function showMessage(msg, type = 'info') {
+    if (!alertDiv) return;
     alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
+    alertDiv.textContent = msg;
     alertDiv.style.display = 'block';
-
-    if (alertTimeout) clearTimeout(alertTimeout);
-    alertTimeout = setTimeout(resetAlert, 1500);
   }
 
   function resetAlert() {
+    if (!alertDiv) return;
     alertDiv.style.display = 'none';
-    alertDiv.className = 'alert';
     alertDiv.textContent = '';
   }
-
-  /* -------------------- CLEANUP -------------------- */
-
-  window.addEventListener('beforeunload', () => {
-    if (html5QrCode) {
-      html5QrCode.stop().catch(() => {});
-    }
-  });
 });

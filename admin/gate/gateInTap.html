@@ -1,6 +1,6 @@
 <script src="/style/js/roleCheck.js"></script>
 <script>
-  checkRoleAccess(['gateAdmin', 'superAdmin']); // customize allowed roles
+  checkRoleAccess(['gateAdmin', 'superAdmin']);
 </script>
 
 <!DOCTYPE html>
@@ -8,7 +8,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gate Check-In</title>
+    <title>Gate Check-In (Tap)</title>
+
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- Load jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -20,6 +22,12 @@
     <script src="../../style/js/custom.js"></script>
     <script src="../../style/js/config.js"></script>
     <script src="/sessionstorage.js"></script>
+
+    <!-- Offline PWA & Kiosk Layer -->
+    <script src="../../style/js/offline-db.js"></script>
+    <script src="../../style/js/stationAuth.js"></script>
+    <script src="../../style/js/scannerCommon.js"></script>
+    <script src="../../style/js/pwa-register.js"></script>
     <script src="gateInTap.js"></script>
 
     <!-- Styles -->
@@ -38,6 +46,9 @@
       .alert-danger {
         color: red;
       }
+      .alert-warning {
+        color: #856404;
+      }
       .alert-info {
         color: #0056b3;
       }
@@ -45,7 +56,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        margin-right: 15px;
+        flex-wrap: wrap;
       }
       .network-badge {
         padding: 4px 10px;
@@ -68,18 +79,28 @@
         color: #ffffff;
         font-weight: 600;
       }
-      .btn-sync {
-        padding: 2px 8px;
+      .btn-sync, .btn-topbar {
+        padding: 3px 10px;
         font-size: 12px;
         border-radius: 4px;
         background-color: #319795;
         color: white;
         border: none;
         cursor: pointer;
+        font-weight: 600;
       }
-      .btn-sync:disabled {
+      .btn-topbar-secondary {
+        background-color: #4a5568;
+      }
+      .btn-sync:disabled, .btn-topbar:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+      }
+      .station-clock {
+        font-size: 13px;
+        color: #e2e8f0;
+        font-weight: bold;
+        margin-right: 8px;
       }
     </style>
   </head>
@@ -89,9 +110,13 @@
       <div class="container">
         <div class="logout">
           <div class="network-badge-container">
+            <span class="station-clock">🕒 <span id="station-clock">--:--</span></span>
             <span id="network-badge" class="network-badge online">🟢 Online</span>
             <span id="queue-count" class="queue-count">0 Pending Scans</span>
             <button id="sync-now-btn" class="btn-sync" style="display: none;">Sync Now</button>
+            <button id="update-data-btn" class="btn-topbar">⬇️ Update Data</button>
+            <button id="pwa-install-btn" class="btn-topbar" style="display: none; background: #2b6cb0;">📲 Install App</button>
+            <button id="reset-station-btn" class="btn-topbar btn-topbar-secondary" title="Reset local station cache">🗑️ Reset Station</button>
           </div>
           &nbsp; | &nbsp;
           <a href="javascript:void(0);" onclick="history.back()">Back</a>
@@ -116,7 +141,7 @@
                 <form id="gateCheckinForm">
                   <div class="form-group">
                     <label for="cardno">Tap your card:</label>
-                    <input type="text" class="form-control" id="cardno" name="cardno" required />
+                    <input type="text" class="form-control" id="cardno" name="cardno" required autofocus />
                   </div>
 
                   <div class="form-group form-submit">
@@ -125,10 +150,6 @@
                 </form>
               </div>
             </div>
-
-            <audio id="errorSound">
-              <source src="/assets/sound/alert.mp3" type="audio/mp3" />
-            </audio>
 
           </div>
         </div>

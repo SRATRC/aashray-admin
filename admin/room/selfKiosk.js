@@ -53,6 +53,15 @@ async function handleUnified(cardno, fromScan = false) {
   // Guest has an active in-house stay ENDING TODAY AND a pending check-in today
   // -------------------------------------------------------------
   if (currentEndingStay && hasPendingCheckinToday) {
+    if (!navigator.onLine) {
+      Kiosk.showResult(
+        false,
+        'Room Switch: Please Visit Reception',
+        'Offline room switches cannot be processed automatically at the kiosk. Please speak with reception staff.'
+      );
+      return;
+    }
+
     const ok = await Kiosk.confirm({
       question: 'Room Change Detected: Is this you?',
       guestName,
