@@ -1,3 +1,5 @@
+const SENIOR_AGE = 60;
+
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('bulkBookingForm');
   const tableBody = document.getElementById('bookingTableBody');
@@ -117,20 +119,27 @@ document.addEventListener('DOMContentLoaded', function () {
           nameInput.value = c.issuedto || '';
           let genderDisplay = c.gender || '';
           if (c.dob) {
-            const birthDate = new Date(c.dob);
-            if (!isNaN(birthDate.getTime())) {
+            const parts = String(c.dob).slice(0, 10).split('-').map(Number);
+            if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+              const [y, m, d] = parts;
+              const checkinVal = document.getElementById('checkin_date')?.value;
+              const refParts = checkinVal ? String(checkinVal).slice(0, 10).split('-').map(Number) : null;
               const today = new Date();
-              let age = today.getFullYear() - birthDate.getFullYear();
-              const m = today.getMonth() - birthDate.getMonth();
-              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+              const refYear = refParts && refParts.length === 3 && !isNaN(refParts[0]) ? refParts[0] : today.getFullYear();
+              const refMonth = refParts && refParts.length === 3 && !isNaN(refParts[1]) ? refParts[1] : today.getMonth() + 1;
+              const refDay = refParts && refParts.length === 3 && !isNaN(refParts[2]) ? refParts[2] : today.getDate();
+
+              let age = refYear - y;
+              if (refMonth < m || (refMonth === m && refDay < d)) {
                 age--;
               }
-              if (age >= 60) {
+              if (age >= SENIOR_AGE) {
                 genderDisplay += ` (Senior - ${age})`;
               }
             }
           }
           genderInput.value = genderDisplay;
+          genderInput.title = genderDisplay;
           centerInput.value = c.center || '';
           resStatusInput.value = c.res_status || '';
         } else {
