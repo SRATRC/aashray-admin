@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Express Check-In & Check-Out | Research Centre Stay</title>
+  <link rel="stylesheet" href="../../style/css/style.css" />
+  <script src="/style/js/html5-qrcode.min.js"></script>
+  <script src="/style/js/roleCheck.js"></script>
+  <script>
+    checkRoleAccess(['officeAdmin', 'roomAdmin', 'superAdmin', 'kioskAdmin']);
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #f8fafc;
+      background-image: radial-gradient(circle at 50% 0%, #e2e8f0 0%, #f8fafc 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: #0f172a;
+    }
+
+    .kiosk-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #2563eb 100%);
+      color: #ffffff;
+      padding: 24px 20px 20px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+      position: relative;
+    }
+
+    .kiosk-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(6px);
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      margin-bottom: 8px;
+    }
+
+    .kiosk-header h1 {
+      margin: 0;
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .kiosk-header p {
+      margin: 6px 0 0 0;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 400;
+    }
+
+    .kiosk-container {
+      max-width: 580px;
+      width: 100%;
+      margin: 22px auto 28px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    /* 3-Step Instruction Guide */
+    .kiosk-step-guide {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 12px 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    .kiosk-step-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 0.78rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .kiosk-step-arrow {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .scanner-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 30px 26px;
+      box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.05);
+      text-align: center;
+      position: relative;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 440px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #2563eb;
+      min-height: 250px;
+      background: #0f172a;
+    }
+
+    .btn-cam-switch {
+      background: #475569;
+      color: #fff;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cam-switch:hover {
+      background: #334155;
+    }
+
+    /* USB Scanner Ready Box */
+    .usb-prompt-card {
+      background: #eff6ff;
+      border: 2px dashed #93c5fd;
+      border-radius: 18px;
+      padding: 30px 20px 24px 20px;
+      margin-bottom: 22px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .scanner-icon-pulse {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px auto;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+      color: #2563eb;
+      animation: scanBreathe 2.5s infinite ease-in-out;
+    }
+
+    @keyframes scanBreathe {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3);
+      }
+
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
+      }
+
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3);
+      }
+    }
+
+    .usb-prompt-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .usb-prompt-subtitle {
+      font-size: 0.92rem;
+      color: #64748b;
+      line-height: 1.4;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+
+    .scanner-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #059669;
+      margin-top: 16px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+
+    .kiosk-divider {
+      display: flex;
+      align-items: center;
+      margin: 22px 0 18px 0;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .kiosk-divider::before,
+    .kiosk-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .kiosk-divider span {
+      padding: 0 12px;
+    }
+
+    .manual-input-box {
+      display: flex;
+      gap: 10px;
+    }
+
+    .manual-input-box input {
+      flex: 1;
+      padding: 14px 18px;
+      font-size: 1.05rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      outline: none;
+      background: #f8fafc;
+      color: #0f172a;
+      transition: all 0.2s ease;
+    }
+
+    .manual-input-box input:focus {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .manual-input-box button {
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .manual-input-box button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    }
+
+    .manual-input-box button:active {
+      transform: translateY(1px);
+    }
+
+    /* Modal / Result Overlays */
+    .overlay-result {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .result-card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 34px 28px 28px 28px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: overlayFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes overlayFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.94) translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .status-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px auto;
+      font-size: 2.2rem;
+    }
+
+    .icon-success {
+      background: #ecfdf5;
+      color: #10b981;
+    }
+
+    .icon-error {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+
+    .result-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
+
+    .result-guest {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 18px;
+    }
+
+    .room-badge-card {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1.5px solid #bfdbfe;
+      border-radius: 18px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    .room-badge-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #1e40af;
+      margin-bottom: 4px;
+    }
+
+    .room-badge-number {
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: #1e3a8a;
+      letter-spacing: 0.5px;
+    }
+
+    .wifi-voucher-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+
+    .wifi-voucher-tag {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .wifi-voucher-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0f172a;
+      background: #ffffff;
+      padding: 4px 14px;
+      border-radius: 10px;
+      display: inline-block;
+      border: 1px solid #cbd5e1;
+      letter-spacing: 1px;
+    }
+
+    .wifi-voucher-hint {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    .result-note-text {
+      font-size: 0.95rem;
+      color: #64748b;
+      line-height: 1.45;
+      margin-bottom: 18px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #10b981;
+      width: 100%;
+      border-radius: 9999px;
+      transition: width 5s linear;
+    }
+
+    .countdown-text {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      margin-top: 10px;
+    }
+
+    .kiosk-spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s ease-in-out infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .kiosk-loading-pill {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin: 14px auto 0 auto;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      animation: overlayFadeIn 0.2s ease;
+    }
+
+    .kiosk-loading-pill strong {
+      color: #60a5fa;
+      font-weight: 700;
+    }
+
+    .kiosk-fullscreen-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 100;
+    }
+
+    .kiosk-fullscreen-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .kiosk-fullscreen-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Confirmation Modal Action Buttons */
+    .confirm-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
+    .btn-kiosk-cancel {
+      padding: 14px 22px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #475569;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-kiosk-cancel:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .btn-kiosk-confirm {
+      padding: 14px 26px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border: none;
+      color: #ffffff;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-kiosk-confirm:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-kiosk-confirm:active {
+      transform: translateY(1px);
+    }
+
+    .confirm-countdown-badge {
+      background: #f1f5f9;
+      border-radius: 9999px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      color: #64748b;
+      display: inline-block;
+      margin-top: 14px;
+      font-weight: 600;
+    }
+
+    /* Done / Dismiss Button on Result Modal */
+    .btn-result-done {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 260px;
+      margin: 16px auto 0 auto;
+      padding: 12px 24px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-done-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-done-success:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-done-error {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-done-error:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Confirmation Modal Countdown Progress */
+    .confirm-progress-container {
+      width: 100%;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+
+    .confirm-progress-fill {
+      height: 100%;
+      background: #64748b;
+      width: 100%;
+      border-radius: 9999px;
+      transition: width 1s linear;
+    }
+
+    /* Kiosk Session Warning Banner */
+    .kiosk-session-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      color: #991b1b;
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      text-align: center;
+      animation: overlayFadeIn 0.3s ease;
+    }
+
+    @media (max-width: 480px) {
+      .kiosk-step-guide {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .kiosk-step-arrow {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="kiosk-header">
+    <button type="button" id="fullscreenToggleBtn" class="kiosk-fullscreen-btn" title="Toggle Fullscreen"
+      aria-label="Toggle Fullscreen">
+      <svg id="fullscreenIconExpand" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      </svg>
+      <svg id="fullscreenIconCompress" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+      </svg>
+    </button>
+    <div class="kiosk-brand-badge">Research Centre Stay Self-Service</div>
+    <h1>Express Check-In & Check-Out</h1>
+    <p>Scan your QR Code to check in or check out</p>
+  </div>
+
+  <div class="kiosk-container">
+    <div class="kiosk-step-guide">
+      <div class="kiosk-step-item">
+        <div class="step-num">1</div>
+        <div class="step-text">Scan Card / QR</div>
+      </div>
+      <div class="kiosk-step-arrow">→</div>
+      <div class="kiosk-step-item">
+        <div class="step-num">2</div>
+        <div class="step-text">Confirm on Screen</div>
+      </div>
+      <div class="kiosk-step-arrow">→</div>
+      <div class="kiosk-step-item">
+        <div class="step-num">3</div>
+        <div class="step-text">Note Room & Wi-Fi</div>
+      </div>
+    </div>
+
+    <div class="scanner-card">
+      <div id="kioskSessionBanner" class="kiosk-session-banner">
+        ⚠️ <strong>Kiosk Session Inactive</strong>: Please log in from the staff panel to activate scanner.
+      </div>
+      <button type="button" id="switchCamBtn" class="btn-cam-switch" style="display: none;">Switch Camera</button>
+      <div id="reader"></div>
+
+      <div class="kiosk-divider">
+        <span>or enter card number manually</span>
+      </div>
+
+      <div class="manual-input-box">
+        <input type="text" id="manualCardNo" placeholder="Enter Card No (e.g. 000123)" autofocus autocomplete="off" />
+        <button type="button" id="submitManualBtn">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay Modal for Check-In / Check-Out Result -->
+  <div id="resultOverlay" class="overlay-result">
+    <div class="result-card">
+      <div id="resultIcon" class="status-icon icon-success">✓</div>
+      <div id="resultTitle" class="result-title" style="color: #10b981;">Successful!</div>
+      <div id="resultGuestName" class="result-guest">--</div>
+
+      <div id="roomBadgeContainer" class="room-badge-card">
+        <div class="room-badge-label">Assigned Room / Flat</div>
+        <div id="resultRoomNo" class="room-badge-number">--</div>
+      </div>
+
+      <div id="singleDayNoticeBox" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 16px; margin: 12px 0; display: none; text-align: center;">
+        <div style="font-weight: 700; color: #334155; font-size: 0.95rem; margin-bottom: 3px;">Single Day Visit</div>
+        <div style="font-size: 0.88rem; color: #64748b; line-height: 1.4;">Rooms are not assigned for single day visits.<br>If a room is needed, please contact the office.</div>
+      </div>
+
+      <div id="wifiBox" class="wifi-voucher-card" style="display: none;">
+        <div class="wifi-voucher-tag">📶 Temporary Guest Wi-Fi</div>
+        <div>
+          <span id="resultWifiCode" class="wifi-voucher-code">--</span>
+        </div>
+        <div class="wifi-voucher-hint">Connect to Wi-Fi and use this password</div>
+      </div>
+
+      <div id="resultMessage" class="result-note-text"></div>
+
+      <div class="progress-bar-container">
+        <div id="progressFill" class="progress-bar-fill"></div>
+      </div>
+      <div class="countdown-text">Resetting scanner in <span id="countdown">5</span>s...</div>
+      <button type="button" id="resultDoneBtn" class="btn-result-done btn-done-success">Done / Next Guest</button>
+    </div>
+  </div>
+
+  <script src="../../style/js/config.js"></script>
+  <script src="../../style/js/common.js"></script>
+  <script src="kioskCommon.js"></script>
+  <script src="selfKiosk.js"></script>
+</body>
+
+</html>
