@@ -766,9 +766,12 @@
                   <span style="color: #64748b; font-size: 0.85rem;" id="lastUpdated">Last checked: -</span>
                 </div>
               </div>
-              <button class="btn btn-primary" id="refreshBtn" onclick="checkStatus(true)" style="padding: 8px 18px; font-size: 0.85rem; width: auto; margin: 0;">
-                Refresh Status
-              </button>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a class="btn btn-secondary" id="messagesLink" href="messages.html" style="padding: 8px 18px; font-size: 0.85rem; width: auto; margin: 0; text-decoration: none;">Messages</a>
+                <button class="btn btn-primary" id="refreshBtn" onclick="checkStatus(true)" style="padding: 8px 18px; font-size: 0.85rem; width: auto; margin: 0;">
+                  Refresh Status
+                </button>
+              </div>
             </div>
 
             <div class="qr-container" id="qrContainer" style="display: none; margin-top: 16px;">
